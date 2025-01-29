@@ -1,0 +1,21 @@
+service: rainer-portfolio-backend
+frameworkVersion: '3'
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1
+  environment:
+    AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
+    COGNITO_USER_POOL_ID: ${ssm:/rainer/user-pool-id}
+    COGNITO_CLIENT_ID: ${ssm:/rainer/client-id}
+    DYNAMODB_TABLE: ${ssm:/rainer/posts-table}
+functions:
+  api:
+    handler: dist/main.handler
+    events:
+      - httpApi:
+          path: /{proxy+}
+          method: ANY
+plugins:
+  - serverless-plugin-typescript
+  - serverless-dotenv-plugin
