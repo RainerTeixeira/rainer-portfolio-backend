@@ -1,41 +1,158 @@
-service: rainer-portfolio-backend
-frameworkVersion: '3'
+service: rainer-portfolio-backend  # Nome do serviço
+
+frameworkVersion: '3'  # Versão do Serverless Framework sendo utilizada
+
 provider:
-  name: aws
-  runtime: nodejs18.x
-  region: us-east-1
-  environment:
-    AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
-    COGNITO_USER_POOL_ID: ${ssm:/rainer/user-pool-id}
-    COGNITO_CLIENT_ID: ${ssm:/rainer/client-id}
-    DYNAMODB_TABLE_AUTHORS: ${ssm:/rainer/authors-table}
-    DYNAMODB_TABLE_CATEGORIES: ${ssm:/rainer/categories-table}
-    DYNAMODB_TABLE_COMMENTS: ${ssm:/rainer/comments-table}
-    DYNAMODB_TABLE_EXTERNALINTEGRATIONS: ${ssm:/rainer/external-integrations-table}
-    DYNAMODB_TABLE_POSTS: ${ssm:/rainer/posts-table}
+  name: aws  # Provê o serviço na AWS
+  runtime: nodejs18.x  # A função Lambda usará Node.js 18.x como runtime
+  region: us-east-1  # Região AWS onde os recursos serão criados
+  environment:  # Definindo variáveis de ambiente para a função Lambda
+
+    AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1  # Habilita reutilização de conexão para Node.js, melhorando performance
+
+    # Variáveis de ambiente carregadas do AWS Systems Manager Parameter Store
+    COGNITO_USER_POOL_ID: ${ssm:/rainer-portfolio/COGNITO_USER_POOL_ID}  # ID DO POOL DE USUÁRIOS COGNITO
+    COGNITO_CLIENT_ID: ${ssm:/rainer-portfolio/COGNITO_CLIENT_ID}  # ID DO CLIENTE COGNITO
+    COGNITO_JWKS_URL: ${ssm:/rainer-portfolio/COGNITO_JWKS_URL}  # URL JWKS DO COGNITO
+    # REGIÃO DO DYNAMODB
+    DYNAMODB_REGION: ${ssm:/rainer-portfolio/DYNAMODB_REGION}  
+    # Nome das tabelas do DynamoDB
+    DYNAMO_TABLE_NAME_AUTHORS: ${ssm:/rainer-portfolio/DYNAMO_TABLE_NAME_AUTHORS}
+    DYNAMO_TABLE_NAME_CATEGORIES: ${ssm:/rainer-portfolio/DYNAMO_TABLE_NAME_CATEGORIES}
+    DYNAMO_TABLE_NAME_COMMENTS: ${ssm:/rainer-portfolio/DYNAMO_TABLE_NAME_COMMENTS}
+    DYNAMO_TABLE_NAME_EXTERNAL_INTEGRATIONS: ${ssm:/rainer-portfolio/DYNAMO_TABLE_NAME_EXTERNAL_INTEGRATIONS}
+    DYNAMO_TABLE_NAME_POSTS: ${ssm:/rainer-portfolio/DYNAMO_TABLE_NAME_POSTS}
+    DYNAMO_TABLE_NAME_REFERENCES: ${ssm:/rainer-portfolio/DYNAMO_TABLE_NAME_REFERENCES}
+
+  # Configurações de memória e timeout para otimização de custos
   lambda:
-    memorySize: 128  # Inicial para otimizar custo, ajustar conforme necessidade
-    timeout: 6  # Ajuste para reduzir custos em funções de execução curta
+    memorySize: 128  # Memória atribuída à função Lambda, ajustável conforme necessidade
+    timeout: 6  # Tempo limite para execução da função (em segundos)
 
 functions:
+  # Função para lidar com qualquer requisição na API
   api:
-    handler: dist/main.handler
-    memorySize: 128  # A mesma configuração de memória para a função
-    timeout: 6  # Tempo ajustado para garantir menor custo
+    handler: dist/main.handler  # Manipulador da função
+    memorySize: 128  # Mesma configuração de memória da função acima
+    timeout: 6  # Tempo limite ajustado
     events:
-      - httpApi:
-          path: /{proxy+}
-          method: ANY
-          # API Gateway HTTP (mais barato que REST API)
-          payload: '2.0'
+      - httpApi:  # Configuração para expor a função via API Gateway (melhor desempenho e custo com HTTP API)
+          path: /{proxy+}  # Qualquer caminho será mapeado para essa função
+          method: ANY  # Aceita qualquer método HTTP
+          payload: '2.0'  # API Gateway versão 2.0
+
+  # Funções para operações CRUD para posts
+  getPosts:
+    handler: handler.getPosts  # Função que lida com requisição GET para obter posts
+    memorySize: 128
+    timeout: 6
+    events:
+      - http:
+          path: posts  # Rota para obter os posts
+          method: get  # Método HTTP GET
+          cors: true  # Habilita CORS para permitir chamadas de outros domínios
+
+  createPost:
+    handler: handler.createPost  # Função para criar um novo post
+    memorySize: 128
+    timeout: 6
+    events:
+      - http:
+          path: posts  # Rota para criar um post
+          method: post  # Método HTTP POST
+          cors: true
+
+  # Funções para operações CRUD para autores
+  getAuthors:
+    handler: handler.getAuthors  # Função para obter os autores
+    memorySize: 128
+    timeout: 6
+    events:
+      - http:
+          path: authors  # Rota para obter os autores
+          method: get
+          cors: true
+
+  createAuthor:
+    handler: handler.createAuthor  # Função para criar um novo autor
+    memorySize: 128
+    timeout: 6
+    events:
+      - http:
+          path: authors  # Rota para criar um autor
+          method: post
+          cors: true
+
+  # Funções para operações CRUD para categorias
+  getCategories:
+    handler: handler.getCategories  # Função para obter categorias
+    memorySize: 128
+    timeout: 6
+    events:
+      - http:
+          path: categories  # Rota para obter as categorias
+          method: get
+          cors: true
+
+  createCategory:
+    handler: handler.createCategory  # Função para criar uma nova categoria
+    memorySize: 128
+    timeout: 6
+    events:
+      - http:
+          path: categories  # Rota para criar uma categoria
+          method: post
+          cors: true
+
+  # Funções para operações CRUD para comentários
+  getComments:
+    handler: handler.getComments  # Função para obter comentários
+    memorySize: 128
+    timeout: 6
+    events:
+      - http:
+          path: comments  # Rota para obter comentários
+          method: get
+          cors: true
+
+  createComment:
+    handler: handler.createComment  # Função para criar um novo comentário
+    memorySize: 128
+    timeout: 6
+    events:
+      - http:
+          path: comments  # Rota para criar um comentário
+          method: post
+          cors: true
+
+  # Funções para operações CRUD para integrações externas
+  getExternalIntegrations:
+    handler: handler.getExternalIntegrations  # Função para obter integrações externas
+    memorySize: 128
+    timeout: 6
+    events:
+      - http:
+          path: external-integrations  # Rota para obter integrações externas
+          method: get
+          cors: true
+
+  createExternalIntegration:
+    handler: handler.createExternalIntegration  # Função para criar uma nova integração externa
+    memorySize: 128
+    timeout: 6
+    events:
+      - http:
+          path: external-integrations  # Rota para criar uma integração externa
+          method: post
+          cors: true
 
 plugins:
-  - serverless-plugin-typescript
-  - serverless-dotenv-plugin
+  - serverless-plugin-typescript  # Plugin para compilar o código TypeScript
+  - serverless-dotenv-plugin  # Plugin para carregar variáveis de ambiente do arquivo .env
 
 resources:
   Outputs:
-    LambdaFunctionName:
-      Value: !Ref ApiLambdaFunction  # Para verificar o nome da função Lambda
-    ApiGatewayUrl:
+    LambdaFunctionName:  # Output para verificar o nome da função Lambda
+      Value: !Ref ApiLambdaFunction
+    ApiGatewayUrl:  # Output para obter a URL da API Gateway
       Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/"
