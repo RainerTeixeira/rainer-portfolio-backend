@@ -1,28 +1,30 @@
 service: rainer-portfolio-backend  # Nome do serviço
 
-frameworkVersion: '3'  # Versão do Serverless Framework sendo utilizada
+frameworkVersion: '4'  # Versão do Serverless Framework sendo utilizada
 
 provider:
   name: aws  # Provê o serviço na AWS
   runtime: nodejs18.x  # A função Lambda usará Node.js 18.x como runtime
-  region: us-east-1  # Região AWS onde os recursos serão criados
+  region: ${env:DYNAMODB_REGION, 'us-east-1'}  # Região AWS onde os recursos serão criados, verifica a variável local ou usa valor default
   environment:  # Definindo variáveis de ambiente para a função Lambda
 
     AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1  # Habilita reutilização de conexão para Node.js, melhorando performance
 
-    # Variáveis de ambiente carregadas do AWS Systems Manager Parameter Store
-    COGNITO_USER_POOL_ID: ${ssm:/rainer-portfolio/COGNITO_USER_POOL_ID}  # ID DO POOL DE USUÁRIOS COGNITO
-    COGNITO_CLIENT_ID: ${ssm:/rainer-portfolio/COGNITO_CLIENT_ID}  # ID DO CLIENTE COGNITO
-    COGNITO_JWKS_URL: ${ssm:/rainer-portfolio/COGNITO_JWKS_URL}  # URL JWKS DO COGNITO
+    # Variáveis de ambiente carregadas do arquivo .env local ou do AWS Systems Manager Parameter Store
+    COGNITO_USER_POOL_ID: ${env:COGNITO_USER_POOL_ID, ${self:custom.cognitoUserPoolId}} 
+    COGNITO_CLIENT_ID: ${env:COGNITO_CLIENT_ID, ${self:custom.cognitoClientId}} 
+    COGNITO_JWKS_URL: ${env:COGNITO_JWKS_URL, ${self:custom.cognitoJwksUrl}} 
+
     # REGIÃO DO DYNAMODB
-    DYNAMODB_REGION: ${ssm:/rainer-portfolio/DYNAMODB_REGION}  
+    DYNAMODB_REGION: ${env:DYNAMODB_REGION, ${self:custom.dynamodbRegion}}  # Corrigido a variável aqui
+
     # Nome das tabelas do DynamoDB
-    DYNAMO_TABLE_NAME_AUTHORS: ${ssm:/rainer-portfolio/DYNAMO_TABLE_NAME_AUTHORS}
-    DYNAMO_TABLE_NAME_CATEGORIES: ${ssm:/rainer-portfolio/DYNAMO_TABLE_NAME_CATEGORIES}
-    DYNAMO_TABLE_NAME_COMMENTS: ${ssm:/rainer-portfolio/DYNAMO_TABLE_NAME_COMMENTS}
-    DYNAMO_TABLE_NAME_EXTERNAL_INTEGRATIONS: ${ssm:/rainer-portfolio/DYNAMO_TABLE_NAME_EXTERNAL_INTEGRATIONS}
-    DYNAMO_TABLE_NAME_POSTS: ${ssm:/rainer-portfolio/DYNAMO_TABLE_NAME_POSTS}
-    DYNAMO_TABLE_NAME_REFERENCES: ${ssm:/rainer-portfolio/DYNAMO_TABLE_NAME_REFERENCES}
+    DYNAMO_TABLE_NAME_AUTHORS: ${env:DYNAMO_TABLE_NAME_AUTHORS, ${self:custom.dynamoTableNames.authors}} 
+    DYNAMO_TABLE_NAME_CATEGORIES: ${env:DYNAMO_TABLE_NAME_CATEGORIES, ${self:custom.dynamoTableNames.categories}} 
+    DYNAMO_TABLE_NAME_COMMENTS: ${env:DYNAMO_TABLE_NAME_COMMENTS, ${self:custom.dynamoTableNames.comments}} 
+    DYNAMO_TABLE_NAME_EXTERNAL_INTEGRATIONS: ${env:DYNAMO_TABLE_NAME_EXTERNAL_INTEGRATIONS, ${self:custom.dynamoTableNames.externalIntegrations}} 
+    DYNAMO_TABLE_NAME_POSTS: ${env:DYNAMO_TABLE_NAME_POSTS, ${self:custom.dynamoTableNames.posts}} 
+    DYNAMO_TABLE_NAME_REFERENCES: ${env:DYNAMO_TABLE_NAME_REFERENCES, ${self:custom.dynamoTableNames.references}} 
 
   # Configurações de memória e timeout para otimização de custos
   lambda:
@@ -147,8 +149,8 @@ functions:
           cors: true
 
 plugins:
-  - serverless-plugin-typescript  # Plugin para compilar o código TypeScript
   - serverless-dotenv-plugin  # Plugin para carregar variáveis de ambiente do arquivo .env
+  - serverless-offline # Plugin para simular a execução localmente
 
 resources:
   Outputs:
@@ -156,3 +158,21 @@ resources:
       Value: !Ref ApiLambdaFunction
     ApiGatewayUrl:  # Output para obter a URL da API Gateway
       Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/"
+
+custom:
+  build:
+    esbuild: true  # Habilita o uso do ESBuild nativo
+  
+  # Custom variables to manage env vs ssm for different stages
+  cognitoUserPoolId: ${ssm:/rainer-portfolio/COGNITO_USER_POOL_ID~true}
+  cognitoClientId: ${ssm:/rainer-portfolio/COGNITO_CLIENT_ID~true}
+  cognitoJwksUrl: ${ssm:/rainer-portfolio/COGNITO_JWKS_URL~true}
+
+  dynamodbRegion: ${ssm:/rainer-portfolio/DYNAMODB_REGION~true}
+  dynamoTableNames:
+    authors: ${ssm:/rainer-portfolio/DYNAMO_TABLE_NAME_AUTHORS~true}
+    categories: ${ssm:/rainer-portfolio/DYNAMO_TABLE_NAME_CATEGORIES~true}
+    comments: ${ssm:/rainer-portfolio/DYNAMO_TABLE_NAME_COMMENTS~true}
+    externalIntegrations: ${ssm:/rainer-portfolio/DYNAMO_TABLE_NAME_EXTERNAL_INTEGRATIONS~true}
+    posts: ${ssm:/rainer-portfolio/DYNAMO_TABLE_NAME_POSTS~true}
+    references: ${ssm:/rainer-portfolio/DYNAMO_TABLE_NAME_REFERENCES~true}
