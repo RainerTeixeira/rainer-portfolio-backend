@@ -8,14 +8,34 @@ provider:
     AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
     COGNITO_USER_POOL_ID: ${ssm:/rainer/user-pool-id}
     COGNITO_CLIENT_ID: ${ssm:/rainer/client-id}
-    DYNAMODB_TABLE: ${ssm:/rainer/posts-table}
+    DYNAMODB_TABLE_AUTHORS: ${ssm:/rainer/authors-table}
+    DYNAMODB_TABLE_CATEGORIES: ${ssm:/rainer/categories-table}
+    DYNAMODB_TABLE_COMMENTS: ${ssm:/rainer/comments-table}
+    DYNAMODB_TABLE_EXTERNALINTEGRATIONS: ${ssm:/rainer/external-integrations-table}
+    DYNAMODB_TABLE_POSTS: ${ssm:/rainer/posts-table}
+  lambda:
+    memorySize: 128  # Inicial para otimizar custo, ajustar conforme necessidade
+    timeout: 6  # Ajuste para reduzir custos em funções de execução curta
+
 functions:
   api:
     handler: dist/main.handler
+    memorySize: 128  # A mesma configuração de memória para a função
+    timeout: 6  # Tempo ajustado para garantir menor custo
     events:
       - httpApi:
           path: /{proxy+}
           method: ANY
+          # API Gateway HTTP (mais barato que REST API)
+          payload: '2.0'
+
 plugins:
   - serverless-plugin-typescript
   - serverless-dotenv-plugin
+
+resources:
+  Outputs:
+    LambdaFunctionName:
+      Value: !Ref ApiLambdaFunction  # Para verificar o nome da função Lambda
+    ApiGatewayUrl:
+      Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/"
