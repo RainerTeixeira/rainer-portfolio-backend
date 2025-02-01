@@ -1,178 +1,263 @@
-service: rainer-portfolio-backend  # Nome do serviço
-
-frameworkVersion: '4'  # Versão do Serverless Framework sendo utilizada
+service: rainer-portfolio-backend
+frameworkVersion: '3'
 
 provider:
-  name: aws  # Provê o serviço na AWS
-  runtime: nodejs18.x  # A função Lambda usará Node.js 18.x como runtime
-  region: ${env:DYNAMODB_REGION, 'us-east-1'}  # Região AWS onde os recursos serão criados, verifica a variável local ou usa valor default
-  environment:  # Definindo variáveis de ambiente para a função Lambda
-
-    AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1  # Habilita reutilização de conexão para Node.js, melhorando performance
-
-    # Variáveis de ambiente carregadas do arquivo .env local ou do AWS Systems Manager Parameter Store
-    COGNITO_USER_POOL_ID: ${env:COGNITO_USER_POOL_ID, ${self:custom.cognitoUserPoolId}} 
-    COGNITO_CLIENT_ID: ${env:COGNITO_CLIENT_ID, ${self:custom.cognitoClientId}} 
-    COGNITO_JWKS_URL: ${env:COGNITO_JWKS_URL, ${self:custom.cognitoJwksUrl}} 
-
-    # REGIÃO DO DYNAMODB
-    DYNAMODB_REGION: ${env:DYNAMODB_REGION, ${self:custom.dynamodbRegion}}  # Corrigido a variável aqui
-
-    # Nome das tabelas do DynamoDB
-    DYNAMO_TABLE_NAME_AUTHORS: ${env:DYNAMO_TABLE_NAME_AUTHORS, ${self:custom.dynamoTableNames.authors}} 
-    DYNAMO_TABLE_NAME_CATEGORIES: ${env:DYNAMO_TABLE_NAME_CATEGORIES, ${self:custom.dynamoTableNames.categories}} 
-    DYNAMO_TABLE_NAME_COMMENTS: ${env:DYNAMO_TABLE_NAME_COMMENTS, ${self:custom.dynamoTableNames.comments}} 
-    DYNAMO_TABLE_NAME_EXTERNAL_INTEGRATIONS: ${env:DYNAMO_TABLE_NAME_EXTERNAL_INTEGRATIONS, ${self:custom.dynamoTableNames.externalIntegrations}} 
-    DYNAMO_TABLE_NAME_POSTS: ${env:DYNAMO_TABLE_NAME_POSTS, ${self:custom.dynamoTableNames.posts}} 
-    DYNAMO_TABLE_NAME_REFERENCES: ${env:DYNAMO_TABLE_NAME_REFERENCES, ${self:custom.dynamoTableNames.references}} 
-
-  # Configurações de memória e timeout para otimização de custos
-  lambda:
-    memorySize: 128  # Memória atribuída à função Lambda, ajustável conforme necessidade
-    timeout: 6  # Tempo limite para execução da função (em segundos)
+  name: aws
+  runtime: nodejs18.x
+  region: ${env:AWS_REGION, 'us-east-1'}
+  stage: ${opt:stage, 'dev'}
+  environment:
+    NODE_ENV: ${self:provider.stage}
+    AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
+  httpApi:
+    cors: true
+    authorizers:
+      cognitoAuth:
+        identitySource: $request.header.Authorization
+        issuerUrl: https://cognito-idp.${self:provider.region}.amazonaws.com/${self:custom.cognitoUserPoolId}
+        audience:
+          - ${self:custom.cognitoClientId}
 
 functions:
-  # Função para lidar com qualquer requisição na API
   api:
-    handler: dist/main.handler  # Manipulador da função
-    memorySize: 128  # Mesma configuração de memória da função acima
-    timeout: 6  # Tempo limite ajustado
+    handler: src/main.handler
     events:
-      - httpApi:  # Configuração para expor a função via API Gateway (melhor desempenho e custo com HTTP API)
-          path: /{proxy+}  # Qualquer caminho será mapeado para essa função
-          method: ANY  # Aceita qualquer método HTTP
-          payload: '2.0'  # API Gateway versão 2.0
+      - httpApi:
+          path: /{proxy+}
+          method: ANY
 
-  # Funções para operações CRUD para posts
-  getPosts:
-    handler: handler.getPosts  # Função que lida com requisição GET para obter posts
-    memorySize: 128
-    timeout: 6
-    events:
-      - http:
-          path: posts  # Rota para obter os posts
-          method: get  # Método HTTP GET
-          cors: true  # Habilita CORS para permitir chamadas de outros domínios
-
+  # Posts
   createPost:
-    handler: handler.createPost  # Função para criar um novo post
-    memorySize: 128
-    timeout: 6
+    handler: src/controllers/posts.create
     events:
-      - http:
-          path: posts  # Rota para criar um post
-          method: post  # Método HTTP POST
-          cors: true
+      - httpApi:
+          path: /posts
+          method: post
+          authorizer:
+            name: cognitoAuth
+            type: jwt
+            scopes: [write:posts]
 
-  # Funções para operações CRUD para autores
-  getAuthors:
-    handler: handler.getAuthors  # Função para obter os autores
-    memorySize: 128
-    timeout: 6
+  getPosts:
+    handler: src/controllers/posts.getAll
     events:
-      - http:
-          path: authors  # Rota para obter os autores
+      - httpApi:
+          path: /posts
           method: get
-          cors: true
 
+  # Authors
   createAuthor:
-    handler: handler.createAuthor  # Função para criar um novo autor
-    memorySize: 128
-    timeout: 6
+    handler: src/controllers/authors.create
     events:
-      - http:
-          path: authors  # Rota para criar um autor
+      - httpApi:
+          path: /authors
           method: post
-          cors: true
+          authorizer:
+            name: cognitoAuth
+            type: jwt
+            scopes: [write:authors]
 
-  # Funções para operações CRUD para categorias
-  getCategories:
-    handler: handler.getCategories  # Função para obter categorias
-    memorySize: 128
-    timeout: 6
+  getAuthors:
+    handler: src/controllers/authors.getAll
     events:
-      - http:
-          path: categories  # Rota para obter as categorias
+      - httpApi:
+          path: /authors
           method: get
-          cors: true
 
+  # Categories
   createCategory:
-    handler: handler.createCategory  # Função para criar uma nova categoria
-    memorySize: 128
-    timeout: 6
+    handler: src/controllers/categories.create
     events:
-      - http:
-          path: categories  # Rota para criar uma categoria
+      - httpApi:
+          path: /categories
           method: post
-          cors: true
+          authorizer:
+            name: cognitoAuth
+            type: jwt
+            scopes: [write:categories]
 
-  # Funções para operações CRUD para comentários
-  getComments:
-    handler: handler.getComments  # Função para obter comentários
-    memorySize: 128
-    timeout: 6
+  getCategories:
+    handler: src/controllers/categories.getAll
     events:
-      - http:
-          path: comments  # Rota para obter comentários
+      - httpApi:
+          path: /categories
           method: get
-          cors: true
 
+  # Comments
   createComment:
-    handler: handler.createComment  # Função para criar um novo comentário
-    memorySize: 128
-    timeout: 6
+    handler: src/controllers/comments.create
     events:
-      - http:
-          path: comments  # Rota para criar um comentário
+      - httpApi:
+          path: /comments
           method: post
-          cors: true
+          authorizer:
+            name: cognitoAuth
+            type: jwt
+            scopes: [write:comments]
 
-  # Funções para operações CRUD para integrações externas
-  getExternalIntegrations:
-    handler: handler.getExternalIntegrations  # Função para obter integrações externas
-    memorySize: 128
-    timeout: 6
+  getComments:
+    handler: src/controllers/comments.getAll
     events:
-      - http:
-          path: external-integrations  # Rota para obter integrações externas
+      - httpApi:
+          path: /comments
           method: get
-          cors: true
 
+  # External Integrations
   createExternalIntegration:
-    handler: handler.createExternalIntegration  # Função para criar uma nova integração externa
-    memorySize: 128
-    timeout: 6
+    handler: src/controllers/external-integrations.create
     events:
-      - http:
-          path: external-integrations  # Rota para criar uma integração externa
+      - httpApi:
+          path: /external-integrations
           method: post
-          cors: true
+          authorizer:
+            name: cognitoAuth
+            type: jwt
+            scopes: [write:integrations]
+
+  getExternalIntegrations:
+    handler: src/controllers/external-integrations.getAll
+    events:
+      - httpApi:
+          path: /external-integrations
+          method: get
 
 plugins:
-  - serverless-dotenv-plugin  # Plugin para carregar variáveis de ambiente do arquivo .env
-  - serverless-offline # Plugin para simular a execução localmente
-
-resources:
-  Outputs:
-    LambdaFunctionName:  # Output para verificar o nome da função Lambda
-      Value: !Ref ApiLambdaFunction
-    ApiGatewayUrl:  # Output para obter a URL da API Gateway
-      Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/"
+  - serverless-dotenv-plugin
+  - serverless-offline
+  - serverless-esbuild
 
 custom:
-  build:
-    esbuild: true  # Habilita o uso do ESBuild nativo
-  
-  # Custom variables to manage env vs ssm for different stages
-  cognitoUserPoolId: ${ssm:/rainer-portfolio/COGNITO_USER_POOL_ID~true}
-  cognitoClientId: ${ssm:/rainer-portfolio/COGNITO_CLIENT_ID~true}
-  cognitoJwksUrl: ${ssm:/rainer-portfolio/COGNITO_JWKS_URL~true}
+  esbuild:
+    bundle: true
+    minify: ${self:custom.minifyEnabled.${self:provider.stage}}
+    sourcemap: true
+    exclude: ['aws-sdk']
+    target: 'node18'
+    platform: 'node'
+    concurrency: 10
+    packager: 'npm'
+    watch:
+      pattern: ['src/**/*.ts']
+      ignore: ['.build', 'dist', 'node_modules']
 
-  dynamodbRegion: ${ssm:/rainer-portfolio/DYNAMODB_REGION~true}
+  minifyEnabled:
+    prod: true
+    dev: false
+    staging: false
+
+  cognitoUserPoolId: ${ssm:/rainer-portfolio/COGNITO_USER_POOL_ID, env:COGNITO_USER_POOL_ID}
+  cognitoClientId: ${ssm:/rainer-portfolio/COGNITO_CLIENT_ID, env:COGNITO_CLIENT_ID}
+  cognitoJwksUrl: ${ssm:/rainer-portfolio/COGNITO_JWKS_URL, env:COGNITO_JWKS_URL}
+
+  dynamodbRegion: ${ssm:/rainer-portfolio/DYNAMODB_REGION, env:DYNAMODB_REGION}
   dynamoTableNames:
-    authors: ${ssm:/rainer-portfolio/DYNAMO_TABLE_NAME_AUTHORS~true}
-    categories: ${ssm:/rainer-portfolio/DYNAMO_TABLE_NAME_CATEGORIES~true}
-    comments: ${ssm:/rainer-portfolio/DYNAMO_TABLE_NAME_COMMENTS~true}
-    externalIntegrations: ${ssm:/rainer-portfolio/DYNAMO_TABLE_NAME_EXTERNAL_INTEGRATIONS~true}
-    posts: ${ssm:/rainer-portfolio/DYNAMO_TABLE_NAME_POSTS~true}
-    references: ${ssm:/rainer-portfolio/DYNAMO_TABLE_NAME_REFERENCES~true}
+    posts: ${ssm:/rainer-portfolio/DYNAMO_TABLE_NAME_POSTS, env:DYNAMO_TABLE_NAME_POSTS}
+    authors: ${ssm:/rainer-portfolio/DYNAMO_TABLE_NAME_AUTHORS, env:DYNAMO_TABLE_NAME_AUTHORS}
+    categories: ${ssm:/rainer-portfolio/DYNAMO_TABLE_NAME_CATEGORIES, env:DYNAMO_TABLE_NAME_CATEGORIES}
+    comments: ${ssm:/rainer-portfolio/DYNAMO_TABLE_NAME_COMMENTS, env:DYNAMO_TABLE_NAME_COMMENTS}
+    references: ${ssm:/rainer-portfolio/DYNAMO_TABLE_NAME_REFERENCES, env:DYNAMO_TABLE_NAME_REFERENCES}
+    externalIntegrations: ${ssm:/rainer-portfolio/DYNAMO_TABLE_NAME_EXTERNAL_INTEGRATIONS, env:DYNAMO_TABLE_NAME_EXTERNAL_INTEGRATIONS}
+    achievements: ${ssm:/rainer-portfolio/DYNAMO_TABLE_NAME_ACHIEVEMENTS, env:DYNAMO_TABLE_NAME_ACHIEVEMENTS}
+
+resources:
+  Resources:
+    PostsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.dynamoTableNames.posts}
+        AttributeDefinitions:
+          - AttributeName: postId
+            AttributeType: N
+          - AttributeName: postDate
+            AttributeType: S
+        KeySchema:
+          - AttributeName: postId
+            KeyType: HASH
+          - AttributeName: postDate
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+
+    AuthorsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.dynamoTableNames.authors}
+        AttributeDefinitions:
+          - AttributeName: authorId
+            AttributeType: N
+        KeySchema:
+          - AttributeName: authorId
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+
+    CategoriesTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.dynamoTableNames.categories}
+        AttributeDefinitions:
+          - AttributeName: categoryId
+            AttributeType: N
+        KeySchema:
+          - AttributeName: categoryId
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+
+    CommentsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.dynamoTableNames.comments}
+        AttributeDefinitions:
+          - AttributeName: commentId
+            AttributeType: N
+          - AttributeName: authorId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: commentId
+            KeyType: HASH
+          - AttributeName: authorId
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+
+    ReferencesTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.dynamoTableNames.references}
+        AttributeDefinitions:
+          - AttributeName: referenceId
+            AttributeType: N
+        KeySchema:
+          - AttributeName: referenceId
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+
+    ExternalIntegrationsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.dynamoTableNames.externalIntegrations}
+        AttributeDefinitions:
+          - AttributeName: integrationId
+            AttributeType: N
+        KeySchema:
+          - AttributeName: integrationId
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+
+    AchievementsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.dynamoTableNames.achievements}
+        AttributeDefinitions:
+          - AttributeName: achievementId
+            AttributeType: N
+          - AttributeName: points
+            AttributeType: N
+        KeySchema:
+          - AttributeName: achievementId
+            KeyType: HASH
+          - AttributeName: points
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+
+  Outputs:
+    ApiEndpoint:
+      Description: "API Gateway endpoint URL"
+      Value: !Sub "https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com/"

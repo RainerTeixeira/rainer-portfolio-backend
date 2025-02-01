@@ -1,8 +1,17 @@
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
+import { Handler } from 'aws-lambda';
 
-async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  await app.listen(process.env.PORT ?? 3000);
-}
-bootstrap();
+export const handler: Handler = async (event, context) => {
+  return {
+    statusCode: 200,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      message: 'Welcome to Rainer Portfolio API',
+      endpoints: {
+        posts: '/posts',
+        authors: '/authors',
+        categories: '/categories',
+        comments: '/comments'
+      }
+    })
+  };
+};
