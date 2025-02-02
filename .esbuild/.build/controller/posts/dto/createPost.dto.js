@@ -1,71 +1,32 @@
 "use strict";
-var __esDecorate = (this && this.__esDecorate) || function (ctor, descriptorIn, decorators, contextIn, initializers, extraInitializers) {
-    function accept(f) { if (f !== void 0 && typeof f !== "function") throw new TypeError("Function expected"); return f; }
-    var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
-    var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
-    var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
-    var _, done = false;
-    for (var i = decorators.length - 1; i >= 0; i--) {
-        var context = {};
-        for (var p in contextIn) context[p] = p === "access" ? {} : contextIn[p];
-        for (var p in contextIn.access) context.access[p] = contextIn.access[p];
-        context.addInitializer = function (f) { if (done) throw new TypeError("Cannot add initializers after decoration has completed"); extraInitializers.push(accept(f || null)); };
-        var result = (0, decorators[i])(kind === "accessor" ? { get: descriptor.get, set: descriptor.set } : descriptor[key], context);
-        if (kind === "accessor") {
-            if (result === void 0) continue;
-            if (result === null || typeof result !== "object") throw new TypeError("Object expected");
-            if (_ = accept(result.get)) descriptor.get = _;
-            if (_ = accept(result.set)) descriptor.set = _;
-            if (_ = accept(result.init)) initializers.unshift(_);
-        }
-        else if (_ = accept(result)) {
-            if (kind === "field") initializers.unshift(_);
-            else descriptor[key] = _;
-        }
-    }
-    if (target) Object.defineProperty(target, contextIn.name, descriptor);
-    done = true;
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-var __runInitializers = (this && this.__runInitializers) || function (thisArg, initializers, value) {
-    var useValue = arguments.length > 2;
-    for (var i = 0; i < initializers.length; i++) {
-        value = useValue ? initializers[i].call(thisArg, value) : initializers[i].call(thisArg);
-    }
-    return useValue ? value : void 0;
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreatePostDto = void 0;
 const class_validator_1 = require("class-validator");
-let CreatePostDto = (() => {
-    var _a;
-    let _postTitle_decorators;
-    let _postTitle_initializers = [];
-    let _postTitle_extraInitializers = [];
-    let _postContent_decorators;
-    let _postContent_initializers = [];
-    let _postContent_extraInitializers = [];
-    let _postTags_decorators;
-    let _postTags_initializers = [];
-    let _postTags_extraInitializers = [];
-    return _a = class CreatePostDto {
-            constructor() {
-                this.postTitle = __runInitializers(this, _postTitle_initializers, void 0);
-                this.postContent = (__runInitializers(this, _postTitle_extraInitializers), __runInitializers(this, _postContent_initializers, void 0));
-                this.postTags = (__runInitializers(this, _postContent_extraInitializers), __runInitializers(this, _postTags_initializers, void 0));
-                __runInitializers(this, _postTags_extraInitializers);
-            }
-        },
-        (() => {
-            const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
-            _postTitle_decorators = [(0, class_validator_1.IsString)(), (0, class_validator_1.IsNotEmpty)()];
-            _postContent_decorators = [(0, class_validator_1.IsString)(), (0, class_validator_1.IsNotEmpty)()];
-            _postTags_decorators = [(0, class_validator_1.IsArray)(), (0, class_validator_1.IsNotEmpty)()];
-            __esDecorate(null, null, _postTitle_decorators, { kind: "field", name: "postTitle", static: false, private: false, access: { has: obj => "postTitle" in obj, get: obj => obj.postTitle, set: (obj, value) => { obj.postTitle = value; } }, metadata: _metadata }, _postTitle_initializers, _postTitle_extraInitializers);
-            __esDecorate(null, null, _postContent_decorators, { kind: "field", name: "postContent", static: false, private: false, access: { has: obj => "postContent" in obj, get: obj => obj.postContent, set: (obj, value) => { obj.postContent = value; } }, metadata: _metadata }, _postContent_initializers, _postContent_extraInitializers);
-            __esDecorate(null, null, _postTags_decorators, { kind: "field", name: "postTags", static: false, private: false, access: { has: obj => "postTags" in obj, get: obj => obj.postTags, set: (obj, value) => { obj.postTags = value; } }, metadata: _metadata }, _postTags_initializers, _postTags_extraInitializers);
-            if (_metadata) Object.defineProperty(_a, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
-        })(),
-        _a;
-})();
+class CreatePostDto {
+}
 exports.CreatePostDto = CreatePostDto;
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], CreatePostDto.prototype, "postTitle", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], CreatePostDto.prototype, "postContent", void 0);
+__decorate([
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", Array)
+], CreatePostDto.prototype, "postTags", void 0);
 //# sourceMappingURL=createPost.dto.js.map

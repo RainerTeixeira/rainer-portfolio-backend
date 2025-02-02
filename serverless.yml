@@ -1,22 +1,56 @@
 service: rainer-portfolio-backend
-frameworkVersion: '3'
+frameworkVersion: '^4.0.0'
 
 provider:
   name: aws
   runtime: nodejs18.x
   region: ${env:AWS_REGION, 'us-east-1'}
   stage: ${opt:stage, 'dev'}
+  
+  # Credenciais para DynamoDB Local
   environment:
     NODE_ENV: ${self:provider.stage}
     AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
+    AWS_ACCESS_KEY_ID: ${env:DYNAMODB_ACCESS_KEY_ID}
+    AWS_SECRET_ACCESS_KEY: ${env:DYNAMODB_SECRET_ACCESS_KEY}
+    AWS_REGION: ${env:DYNAMODB_REGION}
+
+    # Tabelas DynamoDB
+    DYNAMO_TABLE_NAME_POSTS: ${env:DYNAMO_TABLE_NAME_POSTS}
+    DYNAMO_TABLE_NAME_AUTHORS: ${env:DYNAMO_TABLE_NAME_AUTHORS}
+    DYNAMO_TABLE_NAME_CATEGORIES: ${env:DYNAMO_TABLE_NAME_CATEGORIES}
+    DYNAMO_TABLE_NAME_COMMENTS: ${env:DYNAMO_TABLE_NAME_COMMENTS}
+    DYNAMO_TABLE_NAME_REFERENCES: ${env:DYNAMO_TABLE_NAME_REFERENCES}
+    DYNAMO_TABLE_NAME_EXTERNAL_INTEGRATIONS: ${env:DYNAMO_TABLE_NAME_EXTERNAL_INTEGRATIONS}
+    DYNAMO_TABLE_NAME_ACHIEVEMENTS: ${env:DYNAMO_TABLE_NAME_ACHIEVEMENTS}
+
+    # Cognito
+    COGNITO_USER_POOL_ID: ${env:COGNITO_USER_POOL_ID}
+    COGNITO_CLIENT_ID: ${env:COGNITO_CLIENT_ID}
+    COGNITO_JWKS_URL: ${env:COGNITO_JWKS_URL}
+
+  # Permissões do IAM para DynamoDB
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:*
+      Resource: 
+        - "arn:aws:dynamodb:${self:provider.region}:*:table/${env:DYNAMO_TABLE_NAME_POSTS}"
+        - "arn:aws:dynamodb:${self:provider.region}:*:table/${env:DYNAMO_TABLE_NAME_AUTHORS}"
+        - "arn:aws:dynamodb:${self:provider.region}:*:table/${env:DYNAMO_TABLE_NAME_CATEGORIES}"
+        - "arn:aws:dynamodb:${self:provider.region}:*:table/${env:DYNAMO_TABLE_NAME_COMMENTS}"
+        - "arn:aws:dynamodb:${self:provider.region}:*:table/${env:DYNAMO_TABLE_NAME_REFERENCES}"
+        - "arn:aws:dynamodb:${self:provider.region}:*:table/${env:DYNAMO_TABLE_NAME_EXTERNAL_INTEGRATIONS}"
+        - "arn:aws:dynamodb:${self:provider.region}:*:table/${env:DYNAMO_TABLE_NAME_ACHIEVEMENTS}"
+
   httpApi:
     cors: true
     authorizers:
       cognitoAuth:
         identitySource: $request.header.Authorization
-        issuerUrl: https://cognito-idp.${self:provider.region}.amazonaws.com/${self:custom.cognitoUserPoolId}
+        issuerUrl: https://cognito-idp.${self:provider.region}.amazonaws.com/${env:COGNITO_USER_POOL_ID}
         audience:
-          - ${self:custom.cognitoClientId}
+          - ${env:COGNITO_CLIENT_ID}
 
 functions:
   api:
@@ -35,7 +69,7 @@ functions:
           method: post
           authorizer:
             name: cognitoAuth
-            type: jwt
+            type: jwt_authorizer
             scopes: [write:posts]
 
   getPosts:
@@ -54,7 +88,7 @@ functions:
           method: post
           authorizer:
             name: cognitoAuth
-            type: jwt
+            type: jwt_authorizer
             scopes: [write:authors]
 
   getAuthors:
@@ -73,7 +107,7 @@ functions:
           method: post
           authorizer:
             name: cognitoAuth
-            type: jwt
+            type: jwt_authorizer
             scopes: [write:categories]
 
   getCategories:
@@ -92,7 +126,7 @@ functions:
           method: post
           authorizer:
             name: cognitoAuth
-            type: jwt
+            type: jwt_authorizer
             scopes: [write:comments]
 
   getComments:
@@ -111,7 +145,7 @@ functions:
           method: post
           authorizer:
             name: cognitoAuth
-            type: jwt
+            type: jwt_authorizer
             scopes: [write:integrations]
 
   getExternalIntegrations:
@@ -124,66 +158,58 @@ functions:
 plugins:
   - serverless-dotenv-plugin
   - serverless-offline
+  - serverless-offline-jwt-authorizer
   - serverless-esbuild
+  - serverless-dynamodb-local
 
 custom:
+  serverless-offline-jwt-authorizer:
+    jwksUri: ${env:COGNITO_JWKS_URL}
+    issuer: https://cognito-idp.${self:provider.region}.amazonaws.com/${env:COGNITO_USER_POOL_ID}
+    audience: ${env:COGNITO_CLIENT_ID}
+    identitySource: method.request.header.Authorization
+
   esbuild:
     bundle: true
     minify: ${self:custom.minifyEnabled.${self:provider.stage}}
     sourcemap: true
-    exclude: ['aws-sdk']
     target: 'node18'
     platform: 'node'
-    concurrency: 10
-    packager: 'npm'
-    watch:
-      pattern: ['src/**/*.ts']
-      ignore: ['.build', 'dist', 'node_modules']
+    exclude: ['aws-sdk']
 
   minifyEnabled:
     prod: true
     dev: false
-    staging: false
 
-  cognitoUserPoolId: ${ssm:/rainer-portfolio/COGNITO_USER_POOL_ID, env:COGNITO_USER_POOL_ID}
-  cognitoClientId: ${ssm:/rainer-portfolio/COGNITO_CLIENT_ID, env:COGNITO_CLIENT_ID}
-  cognitoJwksUrl: ${ssm:/rainer-portfolio/COGNITO_JWKS_URL, env:COGNITO_JWKS_URL}
-
-  dynamodbRegion: ${ssm:/rainer-portfolio/DYNAMODB_REGION, env:DYNAMODB_REGION}
-  dynamoTableNames:
-    posts: ${ssm:/rainer-portfolio/DYNAMO_TABLE_NAME_POSTS, env:DYNAMO_TABLE_NAME_POSTS}
-    authors: ${ssm:/rainer-portfolio/DYNAMO_TABLE_NAME_AUTHORS, env:DYNAMO_TABLE_NAME_AUTHORS}
-    categories: ${ssm:/rainer-portfolio/DYNAMO_TABLE_NAME_CATEGORIES, env:DYNAMO_TABLE_NAME_CATEGORIES}
-    comments: ${ssm:/rainer-portfolio/DYNAMO_TABLE_NAME_COMMENTS, env:DYNAMO_TABLE_NAME_COMMENTS}
-    references: ${ssm:/rainer-portfolio/DYNAMO_TABLE_NAME_REFERENCES, env:DYNAMO_TABLE_NAME_REFERENCES}
-    externalIntegrations: ${ssm:/rainer-portfolio/DYNAMO_TABLE_NAME_EXTERNAL_INTEGRATIONS, env:DYNAMO_TABLE_NAME_EXTERNAL_INTEGRATIONS}
-    achievements: ${ssm:/rainer-portfolio/DYNAMO_TABLE_NAME_ACHIEVEMENTS, env:DYNAMO_TABLE_NAME_ACHIEVEMENTS}
+  dynamodb:
+    start:
+      port: 8000
+      migrate: true
+      inMemory: true
+    stages:
+      - dev
 
 resources:
   Resources:
     PostsTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: ${self:custom.dynamoTableNames.posts}
+        TableName: ${env:DYNAMO_TABLE_NAME_POSTS}
         AttributeDefinitions:
           - AttributeName: postId
-            AttributeType: N
-          - AttributeName: postDate
             AttributeType: S
         KeySchema:
           - AttributeName: postId
             KeyType: HASH
-          - AttributeName: postDate
-            KeyType: RANGE
         BillingMode: PAY_PER_REQUEST
 
     AuthorsTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: ${self:custom.dynamoTableNames.authors}
+        TableName: ${env:DYNAMO_TABLE_NAME_AUTHORS}
         AttributeDefinitions:
           - AttributeName: authorId
-            AttributeType: N
+            AttributeType: S
         KeySchema:
           - AttributeName: authorId
             KeyType: HASH
@@ -192,10 +218,10 @@ resources:
     CategoriesTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: ${self:custom.dynamoTableNames.categories}
+        TableName: ${env:DYNAMO_TABLE_NAME_CATEGORIES}
         AttributeDefinitions:
           - AttributeName: categoryId
-            AttributeType: N
+            AttributeType: S
         KeySchema:
           - AttributeName: categoryId
             KeyType: HASH
@@ -204,26 +230,22 @@ resources:
     CommentsTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: ${self:custom.dynamoTableNames.comments}
+        TableName: ${env:DYNAMO_TABLE_NAME_COMMENTS}
         AttributeDefinitions:
           - AttributeName: commentId
-            AttributeType: N
-          - AttributeName: authorId
             AttributeType: S
         KeySchema:
           - AttributeName: commentId
             KeyType: HASH
-          - AttributeName: authorId
-            KeyType: RANGE
         BillingMode: PAY_PER_REQUEST
 
     ReferencesTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: ${self:custom.dynamoTableNames.references}
+        TableName: ${env:DYNAMO_TABLE_NAME_REFERENCES}
         AttributeDefinitions:
           - AttributeName: referenceId
-            AttributeType: N
+            AttributeType: S
         KeySchema:
           - AttributeName: referenceId
             KeyType: HASH
@@ -232,10 +254,10 @@ resources:
     ExternalIntegrationsTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: ${self:custom.dynamoTableNames.externalIntegrations}
+        TableName: ${env:DYNAMO_TABLE_NAME_EXTERNAL_INTEGRATIONS}
         AttributeDefinitions:
           - AttributeName: integrationId
-            AttributeType: N
+            AttributeType: S
         KeySchema:
           - AttributeName: integrationId
             KeyType: HASH
@@ -244,20 +266,16 @@ resources:
     AchievementsTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: ${self:custom.dynamoTableNames.achievements}
+        TableName: ${env:DYNAMO_TABLE_NAME_ACHIEVEMENTS}
         AttributeDefinitions:
           - AttributeName: achievementId
-            AttributeType: N
-          - AttributeName: points
-            AttributeType: N
+            AttributeType: S
         KeySchema:
           - AttributeName: achievementId
             KeyType: HASH
-          - AttributeName: points
-            KeyType: RANGE
         BillingMode: PAY_PER_REQUEST
 
   Outputs:
     ApiEndpoint:
-      Description: "API Gateway endpoint URL"
-      Value: !Sub "https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com/"
+      Description: "Endpoint da API"
+      Value: !Sub "https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com/${self:provider.stage}"
