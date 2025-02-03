@@ -1,10 +1,16 @@
 import { Module } from '@nestjs/common';
-import { PostsController } from '@src/controller/blog/posts/posts.controller';
-import { PostsService } from '@src/controller/blog/posts/posts.service';
-import { DynamoDbService } from '@src/services/dynamoDb';  // Verifique a importação correta
+import { PostsController } from './blog/posts/posts.controller';
+import { PostsService } from './blog/posts/posts.service';
+import { dynamoDBClient } from '../services/dynamoDb';
 
 @Module({
     controllers: [PostsController],
-    providers: [PostsService, DynamoDbService],
+    providers: [
+        PostsService,
+        {
+            provide: 'DYNAMODB_CLIENT',
+            useValue: dynamoDBClient
+        }
+    ]
 })
 export class BlogModule { }

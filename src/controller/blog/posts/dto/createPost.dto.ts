@@ -1,15 +1,22 @@
-import { IsString, IsNotEmpty, IsArray } from 'class-validator';
+// src/controller/blog/posts/dto/createPost.dto.ts
+
+import { IsString, IsNotEmpty, IsOptional, IsArray } from 'class-validator';
 
 export class CreatePostDto {
-    @IsString()
-    @IsNotEmpty()
-    postTitle!: string;
+  @IsString()
+  @IsNotEmpty()
+  title?: string;  // Torne a propriedade opcional
 
-    @IsString()
-    @IsNotEmpty()
-    postContent!: string;
+  @IsString()
+  @IsNotEmpty()
+  content?: string;  // Torne a propriedade opcional
 
-    @IsArray()
-    @IsNotEmpty()
-    postTags!: string[];
+  @IsString()
+  @IsOptional()
+  authorId?: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  categories?: string[];
 }
