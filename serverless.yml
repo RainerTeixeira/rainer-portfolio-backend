@@ -1,3 +1,5 @@
+# "org" ensures this Service is used with the correct Serverless Framework Access Key.
+org: rainersoft
 service: rainer-portfolio-backend
 frameworkVersion: '^4.0.0'
 
@@ -156,11 +158,8 @@ functions:
           method: get
 
 plugins:
-  - serverless-dotenv-plugin
   - serverless-offline
-  - serverless-offline-jwt-authorizer
   - serverless-esbuild
-  - serverless-dynamodb-local
 
 custom:
   serverless-offline-jwt-authorizer:

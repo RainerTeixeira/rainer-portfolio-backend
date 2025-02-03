@@ -1,11 +1,12 @@
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { fromEnv } from "@aws-sdk/credential-provider-env";
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { fromIni } from "@aws-sdk/credential-provider-ini";
-import { fromNodeProviderChain } from "@aws-sdk/credential-providers";
+import { fromEnvironment } from "@aws-sdk/credential-provider-env";
 
 const dynamoDBConfig = {
-    region: process.env.DYNAMODB_REGION || "us-east-1",
-    credentials: fromNodeProviderChain() // ambiente certo
+    region: process.env.AWS_REGION || "us-east-1", // Pegando da variável de ambiente
+    credentials: process.env.AWS_ACCESS_KEY_ID
+        ? fromEnvironment() // Usa as variáveis de ambiente se existirem
+        : fromIni({ profile: "default" }), // Usa as credenciais do AWS CLI (~/.aws/credentials)
 };
 
 export const dynamoDBClient = new DynamoDBClient(dynamoDBConfig);

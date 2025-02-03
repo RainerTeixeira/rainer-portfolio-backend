@@ -1,1 +1,0 @@
-{"version":3,"file":"dynamoDb.js","sourceRoot":"","sources":["../../../src/services/dynamoDb.ts"],"names":[],"mappings":";;;AAAA,8DAA0D;AAG1D,wEAAsE;AAEtE,MAAM,cAAc,GAAG;IACnB,MAAM,EAAE,OAAO,CAAC,GAAG,CAAC,eAAe,IAAI,WAAW;IAClD,WAAW,EAAE,IAAA,4CAAqB,GAAE,CAAC,iBAAiB;CACzD,CAAC;AAEW,QAAA,cAAc,GAAG,IAAI,gCAAc,CAAC,cAAc,CAAC,CAAC"}
