@@ -10,7 +10,6 @@ let cachedServer: any;  // Variável para armazenar o servidor (usando 'any' par
 async function bootstrapServer(): Promise<any> {  // Função assíncrona que inicializa o servidor
   try {
     console.log('Inicializando o servidor...');
-
     const expressApp = express();
     const adapter = new ExpressAdapter(expressApp);  // Adaptador NestJS para o Express
     const app = await NestFactory.create(AppModule, adapter); // Criação do app NestJS com Express
