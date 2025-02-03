@@ -16,7 +16,8 @@
       "node" // Inclui os tipos do Node.js
     ],
     "experimentalDecorators": true, // Permite o uso de decoradores
-    "emitDecoratorMetadata": true // Emite metadados de decoradores
+    "emitDecoratorMetadata": true, // Emite metadados de decoradores
+    "noEmit": true // Não gera arquivos .js
   },
   "include": [
     "src/**/*.ts", // Inclui todos os arquivos .ts da pasta src
