@@ -16,21 +16,23 @@ export class CognitoAuthService {
 
         this.verifier = CognitoJwtVerifier.create({
             userPoolId: userPoolId,
-            tokenUse: "id",
+            tokenUse: "id", // Aqui o "id" se refere ao tipo de token: ID Token
             clientId: clientId,
         });
     }
 
+    // Método para verificar o token
     async verifyToken(token: string): Promise<any> {
         try {
-            return await this.verifier.verify(token);
+            return await this.verifier.verify(token);  // Verificando o token JWT
         } catch (error) {
-            // Log da mensagem de erro
+            // Log de erro e lançamento de exceção
             console.error("Erro ao verificar o token:", error);
             throw new UnauthorizedException("Token inválido ou expirado");
         }
     }
 
+    // Método para obter as configurações do Cognito
     getCognitoConfig() {
         return {
             region: this.configService.get<string>("DYNAMODB_REGION"),
@@ -42,3 +44,6 @@ export class CognitoAuthService {
         };
     }
 }
+
+// A classe AuthModule deve estar fora da classe CognitoAuthService
+export class AuthModule { }

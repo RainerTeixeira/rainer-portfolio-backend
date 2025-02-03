@@ -1,7 +1,10 @@
-import { dynamoDBClient } from '../../services/dynamoDb';
+import { dynamoDBClient } from '@src/services/dynamoDb'; // Usando alias para caminho absoluto
 import { PutItemCommand, GetItemCommand, UpdateItemCommand, DeleteItemCommand, ScanCommand } from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
 import { Injectable } from '@nestjs/common';
+import { CreatePostDto, UpdatePostDto } from '../controller/posts/dto';
+import { DynamoDbService } from './dynamoDb.service';
+
 
 interface LambdaEvent {
     body?: string;

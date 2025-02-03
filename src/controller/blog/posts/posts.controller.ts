@@ -1,5 +1,6 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Query } from '@nestjs/common';
-import { PostsService } from './posts.service'; // Importando o serviço
+import { PostsService } from './posts.service'; // Importando o serviço de posts
+import { CreatePostDto, UpdatePostDto } from './dto'; // Importando os DTOs de criação e atualização de posts
 
 @Controller('posts')
 export class PostsController {
