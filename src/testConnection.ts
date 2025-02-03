@@ -1,4 +1,4 @@
-import { dynamoDBClient } from "./src/services/dynamoDb";
+import { dynamoDBClient } from "./services/dynamoDb";
 import { ListTablesCommand } from "@aws-sdk/client-dynamodb";
 
 async function testDynamoDB() {

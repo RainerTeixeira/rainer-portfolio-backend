@@ -1,30 +1,30 @@
 {
   "compilerOptions": {
-    "allowJs": false,
-    "module": "ESNext",
-    "target": "ESNext",
+    "allowJs": false, // Não permite JavaScript no projeto
+    "module": "ESNext", // Usa o ESNext para módulos
+    "target": "ESNext", // Usa o ESNext como target de compilação
     "lib": [
-      "ES2020"
+      "ES2020" // Inclui as bibliotecas ES2020
     ],
-    "sourceMap": true,
-    "rootDir": "./src",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "moduleResolution": "node",
+    "sourceMap": false, // Não gera arquivos .map
+    "rootDir": "./src", // Diretório de origem do código TypeScript
+    "strict": true, // Habilita a verificação rigorosa do TypeScript
+    "esModuleInterop": true, // Habilita a interoperação com módulos ES
+    "skipLibCheck": true, // Ignora a checagem de tipos em arquivos de definição de bibliotecas
+    "moduleResolution": "node", // Resolução de módulos compatível com Node.js
     "types": [
-      "node"
+      "node" // Inclui os tipos do Node.js
     ],
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
+    "experimentalDecorators": true, // Permite o uso de decoradores
+    "emitDecoratorMetadata": true // Emite metadados de decoradores
   },
   "include": [
     "src/**/*.ts", // Inclui todos os arquivos .ts da pasta src
-    "testConnection.ts", // Inclui esse arquivo específico
+    "src/testConnection.ts", // Inclui esse arquivo específico
     "src/aws-serverless-express.d.ts" // Inclui esse arquivo de definição de tipos
   ],
   "exclude": [
     "node_modules", // Exclui a pasta node_modules
-    "**/*.spec.ts" // Exclui arquivos de testes
+    "**/*.spec.ts" // Exclui arquivos de testes (arquivos .spec.ts)
   ]
 }
