@@ -39,6 +39,6 @@ export const handler: Handler = async (event: any, context: Context, callback: C
     return serverless.proxy(cachedServer, event, context, 'PROMISE').promise;
   } catch (error) {
     console.error('Erro ao processar requisição:', error);
-    callback(error);  // Passa o erro para o callback para que a Lambda possa processar
+    callback(error);  // Passa o erro para o callback para que a Lambda possa processar..
   }
 };
