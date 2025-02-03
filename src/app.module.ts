@@ -10,7 +10,7 @@ import { dynamoDBClient } from '@src/services/dynamoDb';         // Importando o
   ],
   controllers: [], // Se houver controladores globais, adicione-os aqui
   providers: [
-    { provide: 'DYNAMODB_CLIENT', useValue: dynamoDBClient }, // Fornecendo o cliente DynamoDB globalmente
+    { provide: 'DYNAMODB_CLIENT', useValue: dynamoDBClient }, // Fornecendo o cliente DynamoDB globalmente.
   ],
 })
 export class AppModule { }
