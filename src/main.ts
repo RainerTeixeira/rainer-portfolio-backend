@@ -25,7 +25,7 @@ async function bootstrapServer(): Promise<any> {  // Função assíncrona que in
   }
 }
 
-// Exportando o handler para a AWS Lambda, responsável por manipular as requisições
+// Exportando o handler para a AWS Lambda, responsável por manipular as requisições.
 export const handler: Handler = async (event: any, context: Context, callback: Callback) => {
   try {
     if (!cachedServer) {
