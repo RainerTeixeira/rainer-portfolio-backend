@@ -14,7 +14,7 @@ async function bootstrapServer(): Promise<any> {  // Função assíncrona que in
     const adapter = new ExpressAdapter(expressApp);  // Adaptador NestJS para o Express
     const app = await NestFactory.create(AppModule, adapter); // Criação do app NestJS com Express
     app.enableCors();  // Habilitar CORS
-    await app.init();  // Inicialização do app NestJS
+    await app.init();  // Inicialização do app NestJS.
 
     console.log('Servidor inicializado com sucesso!');
     return serverless.createServer(expressApp);  // Criar o servidor serverless para AWS Lambda
