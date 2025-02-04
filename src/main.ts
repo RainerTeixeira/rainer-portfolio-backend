@@ -43,7 +43,7 @@ async function bootstrapLocal() {
 export const handler: Handler = async (
   event: APIGatewayProxyEvent,
   context: Context,
-  callback: Callback
+  callback: Callback,
 ) => {
   try {
     // Se o servidor ainda não foi criado, inicializa ele

@@ -4,13 +4,13 @@ import { PostsService } from './blog/posts/posts.service';
 import { dynamoDBClient } from '../services/dynamoDb';
 
 @Module({
-    controllers: [PostsController],
-    providers: [
-        PostsService,
-        {
-            provide: 'DYNAMODB_CLIENT',
-            useValue: dynamoDBClient
-        }
-    ]
+  controllers: [PostsController],
+  providers: [
+    PostsService,
+    {
+      provide: 'DYNAMODB_CLIENT',
+      useValue: dynamoDBClient,
+    },
+  ],
 })
-export class BlogModule { }
+export class BlogModule {}
