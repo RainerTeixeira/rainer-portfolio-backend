@@ -20,7 +20,7 @@ async function bootstrapServer(): Promise<any> {  // Função assíncrona que in
     return serverless.createServer(expressApp);  // Criar o servidor serverless para AWS Lambda
   } catch (error) {
     console.error('Erro ao inicializar o servidor:', error);
-    throw error;  // Lançar erro para que o handler possa lidar com isso
+    throw error;  // Lançar erro para que o handler possa lidar com isso.
   }
 }
 
