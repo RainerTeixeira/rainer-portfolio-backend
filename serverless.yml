@@ -8,7 +8,7 @@ provider:
   runtime: nodejs18.x
   region: ${env:AWS_REGION, 'us-east-1'}
   stage: ${opt:stage, 'dev'}
-  
+
   # Credenciais para DynamoDB Local
   environment:
     NODE_ENV: ${self:provider.stage}
@@ -36,14 +36,14 @@ provider:
     - Effect: Allow
       Action:
         - dynamodb:*
-      Resource: 
-        - "arn:aws:dynamodb:${self:provider.region}:*:table/${env:DYNAMO_TABLE_NAME_POSTS}"
-        - "arn:aws:dynamodb:${self:provider.region}:*:table/${env:DYNAMO_TABLE_NAME_AUTHORS}"
-        - "arn:aws:dynamodb:${self:provider.region}:*:table/${env:DYNAMO_TABLE_NAME_CATEGORIES}"
-        - "arn:aws:dynamodb:${self:provider.region}:*:table/${env:DYNAMO_TABLE_NAME_COMMENTS}"
-        - "arn:aws:dynamodb:${self:provider.region}:*:table/${env:DYNAMO_TABLE_NAME_REFERENCES}"
-        - "arn:aws:dynamodb:${self:provider.region}:*:table/${env:DYNAMO_TABLE_NAME_EXTERNAL_INTEGRATIONS}"
-        - "arn:aws:dynamodb:${self:provider.region}:*:table/${env:DYNAMO_TABLE_NAME_ACHIEVEMENTS}"
+      Resource:
+        - 'arn:aws:dynamodb:${self:provider.region}:*:table/${env:DYNAMO_TABLE_NAME_POSTS}'
+        - 'arn:aws:dynamodb:${self:provider.region}:*:table/${env:DYNAMO_TABLE_NAME_AUTHORS}'
+        - 'arn:aws:dynamodb:${self:provider.region}:*:table/${env:DYNAMO_TABLE_NAME_CATEGORIES}'
+        - 'arn:aws:dynamodb:${self:provider.region}:*:table/${env:DYNAMO_TABLE_NAME_COMMENTS}'
+        - 'arn:aws:dynamodb:${self:provider.region}:*:table/${env:DYNAMO_TABLE_NAME_REFERENCES}'
+        - 'arn:aws:dynamodb:${self:provider.region}:*:table/${env:DYNAMO_TABLE_NAME_EXTERNAL_INTEGRATIONS}'
+        - 'arn:aws:dynamodb:${self:provider.region}:*:table/${env:DYNAMO_TABLE_NAME_ACHIEVEMENTS}'
 
   httpApi:
     cors: true
@@ -276,5 +276,5 @@ resources:
 
   Outputs:
     ApiEndpoint:
-      Description: "Endpoint da API"
-      Value: !Sub "https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com/${self:provider.stage}"
+      Description: 'Endpoint da API'
+      Value: !Sub 'https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com/${self:provider.stage}'

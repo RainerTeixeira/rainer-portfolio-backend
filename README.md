@@ -18,3 +18,4 @@ Este repositório contém o backend implementado em NestJS, permitindo o login d
 
 ```bash
 $ npm install
+```
