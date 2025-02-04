@@ -10,74 +10,45 @@ export class PostsController {
     @Post()
     async create(@Body() createPostDto: CreatePostDto) {
         try {
-            // Passa o DTO para o serviço para criar o post
             return await this.postsService.create(createPostDto);
         } catch (error) {
-            // Trata os erros de forma detalhada
-            if (error instanceof Error) {
-                throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
-            } else {
-                throw new HttpException('Erro desconhecido', HttpStatus.BAD_REQUEST);
-            }
+            throw new HttpException(error instanceof Error ? error.message : 'Erro desconhecido', HttpStatus.BAD_REQUEST);
         }
     }
 
     @Get()
     async findAll(@Query() query: any): Promise<ListPostsDto[]> {
         try {
-            // Passa o parâmetro da query para o serviço para buscar todos os posts
             return await this.postsService.findAll(query);
         } catch (error) {
-            if (error instanceof Error) {
-                throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
-            } else {
-                throw new HttpException('Erro desconhecido', HttpStatus.BAD_REQUEST);
-            }
+            throw new HttpException(error instanceof Error ? error.message : 'Erro desconhecido', HttpStatus.BAD_REQUEST);
         }
     }
 
     @Get(':id')
     async findOne(@Param('id') id: string) {
         try {
-            // Busca um post específico pelo ID
             return await this.postsService.findOne(id);
         } catch (error) {
-            if (error instanceof Error) {
-                throw new HttpException(error.message, HttpStatus.NOT_FOUND);
-            } else {
-                throw new HttpException('Erro desconhecido', HttpStatus.NOT_FOUND);
-            }
+            throw new HttpException(error instanceof Error ? error.message : 'Erro desconhecido', HttpStatus.NOT_FOUND);
         }
     }
 
     @Put(':id')
-    async update(
-        @Param('id') id: string,
-        @Body() updatePostDto: UpdatePostDto
-    ) {
+    async update(@Param('id') id: string, @Body() updatePostDto: UpdatePostDto) {
         try {
-            // Passa o ID e o DTO de atualização para o serviço
             return await this.postsService.update(id, updatePostDto);
         } catch (error) {
-            if (error instanceof Error) {
-                throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
-            } else {
-                throw new HttpException('Erro desconhecido', HttpStatus.BAD_REQUEST);
-            }
+            throw new HttpException(error instanceof Error ? error.message : 'Erro desconhecido', HttpStatus.BAD_REQUEST);
         }
     }
 
     @Delete(':id')
     async remove(@Param('id') id: string) {
         try {
-            // Passa o ID para o serviço para remover o post
             return await this.postsService.remove(id);
         } catch (error) {
-            if (error instanceof Error) {
-                throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
-            } else {
-                throw new HttpException('Erro desconhecido', HttpStatus.BAD_REQUEST);
-            }
+            throw new HttpException(error instanceof Error ? error.message : 'Erro desconhecido', HttpStatus.BAD_REQUEST);
         }
     }
 }
