@@ -1,24 +1,12 @@
-import {
-    Injectable,
-    NotFoundException,
-    BadRequestException
-} from '@nestjs/common';
-import {
-    DynamoDBDocumentClient,
-    ScanCommand,
-    GetCommand,
-    PutCommand,
-    UpdateCommand,
-    DeleteCommand
-} from '@aws-sdk/lib-dynamodb'; // AWS SDK v3 for DynamoDB Document Client
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb'; // AWS SDK v3 for DynamoDB Client
+import {Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb'; // AWS SDK v3 for DynamoDB Client base para criar DynamoDBDocumentClient
+import { DynamoDBDocumentClient, ScanCommand, GetCommand, PutCommand, UpdateCommand, DeleteCommand } from '@aws-sdk/lib-dynamodb'; //AWS SDK v3 for DynamoDB Document Client
 
 import { CreatePostDto, UpdatePostDto } from './dto';
 
 @Injectable()
 export class PostsService {
     private readonly tableName = process.env.DYNAMO_TABLE_NAME_POSTS;
-
     // Use DynamoDBClient from AWS SDK v3
     private readonly dynamoDBClient = new DynamoDBClient({});
     private readonly docClient = DynamoDBDocumentClient.from(this.dynamoDBClient);
@@ -26,7 +14,7 @@ export class PostsService {
     async create(createPostDto: CreatePostDto) {
         try {
             const post = {
-                postId: Date.now().toString(),
+                postId: Date.now().toString(), // Gera um ID único com timestamp
                 ...createPostDto,
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString()

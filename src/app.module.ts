@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
-import { BlogModule } from '@src/controller/blog.module';  // Importando o BlogModule com o alias configurado
+import { BlogModule } from '@src/controller/blog.module';         // Importando o BlogModule com o alias configurado
 import { AuthModule } from '@src/auth/cognito';                  // Importando o AuthModule
-import { dynamoDBClient } from '@src/services/dynamoDb';         // Importando o cliente DynamoDB
+import { dynamoDBClient } from '@src/services/dynamoDb';        // Importando o cliente DynamoDB
 
 @Module({
   imports: [
