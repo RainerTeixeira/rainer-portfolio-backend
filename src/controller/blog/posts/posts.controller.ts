@@ -3,7 +3,7 @@ import { PostsService } from './posts.service';
 import { CreatePostDto, UpdatePostDto, ListPostsDto } from './dto'; // Certifique-se de importar corretamente os DTOs
 
 @Controller('posts')
-@UsePipes(new ValidationPipe({ transform: true })) // Transforma os dados de entrada para os tipos dos DTOs
+@UsePipes(new ValidationPipe({ transform: true })) // Transforma os dados de entrada para os tipos dos DTOs.
 export class PostsController {
     constructor(private readonly postsService: PostsService) { }
 
@@ -25,7 +25,7 @@ export class PostsController {
     @Get()
     async findAll(@Query() query: any): Promise<ListPostsDto[]> {
         try {
-            // Passa o parâmetro da query para o serviço para buscar todos os posts
+            // Passa o parâmetro da query para o serviço para buscar todos os posts.
             return await this.postsService.findAll(query);
         } catch (error) {
             if (error instanceof Error) {

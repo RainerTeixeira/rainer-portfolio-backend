@@ -17,7 +17,7 @@ export class CreatePostDto {
   relatedPosts: number[]; // IDs de posts relacionados
   comments: number[]; // IDs dos comentários
   authorIds: number[]; // IDs dos autores
-  category: { CategoryId: number, subCategoryId: number }; // Categoria do post
+  category: { CategoryId: number, subCategoryId: number }; // Categoria do post;
   sections: { sectionId: number, title: string, content: string, type: string }[];
   seo: { canonicalUrl: string, description: string, keywords: string[] };
   viewsCount: number;

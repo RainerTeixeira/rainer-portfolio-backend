@@ -11,7 +11,7 @@ import {
     UpdateCommand,
     DeleteCommand
 } from '@aws-sdk/lib-dynamodb'; // AWS SDK v3 for DynamoDB Document Client
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb'; // AWS SDK v3 for DynamoDB Client
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb'; // AWS SDK v3 for DynamoDB Client.
 
 import { CreatePostDto, UpdatePostDto } from './dto';
 
@@ -19,7 +19,7 @@ import { CreatePostDto, UpdatePostDto } from './dto';
 export class PostsService {
     private readonly tableName = process.env.DYNAMO_TABLE_NAME_POSTS;
 
-    // Use DynamoDBClient from AWS SDK v3
+    // Use DynamoDBClient from AWS SDK v3.
     private readonly dynamoDBClient = new DynamoDBClient({});
     private readonly docClient = DynamoDBDocumentClient.from(this.dynamoDBClient);
 

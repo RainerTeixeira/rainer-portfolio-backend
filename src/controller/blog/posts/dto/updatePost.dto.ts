@@ -11,7 +11,7 @@ export class UpdatePostDto {
     postReadingTime?: number;
     postStatus?: number;
     postTags?: string[];
-    postImages?: string[]; // URLs das imagens
+    postImages?: string[]; // URLs das imagens.
     postVideoEmbedUrls?: string[]; // URLs dos vídeos incorporados
     references?: { referenceId: number, title: string, url: string }[];
     relatedPosts?: number[]; // IDs de posts relacionados
