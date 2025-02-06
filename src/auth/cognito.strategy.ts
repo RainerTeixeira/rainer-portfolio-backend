@@ -19,7 +19,7 @@ export class CognitoStrategy extends PassportStrategy(Strategy, 'cognito') {
                     // Obtém a URL dos JWKS do Cognito a partir do .env
                     const jwksUrl = process.env.COGNITO_JWKS_URL;
                     if (!jwksUrl) {
-                        return done(new UnauthorizedException('COGNITO_JWKS_URL não definida'), null);
+                        return done(new UnauthorizedException('COGNITO_JWKS_URL não definida'), undefined);
                     }
                     // Busca as chaves do JWKS
                     const response = await axios.get(jwksUrl);
@@ -34,8 +34,7 @@ export class CognitoStrategy extends PassportStrategy(Strategy, 'cognito') {
                     // Procura a chave que corresponda ao kid
                     const key = keys.find((k) => k.kid === kid);
                     if (!key) {
-                        return done(new UnauthorizedException('Chave não encontrada'), null);
-                    }
+d                    }
                     // Converte o JWK para PEM
                     const pem = jwkToPem(key);
                     return done(null, pem);

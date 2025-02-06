@@ -1,168 +1,117 @@
+// src/modules/blog/posts/posts.service.ts
 import {
   Injectable,
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { Inject } from '@nestjs/common';
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import {
-  DynamoDBDocumentClient,
-  ScanCommand,
-  GetCommand,
-  PutCommand,
-  UpdateCommand,
-  DeleteCommand,
-} from '@aws-sdk/lib-dynamodb';
-import { CreatePostDto, UpdatePostDto } from './dto';
+import { CreatePostDto, UpdatePostDto, ListPostsDto } from './dto';
+import { DynamoDbService } from '@src/services/dynamoDb.service';
 
 @Injectable()
 export class PostsService {
   private readonly tableName = process.env.DYNAMO_TABLE_NAME_POSTS;
-  private readonly docClient: DynamoDBDocumentClient;
 
-  constructor(
-    @Inject('DYNAMODB_CLIENT') private readonly dynamoDBClient: DynamoDBClient,
-  ) {
-    this.docClient = DynamoDBDocumentClient.from(this.dynamoDBClient, {
-      marshallOptions: { removeUndefinedValues: true },
-      unmarshallOptions: { wrapNumbers: false },
-    });
-  }
-
-  private handleDynamoError(error: unknown, context: string) {
-    console.error(`Erro no DynamoDB (${context}):`, error);
-    throw new BadRequestException(`Falha ao ${context}`);
-  }
+  constructor(private readonly dynamoDb: DynamoDbService) { }
 
   async create(createPostDto: CreatePostDto) {
-    try {
-      const post = {
-        postId: Date.now().toString(),
-        ...createPostDto,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
+    const post = {
+      ...createPostDto,
+      postId: this.generatePostId(),
+      postDate: new Date().toISOString(),
+      postLastUpdated: new Date().toISOString(),
+    };
 
-      await this.docClient.send(
-        new PutCommand({
-          TableName: this.tableName,
-          Item: post,
-        }),
-      );
+    await this.dynamoDb.putItem({
+      TableName: this.tableName,
+      Item: post,
+      ConditionExpression: 'attribute_not_exists(postId)',
+    });
 
-      return post;
-    } catch (error) {
-      this.handleDynamoError(error, 'criar post');
-    }
+    return post;
   }
 
-  async findAll(query: { limit?: string; lastKey?: string }) {
-    try {
-      const limit = Math.min(Number(query.limit) || 20, 100);
-      const ExclusiveStartKey = query.lastKey
-        ? JSON.parse(Buffer.from(query.lastKey, 'base64').toString('utf-8'))
-        : undefined;
+  async findAll(query: { limit?: string; lastKey?: string }): Promise<ListPostsDto> {
+    const limit = Math.min(Number(query.limit) || 20, 100);
+    const ExclusiveStartKey = this.decodeCursor(query.lastKey);
 
-      const { Items, LastEvaluatedKey } = await this.docClient.send(
-        new ScanCommand({
-          TableName: this.tableName,
-          Limit: limit,
-          ExclusiveStartKey,
-        }),
-      );
+    const result = await this.dynamoDb.scanItems({
+      TableName: this.tableName,
+      Limit: limit,
+      ExclusiveStartKey,
+      ConsistentRead: false,
+    });
 
-      return {
-        data: Items || [],
-        meta: {
-          count: Items?.length || 0,
-          nextCursor: LastEvaluatedKey
-            ? Buffer.from(JSON.stringify(LastEvaluatedKey)).toString('base64')
-            : null,
-        },
-      };
-    } catch (error) {
-      this.handleDynamoError(error, 'buscar posts');
-    }
+    return this.formatPaginatedResult(result.Items, result.LastEvaluatedKey);
   }
 
   async findOne(id: string) {
-    try {
-      const { Item } = await this.docClient.send(
-        new GetCommand({
-          TableName: this.tableName,
-          Key: { postId: id },
-        }),
-      );
+    const result = await this.dynamoDb.getItem({
+      TableName: this.tableName,
+      Key: { postId: id },
+      ConsistentRead: true,
+    });
 
-      if (!Item) {
-        throw new NotFoundException('Post não encontrado');
-      }
-
-      return Item;
-    } catch (error) {
-      if (error instanceof NotFoundException) throw error;
-      this.handleDynamoError(error, 'buscar post');
+    if (!result.Item) {
+      throw new NotFoundException('Post não encontrado');
     }
+
+    return result.Item;
   }
 
   async update(id: string, updatePostDto: UpdatePostDto) {
-    try {
-      const updateKeys = Object.keys(updatePostDto);
-      if (updateKeys.length === 0) {
-        throw new BadRequestException('Nenhum campo fornecido para atualização');
-      }
+    const updateParams = this.dynamoDb.buildUpdateExpression(updatePostDto, ['postId']);
 
-      const updateExpressions = updateKeys
-        .map((_, index) => `#field${index} = :value${index}`)
-        .join(', ');
-
-      const expressionAttributeNames = updateKeys.reduce(
-        (acc, key, index) => ({ ...acc, [`#field${index}`]: key }),
-        {},
-      );
-
-      const expressionAttributeValues = updateKeys.reduce(
-        (acc, key, index) => ({ ...acc, [`:value${index}`]: updatePostDto[key as keyof UpdatePostDto] }), // Evitar uso de any
-        {},
-      );
-
-      const { Attributes } = await this.docClient.send(
-        new UpdateCommand({
-          TableName: this.tableName,
-          Key: { postId: id },
-          UpdateExpression: `SET ${updateExpressions}, updatedAt = :updatedAt`,
-          ExpressionAttributeNames: expressionAttributeNames,
-          ExpressionAttributeValues: {
-            ...expressionAttributeValues,
-            ':updatedAt': new Date().toISOString(),
-          },
-          ReturnValues: 'ALL_NEW',
-        }),
-      );
-
-      if (!Attributes) {
-        throw new NotFoundException('Post não encontrado para atualização');
-      }
-
-      return Attributes;
-    } catch (error) {
-      if (error instanceof NotFoundException) throw error;
-      this.handleDynamoError(error, 'atualizar post');
+    if (!updateParams) {
+      throw new BadRequestException('Nenhum campo válido para atualização');
     }
+
+    const result = await this.dynamoDb.updateItem({
+      TableName: this.tableName,
+      Key: { postId: id },
+      ...updateParams,
+      UpdateExpression: `${updateParams.UpdateExpression}, postLastUpdated = :updatedAt`,
+      ExpressionAttributeValues: {
+        ...updateParams.ExpressionAttributeValues,
+        ':updatedAt': new Date().toISOString(),
+      },
+      ReturnValues: 'ALL_NEW',
+      ConditionExpression: 'attribute_exists(postId)',
+    });
+
+    return result.Attributes;
   }
 
   async remove(id: string) {
-    try {
-      await this.docClient.send(
-        new DeleteCommand({
-          TableName: this.tableName,
-          Key: { postId: id },
-        }),
-      );
+    await this.dynamoDb.deleteItem({
+      TableName: this.tableName,
+      Key: { postId: id },
+      ConditionExpression: 'attribute_exists(postId)',
+    });
 
-      return { success: true, message: 'Post excluído com sucesso' };
-    } catch (error) {
-      this.handleDynamoError(error, 'excluir post');
+    return { success: true, message: 'Post excluído com sucesso' };
+  }
+
+  private generatePostId(): string {
+    return Date.now().toString() + '-' + Math.random().toString(36).substr(2, 9);
+  }
+
+  private decodeCursor(cursor?: string): any | undefined {
+    try {
+      return cursor ? JSON.parse(Buffer.from(cursor, 'base64').toString('utf-8')) : undefined;
+    } catch {
+      return undefined;
     }
+  }
+
+  private formatPaginatedResult(items: any[], lastKey?: any): ListPostsDto {
+    return {
+      data: items || [],
+      meta: {
+        count: items?.length || 0,
+        nextCursor: lastKey
+          ? Buffer.from(JSON.stringify(lastKey)).toString('base64')
+          : null,
+      },
+    };
   }
 }

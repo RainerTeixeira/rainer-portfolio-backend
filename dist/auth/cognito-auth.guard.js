@@ -6,18 +6,13 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AppModule = void 0;
+exports.CognitoAuthGuard = void 0;
+// src/auth/cognito-auth.guard.ts
 const common_1 = require("@nestjs/common");
-const blog_module_1 = require("./modules/blog.module"); // Importando o BlogModule com o alias configurado
-const auth_module_1 = require("./auth/auth.module"); // Importando o auth module...
-let AppModule = class AppModule {
+const passport_1 = require("@nestjs/passport");
+let CognitoAuthGuard = class CognitoAuthGuard extends (0, passport_1.AuthGuard)('cognito') {
 };
-exports.AppModule = AppModule;
-exports.AppModule = AppModule = __decorate([
-    (0, common_1.Module)({
-        imports: [
-            blog_module_1.BlogModule, // Inclui o BlogModule com todas as funcionalidades do blog (posts, autores, etc.)
-            auth_module_1.AuthModule, // Inclui o AuthModule para autenticação
-        ],
-    })
-], AppModule);
+exports.CognitoAuthGuard = CognitoAuthGuard;
+exports.CognitoAuthGuard = CognitoAuthGuard = __decorate([
+    (0, common_1.Injectable)()
+], CognitoAuthGuard);

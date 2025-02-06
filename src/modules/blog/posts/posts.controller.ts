@@ -1,3 +1,4 @@
+// src/modules/blog/posts/posts.controller.ts
 import {
   Controller,
   Get,
@@ -8,75 +9,147 @@ import {
   Param,
   Query,
   UsePipes,
-  ValidationPipe,
-  HttpException,
+  UseGuards,
+  HttpCode,
   HttpStatus,
+  ParseIntPipe,
 } from '@nestjs/common';
-import { PostsService } from '@src/modules/blog/posts/posts.service'; // Importa o serviço de posts
-import { CreatePostDto, UpdatePostDto, ListPostsDto } from './dto'; // Certifique-se de importar corretamente os DTOs
+import { PostsService } from './posts.service';
+import {
+  CreatePostDto,
+  UpdatePostDto,
+  ListPostsDto,
+} from './dto';
+import { CognitoAuthGuard } from '@src/auth/cognito-auth.guard';
+import { ValidationPipe } from '@nestjs/common/pipes';
+import { DynamoDbError } from '@src/services/dynamoDb.service';
 
 @Controller('posts')
-@UsePipes(new ValidationPipe({ transform: true })) // Transforma os dados de entrada para os tipos dos DTOs
+@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 export class PostsController {
   constructor(private readonly postsService: PostsService) { }
 
+  @UseGuards(CognitoAuthGuard)
   @Post()
+  @HttpCode(HttpStatus.CREATED)
   async create(@Body() createPostDto: CreatePostDto) {
     try {
-      return await this.postsService.create(createPostDto);
+      const result = await this.postsService.create(createPostDto);
+      return this.formatResponse('Post criado com sucesso', result);
     } catch (error) {
-      throw new HttpException(
-        error instanceof Error ? error.message : 'Erro desconhecido',
-        HttpStatus.BAD_REQUEST,
-      );
+      this.handleDynamoError(error, 'Erro ao criar post');
     }
   }
 
   @Get()
-  async findAll(@Query() query: any): Promise<ListPostsDto[]> {
+  async findAll(
+    @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
+    @Query('lastKey') lastKey?: string,
+  ): Promise<ListPostsDto> {
     try {
-      return await this.postsService.findAll(query);
+      const safeLimit = Math.min(limit || 20, 50); // Max 50 items para free tier
+      const result = await this.postsService.findAll({
+        limit: safeLimit,
+        lastKey,
+      });
+      return this.formatPaginatedResponse(result);
     } catch (error) {
-      throw new HttpException(
-        error instanceof Error ? error.message : 'Erro desconhecido',
-        HttpStatus.BAD_REQUEST,
-      );
+      this.handleDynamoError(error, 'Erro ao buscar posts');
     }
   }
 
   @Get(':id')
+  @HttpCode(HttpStatus.OK)
   async findOne(@Param('id') id: string) {
     try {
-      return await this.postsService.findOne(id);
+      const result = await this.postsService.findOne(id);
+      return this.formatResponse('Post encontrado', result);
     } catch (error) {
-      throw new HttpException(
-        error instanceof Error ? error.message : 'Erro desconhecido',
+      this.handleDynamoError(
+        error,
+        'Post não encontrado',
         HttpStatus.NOT_FOUND,
       );
     }
   }
 
+  @UseGuards(CognitoAuthGuard)
   @Put(':id')
-  async update(@Param('id') id: string, @Body() updatePostDto: UpdatePostDto) {
+  @HttpCode(HttpStatus.OK)
+  async update(
+    @Param('id') id: string,
+    @Body() updatePostDto: UpdatePostDto,
+  ) {
     try {
-      return await this.postsService.update(id, updatePostDto);
+      const result = await this.postsService.update(id, updatePostDto);
+      return this.formatResponse('Post atualizado com sucesso', result);
     } catch (error) {
-      throw new HttpException(
-        error instanceof Error ? error.message : 'Erro desconhecido',
-        HttpStatus.BAD_REQUEST,
-      );
+      this.handleDynamoError(error, 'Erro ao atualizar post');
     }
   }
 
+  @UseGuards(CognitoAuthGuard)
   @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@Param('id') id: string) {
     try {
-      return await this.postsService.remove(id);
+      await this.postsService.remove(id);
     } catch (error) {
-      throw new HttpException(
-        error instanceof Error ? error.message : 'Erro desconhecido',
-        HttpStatus.BAD_REQUEST,
-      );
+      this.handleDynamoError(error, 'Erro ao excluir post');
     }
+  }
+
+  private handleDynamoError(
+    error: Error,
+    defaultMessage: string,
+    defaultStatus: HttpStatus = HttpStatus.BAD_REQUEST,
+  ): never {
+    const dynamoError = error as DynamoDbError;
+
+    const errorMap = {
+      ResourceNotFoundException: {
+        status: HttpStatus.NOT_FOUND,
+        message: 'Recurso não encontrado',
+      },
+      ProvisionedThroughputExceededException: {
+        status: HttpStatus.TOO_MANY_REQUESTS,
+        message: 'Limite de requisições excedido',
+      },
+      ConditionalCheckFailedException: {
+        status: HttpStatus.CONFLICT,
+        message: 'Conflito na versão do recurso',
+      },
+    };
+
+    const { status, message } = errorMap[dynamoError.name] || {
+      status: defaultStatus,
+      message: defaultMessage,
+    };
+
+    throw new HttpException(
+      { statusCode: status, message: message, error: dynamoError.message },
+      status,
+    );
+  }
+
+  private formatResponse(message: string, data: any) {
+    return {
+      statusCode: HttpStatus.OK,
+      message,
+      data,
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  private formatPaginatedResponse(result: ListPostsDto) {
+    return {
+      statusCode: HttpStatus.OK,
+      message: 'Posts recuperados com sucesso',
+      data: result.data,
+      meta: {
+        ...result.meta,
+        timestamp: new Date().toISOString(),
+      },
+    };
   }
 }

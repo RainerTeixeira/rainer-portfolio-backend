@@ -6,14 +6,18 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AppService = void 0;
-const common_1 = require("@nestjs/common"); // Importa o decorador Injectable do NestJS
-let AppService = class AppService {
-    getHello() {
-        return 'Hello World!';
-    }
+exports.AuthModule = void 0;
+// src/auth/auth.module.ts
+const common_1 = require("@nestjs/common");
+const passport_1 = require("@nestjs/passport");
+const cognito_strategy_1 = require("./cognito.strategy");
+let AuthModule = class AuthModule {
 };
-exports.AppService = AppService;
-exports.AppService = AppService = __decorate([
-    (0, common_1.Injectable)()
-], AppService);
+exports.AuthModule = AuthModule;
+exports.AuthModule = AuthModule = __decorate([
+    (0, common_1.Module)({
+        imports: [passport_1.PassportModule.register({ defaultStrategy: 'cognito' })],
+        providers: [cognito_strategy_1.CognitoStrategy],
+        exports: [passport_1.PassportModule],
+    })
+], AuthModule);

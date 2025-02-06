@@ -1,7 +1,20 @@
-import { PartialType } from '@nestjs/mapped-types';
+import { ApiProperty, PartialType } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import {
+    IsInt,
+    IsOptional,
+    IsPositive
+} from 'class-validator';
 import { CreatePostDto } from './create-post.dto';
 
 export class UpdatePostDto extends PartialType(CreatePostDto) {
-    // Adicionando assinatura de índice para garantir que podemos acessar campos dinamicamente
-    [key: string]: string | number | undefined;
+    @ApiProperty()
+    @IsInt()
+    @IsPositive()
+    postId: number;
+
+    @ApiPropertyOptional()
+    @IsOptional()
+    @Type(() => Date)
+    postLastUpdated?: Date;
 }
