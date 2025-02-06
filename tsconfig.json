@@ -1,27 +1,42 @@
 {
   "compilerOptions": {
     "allowJs": false,
-    "module": "NodeNext",
-    "target": "ESNext",
-    "lib": ["ES2020", "DOM"],
+    "module": "CommonJS",
+    "target": "ES6",
+    "lib": [
+      "ES2020"
+    ],
     "sourceMap": false,
     "rootDir": "./src",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "moduleResolution": "nodenext",
-    "types": ["node"],
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
-    "noEmit": true,
-    "baseUrl": "./",
-    "paths": {
-      "@src/*": ["src/*"]
-    },
+    "moduleResolution": "node",
+    "types": [
+      "node"
+    ],
+    "noEmit": false,
+    "outDir": "./dist",
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "baseUrl": "./src",
+    "paths": {
+      "@src/*": [
+        "*"
+      ]
+    }
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "tests", "**/*.test.ts", "**/*.spec.ts"]
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "tests",
+    "**/*.test.ts",
+    "**/*.spec.ts"
+  ]
 }
