@@ -18,7 +18,7 @@ import { CreatePostDto, UpdatePostDto, ListPostsDto } from './dto'; // Certifiqu
 @Controller('posts')
 @UsePipes(new ValidationPipe({ transform: true })) // Transforma os dados de entrada para os tipos dos DTOs
 export class PostsController {
-  constructor(private readonly postsService: PostsService) {}
+  constructor(private readonly postsService: PostsService) { }
 
   @Post()
   async create(@Body() createPostDto: CreatePostDto) {

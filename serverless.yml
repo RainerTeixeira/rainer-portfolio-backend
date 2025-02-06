@@ -1,185 +1,63 @@
-# "org" ensures this Service is used with the correct Serverless Framework Access Key.
-org: rainersoft
-service: rainer-portfolio-backend
-frameworkVersion: '^4.0.0'
+service: rp-dynamo-api
+frameworkVersion: "4.0.38"
 
 provider:
   name: aws
-  runtime: nodejs18.x
-  region: ${env:AWS_REGION, 'us-east-1'}
-  stage: ${opt:stage, 'dev'}
-
-  # Credenciais para DynamoDB Local
+  runtime: nodejs20.x
+  region: us-east-1
+  stage: dev
   environment:
-    NODE_ENV: ${self:provider.stage}
+    NODE_ENV: dev
     AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
-    AWS_ACCESS_KEY_ID: ${env:DYNAMODB_ACCESS_KEY_ID}
-    AWS_SECRET_ACCESS_KEY: ${env:DYNAMODB_SECRET_ACCESS_KEY}
-    AWS_REGION: ${env:DYNAMODB_REGION}
+    AWS_REGION: us-east-1
+    DYNAMO_TABLE_NAME_POSTS: Posts
+    COGNITO_USER_POOL_ID: us-east-1_wryiyhbWC
+    COGNITO_CLIENT_ID: 3ueos5ofu499je6ebc5u98n35h
+    COGNITO_JWKS_URL: https://cognito-idp.us-east-1.amazonaws.com/us-east-1_wryiyhbWC/.well-known/jwks.json
 
-    # Tabelas DynamoDB
-    DYNAMO_TABLE_NAME_POSTS: ${env:DYNAMO_TABLE_NAME_POSTS}
-    DYNAMO_TABLE_NAME_AUTHORS: ${env:DYNAMO_TABLE_NAME_AUTHORS}
-    DYNAMO_TABLE_NAME_CATEGORIES: ${env:DYNAMO_TABLE_NAME_CATEGORIES}
-    DYNAMO_TABLE_NAME_COMMENTS: ${env:DYNAMO_TABLE_NAME_COMMENTS}
-    DYNAMO_TABLE_NAME_REFERENCES: ${env:DYNAMO_TABLE_NAME_REFERENCES}
-    DYNAMO_TABLE_NAME_EXTERNAL_INTEGRATIONS: ${env:DYNAMO_TABLE_NAME_EXTERNAL_INTEGRATIONS}
-    DYNAMO_TABLE_NAME_ACHIEVEMENTS: ${env:DYNAMO_TABLE_NAME_ACHIEVEMENTS}
-
-    # Cognito
-    COGNITO_USER_POOL_ID: ${env:COGNITO_USER_POOL_ID}
-    COGNITO_CLIENT_ID: ${env:COGNITO_CLIENT_ID}
-    COGNITO_JWKS_URL: ${env:COGNITO_JWKS_URL}
-
-  # Permissões do IAM para DynamoDB
   iamRoleStatements:
     - Effect: Allow
       Action:
-        - dynamodb:*
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
       Resource:
-        - 'arn:aws:dynamodb:${self:provider.region}:*:table/${env:DYNAMO_TABLE_NAME_POSTS}'
-        - 'arn:aws:dynamodb:${self:provider.region}:*:table/${env:DYNAMO_TABLE_NAME_AUTHORS}'
-        - 'arn:aws:dynamodb:${self:provider.region}:*:table/${env:DYNAMO_TABLE_NAME_CATEGORIES}'
-        - 'arn:aws:dynamodb:${self:provider.region}:*:table/${env:DYNAMO_TABLE_NAME_COMMENTS}'
-        - 'arn:aws:dynamodb:${self:provider.region}:*:table/${env:DYNAMO_TABLE_NAME_REFERENCES}'
-        - 'arn:aws:dynamodb:${self:provider.region}:*:table/${env:DYNAMO_TABLE_NAME_EXTERNAL_INTEGRATIONS}'
-        - 'arn:aws:dynamodb:${self:provider.region}:*:table/${env:DYNAMO_TABLE_NAME_ACHIEVEMENTS}'
-
-  httpApi:
-    cors: true
-    authorizers:
-      cognitoAuth:
-        identitySource: $request.header.Authorization
-        issuerUrl: https://cognito-idp.${self:provider.region}.amazonaws.com/${env:COGNITO_USER_POOL_ID}
-        audience:
-          - ${env:COGNITO_CLIENT_ID}
+        - arn:aws:dynamodb:us-east-1:*:table/Posts
 
 functions:
-  api:
-    handler: src/main.handler
+  posts:
+    handler: src/controller/blog/posts/posts.controller.handler
     events:
-      - httpApi:
-          path: /{proxy+}
-          method: ANY
-
-  # Posts
-  createPost:
-    handler: src/controllers/posts.create
-    events:
-      - httpApi:
-          path: /posts
+      - http: 
+          path: posts
           method: post
-          authorizer:
-            name: cognitoAuth
-            type: jwt_authorizer
-            scopes: [write:posts]
-
-  getPosts:
-    handler: src/controllers/posts.getAll
-    events:
-      - httpApi:
-          path: /posts
+          cors: true  # Ativando CORS para permitir chamadas de outros domínios
+      - http:
+          path: posts
           method: get
+          cors: true
 
-  # Authors
-  createAuthor:
-    handler: src/controllers/authors.create
-    events:
-      - httpApi:
-          path: /authors
-          method: post
-          authorizer:
-            name: cognitoAuth
-            type: jwt_authorizer
-            scopes: [write:authors]
-
-  getAuthors:
-    handler: src/controllers/authors.getAll
-    events:
-      - httpApi:
-          path: /authors
-          method: get
-
-  # Categories
-  createCategory:
-    handler: src/controllers/categories.create
-    events:
-      - httpApi:
-          path: /categories
-          method: post
-          authorizer:
-            name: cognitoAuth
-            type: jwt_authorizer
-            scopes: [write:categories]
-
-  getCategories:
-    handler: src/controllers/categories.getAll
-    events:
-      - httpApi:
-          path: /categories
-          method: get
-
-  # Comments
-  createComment:
-    handler: src/controllers/comments.create
-    events:
-      - httpApi:
-          path: /comments
-          method: post
-          authorizer:
-            name: cognitoAuth
-            type: jwt_authorizer
-            scopes: [write:comments]
-
-  getComments:
-    handler: src/controllers/comments.getAll
-    events:
-      - httpApi:
-          path: /comments
-          method: get
-
-  # External Integrations
-  createExternalIntegration:
-    handler: src/controllers/external-integrations.create
-    events:
-      - httpApi:
-          path: /external-integrations
-          method: post
-          authorizer:
-            name: cognitoAuth
-            type: jwt_authorizer
-            scopes: [write:integrations]
-
-  getExternalIntegrations:
-    handler: src/controllers/external-integrations.getAll
-    events:
-      - httpApi:
-          path: /external-integrations
-          method: get
+    # URL da Lambda Function - opcional se você deseja usar uma URL HTTP diretamente
+    url:
+      cors: true
 
 plugins:
-  - serverless-offline
-  - serverless-esbuild
+  - serverless-offline  # Plugin para rodar localmente
 
 custom:
-  serverless-offline-jwt-authorizer:
-    jwksUri: ${env:COGNITO_JWKS_URL}
-    issuer: https://cognito-idp.${self:provider.region}.amazonaws.com/${env:COGNITO_USER_POOL_ID}
-    audience: ${env:COGNITO_CLIENT_ID}
-    identitySource: method.request.header.Authorization
-
   esbuild:
     bundle: true
-    minify: ${self:custom.minifyEnabled.${self:provider.stage}}
+    minify: false
     sourcemap: true
-    target: 'node18'
-    platform: 'node'
-    exclude: ['aws-sdk']
-
+    target: node20
+    platform: node
+    exclude: [aws-sdk]  # Excluindo aws-sdk, pois o SDK já está disponível no Lambda
   minifyEnabled:
     prod: true
     dev: false
-
   dynamodb:
     start:
       port: 8000
@@ -193,88 +71,17 @@ resources:
     PostsTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: ${env:DYNAMO_TABLE_NAME_POSTS}
+        TableName: Posts
         AttributeDefinitions:
           - AttributeName: postId
-            AttributeType: S
+            AttributeType: N
         KeySchema:
           - AttributeName: postId
-            KeyType: HASH
-        BillingMode: PAY_PER_REQUEST
-
-    AuthorsTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: ${env:DYNAMO_TABLE_NAME_AUTHORS}
-        AttributeDefinitions:
-          - AttributeName: authorId
-            AttributeType: S
-        KeySchema:
-          - AttributeName: authorId
-            KeyType: HASH
-        BillingMode: PAY_PER_REQUEST
-
-    CategoriesTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: ${env:DYNAMO_TABLE_NAME_CATEGORIES}
-        AttributeDefinitions:
-          - AttributeName: categoryId
-            AttributeType: S
-        KeySchema:
-          - AttributeName: categoryId
-            KeyType: HASH
-        BillingMode: PAY_PER_REQUEST
-
-    CommentsTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: ${env:DYNAMO_TABLE_NAME_COMMENTS}
-        AttributeDefinitions:
-          - AttributeName: commentId
-            AttributeType: S
-        KeySchema:
-          - AttributeName: commentId
-            KeyType: HASH
-        BillingMode: PAY_PER_REQUEST
-
-    ReferencesTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: ${env:DYNAMO_TABLE_NAME_REFERENCES}
-        AttributeDefinitions:
-          - AttributeName: referenceId
-            AttributeType: S
-        KeySchema:
-          - AttributeName: referenceId
-            KeyType: HASH
-        BillingMode: PAY_PER_REQUEST
-
-    ExternalIntegrationsTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: ${env:DYNAMO_TABLE_NAME_EXTERNAL_INTEGRATIONS}
-        AttributeDefinitions:
-          - AttributeName: integrationId
-            AttributeType: S
-        KeySchema:
-          - AttributeName: integrationId
-            KeyType: HASH
-        BillingMode: PAY_PER_REQUEST
-
-    AchievementsTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: ${env:DYNAMO_TABLE_NAME_ACHIEVEMENTS}
-        AttributeDefinitions:
-          - AttributeName: achievementId
-            AttributeType: S
-        KeySchema:
-          - AttributeName: achievementId
             KeyType: HASH
         BillingMode: PAY_PER_REQUEST
 
   Outputs:
-    ApiEndpoint:
-      Description: 'Endpoint da API'
-      Value: !Sub 'https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com/${self:provider.stage}'
+    FunctionUrl:
+      Description: Endpoint HTTP direto da Lambda
+      Value:
+        Fn::GetAtt: [PostsLambdaFunctionUrl, FunctionUrl]
