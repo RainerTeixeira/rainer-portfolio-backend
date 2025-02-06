@@ -12,3 +12,5 @@ const dynamoDBConfig = {
 
 const client = new DynamoDBClient(dynamoDBConfig);
 export const dynamoDBClient = DynamoDBDocumentClient.from(client);
+
+export class DynamoDbService {;
