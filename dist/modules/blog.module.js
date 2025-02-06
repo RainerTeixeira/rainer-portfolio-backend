@@ -5,28 +5,26 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BlogModule = void 0;
-// src/controller/blog.module.ts
+// src/modules/blog/blog.module.ts
 const common_1 = require("@nestjs/common");
-const posts_controller_1 = require("./posts/posts.controller");
-const posts_service_1 = require("./posts/posts.service");
-const dynamoDb_1 = __importDefault(require("../../services/dynamoDb"));
+const posts_module_1 = require("./blog/posts/posts.module");
+//import { AuthorsModule } from '@src/modules/blog/authors/autor.module';
+//import { CategoriesModule } from '@src/modules/blog/authors/categories.module';
+//import { CommentsModule } from '@src/modules/blog/authors/comments.module';
+//import { ExternalIntegrationsModule } from './external-integrations/external-integrations.module';
 let BlogModule = class BlogModule {
 };
 exports.BlogModule = BlogModule;
 exports.BlogModule = BlogModule = __decorate([
     (0, common_1.Module)({
-        controllers: [posts_controller_1.PostsController],
-        providers: [
-            posts_service_1.PostsService,
-            {
-                provide: 'DYNAMODB_CLIENT',
-                useValue: dynamoDb_1.default,
-            },
+        imports: [
+            posts_module_1.PostsModule,
+            //AuthorsModule,
+            //CategoriesModule,
+            //CommentsModule,
+            //ExternalIntegrationsModule,
         ],
     })
 ], BlogModule);

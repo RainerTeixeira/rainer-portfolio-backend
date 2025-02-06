@@ -20,11 +20,15 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var _a, _b;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PostsController = void 0;
+// src/modules/blog/posts/posts.controller.ts
 const common_1 = require("@nestjs/common");
 const posts_service_1 = require("./posts.service");
-const dto_1 = require("./dto"); // Certifique-se de importar corretamente os DTOs
+const dto_1 = require("./dto");
+const cognito_auth_guard_1 = require("../../../auth/cognito-auth.guard");
+const pipes_1 = require("@nestjs/common/pipes");
 let PostsController = class PostsController {
     constructor(postsService) {
         this.postsService = postsService;
@@ -32,86 +36,140 @@ let PostsController = class PostsController {
     create(createPostDto) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                return yield this.postsService.create(createPostDto);
+                const result = yield this.postsService.create(createPostDto);
+                return this.formatResponse('Post criado com sucesso', result);
             }
             catch (error) {
-                throw new common_1.HttpException(error instanceof Error ? error.message : 'Erro desconhecido', common_1.HttpStatus.BAD_REQUEST);
+                this.handleDynamoError(error, 'Erro ao criar post');
             }
         });
     }
-    findAll(query) {
+    findAll(limit, lastKey) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                return yield this.postsService.findAll(query);
+                const safeLimit = Math.min(limit || 20, 50); // Max 50 items para free tier
+                const result = yield this.postsService.findAll({
+                    limit: safeLimit,
+                    lastKey,
+                });
+                return this.formatPaginatedResponse(result);
             }
             catch (error) {
-                throw new common_1.HttpException(error instanceof Error ? error.message : 'Erro desconhecido', common_1.HttpStatus.BAD_REQUEST);
+                this.handleDynamoError(error, 'Erro ao buscar posts');
             }
         });
     }
     findOne(id) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                return yield this.postsService.findOne(id);
+                const result = yield this.postsService.findOne(id);
+                return this.formatResponse('Post encontrado', result);
             }
             catch (error) {
-                throw new common_1.HttpException(error instanceof Error ? error.message : 'Erro desconhecido', common_1.HttpStatus.NOT_FOUND);
+                this.handleDynamoError(error, 'Post não encontrado', common_1.HttpStatus.NOT_FOUND);
             }
         });
     }
     update(id, updatePostDto) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                return yield this.postsService.update(id, updatePostDto);
+                const result = yield this.postsService.update(id, updatePostDto);
+                return this.formatResponse('Post atualizado com sucesso', result);
             }
             catch (error) {
-                throw new common_1.HttpException(error instanceof Error ? error.message : 'Erro desconhecido', common_1.HttpStatus.BAD_REQUEST);
+                this.handleDynamoError(error, 'Erro ao atualizar post');
             }
         });
     }
     remove(id) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                return yield this.postsService.remove(id);
+                yield this.postsService.remove(id);
             }
             catch (error) {
-                throw new common_1.HttpException(error instanceof Error ? error.message : 'Erro desconhecido', common_1.HttpStatus.BAD_REQUEST);
+                this.handleDynamoError(error, 'Erro ao excluir post');
             }
         });
+    }
+    handleDynamoError(error, defaultMessage, defaultStatus = common_1.HttpStatus.BAD_REQUEST) {
+        const dynamoError = error;
+        const errorMap = {
+            ResourceNotFoundException: {
+                status: common_1.HttpStatus.NOT_FOUND,
+                message: 'Recurso não encontrado',
+            },
+            ProvisionedThroughputExceededException: {
+                status: common_1.HttpStatus.TOO_MANY_REQUESTS,
+                message: 'Limite de requisições excedido',
+            },
+            ConditionalCheckFailedException: {
+                status: common_1.HttpStatus.CONFLICT,
+                message: 'Conflito na versão do recurso',
+            },
+        };
+        const { status, message } = errorMap[dynamoError.name] || {
+            status: defaultStatus,
+            message: defaultMessage,
+        };
+        throw new HttpException({ statusCode: status, message: message, error: dynamoError.message }, status);
+    }
+    formatResponse(message, data) {
+        return {
+            statusCode: common_1.HttpStatus.OK,
+            message,
+            data,
+            timestamp: new Date().toISOString(),
+        };
+    }
+    formatPaginatedResponse(result) {
+        return {
+            statusCode: common_1.HttpStatus.OK,
+            message: 'Posts recuperados com sucesso',
+            data: result.data,
+            meta: Object.assign(Object.assign({}, result.meta), { timestamp: new Date().toISOString() }),
+        };
     }
 };
 exports.PostsController = PostsController;
 __decorate([
+    (0, common_1.UseGuards)(cognito_auth_guard_1.CognitoAuthGuard),
     (0, common_1.Post)(),
+    (0, common_1.HttpCode)(common_1.HttpStatus.CREATED),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [dto_1.CreatePostDto]),
+    __metadata("design:paramtypes", [typeof (_a = typeof dto_1.CreatePostDto !== "undefined" && dto_1.CreatePostDto) === "function" ? _a : Object]),
     __metadata("design:returntype", Promise)
 ], PostsController.prototype, "create", null);
 __decorate([
     (0, common_1.Get)(),
-    __param(0, (0, common_1.Query)()),
+    __param(0, (0, common_1.Query)('limit', new common_1.ParseIntPipe({ optional: true }))),
+    __param(1, (0, common_1.Query)('lastKey')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [Number, String]),
     __metadata("design:returntype", Promise)
 ], PostsController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Get)(':id'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], PostsController.prototype, "findOne", null);
 __decorate([
+    (0, common_1.UseGuards)(cognito_auth_guard_1.CognitoAuthGuard),
     (0, common_1.Put)(':id'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, dto_1.UpdatePostDto]),
+    __metadata("design:paramtypes", [String, typeof (_b = typeof dto_1.UpdatePostDto !== "undefined" && dto_1.UpdatePostDto) === "function" ? _b : Object]),
     __metadata("design:returntype", Promise)
 ], PostsController.prototype, "update", null);
 __decorate([
+    (0, common_1.UseGuards)(cognito_auth_guard_1.CognitoAuthGuard),
     (0, common_1.Delete)(':id'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.NO_CONTENT),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
@@ -119,7 +177,6 @@ __decorate([
 ], PostsController.prototype, "remove", null);
 exports.PostsController = PostsController = __decorate([
     (0, common_1.Controller)('posts'),
-    (0, common_1.UsePipes)(new common_1.ValidationPipe({ transform: true })) // Transforma os dados de entrada para os tipos dos DTOs
-    ,
+    (0, common_1.UsePipes)(new pipes_1.ValidationPipe({ transform: true, whitelist: true })),
     __metadata("design:paramtypes", [posts_service_1.PostsService])
 ], PostsController);

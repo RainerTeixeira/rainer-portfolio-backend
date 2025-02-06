@@ -28,7 +28,8 @@ function bootstrapServer() {
             const app = yield core_1.NestFactory.create(app_module_1.AppModule, new platform_fastify_1.FastifyAdapter());
             app.enableCors(); // Ativa CORS, se necessário
             yield app.init();
-            cachedServer = (0, serverless_http_1.default)(app.getHttpAdapter().getInstance()); // Adapta para AWS Lambda
+            // Adapta a instância do Fastify para AWS Lambda
+            cachedServer = (0, serverless_http_1.default)(app.getHttpAdapter().getInstance());
             console.log('✅ Servidor pronto!');
         }
         return cachedServer;
