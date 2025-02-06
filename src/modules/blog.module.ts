@@ -1,17 +1,18 @@
-// src/controller/blog.module.ts
+// src/modules/blog/blog.module.ts
 import { Module } from '@nestjs/common';
-import { PostsController } from './posts/posts.controller';
-import { PostsService } from './posts/posts.service';
-import dynamoDBClient from '../../services/dynamoDb';
+import { PostsModule } from './posts/posts.module';
+import { AuthorsModule } from './authors/authors.module';
+import { CategoriesModule } from './categories/categories.module';
+import { CommentsModule } from './comments/comments.module';
+import { ExternalIntegrationsModule } from './external-integrations/external-integrations.module';
 
 @Module({
-  controllers: [PostsController],
-  providers: [
-    PostsService,
-    {
-      provide: 'DYNAMODB_CLIENT',
-      useValue: dynamoDBClient,
-    },
+  imports: [
+    PostsModule,
+    AuthorsModule,
+    CategoriesModule,
+    CommentsModule,
+    ExternalIntegrationsModule,
   ],
 })
 export class BlogModule { }

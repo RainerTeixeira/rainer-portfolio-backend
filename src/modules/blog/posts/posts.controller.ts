@@ -12,7 +12,7 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
-import { PostsService } from './posts.service';
+import { PostsService } from '@src/modules/blog/posts/posts.service'; // Importa o serviço de posts
 import { CreatePostDto, UpdatePostDto, ListPostsDto } from './dto'; // Certifique-se de importar corretamente os DTOs
 
 @Controller('posts')

@@ -20,7 +20,8 @@ async function bootstrapServer(): Promise<any> {
     app.enableCors(); // Ativa CORS, se necessário
     await app.init();
 
-    cachedServer = serverless(app.getHttpAdapter().getInstance()); // Adapta para AWS Lambda
+    // Adapta a instância do Fastify para AWS Lambda
+    cachedServer = serverless(app.getHttpAdapter().getInstance());
     console.log('✅ Servidor pronto!');
   }
 
