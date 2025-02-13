@@ -3,6 +3,14 @@ import { Injectable, Logger } from '@nestjs/common';
 import {
   DynamoDBClient,
   DynamoDBClientConfig,
+  GetItemCommand,
+  PutItemCommand,
+  UpdateItemCommand,
+  DeleteItemCommand,
+  ScanCommand,
+  QueryCommand,
+  BatchWriteItemCommand,
+  BatchGetItemCommand,
 } from '@aws-sdk/client-dynamodb';
 import {
   DynamoDBDocumentClient,
@@ -49,7 +57,8 @@ export class DynamoDbService {
 
   async getItem(params: GetCommandInput) {
     try {
-      return await this.docClient.send(new GetCommand(params));
+      const command = new GetCommand(params);
+      return await this.docClient.send(command);
     } catch (error) {
       this.handleError(error, 'getItem');
     }
@@ -57,7 +66,8 @@ export class DynamoDbService {
 
   async putItem(params: PutCommandInput) {
     try {
-      return await this.docClient.send(new PutCommand(params));
+      const command = new PutCommand(params);
+      return await this.docClient.send(command);
     } catch (error) {
       this.handleError(error, 'putItem');
     }
@@ -65,7 +75,8 @@ export class DynamoDbService {
 
   async updateItem(params: UpdateCommandInput) {
     try {
-      return await this.docClient.send(new UpdateCommand(params));
+      const command = new UpdateCommand(params);
+      return await this.docClient.send(command);
     } catch (error) {
       this.handleError(error, 'updateItem');
     }
@@ -73,7 +84,8 @@ export class DynamoDbService {
 
   async deleteItem(params: DeleteCommandInput) {
     try {
-      return await this.docClient.send(new DeleteCommand(params));
+      const command = new DeleteCommand(params);
+      return await this.docClient.send(command);
     } catch (error) {
       this.handleError(error, 'deleteItem');
     }
@@ -81,7 +93,8 @@ export class DynamoDbService {
 
   async scanItems(params: ScanCommandInput) {
     try {
-      return await this.docClient.send(new ScanCommand(params));
+      const command = new ScanCommand(params);
+      return await this.docClient.send(command);
     } catch (error) {
       this.handleError(error, 'scanItems');
     }
@@ -89,7 +102,8 @@ export class DynamoDbService {
 
   async queryItems(params: QueryCommandInput) {
     try {
-      return await this.docClient.send(new QueryCommand(params));
+      const command = new QueryCommand(params);
+      return await this.docClient.send(command);
     } catch (error) {
       this.handleError(error, 'queryItems');
     }
@@ -97,7 +111,8 @@ export class DynamoDbService {
 
   async batchWrite(params: BatchWriteCommandInput) {
     try {
-      return await this.docClient.send(new BatchWriteCommand(params));
+      const command = new BatchWriteCommand(params);
+      return await this.docClient.send(command);
     } catch (error) {
       this.handleError(error, 'batchWrite');
     }
@@ -105,16 +120,60 @@ export class DynamoDbService {
 
   async batchGet(params: BatchGetCommandInput) {
     try {
-      return await this.docClient.send(new BatchGetCommand(params));
+      const command = new BatchGetCommand(params);
+      return await this.docClient.send(command);
     } catch (error) {
       this.handleError(error, 'batchGet');
     }
   }
 
-  private handleError(error: any, operation: string): never {
-    this.logger.error(`DynamoDB Error (${operation}): ${error.message}`, error.stack);
+  buildUpdateExpression(
+    input: Record<string, any>,
+    excludeKeys: string[] = []
+  ) {
+    const updateKeys = Object.keys(input)
+      .filter((key) => !excludeKeys.includes(key))
+      .filter((key) => input[key] !== undefined);
 
-    throw new Error(this.mapErrorMessage(error, operation));
+    if (updateKeys.length === 0) return null;
+
+    const UpdateExpression = `SET ${updateKeys
+      .map((key, index) => `#field${index} = :value${index}`)
+      .join(', ')}`;
+
+    const ExpressionAttributeNames = updateKeys.reduce(
+      (acc, key, index) => ({
+        ...acc,
+        [`#field${index}`]: key,
+      }),
+      {}
+    );
+
+    const ExpressionAttributeValues = updateKeys.reduce(
+      (acc, key, index) => ({
+        ...acc,
+        [`:value${index}`]: input[key],
+      }),
+      {}
+    );
+
+    return {
+      UpdateExpression,
+      ExpressionAttributeNames,
+      ExpressionAttributeValues,
+    };
+  }
+
+  private handleError(error: any, operation: string): never {
+    this.logger.error(
+      `DynamoDB Error (${operation}): ${error.message}`,
+      error.stack
+    );
+
+    const mappedError = new Error(this.mapErrorMessage(error, operation));
+    mappedError.name = error.name || 'DynamoDBError';
+
+    throw mappedError;
   }
 
   private mapErrorMessage(error: any, operation: string): string {
@@ -125,34 +184,9 @@ export class DynamoDbService {
       TransactionConflictException: 'Conflito em transação',
     };
 
-    return errorMessages[error.name] || `Erro na operação ${operation}: ${error.message}`;
-  }
-
-  buildUpdateExpression(input: Record<string, any>, excludeKeys: string[] = []) {
-    const updateKeys = Object.keys(input)
-      .filter(key => !excludeKeys.includes(key))
-      .filter(key => input[key] !== undefined);
-
-    if (updateKeys.length === 0) return null;
-
-    const UpdateExpression = `SET ${updateKeys
-      .map((key, index) => `#field${index} = :value${index}`)
-      .join(', ')}`;
-
-    const ExpressionAttributeNames = updateKeys.reduce((acc, key, index) => ({
-      ...acc,
-      [`#field${index}`]: key,
-    }), {});
-
-    const ExpressionAttributeValues = updateKeys.reduce((acc, key, index) => ({
-      ...acc,
-      [`:value${index}`]: input[key],
-    }), {});
-
-    return {
-      UpdateExpression,
-      ExpressionAttributeNames,
-      ExpressionAttributeValues,
-    };
+    return (
+      errorMessages[error.name] ||
+      `Erro na operação ${operation}: ${error.message}`
+    );
   }
 }

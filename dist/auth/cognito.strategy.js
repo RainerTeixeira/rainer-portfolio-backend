@@ -65,37 +65,32 @@ const jwt = __importStar(require("jsonwebtoken"));
 let CognitoStrategy = class CognitoStrategy extends (0, passport_1.PassportStrategy)(passport_jwt_1.Strategy, 'cognito') {
     constructor() {
         super({
-            // Extrai o token do cabeçalho Authorization (Bearer token)
             jwtFromRequest: passport_jwt_1.ExtractJwt.fromAuthHeaderAsBearerToken(),
             ignoreExpiration: false,
-            // O provider para obter a chave pública dinamicamente a partir do Cognito
             secretOrKeyProvider: (request, rawJwtToken, done) => __awaiter(this, void 0, void 0, function* () {
+                var _a;
                 try {
-                    // Obtém a URL dos JWKS do Cognito a partir do .env
                     const jwksUrl = process.env.COGNITO_JWKS_URL;
                     if (!jwksUrl) {
                         return done(new common_1.UnauthorizedException('COGNITO_JWKS_URL não definida'), undefined);
                     }
-                    // Busca as chaves do JWKS
                     const response = yield axios_1.default.get(jwksUrl);
                     const keys = response.data.keys;
-                    // Decodifica o token para extrair o "kid" (Key ID)
                     const decoded = jwt.decode(rawJwtToken, { complete: true });
-                    if (!decoded || !decoded.header) {
-                        return done(new common_1.UnauthorizedException('Token inválido'), null);
+                    if (!((_a = decoded === null || decoded === void 0 ? void 0 : decoded.header) === null || _a === void 0 ? void 0 : _a.kid)) {
+                        return done(new common_1.UnauthorizedException('Token inválido'), undefined);
                     }
-                    const kid = decoded.header.kid;
-                    // Procura a chave que corresponda ao kid
+                    const { kid } = decoded.header;
+                    // Add type annotation to the callback parameter
                     const key = keys.find((k) => k.kid === kid);
                     if (!key) {
-                        d;
+                        return done(new common_1.UnauthorizedException('Chave pública não encontrada'), undefined);
                     }
-                    // Converte o JWK para PEM
                     const pem = (0, jwk_to_pem_1.default)(key);
                     return done(null, pem);
                 }
                 catch (error) {
-                    return done(error, null);
+                    return done(error, undefined);
                 }
             }),
         });
@@ -105,7 +100,6 @@ let CognitoStrategy = class CognitoStrategy extends (0, passport_1.PassportStrat
             if (!payload) {
                 throw new common_1.UnauthorizedException();
             }
-            // Aqui você pode adicionar validações extras (como verificar claims específicas)
             return payload;
         });
     }
