@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
-import { BlogModule } from '@src/modules/blog.module'; // Importando o BlogModule com o alias configurado
-import { AuthModule } from '@src/auth/auth.module'; // Importando o auth module...
+import { BlogModule } from './modules/blog/blog.module';
+
 @Module({
   imports: [
-    BlogModule, // Inclui o BlogModule com todas as funcionalidades do blog (posts, autores, etc.)
-    AuthModule, // Inclui o AuthModule para autenticação
+    BlogModule, // Importa o módulo Blog
   ],
-
+  controllers: [],
+  providers: [],
 })
-export class AppModule {}
+export class AppModule { }
