@@ -9,24 +9,20 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UpdatePostDto = void 0;
+exports.ReferenceDto = void 0;
 const swagger_1 = require("@nestjs/swagger");
-const class_transformer_1 = require("class-transformer");
-const class_validator_1 = require("class-validator");
-const create_post_dto_1 = require("./create-post.dto");
-class UpdatePostDto extends (0, swagger_1.PartialType)(create_post_dto_1.CreatePostDto) {
+class ReferenceDto {
 }
-exports.UpdatePostDto = UpdatePostDto;
+exports.ReferenceDto = ReferenceDto;
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 1 }),
-    (0, class_validator_1.IsInt)(),
-    (0, class_validator_1.IsPositive)(),
+    (0, swagger_1.ApiProperty)({ example: 1, description: 'ID de referência' }),
     __metadata("design:type", Number)
-], UpdatePostDto.prototype, "postId", void 0);
+], ReferenceDto.prototype, "referenceId", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: '2024-01-03T00:00:00.000Z' }),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsDate)(),
-    (0, class_transformer_1.Type)(() => Date),
-    __metadata("design:type", Date)
-], UpdatePostDto.prototype, "postLastUpdated", void 0);
+    (0, swagger_1.ApiProperty)({ example: 'Título da Referência', description: 'Título da fonte externa' }),
+    __metadata("design:type", String)
+], ReferenceDto.prototype, "title", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: 'https://exemplo.com', description: 'URL da referência' }),
+    __metadata("design:type", String)
+], ReferenceDto.prototype, "url", void 0);

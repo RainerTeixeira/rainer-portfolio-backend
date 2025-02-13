@@ -13,46 +13,93 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.handler = void 0;
+// handler.ts
 const core_1 = require("@nestjs/core");
 const app_module_1 = require("./app.module");
 const platform_fastify_1 = require("@nestjs/platform-fastify");
 const serverless_http_1 = __importDefault(require("serverless-http"));
-let cachedServer; // Cache da instância do servidor
+// Cache para armazenar a instância do servidor entre execuções Lambda
+let cachedServer;
+// Helper para tratamento seguro de mensagens de erro
+function getErrorMessage(error) {
+    if (error instanceof Error)
+        return error.message;
+    return String(error);
+}
+// Helper para logging detalhado de erros
+function logError(error) {
+    if (error instanceof Error) {
+        console.error('Erro:', error.stack || error.message);
+    }
+    else {
+        console.error('Erro desconhecido:', error);
+    }
+}
 /**
- * Inicializa o servidor NestJS com Fastify para melhorar performance.
+ * Inicializa ou retorna a instância do servidor NestJS com Fastify
+ * @returns Promise com o servidor configurado para uso no Lambda
  */
 function bootstrapServer() {
     return __awaiter(this, void 0, void 0, function* () {
         if (!cachedServer) {
             console.log('⚡ Inicializando o servidor NestJS...');
-            const app = yield core_1.NestFactory.create(app_module_1.AppModule, new platform_fastify_1.FastifyAdapter());
-            app.enableCors(); // Ativa CORS, se necessário
+            const app = yield core_1.NestFactory.create(app_module_1.AppModule, new platform_fastify_1.FastifyAdapter({ logger: true }));
+            app.enableCors({
+                origin: '*',
+                methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+            });
             yield app.init();
-            // Adapta a instância do Fastify para AWS Lambda
             cachedServer = (0, serverless_http_1.default)(app.getHttpAdapter().getInstance());
-            console.log('✅ Servidor pronto!');
+            console.log('✅ Servidor inicializado e pronto para requisições!');
         }
         return cachedServer;
     });
 }
 /**
- * Handler AWS Lambda: Executado a cada requisição
+ * Handler principal para execução no AWS Lambda
  */
 const handler = (event, context) => __awaiter(void 0, void 0, void 0, function* () {
-    const server = yield bootstrapServer();
-    return server(event, context);
+    try {
+        const server = yield bootstrapServer();
+        const response = yield server(event, context);
+        response.headers = Object.assign(Object.assign({}, response.headers), { 'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'DENY', 'Strict-Transport-Security': 'max-age=31536000; includeSubDomains' });
+        return response;
+    }
+    catch (error) {
+        logError(error);
+        return {
+            statusCode: 500,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                message: 'Erro interno do servidor',
+                details: process.env.NODE_ENV === 'development'
+                    ? getErrorMessage(error)
+                    : 'Contate o suporte técnico',
+                timestamp: new Date().toISOString(),
+                requestId: context.awsRequestId,
+            }),
+        };
+    }
 });
 exports.handler = handler;
 /**
- * Se não estiver rodando no AWS Lambda, inicializa o servidor localmente
+ * Configuração para execução local
  */
 if (!process.env.AWS_LAMBDA_FUNCTION_NAME) {
     function bootstrapLocal() {
         return __awaiter(this, void 0, void 0, function* () {
+            console.log('🚀 Iniciando servidor local...');
             const app = yield core_1.NestFactory.create(app_module_1.AppModule, new platform_fastify_1.FastifyAdapter());
-            yield app.listen(3000);
-            console.log('🚀 Servidor rodando em http://localhost:3000');
+            yield app.listen(3000, '0.0.0.0', () => {
+                console.log(`🔌 Servidor ouvindo em http://localhost:3000`);
+                console.log(`📚 Documentação Swagger em http://localhost:3000/api`);
+            });
         });
     }
-    bootstrapLocal();
+    bootstrapLocal().catch(error => {
+        logError(error);
+        process.exit(1);
+    });
 }

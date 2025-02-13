@@ -8,19 +8,15 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PostsModule = void 0;
 const common_1 = require("@nestjs/common");
-const posts_controller_1 = require("./posts.controller"); // Caminho relativo
-const posts_service_1 = require("./posts.service"); // Caminho relativo
+const posts_controller_1 = require("./posts.controller");
+const posts_service_1 = require("./posts.service");
 const dynamoDb_service_1 = require("../../../services/dynamoDb.service");
-/**
- * Módulo responsável pela gestão de posts do blog, incluindo operações CRUD.
- */
 let PostsModule = class PostsModule {
 };
 exports.PostsModule = PostsModule;
 exports.PostsModule = PostsModule = __decorate([
     (0, common_1.Module)({
-        imports: [dynamoDb_service_1.DynamoDbModule], // Fornece acesso ao DynamoDB
-        controllers: [posts_controller_1.PostsController], // Controladores das rotas
-        providers: [posts_service_1.PostsService], // Serviço com lógica de negócio
+        providers: [posts_service_1.PostsService, dynamoDb_service_1.DynamoDbService],
+        controllers: [posts_controller_1.PostsController],
     })
 ], PostsModule);

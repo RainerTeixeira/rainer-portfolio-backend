@@ -19,7 +19,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PostsService = void 0;
-// src/modules/blog/posts/posts.service.ts
 const common_1 = require("@nestjs/common");
 const dynamoDb_service_1 = require("../../../services/dynamoDb.service");
 let PostsService = class PostsService {
@@ -29,7 +28,7 @@ let PostsService = class PostsService {
     }
     create(createPostDto) {
         return __awaiter(this, void 0, void 0, function* () {
-            const post = Object.assign(Object.assign({}, createPostDto), { postId: this.generatePostId(), postDate: new Date().toISOString(), postLastUpdated: new Date().toISOString() });
+            const post = Object.assign(Object.assign({}, createPostDto), { postId: this.generatePostId(), postDate: new Date().toISOString(), postLastUpdated: new Date().toISOString(), postStatus: 'draft', seo: {}, viewsCount: 0 });
             yield this.dynamoDb.putItem({
                 TableName: this.tableName,
                 Item: post,
@@ -40,6 +39,7 @@ let PostsService = class PostsService {
     }
     findAll(query) {
         return __awaiter(this, void 0, void 0, function* () {
+            var _a;
             const limit = Math.min(Number(query.limit) || 20, 100);
             const ExclusiveStartKey = this.decodeCursor(query.lastKey);
             const result = yield this.dynamoDb.scanItems({
@@ -48,11 +48,12 @@ let PostsService = class PostsService {
                 ExclusiveStartKey,
                 ConsistentRead: false,
             });
-            return this.formatPaginatedResult(result.Items, result.LastEvaluatedKey);
+            return this.formatPaginatedResult((_a = result.Items) !== null && _a !== void 0 ? _a : [], result.LastEvaluatedKey);
         });
     }
     findOne(id) {
         return __awaiter(this, void 0, void 0, function* () {
+            // Caso necessário, você pode fazer um cast para um tipo que possua a propriedade Item
             const result = yield this.dynamoDb.getItem({
                 TableName: this.tableName,
                 Key: { postId: id },
@@ -67,9 +68,10 @@ let PostsService = class PostsService {
     update(id, updatePostDto) {
         return __awaiter(this, void 0, void 0, function* () {
             const updateParams = this.dynamoDb.buildUpdateExpression(updatePostDto, ['postId']);
-            if (!updateParams) {
+            if (!updateParams || !updateParams.UpdateExpression) {
                 throw new common_1.BadRequestException('Nenhum campo válido para atualização');
             }
+            // Realiza a atualização, concatenando a atualização do campo postLastUpdated
             const result = yield this.dynamoDb.updateItem(Object.assign(Object.assign({ TableName: this.tableName, Key: { postId: id } }, updateParams), { UpdateExpression: `${updateParams.UpdateExpression}, postLastUpdated = :updatedAt`, ExpressionAttributeValues: Object.assign(Object.assign({}, updateParams.ExpressionAttributeValues), { ':updatedAt': new Date().toISOString() }), ReturnValues: 'ALL_NEW', ConditionExpression: 'attribute_exists(postId)' }));
             return result.Attributes;
         });
@@ -97,9 +99,9 @@ let PostsService = class PostsService {
     }
     formatPaginatedResult(items, lastKey) {
         return {
-            data: items || [],
+            data: items,
             meta: {
-                count: (items === null || items === void 0 ? void 0 : items.length) || 0,
+                count: items.length,
                 nextCursor: lastKey
                     ? Buffer.from(JSON.stringify(lastKey)).toString('base64')
                     : null,

@@ -20,13 +20,15 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var _a, _b;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PostsController = void 0;
-// src/modules/blog/posts/posts.controller.ts
 const common_1 = require("@nestjs/common");
+const swagger_1 = require("@nestjs/swagger");
 const posts_service_1 = require("./posts.service");
-const dto_1 = require("./dto");
+const create_post_dto_1 = require("./dto/create-post.dto");
+const update_post_dto_1 = require("./dto/update-post.dto");
+const list_posts_dto_1 = require("./dto/list-posts.dto");
+const post_base_dto_1 = require("./dto/post-base.dto");
 const cognito_auth_guard_1 = require("../../../auth/cognito-auth.guard");
 const pipes_1 = require("@nestjs/common/pipes");
 let PostsController = class PostsController {
@@ -47,9 +49,9 @@ let PostsController = class PostsController {
     findAll(limit, lastKey) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const safeLimit = Math.min(limit || 20, 50); // Max 50 items para free tier
+                const safeLimit = Math.min(limit || 20, 50);
                 const result = yield this.postsService.findAll({
-                    limit: safeLimit,
+                    limit: safeLimit.toString(),
                     lastKey,
                 });
                 return this.formatPaginatedResponse(result);
@@ -107,11 +109,16 @@ let PostsController = class PostsController {
                 message: 'Conflito na versão do recurso',
             },
         };
-        const { status, message } = errorMap[dynamoError.name] || {
+        const errorName = dynamoError.name;
+        const { status, message } = errorMap[errorName] || {
             status: defaultStatus,
             message: defaultMessage,
         };
-        throw new HttpException({ statusCode: status, message: message, error: dynamoError.message }, status);
+        throw new common_1.HttpException({
+            statusCode: status,
+            message: `${message}: ${dynamoError.message}`,
+            timestamp: new Date().toISOString()
+        }, status);
     }
     formatResponse(message, data) {
         return {
@@ -132,15 +139,31 @@ let PostsController = class PostsController {
 };
 exports.PostsController = PostsController;
 __decorate([
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Criar novo post' }),
+    (0, swagger_1.ApiResponse)({
+        status: common_1.HttpStatus.CREATED,
+        description: 'Post criado com sucesso',
+        type: post_base_dto_1.PostBaseDto
+    }),
+    (0, swagger_1.ApiResponse)({ status: common_1.HttpStatus.BAD_REQUEST, description: 'Dados inválidos' }),
     (0, common_1.UseGuards)(cognito_auth_guard_1.CognitoAuthGuard),
     (0, common_1.Post)(),
     (0, common_1.HttpCode)(common_1.HttpStatus.CREATED),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_a = typeof dto_1.CreatePostDto !== "undefined" && dto_1.CreatePostDto) === "function" ? _a : Object]),
+    __metadata("design:paramtypes", [create_post_dto_1.CreatePostDto]),
     __metadata("design:returntype", Promise)
 ], PostsController.prototype, "create", null);
 __decorate([
+    (0, swagger_1.ApiOperation)({ summary: 'Listar posts paginados' }),
+    (0, swagger_1.ApiQuery)({ name: 'limit', required: false, type: Number, description: 'Limite de resultados (máx 50)' }),
+    (0, swagger_1.ApiQuery)({ name: 'lastKey', required: false, type: String, description: 'Chave para paginação' }),
+    (0, swagger_1.ApiResponse)({
+        status: common_1.HttpStatus.OK,
+        description: 'Lista de posts recuperada',
+        type: list_posts_dto_1.ListPostsDto
+    }),
     (0, common_1.Get)(),
     __param(0, (0, common_1.Query)('limit', new common_1.ParseIntPipe({ optional: true }))),
     __param(1, (0, common_1.Query)('lastKey')),
@@ -149,6 +172,13 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], PostsController.prototype, "findAll", null);
 __decorate([
+    (0, swagger_1.ApiOperation)({ summary: 'Obter post por ID' }),
+    (0, swagger_1.ApiResponse)({
+        status: common_1.HttpStatus.OK,
+        description: 'Post encontrado',
+        type: post_base_dto_1.PostBaseDto
+    }),
+    (0, swagger_1.ApiResponse)({ status: common_1.HttpStatus.NOT_FOUND, description: 'Post não encontrado' }),
     (0, common_1.Get)(':id'),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
     __param(0, (0, common_1.Param)('id')),
@@ -157,16 +187,28 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], PostsController.prototype, "findOne", null);
 __decorate([
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Atualizar post' }),
+    (0, swagger_1.ApiResponse)({
+        status: common_1.HttpStatus.OK,
+        description: 'Post atualizado',
+        type: post_base_dto_1.PostBaseDto
+    }),
+    (0, swagger_1.ApiResponse)({ status: common_1.HttpStatus.NOT_FOUND, description: 'Post não encontrado' }),
     (0, common_1.UseGuards)(cognito_auth_guard_1.CognitoAuthGuard),
     (0, common_1.Put)(':id'),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, typeof (_b = typeof dto_1.UpdatePostDto !== "undefined" && dto_1.UpdatePostDto) === "function" ? _b : Object]),
+    __metadata("design:paramtypes", [String, update_post_dto_1.UpdatePostDto]),
     __metadata("design:returntype", Promise)
 ], PostsController.prototype, "update", null);
 __decorate([
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Excluir post' }),
+    (0, swagger_1.ApiResponse)({ status: common_1.HttpStatus.NO_CONTENT, description: 'Post excluído com sucesso' }),
+    (0, swagger_1.ApiResponse)({ status: common_1.HttpStatus.NOT_FOUND, description: 'Post não encontrado' }),
     (0, common_1.UseGuards)(cognito_auth_guard_1.CognitoAuthGuard),
     (0, common_1.Delete)(':id'),
     (0, common_1.HttpCode)(common_1.HttpStatus.NO_CONTENT),
@@ -176,6 +218,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], PostsController.prototype, "remove", null);
 exports.PostsController = PostsController = __decorate([
+    (0, swagger_1.ApiTags)('Posts'),
     (0, common_1.Controller)('posts'),
     (0, common_1.UsePipes)(new pipes_1.ValidationPipe({ transform: true, whitelist: true })),
     __metadata("design:paramtypes", [posts_service_1.PostsService])

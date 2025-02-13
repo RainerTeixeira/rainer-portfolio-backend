@@ -1,10 +1,13 @@
-// src/modules/blog/posts/posts.service.ts
 import {
   Injectable,
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { CreatePostDto, UpdatePostDto, ListPostsDto } from './dto';
+
+import { CreatePostDto } from '@src/modules/blog/posts/dto/create-post.dto';
+import { UpdatePostDto } from '@src/modules/blog/posts/dto/update-post.dto';
+import { ListPostsDto } from '@src/modules/blog/posts/dto/list-posts.dto';
+import { PostBaseDto } from '@src/modules/blog/posts/dto/post-base.dto';
 import { DynamoDbService } from '@src/services/dynamoDb.service';
 
 @Injectable()
@@ -13,12 +16,15 @@ export class PostsService {
 
   constructor(private readonly dynamoDb: DynamoDbService) { }
 
-  async create(createPostDto: CreatePostDto) {
-    const post = {
+  async create(createPostDto: CreatePostDto): Promise<PostBaseDto> {
+    const post: PostBaseDto = {
       ...createPostDto,
-      postId: this.generatePostId(),
+      postId: Date.now(),
       postDate: new Date().toISOString(),
       postLastUpdated: new Date().toISOString(),
+      postStatus: 'draft',   // Defina o status padrão desejado
+      seo: {},               // Defina um objeto SEO padrão, se necessário
+      viewsCount: 0,         // Inicialize com zero visualizações
     };
 
     await this.dynamoDb.putItem({
@@ -41,10 +47,11 @@ export class PostsService {
       ConsistentRead: false,
     });
 
-    return this.formatPaginatedResult(result.Items, result.LastEvaluatedKey);
+    return this.formatPaginatedResult(result.Items ?? [], result.LastEvaluatedKey);
   }
 
   async findOne(id: string) {
+    // Caso necessário, você pode fazer um cast para um tipo que possua a propriedade Item
     const result = await this.dynamoDb.getItem({
       TableName: this.tableName,
       Key: { postId: id },
@@ -61,10 +68,11 @@ export class PostsService {
   async update(id: string, updatePostDto: UpdatePostDto) {
     const updateParams = this.dynamoDb.buildUpdateExpression(updatePostDto, ['postId']);
 
-    if (!updateParams) {
+    if (!updateParams || !updateParams.UpdateExpression) {
       throw new BadRequestException('Nenhum campo válido para atualização');
     }
 
+    // Realiza a atualização, concatenando a atualização do campo postLastUpdated
     const result = await this.dynamoDb.updateItem({
       TableName: this.tableName,
       Key: { postId: id },
@@ -105,9 +113,9 @@ export class PostsService {
 
   private formatPaginatedResult(items: any[], lastKey?: any): ListPostsDto {
     return {
-      data: items || [],
+      data: items,
       meta: {
-        count: items?.length || 0,
+        count: items.length,
         nextCursor: lastKey
           ? Buffer.from(JSON.stringify(lastKey)).toString('base64')
           : null,

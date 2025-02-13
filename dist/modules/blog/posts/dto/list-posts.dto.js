@@ -16,25 +16,25 @@ class MetaDto {
 }
 exports.MetaDto = MetaDto;
 __decorate([
-    (0, swagger_1.ApiProperty)(),
+    (0, swagger_1.ApiProperty)({ example: 100 }),
     __metadata("design:type", Number)
 ], MetaDto.prototype, "count", void 0);
 __decorate([
-    ApiPropertyOptional(),
+    (0, swagger_1.ApiPropertyOptional)({ example: 10 }),
     __metadata("design:type", Number)
 ], MetaDto.prototype, "totalPages", void 0);
 __decorate([
-    ApiPropertyOptional(),
+    (0, swagger_1.ApiPropertyOptional)({ example: 'MjAyNC0wMS0wMVQwMDowMDowMC4wMDBa' }),
     __metadata("design:type", Object)
 ], MetaDto.prototype, "nextCursor", void 0);
 class ListPostsDto {
 }
 exports.ListPostsDto = ListPostsDto;
 __decorate([
-    (0, swagger_1.ApiProperty)({ type: () => [post_base_dto_1.PostBaseDto] }),
+    (0, swagger_1.ApiProperty)({ type: [post_base_dto_1.PostBaseDto] }),
     __metadata("design:type", Array)
 ], ListPostsDto.prototype, "data", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)(),
+    (0, swagger_1.ApiProperty)({ type: MetaDto }),
     __metadata("design:type", MetaDto)
 ], ListPostsDto.prototype, "meta", void 0);

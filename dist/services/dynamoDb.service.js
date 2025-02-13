@@ -45,7 +45,8 @@ let DynamoDbService = DynamoDbService_1 = class DynamoDbService {
     getItem(params) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                return yield this.docClient.send(new GetCommand(params));
+                const command = new GetCommand(params);
+                return yield this.docClient.send(command);
             }
             catch (error) {
                 this.handleError(error, 'getItem');
@@ -55,7 +56,8 @@ let DynamoDbService = DynamoDbService_1 = class DynamoDbService {
     putItem(params) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                return yield this.docClient.send(new PutCommand(params));
+                const command = new PutCommand(params);
+                return yield this.docClient.send(command);
             }
             catch (error) {
                 this.handleError(error, 'putItem');
@@ -65,7 +67,8 @@ let DynamoDbService = DynamoDbService_1 = class DynamoDbService {
     updateItem(params) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                return yield this.docClient.send(new UpdateCommand(params));
+                const command = new UpdateCommand(params);
+                return yield this.docClient.send(command);
             }
             catch (error) {
                 this.handleError(error, 'updateItem');
@@ -75,7 +78,8 @@ let DynamoDbService = DynamoDbService_1 = class DynamoDbService {
     deleteItem(params) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                return yield this.docClient.send(new DeleteCommand(params));
+                const command = new DeleteCommand(params);
+                return yield this.docClient.send(command);
             }
             catch (error) {
                 this.handleError(error, 'deleteItem');
@@ -85,7 +89,8 @@ let DynamoDbService = DynamoDbService_1 = class DynamoDbService {
     scanItems(params) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                return yield this.docClient.send(new ScanCommand(params));
+                const command = new client_dynamodb_1.ScanCommand(params);
+                return yield this.docClient.send(command);
             }
             catch (error) {
                 this.handleError(error, 'scanItems');
@@ -95,7 +100,8 @@ let DynamoDbService = DynamoDbService_1 = class DynamoDbService {
     queryItems(params) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                return yield this.docClient.send(new QueryCommand(params));
+                const command = new client_dynamodb_1.QueryCommand(params);
+                return yield this.docClient.send(command);
             }
             catch (error) {
                 this.handleError(error, 'queryItems');
@@ -105,7 +111,8 @@ let DynamoDbService = DynamoDbService_1 = class DynamoDbService {
     batchWrite(params) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                return yield this.docClient.send(new BatchWriteCommand(params));
+                const command = new BatchWriteCommand(params);
+                return yield this.docClient.send(command);
             }
             catch (error) {
                 this.handleError(error, 'batchWrite');
@@ -115,30 +122,18 @@ let DynamoDbService = DynamoDbService_1 = class DynamoDbService {
     batchGet(params) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                return yield this.docClient.send(new BatchGetCommand(params));
+                const command = new BatchGetCommand(params);
+                return yield this.docClient.send(command);
             }
             catch (error) {
                 this.handleError(error, 'batchGet');
             }
         });
     }
-    handleError(error, operation) {
-        this.logger.error(`DynamoDB Error (${operation}): ${error.message}`, error.stack);
-        throw new Error(this.mapErrorMessage(error, operation));
-    }
-    mapErrorMessage(error, operation) {
-        const errorMessages = {
-            ResourceNotFoundException: 'Recurso não encontrado',
-            ProvisionedThroughputExceededException: 'Limite de capacidade excedido',
-            ConditionalCheckFailedException: 'Condição de escrita não satisfeita',
-            TransactionConflictException: 'Conflito em transação',
-        };
-        return errorMessages[error.name] || `Erro na operação ${operation}: ${error.message}`;
-    }
     buildUpdateExpression(input, excludeKeys = []) {
         const updateKeys = Object.keys(input)
-            .filter(key => !excludeKeys.includes(key))
-            .filter(key => input[key] !== undefined);
+            .filter((key) => !excludeKeys.includes(key))
+            .filter((key) => input[key] !== undefined);
         if (updateKeys.length === 0)
             return null;
         const UpdateExpression = `SET ${updateKeys
@@ -151,6 +146,22 @@ let DynamoDbService = DynamoDbService_1 = class DynamoDbService {
             ExpressionAttributeNames,
             ExpressionAttributeValues,
         };
+    }
+    handleError(error, operation) {
+        this.logger.error(`DynamoDB Error (${operation}): ${error.message}`, error.stack);
+        const mappedError = new Error(this.mapErrorMessage(error, operation));
+        mappedError.name = error.name || 'DynamoDBError';
+        throw mappedError;
+    }
+    mapErrorMessage(error, operation) {
+        const errorMessages = {
+            ResourceNotFoundException: 'Recurso não encontrado',
+            ProvisionedThroughputExceededException: 'Limite de capacidade excedido',
+            ConditionalCheckFailedException: 'Condição de escrita não satisfeita',
+            TransactionConflictException: 'Conflito em transação',
+        };
+        return (errorMessages[error.name] ||
+            `Erro na operação ${operation}: ${error.message}`);
     }
 };
 exports.DynamoDbService = DynamoDbService;
