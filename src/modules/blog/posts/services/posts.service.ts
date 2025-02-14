@@ -1,10 +1,10 @@
 // src/modules/blog/posts/services/posts.service.ts
 
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { DynamoDbService } from '../../../../services/dynamoDb.service';
-import { CreatePostDto } from '../dto/create-post.dto';
-import { UpdatePostDto } from '../dto/update-post.dto';
-import { PostDto } from '../dto/post.dto';
+import { Injectable, NotFoundException } from '@nestjs/common'; // Importa Injectable e NotFoundException do NestJS.
+import { DynamoDbService } from '@src/services/dynamoDb.service'; // Importa DynamoDbService usando alias @src.
+import { CreatePostDto } from '@src/modules/blog/posts/dto/create-post.dto'; // Importa CreatePostDto usando alias @src.
+import { UpdatePostDto } from '@src/modules/blog/posts/dto/update-post.dto'; // Importa UpdatePostDto usando alias @src.
+import { PostDto } from '@src/modules/blog/posts/dto/post.dto'; // Importa PostDto usando alias @src.
 
 @Injectable()
 export class PostsService {

@@ -1,6 +1,6 @@
 // src/modules/blog/subcategoria/dto/create-subcategoria.dto.ts
 
-import { SubcategoriaDto } from './subcategoria.dto';
+import { SubcategoriaDto } from '@src/modules/blog/subcategoria/dto/subcategoria.dto'; // Import SubcategoriaDto usando alias @src.
 import { IsNotEmpty, IsString, IsOptional, IsObject } from 'class-validator'; // Import decorators de validação
 
 export class CreateSubcategoriaDto {

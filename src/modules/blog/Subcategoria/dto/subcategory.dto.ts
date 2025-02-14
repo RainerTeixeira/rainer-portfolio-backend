@@ -1,6 +1,6 @@
-// src/modules/blog/subcategoria/dto/subcategoria.dto.ts
+// src/modules/blog/Subcategory/dto/Subcategory.dto.ts
 
-export class SubcategoriaDto {
+export class Subcategory.Dto {
     'categoryId#subcategoryId': string; // Chave de Partição composta (categoryId#subcategoryId) - String
     subcategoryId: string; // Chave de Classificação (subcategoryId) - String
     name: string;
