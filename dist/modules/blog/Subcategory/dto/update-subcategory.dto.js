@@ -13,6 +13,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.UpdateSubcategoryDto = void 0;
 const class_validator_1 = require("class-validator"); // Import decorators de validação
 class UpdateSubcategoryDto {
+    constructor(name, slug, description, keywords, title) {
+        this.name = name;
+        this.slug = slug;
+        this.description = description;
+        this.keywords = keywords;
+        this.title = title;
+    }
 }
 exports.UpdateSubcategoryDto = UpdateSubcategoryDto;
 __decorate([
@@ -27,6 +34,16 @@ __decorate([
 ], UpdateSubcategoryDto.prototype, "slug", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsObject)(),
-    __metadata("design:type", Object)
-], UpdateSubcategoryDto.prototype, "seo", void 0);
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateSubcategoryDto.prototype, "description", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateSubcategoryDto.prototype, "keywords", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateSubcategoryDto.prototype, "title", void 0);

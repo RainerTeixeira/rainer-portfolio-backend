@@ -11,7 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreatePostDto = void 0;
-const class_validator_1 = require("class-validator"); // Import decorators de validação
+const class_validator_1 = require("class-validator");
 class CreatePostDto {
 }
 exports.CreatePostDto = CreatePostDto;
@@ -36,58 +36,57 @@ __decorate([
     __metadata("design:type", Object)
 ], CreatePostDto.prototype, "postInfo", void 0);
 __decorate([
-    (0, class_validator_1.IsOptional)() // authorId pode ser opcional durante a criação
-    ,
-    __metadata("design:type", String)
-], CreatePostDto.prototype, "authorId", void 0);
-__decorate([
     (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreatePostDto.prototype, "excerpt", void 0);
 __decorate([
-    (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", String)
-], CreatePostDto.prototype, "featuredImageURL", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", String)
-], CreatePostDto.prototype, "modifiedDate", void 0);
-__decorate([
     (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreatePostDto.prototype, "publishDate", void 0);
 __decorate([
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsNumber)(),
-    __metadata("design:type", Number)
-], CreatePostDto.prototype, "readingTime", void 0);
-__decorate([
     (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreatePostDto.prototype, "slug", void 0);
 __decorate([
-    (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", String)
-], CreatePostDto.prototype, "status", void 0);
-__decorate([
-    (0, class_validator_1.IsArray)() // Validação que tags é um array
-    ,
-    (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", Array)
-], CreatePostDto.prototype, "tags", void 0);
-__decorate([
     (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreatePostDto.prototype, "title", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsNumber)(),
-    __metadata("design:type", Number)
-], CreatePostDto.prototype, "views", void 0);
+    (0, class_validator_1.IsObject)(),
+    __metadata("design:type", Object)
+], CreatePostDto.prototype, "seo", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreatePostDto.prototype, "canonical", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreatePostDto.prototype, "description", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.IsString)({ each: true }) // Garante que cada item do array é string
+    ,
+    __metadata("design:type", Array)
+], CreatePostDto.prototype, "keywords", void 0);
 ;
-seo ?  : {
-    canonical: string,
-    description: string
-};
-keywords ?  : string[];
-;
+constructor(categoryId, string, subcategoryId, string, contentHTML, string, postInfo, { authorId: string, tags: string[] }, excerpt, string, publishDate, string, slug, string, title, string, seo ?  : { canonical: string, description: string, keywords: string[] });
+{
+    this.categoryId = categoryId;
+    this.subcategoryId = subcategoryId;
+    this.contentHTML = contentHTML;
+    this.postInfo = postInfo;
+    this.excerpt = excerpt;
+    this.publishDate = publishDate;
+    this.slug = slug;
+    this.title = title;
+    this.seo = seo;
+}

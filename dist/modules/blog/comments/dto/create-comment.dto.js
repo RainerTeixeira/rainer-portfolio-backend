@@ -11,8 +11,14 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateCommentDto = void 0;
-const class_validator_1 = require("class-validator"); // Import decorators de validação
+const class_validator_1 = require("class-validator");
 class CreateCommentDto {
+    constructor(postId, authorId, content, date) {
+        this.postId = postId;
+        this.authorId = authorId;
+        this.content = content;
+        this.date = date;
+    }
 }
 exports.CreateCommentDto = CreateCommentDto;
 __decorate([
@@ -31,13 +37,7 @@ __decorate([
     __metadata("design:type", String)
 ], CreateCommentDto.prototype, "content", void 0);
 __decorate([
-    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateCommentDto.prototype, "date", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)() // Status pode ser opcional ao criar, com um valor padrão no backend
-    ,
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], CreateCommentDto.prototype, "status", void 0);

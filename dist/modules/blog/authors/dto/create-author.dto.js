@@ -11,8 +11,16 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateAuthorDto = void 0;
-const class_validator_1 = require("class-validator"); // Import decorators de validação (opcional, mas recomendado)
+const class_validator_1 = require("class-validator");
 class CreateAuthorDto {
+    constructor(postId, authorId, name, slug, expertise, socialProof) {
+        this.postId = postId;
+        this.authorId = authorId;
+        this.name = name;
+        this.slug = slug;
+        this.expertise = expertise;
+        this.socialProof = socialProof;
+    }
 }
 exports.CreateAuthorDto = CreateAuthorDto;
 __decorate([
@@ -36,13 +44,12 @@ __decorate([
     __metadata("design:type", String)
 ], CreateAuthorDto.prototype, "slug", void 0);
 __decorate([
-    (0, class_validator_1.IsArray)() // Validação que expertise é um array (opcional, dependendo da sua necessidade)
-    ,
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsArray)(),
     __metadata("design:type", Array)
 ], CreateAuthorDto.prototype, "expertise", void 0);
 __decorate([
-    (0, class_validator_1.IsObject)() // Validação que socialProof é um objeto (opcional)
-    ,
     (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsObject)(),
     __metadata("design:type", Object)
 ], CreateAuthorDto.prototype, "socialProof", void 0);

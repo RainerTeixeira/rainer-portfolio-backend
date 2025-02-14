@@ -25,8 +25,6 @@ var _a, _b, _c;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SubcategoryController = void 0;
 const common_1 = require("@nestjs/common"); // Importa decorators do NestJS para controllers.
-const subcategory_service_1 = require("@src/modules/blog/subcategoria/services/subcategory.service"); // Importa SubcategoriaService usando alias @src.
-const update_subcategory_dto_1 = require("@src/modules/blog/subcategoria/dto/update-subcategory.dto"); // Importa UpdateSubcategoriaDto usando alias @src.
 let SubcategoryController = class SubcategoryController {
     constructor(subcategoryService) {
         this.subcategoryService = subcategoryService;
@@ -85,7 +83,7 @@ __decorate([
     __param(1, (0, common_1.Param)('subcategoryId')),
     __param(2, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, typeof (_c = typeof update_subcategory_dto_1.UpdateSubcategoriaDto !== "undefined" && update_subcategory_dto_1.UpdateSubcategoriaDto) === "function" ? _c : Object]),
+    __metadata("design:paramtypes", [String, String, typeof (_c = typeof UpdateSubcategoriaDto !== "undefined" && UpdateSubcategoriaDto) === "function" ? _c : Object]),
     __metadata("design:returntype", Promise)
 ], SubcategoryController.prototype, "update", null);
 __decorate([
@@ -98,5 +96,5 @@ __decorate([
 ], SubcategoryController.prototype, "remove", null);
 exports.SubcategoryController = SubcategoryController = __decorate([
     (0, common_1.Controller)('blog/subcategorias'),
-    __metadata("design:paramtypes", [typeof (_a = typeof subcategory_service_1.SubcategoriaService !== "undefined" && subcategory_service_1.SubcategoriaService) === "function" ? _a : Object])
+    __metadata("design:paramtypes", [typeof (_a = typeof SubcategoriaService !== "undefined" && SubcategoriaService) === "function" ? _a : Object])
 ], SubcategoryController);
