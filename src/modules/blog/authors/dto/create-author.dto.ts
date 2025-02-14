@@ -1,38 +1,43 @@
 // src/modules/blog/authors/dto/create-author.dto.ts
-
-import { IsNotEmpty, IsString, IsArray, IsOptional, IsObject } from 'class-validator';
+import { IsString, IsArray, IsOptional, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
+import { AuthorSocialProofDto } from './author-social-proof.dto';
 
 export class CreateAuthorDto {
-    @IsNotEmpty()
     @IsString()
     postId: string;
 
-    @IsNotEmpty()
     @IsString()
     authorId: string;
 
-    @IsNotEmpty()
+    @IsArray()
+    @IsString({ each: true })
+    expertise: string[];
+
     @IsString()
     name: string;
 
-    @IsNotEmpty()
     @IsString()
     slug: string;
 
     @IsOptional()
-    @IsArray()
-    expertise?: string[];
+    @ValidateNested()
+    @Type(() => AuthorSocialProofDto)
+    socialProof?: AuthorSocialProofDto;
 
-    @IsOptional()
-    @IsObject()
-    socialProof?: { [key: string]: string };
-
-    constructor(postId: string, authorId: string, name: string, slug: string, expertise?: string[], socialProof?: { [key: string]: string }) {
+    constructor(
+        postId: string,
+        authorId: string,
+        expertise: string[],
+        name: string,
+        slug: string,
+        socialProof?: AuthorSocialProofDto, // SocialProof é opcional
+    ) {
         this.postId = postId;
         this.authorId = authorId;
+        this.expertise = expertise;
         this.name = name;
         this.slug = slug;
-        this.expertise = expertise;
         this.socialProof = socialProof;
     }
 }

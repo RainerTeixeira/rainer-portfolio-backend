@@ -1,5 +1,4 @@
 "use strict";
-// src/modules/blog/posts/dto/update-post.dto.ts
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -11,7 +10,15 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UpdatePostDto = void 0;
-const class_validator_1 = require("class-validator"); // Import decorators de validação
+// src/modules/blog/posts/dto/update-post.dto.ts
+const class_validator_1 = require("class-validator");
+const class_transformer_1 = require("class-transformer");
+const post_info_dto_1 = require("./post-info.dto");
+const post_seo_dto_1 = require("./post-seo.dto");
+/**
+ * DTO para atualizar um Post existente.
+ * Todas as propriedades são opcionais, pois apenas os campos que precisam ser atualizados serão enviados.
+ */
 class UpdatePostDto {
 }
 exports.UpdatePostDto = UpdatePostDto;
@@ -32,11 +39,13 @@ __decorate([
 ], UpdatePostDto.prototype, "contentHTML", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsObject)(),
-    __metadata("design:type", Object)
+    (0, class_validator_1.ValidateNested)(),
+    (0, class_transformer_1.Type)(() => post_info_dto_1.PostInfoDto),
+    __metadata("design:type", post_info_dto_1.PostInfoDto)
 ], UpdatePostDto.prototype, "postInfo", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsObject)(),
-    __metadata("design:type", Object)
+    (0, class_validator_1.ValidateNested)(),
+    (0, class_transformer_1.Type)(() => post_seo_dto_1.PostSeoDto),
+    __metadata("design:type", post_seo_dto_1.PostSeoDto)
 ], UpdatePostDto.prototype, "seo", void 0);

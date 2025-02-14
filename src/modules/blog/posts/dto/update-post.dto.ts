@@ -1,42 +1,33 @@
 // src/modules/blog/posts/dto/update-post.dto.ts
+import { IsString, IsOptional, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
+import { PostInfoDto } from './post-info.dto';
+import { PostSeoDto } from './post-seo.dto';
 
-import { PostDto } from '@src/modules/blog/posts/dto/post.dto'; // Import PostDto usando alias @src.
-import { IsOptional, IsString, IsNumber, IsObject, IsArray } from 'class-validator'; // Import decorators de validação
-
+/**
+ * DTO para atualizar um Post existente.
+ * Todas as propriedades são opcionais, pois apenas os campos que precisam ser atualizados serão enviados.
+ */
 export class UpdatePostDto {
     @IsOptional()
     @IsString()
-    categoryId?: string;
+    categoryId?: string; // Opcional para atualização
 
     @IsOptional()
     @IsString()
-    subcategoryId?: string;
+    subcategoryId?: string; // Opcional para atualização
 
     @IsOptional()
     @IsString()
-    contentHTML?: string;
+    contentHTML?: string; // Opcional para atualização
 
     @IsOptional()
-    @IsObject()
-    postInfo?: {
-        authorId?: string;
-        excerpt?: string;
-        featuredImageURL?: string;
-        modifiedDate?: string;
-        publishDate?: string;
-        readingTime?: number;
-        slug?: string;
-        status?: string;
-        tags?: string[];
-        title?: string;
-        views?: number;
-    };
+    @ValidateNested()
+    @Type(() => PostInfoDto)
+    postInfo?: PostInfoDto; // Opcional para atualização
 
     @IsOptional()
-    @IsObject()
-    seo?: {
-        canonical?: string;
-        description?: string;
-        keywords?: string[];
-    };
+    @ValidateNested()
+    @Type(() => PostSeoDto)
+    seo?: PostSeoDto; // Opcional para atualização
 }

@@ -9,43 +9,29 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UpdateAuthorDto = void 0;
-// src/modules/blog/authors/dto/update-author.dto.ts
+exports.PostSeoDto = void 0;
+// src/modules/blog/posts/dto/post-seo.dto.ts
 const class_validator_1 = require("class-validator");
-const class_transformer_1 = require("class-transformer");
-const author_social_proof_dto_1 = require("./author-social-proof.dto");
-class UpdateAuthorDto {
+/**
+ * DTO para o objeto aninhado 'seo' dentro do PostDto.
+ * Define as propriedades relacionadas a SEO para um post.
+ */
+class PostSeoDto {
 }
-exports.UpdateAuthorDto = UpdateAuthorDto;
+exports.PostSeoDto = PostSeoDto;
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], UpdateAuthorDto.prototype, "postId", void 0);
+], PostSeoDto.prototype, "canonical", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], UpdateAuthorDto.prototype, "authorId", void 0);
+], PostSeoDto.prototype, "description", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsArray)(),
     (0, class_validator_1.IsString)({ each: true }),
     __metadata("design:type", Array)
-], UpdateAuthorDto.prototype, "expertise", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], UpdateAuthorDto.prototype, "name", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], UpdateAuthorDto.prototype, "slug", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.ValidateNested)(),
-    (0, class_transformer_1.Type)(() => author_social_proof_dto_1.AuthorSocialProofDto),
-    __metadata("design:type", author_social_proof_dto_1.AuthorSocialProofDto)
-], UpdateAuthorDto.prototype, "socialProof", void 0);
+], PostSeoDto.prototype, "keywords", void 0);
