@@ -20,8 +20,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CommentsService = void 0;
-const common_1 = require("@nestjs/common");
-const dynamoDb_service_1 = require("../../../../services/dynamoDb.service");
+const common_1 = require("@nestjs/common"); // Importa Injectable e NotFoundException do NestJS.
+const dynamoDb_service_1 = require("../../../../services/dynamoDb.service"); // Importa DynamoDbService usando alias @src.
 let CommentsService = class CommentsService {
     constructor(dynamoDbService) {
         this.dynamoDbService = dynamoDbService;

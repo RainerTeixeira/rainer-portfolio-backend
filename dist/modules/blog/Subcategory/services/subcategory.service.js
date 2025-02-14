@@ -21,7 +21,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SubcategoriaService = void 0;
 const common_1 = require("@nestjs/common");
-const dynamoDb_service_1 = require("../../../../services/dynamoDb.service");
+const dynamodb_service_1 = require("../../../../services/dynamodb.service"); // Importa DynamoDbService usando alias @src.
 let SubcategoriaService = class SubcategoriaService {
     constructor(dynamoDbService) {
         this.dynamoDbService = dynamoDbService;
@@ -95,5 +95,5 @@ let SubcategoriaService = class SubcategoriaService {
 exports.SubcategoriaService = SubcategoriaService;
 exports.SubcategoriaService = SubcategoriaService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [dynamoDb_service_1.DynamoDbService])
+    __metadata("design:paramtypes", [dynamodb_service_1.DynamoDbService])
 ], SubcategoriaService);

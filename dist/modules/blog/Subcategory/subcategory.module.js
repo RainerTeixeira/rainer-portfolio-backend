@@ -10,13 +10,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.SubcategoryModule = void 0;
 const common_1 = require("@nestjs/common");
 const subcategory_controller_1 = require("./controllers/subcategory.controller");
+const subcategory_service_1 = require("./services/subcategory.service");
 let SubcategoryModule = class SubcategoryModule {
 };
 exports.SubcategoryModule = SubcategoryModule;
 exports.SubcategoryModule = SubcategoryModule = __decorate([
     (0, common_1.Module)({
         controllers: [subcategory_controller_1.SubcategoryController],
-        providers: [SubcategoryService],
-        exports: SubcategoryService
+        providers: [subcategory_service_1.SubcategoryService],
+        exports: subcategory_service_1.SubcategoryService
     })
 ], SubcategoryModule);

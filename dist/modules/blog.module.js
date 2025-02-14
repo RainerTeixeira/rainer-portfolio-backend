@@ -24,14 +24,14 @@ exports.BlogModule = BlogModule = __decorate([
             categories_module_1.CategoriesModule,
             comments_module_1.CommentsModule,
             posts_module_1.PostsModule,
-            subcategory_module_1.SubcategoriaModule,
+            subcategory_module_1.SubcategoryModule,
         ],
         exports: [
             authors_module_1.AuthorsModule,
             categories_module_1.CategoriesModule,
             comments_module_1.CommentsModule,
             posts_module_1.PostsModule,
-            subcategory_module_1.SubcategoriaModule,
+            subcategory_module_1.SubcategoryModule,
         ],
     })
 ], BlogModule);
