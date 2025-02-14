@@ -1,21 +1,9 @@
-import { IsString, IsNumber, IsOptional, ValidateNested } from 'class-validator';
-import { Type } from 'class-transformer';
+// src/modules/blog/comments/dto/update-comment.dto.ts
 
-class UpdateAuthorCommentDto {
-    @IsOptional()
-    @IsString()
-    name?: string;
-
-    @IsOptional()
-    @IsString()
-    emailHash?: string;
-}
+import { CommentDto } from './comment.dto';
+import { IsOptional, IsString, IsNumber } from 'class-validator'; // Import decorators de validação
 
 export class UpdateCommentDto {
-    @IsOptional()
-    @IsNumber()
-    postId?: number;
-
     @IsOptional()
     @IsString()
     content?: string;
@@ -23,11 +11,6 @@ export class UpdateCommentDto {
     @IsOptional()
     @IsString()
     date?: string;
-
-    @IsOptional()
-    @ValidateNested()
-    @Type(() => UpdateAuthorCommentDto)
-    author?: UpdateAuthorCommentDto;
 
     @IsOptional()
     @IsString()
