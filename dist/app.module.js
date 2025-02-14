@@ -9,17 +9,14 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AppModule = void 0;
 const common_1 = require("@nestjs/common");
-const app_controller_1 = require("./app.controller");
-const app_service_1 = require("./app.service");
-const dynamoDb_service_1 = require("./services/dynamoDb.service"); // Importe o DynamoDbService
-const blog_module_1 = require("./modules/blog/blog.module"); // Importe o BlogModule
+const dynamoDb_service_1 = require("./services/dynamoDb.service"); // Import do DynamoDbService usando @src
+const blog_module_1 = require("@src/modules/blog/blog.module"); // Import correto do BlogModule
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
         imports: [blog_module_1.BlogModule], // Importe o BlogModule aqui
-        controllers: [app_controller_1.AppController],
-        providers: [app_service_1.AppService, dynamoDb_service_1.DynamoDbService], // Declare o DynamoDbService como provider global
+        providers: [dynamoDb_service_1.DynamoDbService], // Declare DynamoDbService como provider
     })
 ], AppModule);

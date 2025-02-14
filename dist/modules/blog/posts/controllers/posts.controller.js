@@ -23,10 +23,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PostsController = void 0;
-const common_1 = require("@nestjs/common");
-const posts_service_1 = require("../services/posts.service");
-const create_post_dto_1 = require("../dto/create-post.dto");
-const update_post_dto_1 = require("../dto/update-post.dto");
+const common_1 = require("@nestjs/common"); // Importa decorators do NestJS para controllers.
+const posts_service_1 = require("../services/posts.service"); // Importa PostsService usando alias @src.
+const create_post_dto_1 = require("../dto/create-post.dto"); // Importa CreatePostDto usando alias @src.
+const update_post_dto_1 = require("../dto/update-post.dto"); // Importa UpdatePostDto usando alias @src.
 let PostsController = class PostsController {
     constructor(postsService) {
         this.postsService = postsService;

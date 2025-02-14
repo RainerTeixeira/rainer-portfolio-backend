@@ -18,10 +18,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthorsService = void 0;
-const common_1 = require("@nestjs/common");
-const dynamoDb_service_1 = require("../../../../services/dynamoDb.service"); // Importa DynamoDbService
 let AuthorsService = class AuthorsService {
     constructor(dynamoDbService) {
         this.dynamoDbService = dynamoDbService;
@@ -58,7 +57,7 @@ let AuthorsService = class AuthorsService {
             };
             const result = yield this.dynamoDbService.getItem(params);
             if (!result.Item) {
-                throw new common_1.NotFoundException(`Author com postId '${postId}' e authorId '${authorId}' não encontrado`);
+                throw new NotFoundException(`Author com postId '${postId}' e authorId '${authorId}' não encontrado`);
             }
             return result.Item;
         });
@@ -95,7 +94,7 @@ let AuthorsService = class AuthorsService {
     }
 };
 exports.AuthorsService = AuthorsService;
-exports.AuthorsService = AuthorsService = __decorate([
-    (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [dynamoDb_service_1.DynamoDbService])
-], AuthorsService);
+exports.AuthorsService = authors_service_1.AuthorsService = __decorate([
+    Injectable(),
+    __metadata("design:paramtypes", [typeof (_a = typeof DynamoDbService !== "undefined" && DynamoDbService) === "function" ? _a : Object])
+], authors_service_1.AuthorsService);

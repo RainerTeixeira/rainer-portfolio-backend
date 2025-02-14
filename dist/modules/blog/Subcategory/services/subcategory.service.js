@@ -1,5 +1,5 @@
 "use strict";
-// src/modules/blog/subcategoria/services/subcategoria.service.ts
+// src/modules/blog/Subcategory/services/subcaSubcategorytegoria.service.ts
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -25,7 +25,7 @@ const dynamoDb_service_1 = require("../../../../services/dynamoDb.service");
 let SubcategoriaService = class SubcategoriaService {
     constructor(dynamoDbService) {
         this.dynamoDbService = dynamoDbService;
-        this.tableName = 'Subcategoria';
+        this.tableName = 'Subcategory';
     }
     create(createSubcategoriaDto) {
         return __awaiter(this, void 0, void 0, function* () {

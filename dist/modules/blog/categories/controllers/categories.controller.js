@@ -23,10 +23,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CategoriesController = void 0;
-const common_1 = require("@nestjs/common");
-const categories_service_1 = require("../services/categories.service");
-const create_category_dto_1 = require("../dto/create-category.dto");
-const update_category_dto_1 = require("../dto/update-category.dto");
+const common_1 = require("@nestjs/common"); // Importa decorators do NestJS para controllers.
+const categories_service_1 = require("../services/categories.service"); // Importa CategoriesService usando alias @src.
+const create_category_dto_1 = require("../dto/create-category.dto"); // Importa CreateCategoryDto usando alias @src.
+const update_category_dto_1 = require("../dto/update-category.dto"); // Importa UpdateCategoryDto usando alias @src.
 let CategoriesController = class CategoriesController {
     constructor(categoriesService) {
         this.categoriesService = categoriesService;

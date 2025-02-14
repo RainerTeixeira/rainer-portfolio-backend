@@ -9,11 +9,11 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BlogModule = void 0;
 const common_1 = require("@nestjs/common");
-const authors_module_1 = require("./authors/authors.module");
-const categories_module_1 = require("./categories/categories.module");
-const comments_module_1 = require("./comments/comments.module");
-const posts_module_1 = require("./posts/posts.module");
-const subcategoria_module_1 = require("./subcategoria/subcategoria.module");
+const authors_module_1 = require("./blog/authors/authors.module"); // import com @src  
+const categories_module_1 = require("./blog/categories/categories.module"); // Import com @src
+const comments_module_1 = require("./blog/comments/comments.module"); // Import com @src
+const posts_module_1 = require("./blog/posts/posts.module"); // Import com @src
+const subcategory_module_1 = require("./blog/Subcategory/subcategory.module"); // Import com @src
 let BlogModule = class BlogModule {
 };
 exports.BlogModule = BlogModule;
@@ -24,14 +24,14 @@ exports.BlogModule = BlogModule = __decorate([
             categories_module_1.CategoriesModule,
             comments_module_1.CommentsModule,
             posts_module_1.PostsModule,
-            subcategoria_module_1.SubcategoriaModule,
+            subcategory_module_1.SubcategoriaModule,
         ],
         exports: [
             authors_module_1.AuthorsModule,
             categories_module_1.CategoriesModule,
             comments_module_1.CommentsModule,
             posts_module_1.PostsModule,
-            subcategoria_module_1.SubcategoriaModule,
+            subcategory_module_1.SubcategoriaModule,
         ],
     })
 ], BlogModule);

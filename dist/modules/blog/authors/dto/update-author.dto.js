@@ -11,7 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UpdateAuthorDto = void 0;
-const class_validator_1 = require("class-validator"); // Import decorators de validação (opcional)
+const class_validator_1 = require("class-validator"); // Import decorators de validação (mantenha este import - é um pacote externo)
 class UpdateAuthorDto {
 }
 exports.UpdateAuthorDto = UpdateAuthorDto;

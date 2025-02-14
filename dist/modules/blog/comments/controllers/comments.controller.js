@@ -23,10 +23,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CommentsController = void 0;
-const common_1 = require("@nestjs/common");
-const comments_service_1 = require("../services/comments.service");
-const create_comment_dto_1 = require("../dto/create-comment.dto");
-const update_comment_dto_1 = require("../dto/update-comment.dto");
+const common_1 = require("@nestjs/common"); // Importa decorators do NestJS para controllers.
+const comments_service_1 = require("../services/comments.service"); // Importa CommentsService usando alias @src.
+const create_comment_dto_1 = require("../dto/create-comment.dto"); // Importa CreateCommentDto usando alias @src.
+const update_comment_dto_1 = require("../dto/update-comment.dto"); // Importa UpdateCommentDto usando alias @src.
 let CommentsController = class CommentsController {
     constructor(commentsService) {
         this.commentsService = commentsService;
