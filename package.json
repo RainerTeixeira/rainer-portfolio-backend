@@ -8,9 +8,9 @@
   "scripts": {
     "prebuild": "if exist dist rmdir /s /q dist || echo Diretório dist não encontrado, continuando...",
     "build": "nest build",
-    "start": "ts-node -r tsconfig-paths/register src/main.ts",
-    "start:dev": "ts-node-dev --require tsconfig-paths/register --respawn --transpile-only src/main.ts",
-    "start:prod": "node dist/main.js",
+    "start": "ts-node -r tsconfig-paths/register src/handler.ts",
+    "start:dev": "ts-node-dev --require tsconfig-paths/register --respawn --transpile-only src/handler.ts",
+    "start:prod": "node dist/handler.js",
     "lint": "eslint 'src/**/*.ts' --fix"
   },
   "dependencies": {
@@ -76,7 +76,7 @@
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
   },
-  "main": "index.js",
+  "handler": "index.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/RainerTeixeira/rainer-portfolio-backend.git"

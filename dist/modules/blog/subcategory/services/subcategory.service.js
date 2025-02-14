@@ -29,96 +29,96 @@ let SubcategoryService = class SubcategoryService {
     }
     createSubcategory(categoryIdSubcategoryId, createSubcategoryDto) {
         return __awaiter(this, void 0, void 0, function* () {
-            const compositeKey = `${createSubcategoryDto.categoryId}#${createSubcategoryDto.subcategoryId}`; // Cria chave composta
+            const compositeKey = `${createSubcategoryDto.categoryId}#${createSubcategoryDto.subcategoryId}`; // Cria chave composta (categoryId#subcategoryId)
             const params = {
                 TableName: this.tableName,
                 Item: Object.assign(Object.assign({}, createSubcategoryDto), { 'categoryId#subcategoryId': compositeKey, subcategoryId: createSubcategoryDto.subcategoryId }),
             };
-            yield this.dynamoDbService.putItem(params); // Salva o item no DynamoDB
-            return this.getSubcategoryById(categoryIdSubcategoryId, createSubcategoryDto.subcategoryId); // Retorna a subcategoria criada
+            yield this.dynamoDbService.putItem(params); // Salva o novo item no DynamoDB
+            return this.getSubcategoryById(categoryIdSubcategoryId, createSubcategoryDto.subcategoryId); // Retorna a subcategoria recém-criada buscando-a pelo ID
         });
     }
     getAllSubcategories(categoryIdSubcategoryId) {
         return __awaiter(this, void 0, void 0, function* () {
             const params = {
                 TableName: this.tableName,
-                FilterExpression: 'begins_with(#pk, :pk_prefix)', // Correção: FilterExpression para buscar por prefixo da chave de partição
+                FilterExpression: 'begins_with(#pk, :pk_prefix)', // FilterExpression para buscar por prefixo da chave de partição (PK)
                 ExpressionAttributeNames: {
-                    '#pk': 'categoryId#subcategoryId', // Define '#pk' para 'categoryId#subcategoryId'
+                    '#pk': 'categoryId#subcategoryId', // Placeholder para o nome do atributo da chave de partição
                 },
                 ExpressionAttributeValues: {
-                    ':pk_prefix': categoryIdSubcategoryId, // Define ':pk_prefix' para o valor de categoryIdSubcategoryId
+                    ':pk_prefix': categoryIdSubcategoryId, // Placeholder para o valor do prefixo da chave de partição
                 },
             };
-            const result = yield this.dynamoDbService.scan(params); // Correção: Usando dynamoDbService.scan (nome correto do método)
+            const result = yield this.dynamoDbService.scan(params); // Escaneia a tabela (busca eficiente para este caso)
             if (!result.Items) {
                 return []; // Retorna array vazio se não encontrar itens
             }
             return result.Items.map((item) => {
-                var _a, _b, _c, _d;
+                var _a, _b, _c;
                 return ({
-                    'categoryId#subcategoryId': (_a = item['categoryId#subcategoryId']) === null || _a === void 0 ? void 0 : _a.S, // Mantém, busca do item do DynamoDB
-                    subcategoryId: (_b = item.subcategoryId) === null || _b === void 0 ? void 0 : _b.S,
-                    name: (_c = item.name) === null || _c === void 0 ? void 0 : _c.S,
-                    slug: (_d = item.slug) === null || _d === void 0 ? void 0 : _d.S,
+                    categoryIdSubcategoryId: categoryIdSubcategoryId, // **Correção Crucial: Nome da propriedade corrigido para categoryIdSubcategoryId**
+                    subcategoryId: (_a = item.subcategoryId) === null || _a === void 0 ? void 0 : _a.S,
+                    name: (_b = item.name) === null || _b === void 0 ? void 0 : _b.S,
+                    slug: (_c = item.slug) === null || _c === void 0 ? void 0 : _c.S,
                 });
-            }) || [];
+            }) || []; // Converte o objeto literal para SubcategoryDto
         });
     }
     getSubcategoryById(categoryIdSubcategoryId, subcategoryId) {
         return __awaiter(this, void 0, void 0, function* () {
-            var _a, _b, _c, _d;
+            var _a, _b, _c;
             const params = {
                 TableName: this.tableName,
                 Key: {
-                    'categoryId#subcategoryId': categoryIdSubcategoryId, // Usa a chave de partição composta
-                    subcategoryId: subcategoryId, // Usa subcategoryId como chave de ordenação
+                    'categoryId#subcategoryId': categoryIdSubcategoryId, // Chave primária de partição (PK)
+                    subcategoryId: subcategoryId, // Chave primária de ordenação (SK)
                 },
             };
-            const result = yield this.dynamoDbService.getItem(params); // Busca o item por chave
+            const result = yield this.dynamoDbService.getItem(params); // Busca o item no DynamoDB usando a chave
             if (!result.Item) {
-                throw new common_1.NotFoundException(`Subcategory com ID '${subcategoryId}' na categoria '${categoryIdSubcategoryId}' não encontrada`); // Lança exceção se não encontrar
+                throw new common_1.NotFoundException(`Subcategoria com ID '${subcategoryId}' na categoria '${categoryIdSubcategoryId}' não encontrada`); // Lança exceção se não encontrar
             }
             return {
-                'categoryId#subcategoryId': (_a = result.Item['categoryId#subcategoryId']) === null || _a === void 0 ? void 0 : _a.S, // Mantém, busca do item do DynamoDB
-                subcategoryId: (_b = result.Item.subcategoryId) === null || _b === void 0 ? void 0 : _b.S,
-                name: (_c = result.Item.name) === null || _c === void 0 ? void 0 : _c.S,
-                slug: (_d = result.Item.slug) === null || _d === void 0 ? void 0 : _d.S,
-            };
+                categoryIdSubcategoryId: categoryIdSubcategoryId, // **Correção Crucial: Nome da propriedade corrigido para categoryIdSubcategoryId**
+                subcategoryId: (_a = result.Item.subcategoryId) === null || _a === void 0 ? void 0 : _a.S,
+                name: (_b = result.Item.name) === null || _b === void 0 ? void 0 : _b.S,
+                slug: (_c = result.Item.slug) === null || _c === void 0 ? void 0 : _c.S,
+            }; // Converte o objeto literal para SubcategoryDto
         });
     }
     updateSubcategory(categoryIdSubcategoryId, subcategoryId, updateSubcategoryDto) {
         return __awaiter(this, void 0, void 0, function* () {
-            var _a, _b, _c, _d;
-            yield this.getSubcategoryById(categoryIdSubcategoryId, subcategoryId); // Verifica se a subcategoria existe antes de atualizar
+            var _a, _b, _c;
+            yield this.getSubcategoryById(categoryIdSubcategoryId, subcategoryId); // Garante que a subcategoria existe antes de tentar atualizar
             const updateExpression = this.dynamoDbService.buildUpdateExpression(updateSubcategoryDto); // Constrói a expressão de atualização dinamicamente
             if (!updateExpression) {
-                return this.getSubcategoryById(categoryIdSubcategoryId, subcategoryId); // Se não houver nada para atualizar, retorna a subcategoria existente
+                return this.getSubcategoryById(categoryIdSubcategoryId, subcategoryId); // Se não houver campos para atualizar, retorna a subcategoria existente
             }
             const params = Object.assign(Object.assign({ TableName: this.tableName, Key: {
-                    'categoryId#subcategoryId': categoryIdSubcategoryId, // Usa a chave de partição composta
-                    subcategoryId: subcategoryId, // Usa subcategoryId como chave de ordenação
+                    'categoryId#subcategoryId': categoryIdSubcategoryId, // Chave primária de partição (PK)
+                    subcategoryId: subcategoryId, // Chave primária de ordenação (SK)
                 } }, updateExpression), { ReturnValues: 'ALL_NEW' });
             const result = yield this.dynamoDbService.updateItem(params); // Atualiza o item no DynamoDB
-            if (!result.Attributes) { // Verifica se `result.Attributes` existe para evitar erro de "possibly undefined"
-                throw new common_1.NotFoundException(`Subcategoria com ID '${subcategoryId}' na categoria '${categoryIdSubcategoryId}' não encontrada após atualização.`); // Lança exceção se updateItem não retornar Attributes
+            if (!result.Attributes) {
+                throw new common_1.NotFoundException(`Subcategoria com ID '${subcategoryId}' na categoria '${categoryIdSubcategoryId}' não encontrada após atualização.`); // Lança exceção se não encontrar atributos após atualização
             }
             return {
-                'categoryId#subcategoryId': (_a = result.Attributes['categoryId#subcategoryId']) === null || _a === void 0 ? void 0 : _a.S, // Mantém, busca do Attributes retornado pelo DynamoDB
-                subcategoryId: (_b = result.Attributes.subcategoryId) === null || _b === void 0 ? void 0 : _b.S,
-                name: (_c = result.Attributes.name) === null || _c === void 0 ? void 0 : _c.S,
-                slug: (_d = result.Attributes.slug) === null || _d === void 0 ? void 0 : _d.S,
-            };
+                categoryIdSubcategoryId: categoryIdSubcategoryId, // **Correção Crucial: Nome da propriedade corrigido para categoryIdSubcategoryId**
+                subcategoryId: (_a = result.Attributes.subcategoryId) === null || _a === void 0 ? void 0 : _a.S,
+                name: (_b = result.Attributes.name) === null || _b === void 0 ? void 0 : _b.S,
+                slug: (_c = result.Attributes.slug) === null || _c === void 0 ? void 0 : _c.S,
+            }; // Converte o objeto literal para SubcategoryDto
         });
     }
     deleteSubcategory(categoryIdSubcategoryId, subcategoryId) {
         return __awaiter(this, void 0, void 0, function* () {
-            yield this.getSubcategoryById(categoryIdSubcategoryId, subcategoryId); // Verifica se a subcategoria existe antes de deletar
+            yield this.getSubcategoryById(categoryIdSubcategoryId, subcategoryId); // Garante que a subcategoria existe antes de deletar
             const params = {
                 TableName: this.tableName,
                 Key: {
-                    'categoryId#subcategoryId': categoryIdSubcategoryId, // Usa a chave de partição composta
-                    subcategoryId: subcategoryId, // Usa subcategoryId como chave de ordenação
+                    'categoryId#subcategoryId': categoryIdSubcategoryId, // Chave primária de partição (PK)
+                    subcategoryId: subcategoryId, // Chave primária de ordenação (SK)
                 },
             };
             yield this.dynamoDbService.deleteItem(params); // Deleta o item do DynamoDB

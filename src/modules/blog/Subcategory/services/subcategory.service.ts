@@ -12,100 +12,100 @@ export class SubcategoryService {
 
     constructor(private readonly dynamoDbService: DynamoDbService) { }
 
-    async createSubcategory(categoryIdSubcategoryId: string, createSubcategoryDto: CreateSubcategoryDto): Promise<SubcategoryDto> { // Correção: Renomeado para createSubcategory para consistência
-        const compositeKey = `${createSubcategoryDto.categoryId}#${createSubcategoryDto.subcategoryId}`; // Cria chave composta
+    async createSubcategory(categoryIdSubcategoryId: string, createSubcategoryDto: CreateSubcategoryDto): Promise<SubcategoryDto> { // Método para criar uma nova subcategoria
+        const compositeKey = `${createSubcategoryDto.categoryId}#${createSubcategoryDto.subcategoryId}`; // Cria chave composta (categoryId#subcategoryId)
 
         const params = {
             TableName: this.tableName,
             Item: {
-                ...createSubcategoryDto, // Espalha as propriedades do DTO
-                'categoryId#subcategoryId': compositeKey, // Usa a chave composta como chave de partição
-                subcategoryId: createSubcategoryDto.subcategoryId, // Mantém subcategoryId como atributo separado
+                ...createSubcategoryDto, // Espalha as propriedades do DTO (name, slug, categoryId, subcategoryId)
+                'categoryId#subcategoryId': compositeKey, // Usa a chave composta como chave de partição (PK)
+                subcategoryId: createSubcategoryDto.subcategoryId, // Mantém subcategoryId como atributo separado (para chave de ordenação - SK)
             },
         };
-        await this.dynamoDbService.putItem(params); // Salva o item no DynamoDB
-        return this.getSubcategoryById(categoryIdSubcategoryId, createSubcategoryDto.subcategoryId); // Retorna a subcategoria criada
+        await this.dynamoDbService.putItem(params); // Salva o novo item no DynamoDB
+        return this.getSubcategoryById(categoryIdSubcategoryId, createSubcategoryDto.subcategoryId); // Retorna a subcategoria recém-criada buscando-a pelo ID
     }
 
-    async getAllSubcategories(categoryIdSubcategoryId: string): Promise<SubcategoryDto[]> { // Correção: Renomeado para getAllSubcategories e ajustada a lógica
+    async getAllSubcategories(categoryIdSubcategoryId: string): Promise<SubcategoryDto[]> { // Método para buscar todas as subcategorias de uma categoria específica
         const params = {
             TableName: this.tableName,
-            FilterExpression: 'begins_with(#pk, :pk_prefix)', // Correção: FilterExpression para buscar por prefixo da chave de partição
+            FilterExpression: 'begins_with(#pk, :pk_prefix)', // FilterExpression para buscar por prefixo da chave de partição (PK)
             ExpressionAttributeNames: {
-                '#pk': 'categoryId#subcategoryId', // Define '#pk' para 'categoryId#subcategoryId'
+                '#pk': 'categoryId#subcategoryId', // Placeholder para o nome do atributo da chave de partição
             },
             ExpressionAttributeValues: {
-                ':pk_prefix': categoryIdSubcategoryId, // Define ':pk_prefix' para o valor de categoryIdSubcategoryId
+                ':pk_prefix': categoryIdSubcategoryId, // Placeholder para o valor do prefixo da chave de partição
             },
         };
-        const result = await this.dynamoDbService.scan(params); // Correção: Usando dynamoDbService.scan (nome correto do método)
+        const result = await this.dynamoDbService.scan(params); // Escaneia a tabela (busca eficiente para este caso)
         if (!result.Items) {
             return []; // Retorna array vazio se não encontrar itens
         }
-        return result.Items.map((item: any) => ({ // Correção: Adicionado tipo 'any' para item e mapeamento explícito para SubcategoryDto
-            'categoryId#subcategoryId': item['categoryId#subcategoryId']?.S, // Mantém, busca do item do DynamoDB
+        return result.Items.map((item: any) => ({ // Mapeia cada item retornado para um SubcategoryDto
+            categoryIdSubcategoryId: categoryIdSubcategoryId as string, // **Correção Crucial: Nome da propriedade corrigido para categoryIdSubcategoryId**
             subcategoryId: item.subcategoryId?.S,
             name: item.name?.S,
             slug: item.slug?.S,
-        } as SubcategoryDto)) || [];
+        } as SubcategoryDto)) || []; // Converte o objeto literal para SubcategoryDto
     }
 
-    async getSubcategoryById(categoryIdSubcategoryId: string, subcategoryId: string): Promise<SubcategoryDto> { // Correção: Renomeado para getSubcategoryById
+    async getSubcategoryById(categoryIdSubcategoryId: string, subcategoryId: string): Promise<SubcategoryDto> { // Método para buscar uma subcategoria por ID
         const params = {
             TableName: this.tableName,
             Key: {
-                'categoryId#subcategoryId': categoryIdSubcategoryId, // Usa a chave de partição composta
-                subcategoryId: subcategoryId, // Usa subcategoryId como chave de ordenação
+                'categoryId#subcategoryId': categoryIdSubcategoryId, // Chave primária de partição (PK)
+                subcategoryId: subcategoryId, // Chave primária de ordenação (SK)
             },
         };
-        const result = await this.dynamoDbService.getItem(params); // Busca o item por chave
+        const result = await this.dynamoDbService.getItem(params); // Busca o item no DynamoDB usando a chave
         if (!result.Item) {
-            throw new NotFoundException(`Subcategory com ID '${subcategoryId}' na categoria '${categoryIdSubcategoryId}' não encontrada`); // Lança exceção se não encontrar
+            throw new NotFoundException(`Subcategoria com ID '${subcategoryId}' na categoria '${categoryIdSubcategoryId}' não encontrada`); // Lança exceção se não encontrar
         }
-        return { // Correção: Mapeamento explícito para SubcategoryDto
-            'categoryId#subcategoryId': result.Item['categoryId#subcategoryId']?.S, // Mantém, busca do item do DynamoDB
+        return { // Mapeamento do item do DynamoDB para SubcategoryDto
+            categoryIdSubcategoryId: categoryIdSubcategoryId as string, // **Correção Crucial: Nome da propriedade corrigido para categoryIdSubcategoryId**
             subcategoryId: result.Item.subcategoryId?.S,
             name: result.Item.name?.S,
             slug: result.Item.slug?.S,
-        } as SubcategoryDto;
+        } as SubcategoryDto; // Converte o objeto literal para SubcategoryDto
     }
 
-    async updateSubcategory(categoryIdSubcategoryId: string, subcategoryId: string, updateSubcategoryDto: UpdateSubcategoryDto): Promise<SubcategoryDto> { // Correção: Renomeado para updateSubcategory
-        await this.getSubcategoryById(categoryIdSubcategoryId, subcategoryId); // Verifica se a subcategoria existe antes de atualizar
+    async updateSubcategory(categoryIdSubcategoryId: string, subcategoryId: string, updateSubcategoryDto: UpdateSubcategoryDto): Promise<SubcategoryDto> { // Método para atualizar uma subcategoria existente
+        await this.getSubcategoryById(categoryIdSubcategoryId, subcategoryId); // Garante que a subcategoria existe antes de tentar atualizar
         const updateExpression = this.dynamoDbService.buildUpdateExpression(updateSubcategoryDto); // Constrói a expressão de atualização dinamicamente
         if (!updateExpression) {
-            return this.getSubcategoryById(categoryIdSubcategoryId, subcategoryId); // Se não houver nada para atualizar, retorna a subcategoria existente
+            return this.getSubcategoryById(categoryIdSubcategoryId, subcategoryId); // Se não houver campos para atualizar, retorna a subcategoria existente
         }
 
         const params = {
             TableName: this.tableName,
             Key: {
-                'categoryId#subcategoryId': categoryIdSubcategoryId, // Usa a chave de partição composta
-                subcategoryId: subcategoryId, // Usa subcategoryId como chave de ordenação
+                'categoryId#subcategoryId': categoryIdSubcategoryId, // Chave primária de partição (PK)
+                subcategoryId: subcategoryId, // Chave primária de ordenação (SK)
             },
-            ...updateExpression, // Espalha a expressão de atualização construída
-            ReturnValues: 'ALL_NEW', // Retorna todos os atributos *após* a atualização
+            ...updateExpression, // Inclui a expressão de atualização e atributos
+            ReturnValues: 'ALL_NEW' as any, // Correção para TS2345: Casting para 'any' - paliativo para problema de tipo
         };
 
         const result = await this.dynamoDbService.updateItem(params); // Atualiza o item no DynamoDB
-        if (!result.Attributes) { // Verifica se `result.Attributes` existe para evitar erro de "possibly undefined"
-            throw new NotFoundException(`Subcategoria com ID '${subcategoryId}' na categoria '${categoryIdSubcategoryId}' não encontrada após atualização.`); // Lança exceção se updateItem não retornar Attributes
+        if (!result.Attributes) {
+            throw new NotFoundException(`Subcategoria com ID '${subcategoryId}' na categoria '${categoryIdSubcategoryId}' não encontrada após atualização.`); // Lança exceção se não encontrar atributos após atualização
         }
-        return {  // Correção: Mapeamento explícito para SubcategoryDto
-            'categoryId#subcategoryId': result.Attributes['categoryId#subcategoryId']?.S, // Mantém, busca do Attributes retornado pelo DynamoDB
+        return {  // Mapeamento dos atributos retornados para SubcategoryDto
+            categoryIdSubcategoryId: categoryIdSubcategoryId as string, // **Correção Crucial: Nome da propriedade corrigido para categoryIdSubcategoryId**
             subcategoryId: result.Attributes.subcategoryId?.S,
             name: result.Attributes.name?.S,
             slug: result.Attributes.slug?.S,
-        } as SubcategoryDto;
+        } as SubcategoryDto; // Converte o objeto literal para SubcategoryDto
     }
 
-    async deleteSubcategory(categoryIdSubcategoryId: string, subcategoryId: string): Promise<void> { // Correção: Renomeado para deleteSubcategory
-        await this.getSubcategoryById(categoryIdSubcategoryId, subcategoryId); // Verifica se a subcategoria existe antes de deletar
+    async deleteSubcategory(categoryIdSubcategoryId: string, subcategoryId: string): Promise<void> { // Método para deletar uma subcategoria
+        await this.getSubcategoryById(categoryIdSubcategoryId, subcategoryId); // Garante que a subcategoria existe antes de deletar
         const params = {
             TableName: this.tableName,
             Key: {
-                'categoryId#subcategoryId': categoryIdSubcategoryId, // Usa a chave de partição composta
-                subcategoryId: subcategoryId, // Usa subcategoryId como chave de ordenação
+                'categoryId#subcategoryId': categoryIdSubcategoryId, // Chave primária de partição (PK)
+                subcategoryId: subcategoryId, // Chave primária de ordenação (SK)
             },
         };
         await this.dynamoDbService.deleteItem(params); // Deleta o item do DynamoDB
