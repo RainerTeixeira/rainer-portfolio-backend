@@ -1,13 +1,18 @@
 "use strict";
 // src/modules/blog/posts/dto/post.dto.ts
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.PostDto = void 0;
+exports.PostDto = exports.PostStatus = void 0;
+var PostStatus;
+(function (PostStatus) {
+    PostStatus["DRAFT"] = "draft";
+    PostStatus["PUBLISHED"] = "published";
+    // ... outros status se necessário
+})(PostStatus || (exports.PostStatus = PostStatus = {}));
 class PostDto {
-    constructor(postId, categoryIdSubcategoryId, contentHTML, postInfo, excerpt, publishDate, slug, title, // title moved before status
-    status, // status moved before seo
+    constructor(postId, categoryIdSubcategoryId, contentHTML, postInfo, excerpt, publishDate, slug, title, status, // status: PostStatus no construtor
     seo) {
         this.postId = postId;
-        this['categoryId#subcategoryId'] = categoryIdSubcategoryId; // Use bracket notation for property name with special characters
+        this['categoryId#subcategoryId'] = categoryIdSubcategoryId;
         this.contentHTML = contentHTML;
         this.postInfo = postInfo;
         this.excerpt = excerpt;
@@ -16,8 +21,8 @@ class PostDto {
         this.title = title;
         this.status = status;
         this.seo = seo;
-        this.categoryId = categoryIdSubcategoryId.split('#')[0]; // Extract categoryId
-        this.subcategoryId = categoryIdSubcategoryId.split('#')[1]; // Extract subcategoryId
+        this.categoryId = categoryIdSubcategoryId.split('#')[0];
+        this.subcategoryId = categoryIdSubcategoryId.split('#')[1];
     }
 }
 exports.PostDto = PostDto;

@@ -25,7 +25,7 @@ export class PostsController {
     @Param('categoryIdSubcategoryId') categoryIdSubcategoryId: string,
     @Param('postId') postId: string,
   ): Promise<PostDto> {
-    return this.postsService.findOne(categoryIdSubcategoryId, postId);
+    return this.postsService.findOne(categoryIdSubcategoryId);
   }
 
   @Put(':categoryIdSubcategoryId/:postId')

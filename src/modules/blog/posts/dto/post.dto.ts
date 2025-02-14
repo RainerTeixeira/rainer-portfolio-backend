@@ -1,6 +1,10 @@
 // src/modules/blog/posts/dto/post.dto.ts
 
-import { PostStatus } from './post-status.enum'; // Importe o enum PostStatus
+export enum PostStatus {
+    DRAFT = 'draft',
+    PUBLISHED = 'published',
+    // ... outros status se necessário
+}
 
 export class PostDto {
     'categoryId#subcategoryId': string;
@@ -18,7 +22,7 @@ export class PostDto {
     publishDate: string;
     slug: string;
     title: string;
-    status?: string;
+    status: PostStatus; // Agora o tipo é PostStatus
     seo: {
         canonical?: string;
         description?: string;
@@ -33,12 +37,12 @@ export class PostDto {
         excerpt: string,
         publishDate: string,
         slug: string,
-        title: string,  // title moved before status
-        status: PostStatus, // status moved before seo
+        title: string,
+        status: PostStatus, // status: PostStatus no construtor
         seo?: { canonical?: string; description?: string; keywords?: string[] }
     ) {
         this.postId = postId;
-        this['categoryId#subcategoryId'] = categoryIdSubcategoryId; // Use bracket notation for property name with special characters
+        this['categoryId#subcategoryId'] = categoryIdSubcategoryId;
         this.contentHTML = contentHTML;
         this.postInfo = postInfo;
         this.excerpt = excerpt;
@@ -47,11 +51,7 @@ export class PostDto {
         this.title = title;
         this.status = status;
         this.seo = seo;
-        this.categoryId = categoryIdSubcategoryId.split('#')[0]; // Extract categoryId
-        this.subcategoryId = categoryIdSubcategoryId.split('#')[1]; // Extract subcategoryId
-
+        this.categoryId = categoryIdSubcategoryId.split('#')[0];
+        this.subcategoryId = categoryIdSubcategoryId.split('#')[1];
     }
 }
-
-
-
