@@ -1,4 +1,4 @@
-// src/modules/blog/categories/dto/category.dto.ts
+// src/modules/blog/category/dto/category.dto.ts
 
 export class CategoryDto {
     categoryId: string; // Chave de Partição (categoryId) - String
