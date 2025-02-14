@@ -1,4 +1,3 @@
-// src/modules/blog/posts/services/posts.service.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DynamoDB } from 'aws-sdk';
 import { v4 as uuidv4 } from 'uuid';
@@ -21,7 +20,7 @@ export class PostsService {
       TableName: this.tableName,
       Item: {
         'categoryId#subcategoryId': categoryIdSubcategoryId, // Chave de Partição Composta
-        postId: postId,                                  // Chave de Classificação
+        postId: postId,                                  // Chave de Classificação
         categoryId: createPostDto.categoryId,
         subcategoryId: createPostDto.subcategoryId,
         contentHTML: createPostDto.contentHTML,
@@ -103,6 +102,10 @@ export class PostsService {
 
     const result = await this.dynamoDb.scan(params).promise(); // ou query se usar GSI
 
+    if (!result.Items) { // Adicionando verificação para result.Items
+      return []; // Retorna um array vazio se result.Items for undefined/null
+    }
+
 
     return result.Items.map(item => {
       return {
@@ -124,7 +127,7 @@ export class PostsService {
           title: item.postInfo?.M.title?.S,
           views: Number(item.postInfo?.M.views?.N),
         } : undefined,
-        seo: item.seo?.M ? {  // Ajuste para garantir que seo e suas propriedades existam
+        seo: item.seo?.M ? {  // Ajuste para garantir que seo e suas propriedades existam
           canonical: item.seo?.M.canonical?.S,
           description: item.seo?.M.description?.S,
           keywords: item.seo?.M.keywords?.SS,

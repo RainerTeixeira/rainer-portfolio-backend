@@ -1,5 +1,4 @@
 "use strict";
-// src/modules/blog/posts/controllers/posts.controller.ts
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -23,46 +22,48 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PostsController = void 0;
-const common_1 = require("@nestjs/common"); // Importa decorators do NestJS para controllers.
-const posts_service_1 = require("../services/posts.service"); // Importa PostsService usando alias @src.
-const create_post_dto_1 = require("../dto/create-post.dto"); // Importa CreatePostDto usando alias @src.
-const update_post_dto_1 = require("../dto/update-post.dto"); // Importa UpdatePostDto usando alias @src.
+// src/modules/blog/posts/controllers/posts.controller.ts
+const common_1 = require("@nestjs/common");
+const posts_service_1 = require("../services/posts.service");
+const create_post_dto_1 = require("../dto/create-post.dto");
+const update_post_dto_1 = require("../dto/update-post.dto");
 let PostsController = class PostsController {
     constructor(postsService) {
         this.postsService = postsService;
     }
-    create(createPostDto) {
+    create(categoryIdSubcategoryId, createPostDto) {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.postsService.create(createPostDto);
+            return this.postsService.createPost(categoryIdSubcategoryId, createPostDto); // Correção: createPost
         });
     }
     findAll() {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.postsService.findAll();
+            return this.postsService.getAllPosts(); // Correção: getAllPosts
         });
     }
     findOne(categoryIdSubcategoryId, postId) {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.postsService.findOne(categoryIdSubcategoryId);
+            return this.postsService.getPostById(categoryIdSubcategoryId, postId); // Correção: getPostById
         });
     }
     update(categoryIdSubcategoryId, postId, updatePostDto) {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.postsService.update(categoryIdSubcategoryId, postId, updatePostDto);
+            return this.postsService.updatePost(categoryIdSubcategoryId, postId, updatePostDto); // Correção: updatePost
         });
     }
     remove(categoryIdSubcategoryId, postId) {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.postsService.remove(categoryIdSubcategoryId, postId);
+            return this.postsService.deletePost(categoryIdSubcategoryId, postId); // Correção: deletePost
         });
     }
 };
 exports.PostsController = PostsController;
 __decorate([
     (0, common_1.Post)(),
-    __param(0, (0, common_1.Body)()),
+    __param(0, (0, common_1.Param)('categoryIdSubcategoryId')),
+    __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [create_post_dto_1.CreatePostDto]),
+    __metadata("design:paramtypes", [String, create_post_dto_1.CreatePostDto]),
     __metadata("design:returntype", Promise)
 ], PostsController.prototype, "create", null);
 __decorate([
@@ -72,7 +73,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], PostsController.prototype, "findAll", null);
 __decorate([
-    (0, common_1.Get)(':categoryIdSubcategoryId/:postId'),
+    (0, common_1.Get)(':postId'),
     __param(0, (0, common_1.Param)('categoryIdSubcategoryId')),
     __param(1, (0, common_1.Param)('postId')),
     __metadata("design:type", Function),
@@ -80,7 +81,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], PostsController.prototype, "findOne", null);
 __decorate([
-    (0, common_1.Put)(':categoryIdSubcategoryId/:postId'),
+    (0, common_1.Patch)(':postId'),
     __param(0, (0, common_1.Param)('categoryIdSubcategoryId')),
     __param(1, (0, common_1.Param)('postId')),
     __param(2, (0, common_1.Body)()),
@@ -89,7 +90,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], PostsController.prototype, "update", null);
 __decorate([
-    (0, common_1.Delete)(':categoryIdSubcategoryId/:postId'),
+    (0, common_1.Delete)(':postId'),
     __param(0, (0, common_1.Param)('categoryIdSubcategoryId')),
     __param(1, (0, common_1.Param)('postId')),
     __metadata("design:type", Function),
@@ -97,6 +98,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], PostsController.prototype, "remove", null);
 exports.PostsController = PostsController = __decorate([
-    (0, common_1.Controller)('blog/posts'),
+    (0, common_1.Controller)('categories/:categoryIdSubcategoryId/posts') // Rota base para posts dentro de categorias
+    ,
     __metadata("design:paramtypes", [posts_service_1.PostsService])
 ], PostsController);
