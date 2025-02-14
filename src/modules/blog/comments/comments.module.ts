@@ -1,8 +1,9 @@
 // src/modules/blog/comments/comments.module.ts
 
-import { Module } from '@nestjs/common';
-import { CommentsController } from './controllers/comments.controller';
-import { CommentsService } from './services/comments.service';
+import { Module } from '@nestjs/common'; // Importa o decorator Module do NestJS.
+import { CommentsController } from '@src/modules/blog/comments/controllers/comments.controller'; // Importa CommentsController usando alias @src.
+import { CommentsService } from '@src/modules/blog/comments/services/comments.service'; // Importa CommentsService usando alias @src.
+
 
 @Module({
     controllers: [CommentsController],

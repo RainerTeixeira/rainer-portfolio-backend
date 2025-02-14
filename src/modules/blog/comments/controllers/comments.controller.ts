@@ -1,10 +1,10 @@
 // src/modules/blog/comments/controllers/comments.controller.ts
 
-import { Controller, Get, Post, Put, Delete, Body, Param } from '@nestjs/common';
-import { CommentsService } from '../services/comments.service';
-import { CreateCommentDto } from '../dto/create-comment.dto';
-import { UpdateCommentDto } from '../dto/update-comment.dto';
-import { CommentDto } from '../dto/comment.dto';
+import { Controller, Get, Post, Put, Delete, Body, Param } from '@nestjs/common'; // Importa decorators do NestJS para controllers.
+import { CommentsService } from '@src/modules/blog/comments/services/comments.service'; // Importa CommentsService usando alias @src.
+import { CreateCommentDto } from '@src/modules/blog/comments/dto/create-comment.dto'; // Importa CreateCommentDto usando alias @src.
+import { UpdateCommentDto } from '@src/modules/blog/comments/dto/update-comment.dto'; // Importa UpdateCommentDto usando alias @src.
+import { CommentDto } from '@src/modules/blog/comments/dto/comment.dto'; // Importa CommentDto usando alias @src.
 
 @Controller('blog/comments')
 export class CommentsController {

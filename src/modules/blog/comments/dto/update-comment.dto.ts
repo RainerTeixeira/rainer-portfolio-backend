@@ -1,6 +1,6 @@
 // src/modules/blog/comments/dto/update-comment.dto.ts
 
-import { CommentDto } from './comment.dto';
+import { CommentDto } from '@src/modules/blog/comments/dto/comment.dto'; // Import CommentDto usando alias @src.
 import { IsOptional, IsString, IsNumber } from 'class-validator'; // Import decorators de validação
 
 export class UpdateCommentDto {

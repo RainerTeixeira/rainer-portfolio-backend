@@ -1,6 +1,6 @@
 // src/modules/blog/categories/dto/create-category.dto.ts
 
-import { CategoryDto } from './category.dto';
+import { CategoryDto } from '@src/modules/blog/categories/dto/category.dto'; // Import CategoryDto usando alias @src.
 import { IsNotEmpty, IsString, IsOptional, IsObject, IsNumber } from 'class-validator'; // Import decorators de validação
 
 export class CreateCategoryDto {
