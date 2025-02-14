@@ -1,7 +1,6 @@
 // src/modules/blog/categories/dto/create-category.dto.ts
 
-import { CategoryDto } from '@src/modules/blog/category/dto/category.dto'; // Import CategoryDto usando alias @src.
-import { IsNotEmpty, IsString, IsOptional, IsObject, IsNumber } from 'class-validator'; // Import decorators de validação
+import { IsNotEmpty, IsString, IsOptional, IsObject, IsArray } from 'class-validator';
 
 export class CreateCategoryDto {
     @IsNotEmpty()
@@ -16,10 +15,24 @@ export class CreateCategoryDto {
     @IsString()
     slug: string;
 
-    @IsObject() // Validação que seo é um objeto (opcional)
     @IsOptional()
+    @IsObject()
     seo?: {
-        metaTitle?: string;
-        priority?: number;
+        @IsOptional()
+        @IsString()
+        canonical?: string;
+        @IsOptional()
+        @IsString()
+        description?: string;
+        @IsOptional()
+        @IsArray()
+        keywords?: string[];
     };
+
+    constructor(categoryId: string, name: string, slug: string, seo?: { canonical?: string, description?: string, keywords?: string[] }){
+        this.categoryId = categoryId;
+        this.name = name;
+        this.slug = slug;
+        this.seo = seo;
+    }
 }

@@ -1,9 +1,8 @@
 // src/modules/blog/subcategoria/dto/create-subcategoria.dto.ts
 
-import { SubcategoryDto } from '@src/modules/blog/subcategory/dto/subcategory.dto'; // Importa SubcategoryDto usando alias @src.
-import { IsNotEmpty, IsString, IsOptional, IsObject } from 'class-validator'; // Import decorators de validação
+import { IsNotEmpty, IsString, IsOptional } from 'class-validator';
 
-export class CreateSubcategoriaDto {
+export class CreateSubcategoryDto {
     @IsNotEmpty()
     @IsString()
     categoryId: string;
@@ -21,10 +20,14 @@ export class CreateSubcategoriaDto {
     slug: string;
 
     @IsOptional()
-    @IsObject()
-    seo?: {
-        description?: string;
-        keywords?: string;
-        title?: string;
-    };
+    @IsString()
+    description?: string;
+
+    constructor(categoryId: string, subcategoryId: string, name: string, slug: string, description?: string) {
+        this.categoryId = categoryId;
+        this.subcategoryId = subcategoryId;
+        this.name = name;
+        this.slug = slug;
+        this.description = description;
+    }
 }

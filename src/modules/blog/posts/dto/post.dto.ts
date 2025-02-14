@@ -8,20 +8,46 @@ export class PostDto {
     contentHTML: string;
     postInfo: { // Map aninhado
         authorId?: string;
-        excerpt?: string;
-        featuredImageURL?: string;
-        modifiedDate?: string; // Formato de data ISO String
-        publishDate?: string; // Formato de data ISO String
-        readingTime?: number;
-        slug?: string;
-        status?: string;
-        tags?: string[]; // Set de strings
-        title?: string;
+        tags?: string[];
+        likes?: number;
         views?: number;
     };
+    excerpt: string;
+    publishDate: string;
+    slug: string;
+    title: string;
+    status?: string; // Ex: "draft", "published", etc.
     seo: { // Map aninhado
         canonical?: string;
         description?: string;
-        keywords?: string[]; // Set de strings
+        keywords?: string[];
     };
+
+    constructor(
+        categoryIdSubcategoryId: string,
+        postId: string,
+        categoryId: string,
+        subcategoryId: string,
+        contentHTML: string,
+        postInfo: { authorId?: string; tags?: string[]; likes?: number; views?: number },
+        excerpt: string,
+        publishDate: string,
+        slug: string,
+        title: string,
+        status?: string,
+        seo: { canonical?: string; description?: string; keywords?: string[] }
+    ) {
+        this['categoryId#subcategoryId'] = categoryIdSubcategoryId; // Usando index signature para chave composta
+        this.postId = postId;
+        this.categoryId = categoryId;
+        this.subcategoryId = subcategoryId;
+        this.contentHTML = contentHTML;
+        this.postInfo = postInfo;
+        this.excerpt = excerpt;
+        this.publishDate = publishDate;
+        this.slug = slug;
+        this.title = title;
+        this.status = status;
+        this.seo = seo;
+    }
 }

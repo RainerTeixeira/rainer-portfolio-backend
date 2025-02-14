@@ -1,5 +1,4 @@
 "use strict";
-// src/modules/blog/authors/services/authors.service.ts
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -18,9 +17,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthorsService = void 0;
+const common_1 = require("@nestjs/common");
+const dynamoDb_service_1 = require("../../../../services/dynamoDb.service"); // Importe DynamoDbService
 let AuthorsService = class AuthorsService {
     constructor(dynamoDbService) {
         this.dynamoDbService = dynamoDbService;
@@ -40,10 +40,10 @@ let AuthorsService = class AuthorsService {
         return __awaiter(this, void 0, void 0, function* () {
             const params = {
                 TableName: this.tableName,
-                //  IndexName: 'your-index-name', // Se precisar usar um GSI
+                //  IndexName: 'your-index-name', // Se precisar usar um GSI
             };
-            const result = yield this.dynamoDbService.scanItems(params); // Use scanItems para buscar todos (cuidado em produção!)
-            return result.Items || [];
+            const result = yield this.dynamoDbService.scan(params); // Use scan instead of scanItems
+            return (result.Items || []).map(item => this.mapAuthorFromDynamoDb(item));
         });
     }
     findOne(postId, authorId) {
@@ -57,9 +57,9 @@ let AuthorsService = class AuthorsService {
             };
             const result = yield this.dynamoDbService.getItem(params);
             if (!result.Item) {
-                throw new NotFoundException(`Author com postId '${postId}' e authorId '${authorId}' não encontrado`);
+                throw new common_1.NotFoundException(`Author com postId '${postId}' e authorId '${authorId}' não encontrado`);
             }
-            return result.Item;
+            return this.mapAuthorFromDynamoDb(result.Item);
         });
     }
     update(postId, authorId, updateAuthorDto) {
@@ -75,7 +75,7 @@ let AuthorsService = class AuthorsService {
                     authorId: { S: authorId },
                 } }, updateExpression), { ReturnValues: 'ALL_NEW' });
             const result = yield this.dynamoDbService.updateItem(params);
-            return result.Attributes; // Retorna o autor atualizado
+            return this.mapAuthorFromDynamoDb(result.Attributes); // Retorna o autor atualizado
         });
     }
     remove(postId, authorId) {
@@ -92,9 +92,23 @@ let AuthorsService = class AuthorsService {
             yield this.dynamoDbService.deleteItem(params);
         });
     }
+    mapAuthorFromDynamoDb(item) {
+        var _a, _b, _c, _d, _e, _f, _g;
+        return {
+            postId: (_a = item.postId) === null || _a === void 0 ? void 0 : _a.S,
+            authorId: (_b = item.authorId) === null || _b === void 0 ? void 0 : _b.S,
+            name: (_c = item.name) === null || _c === void 0 ? void 0 : _c.S,
+            slug: (_d = item.slug) === null || _d === void 0 ? void 0 : _d.S,
+            expertise: ((_f = (_e = item.expertise) === null || _e === void 0 ? void 0 : _e.L) === null || _f === void 0 ? void 0 : _f.map((expertiseItem) => expertiseItem.S)) || [],
+            socialProof: Object.entries(((_g = item.socialProof) === null || _g === void 0 ? void 0 : _g.M) || {}).reduce((obj, [key, value]) => {
+                obj[key] = value.S;
+                return obj;
+            }, {}) || {},
+        };
+    }
 };
 exports.AuthorsService = AuthorsService;
 exports.AuthorsService = AuthorsService = __decorate([
-    Injectable(),
-    __metadata("design:paramtypes", [typeof (_a = typeof DynamoDbService !== "undefined" && DynamoDbService) === "function" ? _a : Object])
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [dynamoDb_service_1.DynamoDbService])
 ], AuthorsService);
