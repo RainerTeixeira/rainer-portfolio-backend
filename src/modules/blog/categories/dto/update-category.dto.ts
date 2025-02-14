@@ -1,15 +1,7 @@
-import { IsString, IsOptional, ValidateNested, IsNumber } from 'class-validator';
-import { Type } from 'class-transformer';
+// src/modules/blog/categories/dto/update-category.dto.ts
 
-class UpdateSeoDto {
-    @IsOptional()
-    @IsString()
-    metaTitle?: string;
-
-    @IsOptional()
-    @IsNumber()
-    priority?: number;
-}
+import { CategoryDto } from './category.dto';
+import { IsOptional, IsString, IsObject, IsNumber } from 'class-validator'; // Import decorators de validação
 
 export class UpdateCategoryDto {
     @IsOptional()
@@ -21,7 +13,9 @@ export class UpdateCategoryDto {
     slug?: string;
 
     @IsOptional()
-    @ValidateNested()
-    @Type(() => UpdateSeoDto)
-    seo?: UpdateSeoDto;
+    @IsObject()
+    seo?: {
+        metaTitle?: string;
+        priority?: number;
+    };
 }

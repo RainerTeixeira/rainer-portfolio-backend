@@ -1,23 +1,25 @@
-import { IsString, IsNotEmpty, ValidateNested } from 'class-validator';
-import { Type } from 'class-transformer';
+// src/modules/blog/categories/dto/create-category.dto.ts
 
-class CreateSeoDto {
-    @IsString()
-    @IsNotEmpty()
-    metaTitle: string;
-    // priority pode ser omitido na criação
-}
+import { CategoryDto } from './category.dto';
+import { IsNotEmpty, IsString, IsOptional, IsObject, IsNumber } from 'class-validator'; // Import decorators de validação
 
 export class CreateCategoryDto {
-    @IsString()
     @IsNotEmpty()
+    @IsString()
+    categoryId: string;
+
+    @IsNotEmpty()
+    @IsString()
     name: string;
 
-    @IsString()
     @IsNotEmpty()
+    @IsString()
     slug: string;
 
-    @ValidateNested()
-    @Type(() => CreateSeoDto)
-    seo: CreateSeoDto;
+    @IsObject() // Validação que seo é um objeto (opcional)
+    @IsOptional()
+    seo?: {
+        metaTitle?: string;
+        priority?: number;
+    };
 }
