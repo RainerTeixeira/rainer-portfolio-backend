@@ -1,15 +1,14 @@
-import { IsString, IsOptional } from 'class-validator';
+// src/modules/blog/authors/dto/author.dto.ts
 
-export class UpdateAuthorDto {
-    @IsOptional()
-    @IsString()
-    name?: string;
-
-    @IsOptional()
-    @IsString()
-    bio?: string;
-
-    @IsOptional()
-    @IsString()
-    imageUrl?: string;
+export class AuthorDto {
+    postId: string; // Chave de Partição (postId) - String
+    authorId: string; // Chave de Classificação (authorId) - String
+    name: string;
+    slug: string;
+    expertise: string[]; // Lista de strings
+    socialProof: {
+        facebook?: string; // Map com campos opcionais
+        github?: string;
+        medium?: string;
+    };
 }
