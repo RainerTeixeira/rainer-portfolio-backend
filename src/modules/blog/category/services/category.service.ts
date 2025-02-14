@@ -1,14 +1,14 @@
-// src/modules/blog/categories/services/categories.service.ts
+// src/modules/blog/category/services/categories.service.ts
 
 import { Injectable, NotFoundException } from '@nestjs/common'; // Importa Injectable e NotFoundException do NestJS.
 import { DynamoDbService } from '@src/services/dynamoDb.service'; // Importa DynamoDbService usando alias @src.
-import { CreateCategoryDto } from '@src/modules/blog/categories/dto/create-category.dto'; // Importa CreateCategoryDto usando alias @src.
-import { UpdateCategoryDto } from '@src/modules/blog/categories/dto/update-category.dto'; // Importa UpdateCategoryDto usando alias @src.
-import { CategoryDto } from '@src/modules/blog/categories/dto/category.dto'; // Importa CategoryDto usando alias @src.
+import { CreateCategoryDto } from '@src/modules/blog/category/dto/create-category.dto'; // Importa CreateCategoryDto usando alias @src.
+import { UpdateCategoryDto } from '@src/modules/blog/category/dto/update-category.dto'; // Importa UpdateCategoryDto usando alias @src.
+import { CategoryDto } from '@src/modules/blog/category/dto/category.dto'; // Importa CategoryDto usando alias @src.
 
 @Injectable()
-export class CategoriesService {
-    private readonly tableName = 'Categories';
+export class CategoryService {
+    private readonly tableName = 'Category;
 
     constructor(private readonly dynamoDbService: DynamoDbService) { }
 

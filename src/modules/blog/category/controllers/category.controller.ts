@@ -1,13 +1,13 @@
 // src/modules/blog/categories/controllers/categories.controller.ts
 
 import { Controller, Get, Post, Put, Delete, Body, Param } from '@nestjs/common'; // Importa decorators do NestJS para controllers.
-import { CategoriesService } from '@src/modules/blog/categories/services/categories.service'; // Importa CategoriesService usando alias @src.
-import { CreateCategoryDto } from '@src/modules/blog/categories/dto/create-category.dto'; // Importa CreateCategoryDto usando alias @src.
-import { UpdateCategoryDto } from '@src/modules/blog/categories/dto/update-category.dto'; // Importa UpdateCategoryDto usando alias @src.
-import { CategoryDto } from '@src/modules/blog/categories/dto/category.dto'; // Importa CategoryDto usando alias @src.
+import { CategoryService } from '@src/modules/blog/category/services/category.service'; // Importa CategoriesService usando alias @src.
+import { CreateCategoryDto } from '@src/modules/blog/category/dto/create-category.dto'; // Importa CreateCategoryDto usando alias @src.
+import { UpdateCategoryDto } from '@src/modules/blog/category/dto/update-category.dto'; // Importa UpdateCategoryDto usando alias @src.
+import { CategoryDto } from '@src/modules/blog/category/dto/category.dto'; // Importa CategoryDto usando alias @src.
 
-@Controller('blog/categories')
-export class CategoriesController {
+@Controller('blog/category')
+export class CategoryController {
     constructor(private readonly categoriesService: CategoriesService) { }
 
     @Post()
