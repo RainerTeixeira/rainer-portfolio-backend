@@ -1,60 +1,54 @@
 // src/modules/blog/posts/dto/create-post.dto.ts
 
-import { IsNotEmpty, IsString, IsOptional, IsObject, IsArray } from 'class-validator';
+import { IsString, IsOptional, IsObject, IsArray } from 'class-validator';
 
 export class CreatePostDto {
-  @IsNotEmpty()
   @IsString()
   categoryId: string;
 
-  @IsNotEmpty()
   @IsString()
   subcategoryId: string;
 
-  @IsNotEmpty()
   @IsString()
   contentHTML: string;
 
-  @IsNotEmpty()
   @IsObject()
   postInfo: {
-    authorId?: string; // authorId pode ser opcional durante a criação
-    tags?: string[];
-  };
-
-  @IsNotEmpty()
-  @IsString()
-  excerpt: string;
-
-  @IsNotEmpty()
-  @IsString()
-  publishDate: string;
-
-  @IsNotEmpty()
-  @IsString()
-  slug: string;
-
-  @IsNotEmpty()
-  @IsString()
-  title: string;
-
-
-  @IsOptional()
-  @IsObject()
-  seo?: {
         @IsOptional()
-  @IsString()
-  canonical?: string;
-
-  @IsOptional()
-  @IsString()
-  description?: string;
-
+  authorId?: string;
   @IsOptional()
   @IsArray()
-  @IsString({ each: true }) // Garante que cada item do array é string
-  keywords?: string[];
+  @IsString({ each: true })
+  tags?: string[];
 };
+
+@IsString()
+excerpt: string;
+
+@IsString()
+publishDate: string;
+
+@IsString()
+slug: string;
+
+@IsString()
+title: string;
+
+@IsOptional()
+@IsObject()
+seo ?: {
+        @IsOptional()
+@IsString()
+canonical ?: string;
+@IsOptional()
+@IsString()
+description ?: string;
+@IsOptional()
+@IsArray()
+@IsString({ each: true })
+keywords ?: string[];
+    };
+
 
 constructor(
   categoryId: string,

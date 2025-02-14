@@ -1,7 +1,6 @@
 // src/modules/blog/categories/dto/update-category.dto.ts
 
-import { CategoryDto } from '@src/modules/blog/category/dto/category.dto'; // Import CategoryDto usando alias @src.
-import { IsOptional, IsString, IsObject, IsNumber } from 'class-validator'; // Import decorators de validação (mantenha este import - pacote externo).
+import { IsString, IsOptional, IsObject, IsArray } from 'class-validator';
 
 export class UpdateCategoryDto {
     @IsOptional()
@@ -15,7 +14,15 @@ export class UpdateCategoryDto {
     @IsOptional()
     @IsObject()
     seo?: {
-        metaTitle?: string;
-        priority?: number;
-    };
+        @IsOptional()
+    @IsString()
+    canonical?: string;
+    @IsOptional()
+    @IsString()
+    description?: string;
+    @IsOptional()
+    @IsArray()
+    @IsString({ each: true })
+    keywords?: string[];
+};
 }
