@@ -1,4 +1,5 @@
 "use strict";
+// src/modules/blog/posts/posts.module.ts
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -8,15 +9,15 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PostsModule = void 0;
 const common_1 = require("@nestjs/common");
-const posts_controller_1 = require("./posts.controller");
-const posts_service_1 = require("./posts.service");
-const dynamoDb_service_1 = require("../../../services/dynamoDb.service");
+const posts_controller_1 = require("./controllers/posts.controller");
+const posts_service_1 = require("./services/posts.service");
 let PostsModule = class PostsModule {
 };
 exports.PostsModule = PostsModule;
 exports.PostsModule = PostsModule = __decorate([
     (0, common_1.Module)({
-        providers: [posts_service_1.PostsService, dynamoDb_service_1.DynamoDbService],
         controllers: [posts_controller_1.PostsController],
+        providers: [posts_service_1.PostsService],
+        exports: [posts_service_1.PostsService],
     })
 ], PostsModule);

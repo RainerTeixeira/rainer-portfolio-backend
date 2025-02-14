@@ -1,7 +1,7 @@
 // src/modules/blog/authors/dto/update-author.dto.ts
 
-import { AuthorDto } from './author.dto';
-import { IsOptional, IsString, IsArray, IsObject } from 'class-validator'; // Import decorators de validação (opcional)
+import { AuthorDto } from '@src/modules/blog/authors/dto/author.dto'; // Import AuthorDto usando alias @src.
+import { IsOptional, IsString, IsArray, IsObject } from 'class-validator'; // Import decorators de validação (mantenha este import - é um pacote externo)
 
 export class UpdateAuthorDto {
     @IsOptional()

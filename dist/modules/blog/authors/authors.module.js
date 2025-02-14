@@ -1,5 +1,5 @@
 "use strict";
-// src/app.module.ts
+// src/modules/blog/authors/authors.module.ts
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -7,19 +7,17 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AppModule = void 0;
+exports.AuthorsModule = void 0;
 const common_1 = require("@nestjs/common");
-const app_controller_1 = require("./app.controller");
-const app_service_1 = require("./app.service");
-const dynamoDb_service_1 = require("./services/dynamoDb.service"); // Importe o DynamoDbService
-const blog_module_1 = require("./modules/blog/blog.module"); // Importe o BlogModule
-let AppModule = class AppModule {
+const authors_controller_1 = require("./controllers/authors.controller");
+const authors_service_1 = require("./services/authors.service");
+let AuthorsModule = class AuthorsModule {
 };
-exports.AppModule = AppModule;
-exports.AppModule = AppModule = __decorate([
+exports.AuthorsModule = AuthorsModule;
+exports.AuthorsModule = AuthorsModule = __decorate([
     (0, common_1.Module)({
-        imports: [blog_module_1.BlogModule], // Importe o BlogModule aqui
-        controllers: [app_controller_1.AppController],
-        providers: [app_service_1.AppService, dynamoDb_service_1.DynamoDbService], // Declare o DynamoDbService como provider global
+        controllers: [authors_controller_1.AuthorsController], // Declara AuthorsController
+        providers: [authors_service_1.AuthorsService], // Declara AuthorsService
+        exports: [authors_service_1.AuthorsService], // Exporta AuthorsService se precisar usar em outros módulos
     })
-], AppModule);
+], AuthorsModule);

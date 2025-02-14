@@ -1,11 +1,11 @@
 // src/modules/blog/blog.module.ts
 
 import { Module } from '@nestjs/common';
-import { AuthorsModule } from './authors/authors.module';
-import { CategoriesModule } from './categories/categories.module';
-import { CommentsModule } from './comments/comments.module';
-import { PostsModule } from './posts/posts.module';
-import { SubcategoriaModule } from './subcategoria/subcategoria.module';
+import { AuthorsModule } from '@src/modules/blog/authors/authors.module'; // import com @src  
+import { CategoriesModule } from '@src/modules/blog/categories/categories.module'; // Import com @src
+import { CommentsModule } from '@src/modules/blog/comments/comments.module'; // Import com @src
+import { PostsModule } from '@src/modules/blog/posts/posts.module'; // Import com @src
+import { SubcategoriaModule } from '@src/modules/blog/subcategoria/subcategories.module'; // Import com @src
 
 @Module({
   imports: [

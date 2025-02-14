@@ -1,4 +1,5 @@
 "use strict";
+// src/modules/blog/posts/dto/create-post.dto.ts
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -9,101 +10,84 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CreatePostDto = exports.CreateCategoryDto = void 0;
-const swagger_1 = require("@nestjs/swagger");
-const class_transformer_1 = require("class-transformer");
-const class_validator_1 = require("class-validator");
-const reference_dto_1 = require("./reference.dto");
-class CreateCategoryDto {
-}
-exports.CreateCategoryDto = CreateCategoryDto;
-__decorate([
-    (0, swagger_1.ApiProperty)({ example: 1, description: 'ID da categoria principal' }),
-    (0, class_validator_1.IsInt)(),
-    (0, class_validator_1.IsPositive)(),
-    __metadata("design:type", Number)
-], CreateCategoryDto.prototype, "categoryId", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)({ example: 5, description: 'ID da subcategoria' }),
-    (0, class_validator_1.IsInt)(),
-    (0, class_validator_1.IsPositive)(),
-    __metadata("design:type", Number)
-], CreateCategoryDto.prototype, "subCategoryId", void 0);
+exports.CreatePostDto = void 0;
+const class_validator_1 = require("class-validator"); // Import decorators de validação
 class CreatePostDto {
 }
 exports.CreatePostDto = CreatePostDto;
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'Título Impactante', description: 'Título principal do post' }),
+    (0, class_validator_1.IsNotEmpty)(),
     (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreatePostDto.prototype, "categoryId", void 0);
+__decorate([
+    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreatePostDto.prototype, "subcategoryId", void 0);
+__decorate([
+    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreatePostDto.prototype, "contentHTML", void 0);
+__decorate([
+    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsObject)(),
+    __metadata("design:type", Object)
+], CreatePostDto.prototype, "postInfo", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)() // authorId pode ser opcional durante a criação
+    ,
+    __metadata("design:type", String)
+], CreatePostDto.prototype, "authorId", void 0);
+__decorate([
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
-], CreatePostDto.prototype, "postTitle", void 0);
+], CreatePostDto.prototype, "excerpt", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'Resumo do post...', description: 'Resumo para preview' }),
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsNotEmpty)(),
-    __metadata("design:type", String)
-], CreatePostDto.prototype, "postSummary", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)({ example: 'Conteúdo completo do post...', description: 'Corpo do post' }),
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsNotEmpty)(),
-    __metadata("design:type", String)
-], CreatePostDto.prototype, "postContent", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)({ example: [1, 2], description: 'IDs dos autores', type: [Number] }),
-    (0, class_validator_1.IsArray)(),
-    (0, class_validator_1.IsInt)({ each: true }),
-    (0, class_validator_1.IsPositive)({ each: true }),
-    __metadata("design:type", Array)
-], CreatePostDto.prototype, "authorIds", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)({ type: CreateCategoryDto }),
-    (0, class_validator_1.IsDefined)(),
-    (0, class_validator_1.IsNotEmptyObject)(),
-    (0, class_validator_1.ValidateNested)(),
-    (0, class_transformer_1.Type)(() => CreateCategoryDto),
-    __metadata("design:type", CreateCategoryDto)
-], CreatePostDto.prototype, "category", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: ['tag1', 'tag2'], description: 'Tags relacionadas', type: [String] }),
-    (0, class_validator_1.IsArray)(),
-    (0, class_validator_1.IsString)({ each: true }),
     (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", Array)
-], CreatePostDto.prototype, "postTags", void 0);
+    __metadata("design:type", String)
+], CreatePostDto.prototype, "featuredImageURL", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 5, description: 'Tempo de leitura em minutos' }),
-    (0, class_validator_1.IsInt)(),
-    (0, class_validator_1.IsPositive)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreatePostDto.prototype, "modifiedDate", void 0);
+__decorate([
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], CreatePostDto.prototype, "publishDate", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsNumber)(),
     __metadata("design:type", Number)
-], CreatePostDto.prototype, "postReadingTime", void 0);
+], CreatePostDto.prototype, "readingTime", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: '2024-01-01T00:00:00.000Z', description: 'Data de publicação do post' }),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], CreatePostDto.prototype, "slug", void 0);
+__decorate([
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsDate)(),
-    (0, class_transformer_1.Type)(() => Date),
-    __metadata("design:type", Date)
-], CreatePostDto.prototype, "postDate", void 0);
+    __metadata("design:type", String)
+], CreatePostDto.prototype, "status", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: ['imagem1.jpg'], description: 'URLs das imagens', type: [String] }),
-    (0, class_validator_1.IsArray)(),
-    (0, class_validator_1.IsString)({ each: true }),
-    (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", Array)
-], CreatePostDto.prototype, "postImages", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: [3], description: 'IDs de posts relacionados', type: [Number] }),
-    (0, class_validator_1.IsArray)(),
-    (0, class_validator_1.IsInt)({ each: true }),
+    (0, class_validator_1.IsArray)() // Validação que tags é um array
+    ,
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Array)
-], CreatePostDto.prototype, "relatedPosts", void 0);
+], CreatePostDto.prototype, "tags", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ type: [reference_dto_1.ReferenceDto], description: 'Referências bibliográficas' }),
-    (0, class_validator_1.IsArray)(),
-    (0, class_validator_1.ValidateNested)({ each: true }),
-    (0, class_transformer_1.Type)(() => reference_dto_1.ReferenceDto),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], CreatePostDto.prototype, "title", void 0);
+__decorate([
     (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", Array)
-], CreatePostDto.prototype, "references", void 0);
+    (0, class_validator_1.IsNumber)(),
+    __metadata("design:type", Number)
+], CreatePostDto.prototype, "views", void 0);
+;
+seo ?  : {
+    canonical: string,
+    description: string
+};
+keywords ?  : string[];
+;

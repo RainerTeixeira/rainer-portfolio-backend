@@ -1,6 +1,6 @@
 // src/modules/blog/authors/dto/create-author.dto.ts
 
-import { AuthorDto } from './author.dto';
+import { AuthorDto } from '@src/modules/blog/authors/dto/author.dto'; // Import AuthorDto usando alias @src.
 import { IsNotEmpty, IsString, IsArray, IsOptional, IsObject } from 'class-validator'; // Import decorators de validação (opcional, mas recomendado)
 
 export class CreateAuthorDto {
