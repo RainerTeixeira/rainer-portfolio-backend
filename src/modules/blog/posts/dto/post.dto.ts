@@ -18,13 +18,6 @@ export class PostDto {
     /**
      * Construtor para PostDto.
      * Inicializa as propriedades do DTO quando um objeto PostDto é criado.
-     * @param categoryIdSubcategoryId Chave de partição composta.
-     * @param postId Chave de classificação do post.
-     * @param categoryId ID da categoria do post.
-     * @param subcategoryId ID da subcategoria do post.
-     * @param contentHTML Conteúdo HTML do post.
-     * @param postInfo (Opcional) Informações adicionais sobre o post, do tipo PostInfoDto.
-     * @param seo (Opcional) Dados de SEO do post, do tipo PostSeoDto.
      */
     constructor(
         categoryIdSubcategoryId: string,

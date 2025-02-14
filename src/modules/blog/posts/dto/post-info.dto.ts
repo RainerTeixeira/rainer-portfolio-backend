@@ -28,7 +28,7 @@ export class PostInfoDto {
     modifiedDate?: string;
 
     @IsString()
-    @IsNotEmpty() // Garante que publishDate não seja vazio
+    @IsNotEmpty()
     publishDate: string;
 
     @IsOptional()
@@ -36,7 +36,7 @@ export class PostInfoDto {
     readingTime?: number;
 
     @IsString()
-    @IsNotEmpty() // Garante que slug não seja vazio
+    @IsNotEmpty()
     slug: string;
 
     @IsOptional()
@@ -44,10 +44,36 @@ export class PostInfoDto {
     status?: string;
 
     @IsString()
-    @IsNotEmpty() // Garante que title não seja vazio
+    @IsNotEmpty()
     title: string;
 
     @IsOptional()
     @IsNumber()
     views?: number;
+
+    constructor(
+        publishDate: string,
+        slug: string,
+        title: string,
+        authorId?: string,
+        tags?: string[],
+        excerpt?: string,
+        featuredImageURL?: string,
+        modifiedDate?: string,
+        readingTime?: number,
+        status?: string,
+        views?: number,
+    ) {
+        this.publishDate = publishDate;
+        this.slug = slug;
+        this.title = title;
+        this.authorId = authorId;
+        this.tags = tags;
+        this.excerpt = excerpt;
+        this.featuredImageURL = featuredImageURL;
+        this.modifiedDate = modifiedDate;
+        this.readingTime = readingTime;
+        this.status = status;
+        this.views = views;
+    }
 }

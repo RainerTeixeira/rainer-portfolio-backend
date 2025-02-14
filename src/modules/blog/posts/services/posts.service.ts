@@ -1,125 +1,135 @@
 // src/modules/blog/posts/services/posts.service.ts
-
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { CreatePostDto } from '@src/modules/blog/posts/dto/create-post.dto';
-import { UpdatePostDto } from '@src/modules/blog/posts/dto/update-post.dto';
-import { PostDto } from '@src/modules/blog/posts/dto/post.dto';
-import { DynamoDbService } from '@src/services/dynamoDb.service';
-import { UpdateCommandInput } from '@aws-sdk/lib-dynamodb';
+import { DynamoDB } from 'aws-sdk';
+import { v4 as uuidv4 } from 'uuid';
+import { CreatePostDto } from '../dto/create-post.dto'; // Importe CreatePostDto
+import { UpdatePostDto } from '../dto/update-post.dto'; // Importe UpdatePostDto
+import { PostDto } from '../dto/post.dto'; // Importe PostDto
 
 @Injectable()
 export class PostsService {
-  private readonly tableName = 'Posts';
+  private dynamoDb: DynamoDB.DocumentClient;
+  private tableName = 'Posts';
 
-  constructor(private readonly dynamoDbService: DynamoDbService) { }
+  constructor() {
+    this.dynamoDb = new DynamoDB.DocumentClient({ region: 'us-east-1' }); // ajuste a região se necessário
+  }
 
-  async create(createPostDto: CreatePostDto): Promise<PostDto> {
+  async createPost(categoryIdSubcategoryId: string, createPostDto: CreatePostDto): Promise<PostDto> {
+    const postId = uuidv4();
     const params = {
       TableName: this.tableName,
-      Item: createPostDto,
+      Item: {
+        'categoryId#subcategoryId': categoryIdSubcategoryId, // Chave de Partição Composta
+        postId: postId,                                  // Chave de Classificação
+        categoryId: createPostDto.categoryId,
+        subcategoryId: createPostDto.subcategoryId,
+        contentHTML: createPostDto.contentHTML,
+        postInfo: createPostDto.postInfo,
+        seo: createPostDto.seo,
+      },
     };
-    await this.dynamoDbService.putItem(params);
-    return this.findOne(createPostDto.categoryId + '#' + createPostDto.subcategoryId); // Removed postId argument
+
+    await this.dynamoDb.put(params).promise();
+
+    return { ...params.Item } as PostDto; // Retorna o item criado como PostDto
   }
 
-  async findAll(): Promise<PostDto[]> {
-    const result = await this.dynamoDbService.scan({ TableName: this.tableName });
-    return (result.Items || []).map(item => this.mapPostFromDynamoDb(item));
-  }
 
-  async findOne(categoryIdSubcategoryId: string): Promise<PostDto> { // Only categoryIdSubcategoryId
-    const [categoryId, subcategoryId] = categoryIdSubcategoryId.split('#'); // Destructure
+  async getPostById(categoryIdSubcategoryId: string, postId: string): Promise<PostDto> {
     const params = {
       TableName: this.tableName,
       Key: {
-        'categoryId#subcategoryId': { S: categoryIdSubcategoryId },
-        postId: { S: createPostDto.postId }, // Add postId to the query
+        'categoryId#subcategoryId': categoryIdSubcategoryId,
+        postId: postId,
       },
     };
-    const result = await this.dynamoDbService.getItem(params);
+
+    const result = await this.dynamoDb.get(params).promise();
+
     if (!result.Item) {
-      throw new NotFoundException(`Post com ID '${createPostDto.postId}' na categoria '${categoryIdSubcategoryId}' não encontrado`);
+      throw new NotFoundException(`Post com ID '${postId}' na categoria '${categoryIdSubcategoryId}' não encontrado`);
     }
-    return this.mapPostFromDynamoDb(result.Item);
+
+    return result.Item as PostDto;
   }
 
-  async update(categoryIdSubcategoryId: string, postId: string, updatePostDto: UpdatePostDto): Promise<PostDto> {
-    await this.findOne(categoryIdSubcategoryId); // Only categoryIdSubcategoryId
-
-    const params: UpdateCommandInput = {
+  async updatePost(categoryIdSubcategoryId: string, postId: string, updatePostDto: UpdatePostDto): Promise<PostDto> {
+    const params = {
       TableName: this.tableName,
       Key: {
-        'categoryId#subcategoryId': { S: categoryIdSubcategoryId },
-        postId: { S: postId },
+        'categoryId#subcategoryId': categoryIdSubcategoryId,
+        postId: postId,
       },
-      UpdateExpression: 'SET contentHTML = :contentHTML, excerpt = :excerpt, publishDate = :publishDate, slug = :slug, title = :title, postInfo = :postInfo, seo = :seo, #status = :status',
+      UpdateExpression: 'set #contentHTML = :contentHTML, #postInfo = :postInfo, #seo = :seo, categoryId = :categoryId, subcategoryId = :subcategoryId', // Corrigido UpdateExpression
       ExpressionAttributeNames: {
-        '#status': 'status',
+        '#contentHTML': 'contentHTML',
+        '#postInfo': 'postInfo',
+        '#seo': 'seo',
       },
       ExpressionAttributeValues: {
-        ':contentHTML': { S: updatePostDto.contentHTML },
-        ':excerpt': { S: updatePostDto.excerpt },
-        ':publishDate': { S: updatePostDto.publishDate },
-        ':slug': { S: updatePostDto.slug },
-        ':title': { S: updatePostDto.title },
-        ':postInfo': {
-          M: {
-            authorId: { S: updatePostDto.postInfo?.authorId || null },
-            tags: { L: updatePostDto.postInfo?.tags?.map(tag => ({ S: tag })) || [] },
-          }
-        },
-        ':seo': {
-          M: {
-            canonical: { S: updatePostDto.seo?.canonical || null },
-            description: { S: updatePostDto.seo?.description || null },
-            keywords: { L: updatePostDto.seo?.keywords?.map(keyword => ({ S: keyword })) || [] },
-          }
-        },
-        ':status': { S: updatePostDto.status || 'draft' },
+        ':contentHTML': updatePostDto.contentHTML,
+        ':postInfo': updatePostDto.postInfo,
+        ':seo': updatePostDto.seo,
+        ':categoryId': updatePostDto.categoryId, // Adicionado categoryId
+        ':subcategoryId': updatePostDto.subcategoryId, // Adicionado subcategoryId
       },
       ReturnValues: 'ALL_NEW',
     };
 
-    const result = await this.dynamoDbService.updateItem(params);
-    return this.mapPostFromDynamoDb(result.Attributes as Record<string, any>) as PostDto;
+
+    const result = await this.dynamoDb.update(params).promise();
+    return result.Attributes as PostDto;
   }
 
-  async remove(categoryIdSubcategoryId: string, postId: string): Promise<void> {
-    await this.findOne(categoryIdSubcategoryId); // Only categoryIdSubcategoryId
 
+  async deletePost(categoryIdSubcategoryId: string, postId: string): Promise<void> {
     const params = {
       TableName: this.tableName,
       Key: {
-        'categoryId#subcategoryId': { S: categoryIdSubcategoryId },
-        postId: { S: postId },
+        'categoryId#subcategoryId': categoryIdSubcategoryId,
+        postId: postId,
       },
     };
-    await this.dynamoDbService.deleteItem(params);
+
+    await this.dynamoDb.delete(params).promise();
   }
 
-  private mapPostFromDynamoDb(item: Record<string, any>): PostDto {
-    return {
-      'categoryId#subcategoryId': item['categoryId#subcategoryId']?.S,
-      postId: item.postId?.S,
-      categoryId: item.categoryId?.S,
-      subcategoryId: item.subcategoryId?.S,
-      contentHTML: item.contentHTML?.S,
-      postInfo: {
-        authorId: item.postInfo?.M?.authorId?.S,
-        tags: item.postInfo?.M?.tags?.L?.map((tagItem: any) => tagItem.S) || [],
-        likes: Number(item.postInfo?.M?.likes?.N),
-        views: Number(item.postInfo?.M?.views?.N),
-      },
-      excerpt: item.excerpt?.S,
-      publishDate: item.publishDate?.S,
-      slug: item.slug?.S,
-      title: item.title?.S,
-      status: item.status?.S,
-      seo: {
-        canonical: item.seo?.M?.canonical?.S,
-        description: item.seo?.M?.description?.S,
-        keywords: item.seo?.M?.keywords?.L?.map((keywordItem: any) => keywordItem.S) || []
-      },
-    } as PostDto;
+  async getAllPosts(): Promise<PostDto[]> {
+    const params = {
+      TableName: this.tableName,
+      // IndexName: 'PostsIndex', // Se você tiver um GSI para consulta por todos os posts, descomente e use o nome do índice
+    };
+
+    const result = await this.dynamoDb.scan(params).promise(); // ou query se usar GSI
+
+
+    return result.Items.map(item => {
+      return {
+        'categoryId#subcategoryId': item['categoryId#subcategoryId']?.S,
+        postId: item.postId?.S,
+        categoryId: item.categoryId?.S,
+        subcategoryId: item.subcategoryId?.S,
+        contentHTML: item.contentHTML?.S,
+        postInfo: item.postInfo?.M ? { // Ajuste para garantir que postInfo e suas propriedades existam
+          authorId: item.postInfo?.M.authorId?.S,
+          tags: item.postInfo?.M.tags?.SS,
+          excerpt: item.postInfo?.M.excerpt?.S,
+          featuredImageURL: item.postInfo?.M.featuredImageURL?.S,
+          modifiedDate: item.postInfo?.M.modifiedDate?.S,
+          publishDate: item.postInfo?.M.publishDate?.S,
+          readingTime: Number(item.postInfo?.M.readingTime?.N),
+          slug: item.postInfo?.M.slug?.S,
+          status: item.postInfo?.M.status?.S,
+          title: item.postInfo?.M.title?.S,
+          views: Number(item.postInfo?.M.views?.N),
+        } : undefined,
+        seo: item.seo?.M ? {  // Ajuste para garantir que seo e suas propriedades existam
+          canonical: item.seo?.M.canonical?.S,
+          description: item.seo?.M.description?.S,
+          keywords: item.seo?.M.keywords?.SS,
+        } : undefined,
+      } as PostDto;
+    });
   }
 }
