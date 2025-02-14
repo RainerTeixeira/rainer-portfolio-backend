@@ -21,12 +21,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PostsService = void 0;
 const common_1 = require("@nestjs/common");
-const dynamoDb_service_1 = require("../../../../services/dynamoDb.service"); // Importa DynamoDbService usando alias @src.
+const dynamoDb_service_1 = require("../../../../services/dynamoDb.service");
 let PostsService = class PostsService {
     constructor(dynamoDbService) {
         this.dynamoDbService = dynamoDbService;
-        this.tableName = 'Posts'; // Nome da tabela DynamoDB para Posts
-    } // Injeta DynamoDbService
+        this.tableName = 'Posts';
+    }
     create(createPostDto) {
         return __awaiter(this, void 0, void 0, function* () {
             const params = {
@@ -34,7 +34,7 @@ let PostsService = class PostsService {
                 Item: createPostDto,
             };
             yield this.dynamoDbService.putItem(params);
-            return this.findOne(createPostDto.categoryId + '#' + createPostDto.subcategoryId, createPostDto.postId);
+            return this.findOne(createPostDto.categoryId + '#' + createPostDto.subcategoryId); // Removed postId argument
         });
     }
     findAll() {
@@ -43,18 +43,19 @@ let PostsService = class PostsService {
             return (result.Items || []).map(item => this.mapPostFromDynamoDb(item));
         });
     }
-    findOne(categoryIdSubcategoryId, postId) {
+    findOne(categoryIdSubcategoryId) {
         return __awaiter(this, void 0, void 0, function* () {
+            const [categoryId, subcategoryId] = categoryIdSubcategoryId.split('#'); // Destructure
             const params = {
                 TableName: this.tableName,
                 Key: {
-                    'categoryId#subcategoryId': { S: categoryIdSubcategoryId }, // Chave composta
-                    postId: { S: postId },
+                    'categoryId#subcategoryId': { S: categoryIdSubcategoryId },
+                    postId: { S: createPostDto.postId }, // Add postId to the query
                 },
             };
             const result = yield this.dynamoDbService.getItem(params);
             if (!result.Item) {
-                throw new common_1.NotFoundException(`Post com ID '<span class="math-inline">\{postId\}' na categoria '</span>{categoryIdSubcategoryId}' não encontrado`);
+                throw new common_1.NotFoundException(`Post com ID '${createPostDto.postId}' na categoria '${categoryIdSubcategoryId}' não encontrado`);
             }
             return this.mapPostFromDynamoDb(result.Item);
         });
@@ -62,17 +63,16 @@ let PostsService = class PostsService {
     update(categoryIdSubcategoryId, postId, updatePostDto) {
         return __awaiter(this, void 0, void 0, function* () {
             var _a, _b, _c, _d, _e, _f, _g;
-            // Verifica se o post existe antes de atualizar
-            yield this.findOne(categoryIdSubcategoryId, postId);
+            yield this.findOne(categoryIdSubcategoryId); // Only categoryIdSubcategoryId
             const params = {
                 TableName: this.tableName,
                 Key: {
-                    'categoryId#subcategoryId': { S: categoryIdSubcategoryId }, // Chave composta
+                    'categoryId#subcategoryId': { S: categoryIdSubcategoryId },
                     postId: { S: postId },
                 },
-                UpdateExpression: 'SET contentHTML = :contentHTML, excerpt = :excerpt, publishDate = :publishDate, slug = :slug, title = :title, postInfo = :postInfo, seo = :seo, #status = :status', // UpdateExpression
+                UpdateExpression: 'SET contentHTML = :contentHTML, excerpt = :excerpt, publishDate = :publishDate, slug = :slug, title = :title, postInfo = :postInfo, seo = :seo, #status = :status',
                 ExpressionAttributeNames: {
-                    '#status': 'status', // Para 'status' (palavra reservada)
+                    '#status': 'status',
                 },
                 ExpressionAttributeValues: {
                     ':contentHTML': { S: updatePostDto.contentHTML },
@@ -93,7 +93,7 @@ let PostsService = class PostsService {
                             keywords: { L: ((_g = (_f = updatePostDto.seo) === null || _f === void 0 ? void 0 : _f.keywords) === null || _g === void 0 ? void 0 : _g.map(keyword => ({ S: keyword }))) || [] },
                         }
                     },
-                    ':status': { S: updatePostDto.status || 'draft' }, // Valor padrão 'draft' para status
+                    ':status': { S: updatePostDto.status || 'draft' },
                 },
                 ReturnValues: 'ALL_NEW',
             };
@@ -103,12 +103,11 @@ let PostsService = class PostsService {
     }
     remove(categoryIdSubcategoryId, postId) {
         return __awaiter(this, void 0, void 0, function* () {
-            // Verifica se o post existe antes de deletar
-            yield this.findOne(categoryIdSubcategoryId, postId);
+            yield this.findOne(categoryIdSubcategoryId); // Only categoryIdSubcategoryId
             const params = {
                 TableName: this.tableName,
                 Key: {
-                    'categoryId#subcategoryId': { S: categoryIdSubcategoryId }, // Chave composta
+                    'categoryId#subcategoryId': { S: categoryIdSubcategoryId },
                     postId: { S: postId },
                 },
             };
@@ -118,7 +117,7 @@ let PostsService = class PostsService {
     mapPostFromDynamoDb(item) {
         var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _0, _1, _2, _3, _4, _5, _6, _7, _8;
         return {
-            'categoryId#subcategoryId': (_a = item['categoryId#subcategoryId']) === null || _a === void 0 ? void 0 : _a.S, // Acessa chave composta usando index signature
+            'categoryId#subcategoryId': (_a = item['categoryId#subcategoryId']) === null || _a === void 0 ? void 0 : _a.S,
             postId: (_b = item.postId) === null || _b === void 0 ? void 0 : _b.S,
             categoryId: (_c = item.categoryId) === null || _c === void 0 ? void 0 : _c.S,
             subcategoryId: (_d = item.subcategoryId) === null || _d === void 0 ? void 0 : _d.S,

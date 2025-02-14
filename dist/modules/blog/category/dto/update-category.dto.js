@@ -11,7 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UpdateCategoryDto = void 0;
-const class_validator_1 = require("class-validator"); // Import decorators de validação (mantenha este import - pacote externo).
+const class_validator_1 = require("class-validator");
 class UpdateCategoryDto {
 }
 exports.UpdateCategoryDto = UpdateCategoryDto;
@@ -30,3 +30,20 @@ __decorate([
     (0, class_validator_1.IsObject)(),
     __metadata("design:type", Object)
 ], UpdateCategoryDto.prototype, "seo", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateCategoryDto.prototype, "canonical", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateCategoryDto.prototype, "description", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.IsString)({ each: true }),
+    __metadata("design:type", Array)
+], UpdateCategoryDto.prototype, "keywords", void 0);
+;

@@ -75,7 +75,7 @@ let CategoryService = class CategoryService {
                         M: {
                             canonical: { S: ((_a = updateCategoryDto.seo) === null || _a === void 0 ? void 0 : _a.canonical) || null }, // Se for opcional, use || null para evitar undefined
                             description: { S: ((_b = updateCategoryDto.seo) === null || _b === void 0 ? void 0 : _b.description) || null },
-                            keywords: { L: ((_d = (_c = updateCategoryDto.seo) === null || _c === void 0 ? void 0 : _c.keywords) === null || _d === void 0 ? void 0 : _d.map(keyword => ({ S: keyword }))) || [] } // Se for array, mapeie para formato de lista do DynamoDB
+                            keywords: { L: ((_d = (_c = updateCategoryDto.seo) === null || _c === void 0 ? void 0 : _c.keywords) === null || _d === void 0 ? void 0 : _d.map((keyword) => ({ S: keyword }))) || [] } // Se for array, mapeie para formato de lista do DynamoDB
                         }
                     },
                 },

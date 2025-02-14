@@ -3,11 +3,11 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PostDto = void 0;
 class PostDto {
-    constructor(categoryIdSubcategoryId, postId, categoryId, subcategoryId, contentHTML, postInfo, excerpt, publishDate, slug, title, status, seo) {
-        this['categoryId#subcategoryId'] = categoryIdSubcategoryId; // Usando index signature para chave composta
+    constructor(postId, categoryIdSubcategoryId, contentHTML, postInfo, excerpt, publishDate, slug, title, // title moved before status
+    status, // status moved before seo
+    seo) {
         this.postId = postId;
-        this.categoryId = categoryId;
-        this.subcategoryId = subcategoryId;
+        this['categoryId#subcategoryId'] = categoryIdSubcategoryId; // Use bracket notation for property name with special characters
         this.contentHTML = contentHTML;
         this.postInfo = postInfo;
         this.excerpt = excerpt;
@@ -16,6 +16,8 @@ class PostDto {
         this.title = title;
         this.status = status;
         this.seo = seo;
+        this.categoryId = categoryIdSubcategoryId.split('#')[0]; // Extract categoryId
+        this.subcategoryId = categoryIdSubcategoryId.split('#')[1]; // Extract subcategoryId
     }
 }
 exports.PostDto = PostDto;

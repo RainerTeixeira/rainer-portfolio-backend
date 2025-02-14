@@ -1,4 +1,4 @@
-// src/modules/blog/subcategoria/dto/create-subcategoria.dto.ts
+// src/modules/blog/subcategory/dto/create-subcategory.dto.ts
 
 import { IsNotEmpty, IsString, IsOptional } from 'class-validator';
 
