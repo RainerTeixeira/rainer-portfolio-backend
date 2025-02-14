@@ -1,10 +1,10 @@
 // src/modules/blog/subcategoria/controllers/subcategoria.controller.ts
 
 import { Controller, Get, Post, Put, Delete, Body, Param } from '@nestjs/common'; // Importa decorators do NestJS para controllers.
-import { SubcategoriaService } from '@src/modules/blog/subcategoria/services/subcategory.service'; // Importa SubcategoriaService usando alias @src.
-import { CreateSubcategoriaDto } from '@src/modules/blog/subcategoria/dto/create-subcategory.dto'; // Importa CreateSubcategoriaDto usando alias @src.
-import { UpdateSubcategoriaDto } from '@src/modules/blog/subcategoria/dto/update-subcategory.dto'; // Importa UpdateSubcategoriaDto usando alias @src.
-import { SubcategoriaDto } from '@src/modules/blog/subcategoria/dto/subcategory.dto'; // Importa SubcategoriaDto usando alias @src.
+import { SubcategoryService } from '@src/modules/blog/subcategory/services/subcategory.service'; // Agora 'subcategory'
+import { CreateSubcategoryDto } from '@src/modules/blog/subcategory/dto/create-subcategory.dto'; // Agora 'subcategory'
+import { UpdateSubcategoryDto } from '@src/modules/blog/subcategory/dto/update-subcategory.dto'; // Agora 'subcategory'
+import { SubcategoryDto } from '@src/modules/blog/subcategory/dto/subcategory.dto'; // Agora 'subcategory'
 
 @Controller('blog/subcategorias')
 export class SubcategoryController {

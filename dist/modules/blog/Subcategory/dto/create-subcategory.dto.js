@@ -10,33 +10,40 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CreateSubcategoriaDto = void 0;
-const class_validator_1 = require("class-validator"); // Import decorators de validação
-class CreateSubcategoriaDto {
+exports.CreateSubcategoryDto = void 0;
+const class_validator_1 = require("class-validator");
+class CreateSubcategoryDto {
+    constructor(categoryId, subcategoryId, name, slug, description) {
+        this.categoryId = categoryId;
+        this.subcategoryId = subcategoryId;
+        this.name = name;
+        this.slug = slug;
+        this.description = description;
+    }
 }
-exports.CreateSubcategoriaDto = CreateSubcategoriaDto;
+exports.CreateSubcategoryDto = CreateSubcategoryDto;
 __decorate([
     (0, class_validator_1.IsNotEmpty)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], CreateSubcategoriaDto.prototype, "categoryId", void 0);
+], CreateSubcategoryDto.prototype, "categoryId", void 0);
 __decorate([
     (0, class_validator_1.IsNotEmpty)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], CreateSubcategoriaDto.prototype, "subcategoryId", void 0);
+], CreateSubcategoryDto.prototype, "subcategoryId", void 0);
 __decorate([
     (0, class_validator_1.IsNotEmpty)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], CreateSubcategoriaDto.prototype, "name", void 0);
+], CreateSubcategoryDto.prototype, "name", void 0);
 __decorate([
     (0, class_validator_1.IsNotEmpty)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], CreateSubcategoriaDto.prototype, "slug", void 0);
+], CreateSubcategoryDto.prototype, "slug", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsObject)(),
-    __metadata("design:type", Object)
-], CreateSubcategoriaDto.prototype, "seo", void 0);
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateSubcategoryDto.prototype, "description", void 0);

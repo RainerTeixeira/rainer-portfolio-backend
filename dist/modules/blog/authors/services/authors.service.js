@@ -1,4 +1,5 @@
 "use strict";
+// src/modules/blog/authors/services/authors.service.ts
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -57,7 +58,7 @@ let AuthorsService = class AuthorsService {
             };
             const result = yield this.dynamoDbService.getItem(params);
             if (!result.Item) {
-                throw new common_1.NotFoundException(`Author com postId '${postId}' e authorId '${authorId}' não encontrado`);
+                throw new common_1.NotFoundException(`Author com postId '<span class="math-inline">\{postId\}' e authorId '</span>{authorId}' não encontrado`);
             }
             return this.mapAuthorFromDynamoDb(result.Item);
         });
@@ -101,9 +102,9 @@ let AuthorsService = class AuthorsService {
             slug: (_d = item.slug) === null || _d === void 0 ? void 0 : _d.S,
             expertise: ((_f = (_e = item.expertise) === null || _e === void 0 ? void 0 : _e.L) === null || _f === void 0 ? void 0 : _f.map((expertiseItem) => expertiseItem.S)) || [],
             socialProof: Object.entries(((_g = item.socialProof) === null || _g === void 0 ? void 0 : _g.M) || {}).reduce((obj, [key, value]) => {
-                obj[key] = value.S;
+                obj[key] = value === null || value === void 0 ? void 0 : value.S; // Use optional chaining and nullish coalescing
                 return obj;
-            }, {}) || {},
+            }, {}) || {}, // Explicit type for reduce initial value and return
         };
     }
 };

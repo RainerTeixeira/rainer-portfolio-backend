@@ -129,14 +129,14 @@ let DynamoDbService = DynamoDbService_1 = class DynamoDbService {
         });
     }
     // Método para escanear uma tabela inteira do DynamoDB (Scan) - CUIDADO: Ineficiente para tabelas grandes em produção
-    scanItems(params) {
+    scan(params) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const command = new client_dynamodb_1.ScanCommand(params); // Cria o comando Scan
                 return yield this.docClient.send(command); // Envia o comando para o DynamoDB e retorna a resposta
             }
             catch (error) {
-                this.handleError(error, 'scanItems'); // Em caso de erro, trata o erro
+                this.handleError(error, 'scan'); // Correção: Renomeado para scan
             }
         });
     }
@@ -156,7 +156,7 @@ let DynamoDbService = DynamoDbService_1 = class DynamoDbService {
     batchWrite(params) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const command = new BatchWriteCommand(params); // Cria o comando BatchWriteItem
+                const command = new client_dynamodb_1.BatchWriteItemCommand(params); // Correção: BatchWriteItemCommand // Cria o comando BatchWriteItem
                 return yield this.docClient.send(command); // Envia o comando para o DynamoDB e retorna a resposta
             }
             catch (error) {

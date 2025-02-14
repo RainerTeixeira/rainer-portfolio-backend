@@ -8,7 +8,7 @@ import {
   DeleteItemCommand,
   ScanCommand,
   QueryCommand,
-  BatchWriteItemCommand,
+  BatchWriteItemCommand, // Correção: Importe BatchWriteItemCommand
   BatchGetItemCommand,
 } from '@aws-sdk/client-dynamodb';
 import {
@@ -107,12 +107,12 @@ export class DynamoDbService {
   }
 
   // Método para escanear uma tabela inteira do DynamoDB (Scan) - CUIDADO: Ineficiente para tabelas grandes em produção
-  async scanItems(params: ScanCommandInput) {
+  async scan(params: ScanCommandInput) { // Correção: Renomeado de scanItems para scan
     try {
       const command = new ScanCommand(params); // Cria o comando Scan
       return await this.docClient.send(command); // Envia o comando para o DynamoDB e retorna a resposta
     } catch (error) {
-      this.handleError(error, 'scanItems'); // Em caso de erro, trata o erro
+      this.handleError(error, 'scan'); // Correção: Renomeado para scan
     }
   }
 
@@ -129,7 +129,7 @@ export class DynamoDbService {
   // Método para realizar operações de escrita em lote no DynamoDB (BatchWriteItem) - Para criar ou deletar múltiplos itens eficientemente
   async batchWrite(params: BatchWriteCommandInput) {
     try {
-      const command = new BatchWriteCommand(params); // Cria o comando BatchWriteItem
+      const command = new BatchWriteItemCommand(params); // Correção: BatchWriteItemCommand // Cria o comando BatchWriteItem
       return await this.docClient.send(command); // Envia o comando para o DynamoDB e retorna a resposta
     } catch (error) {
       this.handleError(error, 'batchWrite'); // Em caso de erro, trata o erro

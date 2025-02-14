@@ -11,7 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateCategoryDto = void 0;
-const class_validator_1 = require("class-validator"); // Import decorators de validação
+const class_validator_1 = require("class-validator");
 class CreateCategoryDto {
 }
 exports.CreateCategoryDto = CreateCategoryDto;
@@ -31,8 +31,30 @@ __decorate([
     __metadata("design:type", String)
 ], CreateCategoryDto.prototype, "slug", void 0);
 __decorate([
-    (0, class_validator_1.IsObject)() // Validação que seo é um objeto (opcional)
-    ,
     (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsObject)(),
     __metadata("design:type", Object)
 ], CreateCategoryDto.prototype, "seo", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateCategoryDto.prototype, "canonical", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateCategoryDto.prototype, "description", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsArray)(),
+    __metadata("design:type", Array)
+], CreateCategoryDto.prototype, "keywords", void 0);
+;
+constructor(categoryId, string, name, string, slug, string, seo ?  : { canonical: string, description: string, keywords: string[] });
+{
+    this.categoryId = categoryId;
+    this.name = name;
+    this.slug = slug;
+    this.seo = seo;
+}
