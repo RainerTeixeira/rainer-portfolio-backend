@@ -1,6 +1,6 @@
 // src/modules/blog/posts/dto/update-post.dto.ts
 
-import { PostDto } from './post.dto';
+import { PostDto } from '@src/modules/blog/posts/dto/post.dto'; // Import PostDto usando alias @src.
 import { IsOptional, IsString, IsNumber, IsObject, IsArray } from 'class-validator'; // Import decorators de validação
 
 export class UpdatePostDto {
