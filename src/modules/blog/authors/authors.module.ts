@@ -6,7 +6,7 @@ import { AuthorsService } from '@src/modules/blog/authors/services/authors.servi
 
 @Module({
     controllers: [AuthorsController], // Declara os controllers deste módulo.
-    providers: [AuthorsService],     // Declara os providers (services) deste módulo.
-    exports: [AuthorsService],       // Exporta AuthorsService para outros módulos.
+    providers: [AuthorsService],     // Declara os providers (services) deste módulo.
+    exports: [AuthorsService],      // Exporta AuthorsService para outros módulos.
 })
 export class AuthorsModule { }

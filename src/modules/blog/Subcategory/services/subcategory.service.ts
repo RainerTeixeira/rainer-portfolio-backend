@@ -1,7 +1,7 @@
 // src/modules/blog/Subcategory/services/subcaSubcategorytegoria.service.ts
 
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { DynamoDbService } from '../../../../services/dynamoDb.service';
+import { DynamoDbService } from '@src/services/dynamodb.service'; // Importa DynamoDbService usando alias @src.
 import { CreateSubcategoryDto } from '@src/modules/blog/Subcategory/dto/create-subcategory.dto'; // Importa CreateSubcategoriaDto usando alias @src.
 import { UpdateSubcategoryDto } from '@src/modules/blog/Subcategory/dto/update-subcategory.dto'; // Importa UpdateSubcategoriaDto usando alias @src.
 import { SubcategoriaDto } from '@src/modules/blog/Subcategory/dto/subcategory.dto'; // Importa SubcategoriaDto usando alias @src.

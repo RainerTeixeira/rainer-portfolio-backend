@@ -10,7 +10,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AppModule = void 0;
 const common_1 = require("@nestjs/common");
 const dynamoDb_service_1 = require("./services/dynamoDb.service"); // Import do DynamoDbService usando @src
-const blog_module_1 = require("@src/modules/blog/blog.module"); // Import correto do BlogModule
+const blog_module_1 = require("./modules/blog.module"); // Import correto do BlogModule
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;

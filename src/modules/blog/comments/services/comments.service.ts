@@ -1,10 +1,10 @@
 // src/modules/blog/comments/services/comments.service.ts
 
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { DynamoDbService } from '../../../../services/dynamoDb.service';
-import { CreateCommentDto } from '../dto/create-comment.dto';
-import { UpdateCommentDto } from '../dto/update-comment.dto';
-import { CommentDto } from '../dto/comment.dto';
+import { Injectable, NotFoundException } from '@nestjs/common'; // Importa Injectable e NotFoundException do NestJS.
+import { DynamoDbService } from '@src/services/dynamoDb.service'; // Importa DynamoDbService usando alias @src.
+import { CreateCommentDto } from '@src/modules/blog/comments/dto/create-comment.dto'; // Importa CreateCommentDto usando alias @src.
+import { UpdateCommentDto } from '@src/modules/blog/comments/dto/update-comment.dto'; // Importa UpdateCommentDto usando alias @src.
+import { CommentDto } from '@src/modules/blog/comments/dto/comment.dto'; // Importa CommentDto usando alias @src.
 
 @Injectable()
 export class CommentsService {
