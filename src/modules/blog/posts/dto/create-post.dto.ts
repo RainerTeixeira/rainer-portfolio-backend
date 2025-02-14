@@ -1,6 +1,6 @@
 // src/modules/blog/posts/dto/create-post.dto.ts
 
-import { IsString, IsOptional, IsObject, IsArray } from 'class-validator';
+import { IsOptional, IsString, IsObject } from 'class-validator';
 
 export class CreatePostDto {
   @IsString()
@@ -13,53 +13,46 @@ export class CreatePostDto {
   contentHTML: string;
 
   @IsObject()
-  postInfo: {
-        @IsOptional()
-  authorId?: string;
+  postInfo: { authorId?: string; tags?: string; excerpt?: string; publishDate?: string; slug?: string; title?: string; status?: string }; // Adicione as propriedades faltantes
+
+  @IsString()
+  excerpt: string;
+
+  @IsString()
+  publishDate: string;
+
+  @IsString()
+  slug: string;
+
+  @IsString()
+  title: string;
+
   @IsOptional()
-  @IsArray()
+  @IsObject()
+  seo?: {
+    @IsOptional()
+  @IsString()
+  canonical?: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
   @IsString({ each: true })
-  tags?: string[];
+  keywords?: string[]; // Corrigido para array de strings
 };
-
-@IsString()
-excerpt: string;
-
-@IsString()
-publishDate: string;
-
-@IsString()
-slug: string;
-
-@IsString()
-title: string;
-
-@IsOptional()
-@IsObject()
-seo ?: {
-        @IsOptional()
-@IsString()
-canonical ?: string;
-@IsOptional()
-@IsString()
-description ?: string;
-@IsOptional()
-@IsArray()
-@IsString({ each: true })
-keywords ?: string[];
-    };
-
 
 constructor(
   categoryId: string,
   subcategoryId: string,
   contentHTML: string,
-  postInfo: { authorId?: string; tags?: string[] },
+  postInfo: { authorId?: string; tags?: string; excerpt?: string; publishDate?: string; slug?: string; title?: string; status?: string }, // Adicione as propriedades faltantes
   excerpt: string,
   publishDate: string,
   slug: string,
   title: string,
-  seo ?: { canonical?: string; description?: string; keywords?: string[] }
+  seo ?: { canonical?: string; description?: string; keywords?: string[] } // Corrigido para array de strings
 ) {
   this.categoryId = categoryId;
   this.subcategoryId = subcategoryId;
