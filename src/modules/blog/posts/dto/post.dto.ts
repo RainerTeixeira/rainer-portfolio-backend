@@ -1,57 +1,46 @@
 // src/modules/blog/posts/dto/post.dto.ts
+import { PostInfoDto } from './post-info.dto';
+import { PostSeoDto } from './post-seo.dto';
 
-export enum PostStatus {
-    DRAFT = 'draft',
-    PUBLISHED = 'published',
-    // ... outros status se necessário
-}
-
+/**
+ * DTO principal para representar um Post.
+ * Reflete a estrutura de um post no banco de dados, incluindo chave primária composta e objetos aninhados.
+ */
 export class PostDto {
-    'categoryId#subcategoryId': string;
-    postId: string;
+    'categoryId#subcategoryId': string; // Chave de Partição Composta (categoryId#subcategoryId)
+    postId: string; // Chave de Classificação (postId)
     categoryId: string;
     subcategoryId: string;
     contentHTML: string;
-    postInfo: {
-        authorId?: string;
-        tags?: string[];
-        likes?: number;
-        views?: number;
-    };
-    excerpt: string;
-    publishDate: string;
-    slug: string;
-    title: string;
-    status: PostStatus; // Agora o tipo é PostStatus
-    seo: {
-        canonical?: string;
-        description?: string;
-        keywords?: string[];
-    };
+    postInfo?: PostInfoDto; // Objeto aninhado para informações do post
+    seo?: PostSeoDto; // Objeto aninhado para SEO
 
+    /**
+     * Construtor para PostDto.
+     * Inicializa as propriedades do DTO quando um objeto PostDto é criado.
+     * @param categoryIdSubcategoryId Chave de partição composta.
+     * @param postId Chave de classificação do post.
+     * @param categoryId ID da categoria do post.
+     * @param subcategoryId ID da subcategoria do post.
+     * @param contentHTML Conteúdo HTML do post.
+     * @param postInfo (Opcional) Informações adicionais sobre o post, do tipo PostInfoDto.
+     * @param seo (Opcional) Dados de SEO do post, do tipo PostSeoDto.
+     */
     constructor(
-        postId: string,
         categoryIdSubcategoryId: string,
+        postId: string,
+        categoryId: string,
+        subcategoryId: string,
         contentHTML: string,
-        postInfo: { authorId?: string; tags?: string[] },
-        excerpt: string,
-        publishDate: string,
-        slug: string,
-        title: string,
-        status: PostStatus, // status: PostStatus no construtor
-        seo?: { canonical?: string; description?: string; keywords?: string[] }
+        postInfo?: PostInfoDto,
+        seo?: PostSeoDto,
     ) {
-        this.postId = postId;
         this['categoryId#subcategoryId'] = categoryIdSubcategoryId;
+        this.postId = postId;
+        this.categoryId = categoryId;
+        this.subcategoryId = subcategoryId;
         this.contentHTML = contentHTML;
         this.postInfo = postInfo;
-        this.excerpt = excerpt;
-        this.publishDate = publishDate;
-        this.slug = slug;
-        this.title = title;
-        this.status = status;
         this.seo = seo;
-        this.categoryId = categoryIdSubcategoryId.split('#')[0];
-        this.subcategoryId = categoryIdSubcategoryId.split('#')[1];
     }
 }
