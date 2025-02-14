@@ -1,22 +1,13 @@
-import { IsString, IsNumber, IsNotEmpty, IsOptional, IsArray } from 'class-validator';
+// src/modules/blog/subcategoria/dto/subcategoria.dto.ts
 
-export class SubcategoryDto {
-    @IsNumber()
-    subcategoryId: number;
-
-    @IsNumber()
-    categoryId: number;
-
-    @IsString()
-    @IsNotEmpty()
+export class SubcategoriaDto {
+    'categoryId#subcategoryId': string; // Chave de Partição composta (categoryId#subcategoryId) - String
+    subcategoryId: string; // Chave de Classificação (subcategoryId) - String
     name: string;
-
-    @IsString()
-    @IsNotEmpty()
     slug: string;
-
-    @IsOptional()
-    @IsArray()
-    @IsString({ each: true })
-    relatedTools?: string[];
+    seo: { // Map aninhado
+        description?: string;
+        keywords?: string;
+        title?: string;
+    };
 }

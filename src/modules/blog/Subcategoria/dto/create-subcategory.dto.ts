@@ -1,20 +1,30 @@
-import { IsString, IsNumber, IsNotEmpty, IsOptional, IsArray } from 'class-validator';
+// src/modules/blog/subcategoria/dto/create-subcategoria.dto.ts
 
-export class CreateSubcategoryDto {
-    @IsNumber()
+import { SubcategoriaDto } from './subcategoria.dto';
+import { IsNotEmpty, IsString, IsOptional, IsObject } from 'class-validator'; // Import decorators de validação
+
+export class CreateSubcategoriaDto {
     @IsNotEmpty()
-    categoryId: number;
-
     @IsString()
+    categoryId: string;
+
     @IsNotEmpty()
+    @IsString()
+    subcategoryId: string;
+
+    @IsNotEmpty()
+    @IsString()
     name: string;
 
-    @IsString()
     @IsNotEmpty()
+    @IsString()
     slug: string;
 
     @IsOptional()
-    @IsArray()
-    @IsString({ each: true })
-    relatedTools?: string[];
+    @IsObject()
+    seo?: {
+        description?: string;
+        keywords?: string;
+        title?: string;
+    };
 }

@@ -1,137 +1,58 @@
-import { IsString, IsNumber, IsNotEmpty, ValidateNested, IsOptional, IsArray } from 'class-validator';
-import { Type } from 'class-transformer';
+// src/modules/blog/posts/dto/create-post.dto.ts
 
-class CreateContentPostDto {
-    @IsString()
-    @IsNotEmpty()
-    html: string;
-
-    @IsNumber()
-    @IsNotEmpty()
-    readingTime: number;
-
-    @IsArray()
-    @ValidateNested({ each: true })
-    @Type(() => CreateSectionPostDto)
-    sections: CreateSectionPostDto[];
-
-    @IsArray()
-    @ValidateNested({ each: true })
-    @Type(() => CreateReferencePostDto)
-    references: CreateReferencePostDto[];
-}
-
-class CreateSectionPostDto {
-    @IsString()
-    @IsNotEmpty()
-    anchor: string;
-
-    @IsString()
-    @IsNotEmpty()
-    title: string;
-
-    @IsString()
-    @IsNotEmpty()
-    type: string;
-}
-
-class CreateReferencePostDto {
-    @IsString()
-    @IsNotEmpty()
-    author: string;
-
-    @IsString()
-    @IsNotEmpty()
-    title: string;
-
-    @IsString()
-    @IsNotEmpty()
-    url: string;
-}
-
-class CreateSeoPostDto {
-    @IsString()
-    @IsNotEmpty()
-    canonicalUrl: string;
-
-    @IsArray()
-    @IsString({ each: true })
-    keywords: string[];
-
-    @IsString()
-    @IsNotEmpty()
-    metaDescription: string;
-
-    @IsString()
-    @IsNotEmpty()
-    title: string;
-}
-
-class CreateMediaPostDto {
-    @IsArray()
-    @ValidateNested({ each: true })
-    @Type(() => CreateImagePostDto)
-    images: CreateImagePostDto[];
-
-    @IsArray()
-    @ValidateNested({ each: true })
-    @Type(() => CreateVideoPostDto)
-    videos: CreateVideoPostDto[];
-}
-
-class CreateImagePostDto {
-    @IsString()
-    @IsNotEmpty()
-    alt: string;
-
-    @IsString()
-    @IsNotEmpty()
-    url: string;
-}
-
-class CreateVideoPostDto {
-    @IsString()
-    @IsNotEmpty()
-    embedUrl: string;
-
-    @IsString()
-    @IsNotEmpty()
-    thumbnail: string;
-}
-
-class CreateEngagementPostDto {
-    @IsNumber()
-    @IsNotEmpty()
-    avgTimeOnPage: number;
-
-    @IsNumber()
-    @IsNotEmpty()
-    socialShares: number;
-
-    @IsNumber()
-    @IsNotEmpty()
-    views: number;
-}
-
+import { PostDto } from './post.dto';
+import { IsNotEmpty, IsString, IsNumber, IsOptional, IsObject, IsArray } from 'class-validator'; // Import decorators de validação
 
 export class CreatePostDto {
-    @ValidateNested()
-    @Type(() => CreateContentPostDto)
-    content: CreateContentPostDto;
-
-    @ValidateNested()
-    @Type(() => CreateEngagementPostDto)
-    engagement: CreateEngagementPostDto;
-
-    @ValidateNested()
-    @Type(() => CreateMediaPostDto)
-    media: CreateMediaPostDto;
-
-    @ValidateNested()
-    @Type(() => CreateSeoPostDto)
-    seo: CreateSeoPostDto;
-
+    @IsNotEmpty()
     @IsString()
+    categoryId: string;
+
+    @IsNotEmpty()
+    @IsString()
+    subcategoryId: string;
+
+    @IsNotEmpty()
+    @IsString()
+    contentHTML: string;
+
+    @IsNotEmpty()
+    @IsObject()
+    postInfo: {
+    @IsOptional() // authorId pode ser opcional durante a criação
+    authorId?: string;
+    @IsNotEmpty()
+    excerpt: string;
+    @IsOptional()
+    featuredImageURL?: string;
+    @IsOptional()
+    modifiedDate?: string;
+    @IsNotEmpty()
+    publishDate: string;
+    @IsOptional()
+    @IsNumber()
+    readingTime?: number;
     @IsNotEmpty()
     slug: string;
+    @IsOptional()
+    status?: string;
+    @IsArray() // Validação que tags é um array
+    @IsOptional()
+    tags?: string[];
+    @IsNotEmpty()
+    title: string;
+    @IsOptional()
+    @IsNumber()
+    views?: number;
+};
+
+@IsOptional()
+@IsObject()
+seo ?: {
+    canonical?: string;
+    description?: string;
+    @IsArray() // Validação que keywords é um array
+@IsOptional()
+keywords ?: string[];
+  };
 }

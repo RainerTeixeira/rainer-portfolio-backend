@@ -1,10 +1,9 @@
-import { IsString, IsNumber, IsOptional, IsArray } from 'class-validator';
+// src/modules/blog/subcategoria/dto/update-subcategoria.dto.ts
 
-export class UpdateSubcategoryDto {
-    @IsOptional()
-    @IsNumber()
-    categoryId?: number;
+import { SubcategoriaDto } from './subcategoria.dto';
+import { IsOptional, IsString, IsObject } from 'class-validator'; // Import decorators de validação
 
+export class UpdateSubcategoriaDto {
     @IsOptional()
     @IsString()
     name?: string;
@@ -14,7 +13,10 @@ export class UpdateSubcategoryDto {
     slug?: string;
 
     @IsOptional()
-    @IsArray()
-    @IsString({ each: true })
-    relatedTools?: string[];
+    @IsObject()
+    seo?: {
+        description?: string;
+        keywords?: string;
+        title?: string;
+    };
 }

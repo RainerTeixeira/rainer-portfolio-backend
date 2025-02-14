@@ -1,145 +1,42 @@
-import { IsString, IsNumber, IsOptional, ValidateNested, IsArray } from 'class-validator';
-import { Type } from 'class-transformer';
+// src/modules/blog/posts/dto/update-post.dto.ts
 
-class UpdateContentPostDto {
-    @IsOptional()
-    @IsString()
-    html?: string;
-
-    @IsOptional()
-    @IsNumber()
-    readingTime?: number;
-
-    @IsOptional()
-    @IsArray()
-    @ValidateNested({ each: true })
-    @Type(() => UpdateSectionPostDto)
-    sections?: UpdateSectionPostDto[];
-
-    @IsOptional()
-    @IsArray()
-    @ValidateNested({ each: true })
-    @Type(() => UpdateReferencePostDto)
-    references?: UpdateReferencePostDto[];
-}
-
-class UpdateSectionPostDto {
-    @IsOptional()
-    @IsString()
-    anchor?: string;
-
-    @IsOptional()
-    @IsString()
-    title?: string;
-
-    @IsOptional()
-    @IsString()
-    type?: string;
-}
-
-class UpdateReferencePostDto {
-    @IsOptional()
-    @IsString()
-    author?: string;
-
-    @IsOptional()
-    @IsString()
-    title?: string;
-
-    @IsOptional()
-    @IsString()
-    url?: string;
-}
-
-class UpdateSeoPostDto {
-    @IsOptional()
-    @IsString()
-    canonicalUrl?: string;
-
-    @IsOptional()
-    @IsArray()
-    @IsString({ each: true })
-    keywords?: string[];
-
-    @IsOptional()
-    @IsString()
-    metaDescription?: string;
-
-    @IsOptional()
-    @IsString()
-    title?: string;
-}
-
-class UpdateMediaPostDto {
-    @IsOptional()
-    @IsArray()
-    @ValidateNested({ each: true })
-    @Type(() => UpdateImagePostDto)
-    images?: UpdateImagePostDto[];
-
-    @IsOptional()
-    @IsArray()
-    @ValidateNested({ each: true })
-    @Type(() => UpdateVideoPostDto)
-    videos?: UpdateVideoDto[];
-}
-
-class UpdateImagePostDto {
-    @IsOptional()
-    @IsString()
-    alt?: string;
-
-    @IsOptional()
-    @IsString()
-    url?: string;
-}
-
-class UpdateVideoDto {
-    @IsOptional()
-    @IsString()
-    embedUrl?: string;
-
-    @IsOptional()
-    @IsString()
-    thumbnail?: string;
-}
-
-class UpdateEngagementPostDto {
-    @IsOptional()
-    @IsNumber()
-    avgTimeOnPage?: number;
-
-    @IsOptional()
-    @IsNumber()
-    socialShares?: number;
-
-    @IsOptional()
-    @IsNumber()
-    views?: number;
-}
+import { PostDto } from './post.dto';
+import { IsOptional, IsString, IsNumber, IsObject, IsArray } from 'class-validator'; // Import decorators de validação
 
 export class UpdatePostDto {
     @IsOptional()
-    @ValidateNested()
-    @Type(() => UpdateContentPostDto)
-    content?: UpdateContentPostDto;
-
-    @IsOptional()
-    @ValidateNested()
-    @Type(() => UpdateEngagementPostDto)
-    engagement?: UpdateEngagementPostDto;
-
-    @IsOptional()
-    @ValidateNested()
-    @Type(() => UpdateMediaPostDto)
-    media?: UpdateMediaPostDto;
-
-    @IsOptional()
-    @ValidateNested()
-    @Type(() => UpdateSeoPostDto)
-    seo?: UpdateSeoPostDto;
+    @IsString()
+    categoryId?: string;
 
     @IsOptional()
     @IsString()
-    slug?: string;
+    subcategoryId?: string;
+
+    @IsOptional()
+    @IsString()
+    contentHTML?: string;
+
+    @IsOptional()
+    @IsObject()
+    postInfo?: {
+        authorId?: string;
+        excerpt?: string;
+        featuredImageURL?: string;
+        modifiedDate?: string;
+        publishDate?: string;
+        readingTime?: number;
+        slug?: string;
+        status?: string;
+        tags?: string[];
+        title?: string;
+        views?: number;
+    };
+
+    @IsOptional()
+    @IsObject()
+    seo?: {
+        canonical?: string;
+        description?: string;
+        keywords?: string[];
+    };
 }

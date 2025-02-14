@@ -1,31 +1,26 @@
-import { IsString, IsNumber, IsNotEmpty, ValidateNested } from 'class-validator';
-import { Type } from 'class-transformer';
+// src/modules/blog/comments/dto/create-comment.dto.ts
 
-class CreateAuthorCommentDto {
-    @IsString()
-    @IsNotEmpty()
-    name: string;
-
-    @IsString()
-    @IsNotEmpty()
-    emailHash: string;
-}
-
+import { CommentDto } from './comment.dto';
+import { IsNotEmpty, IsNumber, IsString, IsOptional } from 'class-validator'; // Import decorators de validação
 
 export class CreateCommentDto {
-    @IsNumber()
     @IsNotEmpty()
+    @IsNumber()
     postId: number;
 
-    @IsString()
     @IsNotEmpty()
+    @IsString()
+    authorId: string;
+
+    @IsNotEmpty()
+    @IsString()
     content: string;
 
-    @IsString()
     @IsNotEmpty()
+    @IsString()
     date: string;
 
-    @ValidateNested()
-    @Type(() => CreateAuthorCommentDto)
-    author: CreateAuthorCommentDto;
+    @IsOptional() // Status pode ser opcional ao criar, com um valor padrão no backend
+    @IsString()
+    status?: string;
 }
