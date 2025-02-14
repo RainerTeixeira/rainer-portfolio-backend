@@ -1,18 +1,14 @@
-import { IsNumber, IsString, IsNotEmpty } from 'class-validator';
+// src/modules/blog/authors/dto/author.dto.ts
 
 export class AuthorDto {
-    @IsNumber()
-    authorId: number;
-
-    @IsString()
-    @IsNotEmpty()
+    postId: string; // Chave de Partição (postId) - String
+    authorId: string; // Chave de Classificação (authorId) - String
     name: string;
-
-    @IsString()
-    @IsNotEmpty()
-    bio: string;
-
-    @IsString()
-    @IsNotEmpty()
-    imageUrl: string;
+    slug: string;
+    expertise: string[]; // Lista de strings
+    socialProof: {
+        facebook?: string; // Map com campos opcionais
+        github?: string;
+        medium?: string;
+    };
 }
