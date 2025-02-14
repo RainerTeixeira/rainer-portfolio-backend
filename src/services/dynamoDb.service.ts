@@ -6,9 +6,9 @@ import {
   PutItemCommand,
   UpdateItemCommand,
   DeleteItemCommand,
-  ScanCommand,
+  ScanCommand, // Importante: ScanCommand para escanear tabelas
   QueryCommand,
-  BatchWriteItemCommand, // Correção: Importe BatchWriteItemCommand
+  BatchWriteItemCommand, // Correção: Importe BatchWriteItemCommand (já estava correto)
   BatchGetItemCommand,
 } from '@aws-sdk/client-dynamodb';
 import {
@@ -18,7 +18,7 @@ import {
   PutCommandInput,
   UpdateCommandInput,
   DeleteCommandInput,
-  ScanCommandInput,
+  ScanCommandInput, // Importante: ScanCommandInput para tipagem do método scan
   QueryCommandInput,
   BatchWriteCommandInput,
   BatchGetCommandInput,
@@ -107,12 +107,12 @@ export class DynamoDbService {
   }
 
   // Método para escanear uma tabela inteira do DynamoDB (Scan) - CUIDADO: Ineficiente para tabelas grandes em produção
-  async scan(params: ScanCommandInput) { // Correção: Renomeado de scanItems para scan
+  async scan(params: ScanCommandInput) { // Correção: Renomeado de scanItems para scan (agora usa o nome correto do método da AWS SDK v3)
     try {
       const command = new ScanCommand(params); // Cria o comando Scan
       return await this.docClient.send(command); // Envia o comando para o DynamoDB e retorna a resposta
     } catch (error) {
-      this.handleError(error, 'scan'); // Correção: Renomeado para scan
+      this.handleError(error, 'scan'); // Correção: Renomeado para scan (para corresponder ao nome do método)
     }
   }
 
@@ -129,7 +129,7 @@ export class DynamoDbService {
   // Método para realizar operações de escrita em lote no DynamoDB (BatchWriteItem) - Para criar ou deletar múltiplos itens eficientemente
   async batchWrite(params: BatchWriteCommandInput) {
     try {
-      const command = new BatchWriteItemCommand(params); // Correção: BatchWriteItemCommand // Cria o comando BatchWriteItem
+      const command = new BatchWriteItemCommand(params); // Correção: BatchWriteItemCommand (já estava correto) // Cria o comando BatchWriteItem
       return await this.docClient.send(command); // Envia o comando para o DynamoDB e retorna a resposta
     } catch (error) {
       this.handleError(error, 'batchWrite'); // Em caso de erro, trata o erro

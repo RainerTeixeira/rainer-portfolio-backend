@@ -136,7 +136,7 @@ let DynamoDbService = DynamoDbService_1 = class DynamoDbService {
                 return yield this.docClient.send(command); // Envia o comando para o DynamoDB e retorna a resposta
             }
             catch (error) {
-                this.handleError(error, 'scan'); // Correção: Renomeado para scan
+                this.handleError(error, 'scan'); // Correção: Renomeado para scan (para corresponder ao nome do método)
             }
         });
     }
@@ -156,7 +156,7 @@ let DynamoDbService = DynamoDbService_1 = class DynamoDbService {
     batchWrite(params) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const command = new client_dynamodb_1.BatchWriteItemCommand(params); // Correção: BatchWriteItemCommand // Cria o comando BatchWriteItem
+                const command = new client_dynamodb_1.BatchWriteItemCommand(params); // Correção: BatchWriteItemCommand (já estava correto) // Cria o comando BatchWriteItem
                 return yield this.docClient.send(command); // Envia o comando para o DynamoDB e retorna a resposta
             }
             catch (error) {
