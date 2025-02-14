@@ -1,5 +1,5 @@
 "use strict";
-// src/modules/blog/category/categories.module.ts
+// src/modules/blog/categories/categories.module.ts
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -7,17 +7,17 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CategoriesModule = void 0;
+exports.CategoryModule = void 0;
 const common_1 = require("@nestjs/common");
-const categories_controller_1 = require("./controllers/categories.controller");
-const categories_service_1 = require("./services/categories.service");
-let CategoriesModule = class CategoriesModule {
+const category_controller_1 = require("./controllers/category.controller");
+const category_service_1 = require("./services/category.service");
+let CategoryModule = class CategoryModule {
 };
-exports.CategoriesModule = CategoriesModule;
-exports.CategoriesModule = CategoriesModule = __decorate([
+exports.CategoryModule = CategoryModule;
+exports.CategoryModule = CategoryModule = __decorate([
     (0, common_1.Module)({
-        controllers: [categories_controller_1.CategoriesController],
-        providers: [categories_service_1.CategoriesService],
-        exports: [categories_service_1.CategoriesService],
+        controllers: [category_controller_1.CategoryController],
+        providers: [category_service_1.CategoryService],
+        exports: [category_service_1.CategoryService],
     })
-], CategoriesModule);
+], CategoryModule);
