@@ -10,23 +10,23 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UpdateSubcategoriaDto = void 0;
+exports.UpdateSubcategoryDto = void 0;
 const class_validator_1 = require("class-validator"); // Import decorators de validação
-class UpdateSubcategoriaDto {
+class UpdateSubcategoryDto {
 }
-exports.UpdateSubcategoriaDto = UpdateSubcategoriaDto;
+exports.UpdateSubcategoryDto = UpdateSubcategoryDto;
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], UpdateSubcategoriaDto.prototype, "name", void 0);
+], UpdateSubcategoryDto.prototype, "name", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], UpdateSubcategoriaDto.prototype, "slug", void 0);
+], UpdateSubcategoryDto.prototype, "slug", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsObject)(),
     __metadata("design:type", Object)
-], UpdateSubcategoriaDto.prototype, "seo", void 0);
+], UpdateSubcategoryDto.prototype, "seo", void 0);

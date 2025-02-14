@@ -58,7 +58,7 @@ let SubcategoryService = class SubcategoryService {
             };
             const result = yield this.dynamoDbService.getItem(params);
             if (!result.Item) {
-                throw new common_1.NotFoundException(`Subcategoria com categoryId#subcategoryId '${categoryIdSubcategoryId}' e subcategoryId '${subcategoryId}' não encontrada`);
+                throw new common_1.NotFoundException(`Subcategory com categoryId#subcategoryId '${categoryIdSubcategoryId}' e subcategoryId '${subcategoryId}' não encontrada`);
             }
             return result.Item;
         });
@@ -66,7 +66,7 @@ let SubcategoryService = class SubcategoryService {
     update(categoryIdSubcategoryId, subcategoryId, updateSubcategoryDto) {
         return __awaiter(this, void 0, void 0, function* () {
             yield this.findOne(categoryIdSubcategoryId, subcategoryId);
-            const updateExpression = this.dynamoDbService.buildUpdateExpression(updateSubcategoriaDto);
+            const updateExpression = this.dynamoDbService.buildUpdateExpression(updateSubcategoryDto);
             if (!updateExpression) {
                 return this.findOne(categoryIdSubcategoryId, subcategoryId);
             }

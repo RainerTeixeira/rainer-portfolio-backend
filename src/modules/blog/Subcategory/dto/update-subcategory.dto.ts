@@ -3,7 +3,7 @@
 import { SubcategoriaDto } from '@src/modules/blog/subcategory/dto/subcategory.dto'; // Importa SubcategoriaDto usando alias @src.
 import { IsOptional, IsString, IsObject } from 'class-validator'; // Import decorators de validação
 
-export class UpdateSubcategoriaDto {
+export class UpdateSubcategoryDto {
     @IsOptional()
     @IsString()
     name?: string;
