@@ -23,10 +23,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CommentsController = void 0;
-const common_1 = require("@nestjs/common"); // Importa decorators do NestJS para controllers.
-const comments_service_1 = require("../services/comments.service"); // Importa CommentsService usando alias @src.
-const create_comment_dto_1 = require("../dto/create-comment.dto"); // Importa CreateCommentDto usando alias @src.
-const update_comment_dto_1 = require("../dto/update-comment.dto"); // Importa UpdateCommentDto usando alias @src.
+const common_1 = require("@nestjs/common");
+const comments_service_1 = require("../services/comments.service");
+const create_comment_dto_1 = require("../dto/create-comment.dto");
+const update_comment_dto_1 = require("../dto/update-comment.dto");
 let CommentsController = class CommentsController {
     constructor(commentsService) {
         this.commentsService = commentsService;
@@ -73,27 +73,27 @@ __decorate([
 ], CommentsController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Get)(':postId/:authorId'),
-    __param(0, (0, common_1.Param)('postId')),
+    __param(0, (0, common_1.Param)('postId', common_1.ParseIntPipe)),
     __param(1, (0, common_1.Param)('authorId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [Number, String]),
     __metadata("design:returntype", Promise)
 ], CommentsController.prototype, "findOne", null);
 __decorate([
     (0, common_1.Put)(':postId/:authorId'),
-    __param(0, (0, common_1.Param)('postId')),
+    __param(0, (0, common_1.Param)('postId', common_1.ParseIntPipe)),
     __param(1, (0, common_1.Param)('authorId')),
     __param(2, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, update_comment_dto_1.UpdateCommentDto]),
+    __metadata("design:paramtypes", [Number, String, update_comment_dto_1.UpdateCommentDto]),
     __metadata("design:returntype", Promise)
 ], CommentsController.prototype, "update", null);
 __decorate([
     (0, common_1.Delete)(':postId/:authorId'),
-    __param(0, (0, common_1.Param)('postId')),
+    __param(0, (0, common_1.Param)('postId', common_1.ParseIntPipe)),
     __param(1, (0, common_1.Param)('authorId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [Number, String]),
     __metadata("design:returntype", Promise)
 ], CommentsController.prototype, "remove", null);
 exports.CommentsController = CommentsController = __decorate([

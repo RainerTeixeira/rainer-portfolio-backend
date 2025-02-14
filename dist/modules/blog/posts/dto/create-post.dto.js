@@ -16,67 +16,40 @@ class CreatePostDto {
 }
 exports.CreatePostDto = CreatePostDto;
 __decorate([
-    (0, class_validator_1.IsNotEmpty)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreatePostDto.prototype, "categoryId", void 0);
 __decorate([
-    (0, class_validator_1.IsNotEmpty)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreatePostDto.prototype, "subcategoryId", void 0);
 __decorate([
-    (0, class_validator_1.IsNotEmpty)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreatePostDto.prototype, "contentHTML", void 0);
 __decorate([
-    (0, class_validator_1.IsNotEmpty)(),
     (0, class_validator_1.IsObject)(),
     __metadata("design:type", Object)
 ], CreatePostDto.prototype, "postInfo", void 0);
 __decorate([
-    (0, class_validator_1.IsNotEmpty)(),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], CreatePostDto.prototype, "excerpt", void 0);
-__decorate([
-    (0, class_validator_1.IsNotEmpty)(),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], CreatePostDto.prototype, "publishDate", void 0);
-__decorate([
-    (0, class_validator_1.IsNotEmpty)(),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], CreatePostDto.prototype, "slug", void 0);
-__decorate([
-    (0, class_validator_1.IsNotEmpty)(),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], CreatePostDto.prototype, "title", void 0);
-__decorate([
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsObject)(),
-    __metadata("design:type", Object)
-], CreatePostDto.prototype, "seo", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], CreatePostDto.prototype, "canonical", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], CreatePostDto.prototype, "description", void 0);
+], CreatePostDto.prototype, "authorId", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsArray)(),
-    (0, class_validator_1.IsString)({ each: true }) // Garante que cada item do array é string
-    ,
+    (0, class_validator_1.IsString)({ each: true }),
     __metadata("design:type", Array)
-], CreatePostDto.prototype, "keywords", void 0);
+], CreatePostDto.prototype, "tags", void 0);
+;
+excerpt: string;
+publishDate: string;
+slug: string;
+title: string;
+seo ?  : {};
+canonical ?  : string;
+description ?  : string;
+keywords ?  : string[];
 ;
 constructor(categoryId, string, subcategoryId, string, contentHTML, string, postInfo, { authorId: string, tags: string[] }, excerpt, string, publishDate, string, slug, string, title, string, seo ?  : { canonical: string, description: string, keywords: string[] });
 {
