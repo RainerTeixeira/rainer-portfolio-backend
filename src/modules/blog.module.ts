@@ -5,7 +5,7 @@ import { AuthorsModule } from '@src/modules/blog/authors/authors.module'; // imp
 import { CategoriesModule } from '@src/modules/blog/categories/categories.module'; // Import com @src
 import { CommentsModule } from '@src/modules/blog/comments/comments.module'; // Import com @src
 import { PostsModule } from '@src/modules/blog/posts/posts.module'; // Import com @src
-import { SubcategoriaModule } from '@src/modules/blog/subcategoria/subcategories.module'; // Import com @src
+import { SubcategoriaModule } from '@src/modules/blog/Subcategory/subcategory.module'; // Import com @src
 
 @Module({
   imports: [
