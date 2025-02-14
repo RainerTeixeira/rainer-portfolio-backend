@@ -25,36 +25,44 @@ exports.SubcategoryController = void 0;
 // src/modules/blog/subcategory/controllers/subcategory.controller.ts
 const common_1 = require("@nestjs/common");
 const subcategory_service_1 = require("../services/subcategory.service");
-const create_subcategory_dto_1 = require("../dto/create-subcategory.dto"); // Correção: CreateSubcategoryDto
+const create_subcategory_dto_1 = require("../dto/create-subcategory.dto");
 const update_subcategory_dto_1 = require("../dto/update-subcategory.dto");
 let SubcategoryController = class SubcategoryController {
     constructor(subcategoryService) {
         this.subcategoryService = subcategoryService;
     }
-    create(categoryIdSubcategoryId, createSubcategoryDto // Correção: CreateSubcategoryDto
+    create(categoryIdSubcategoryId, createSubcategoryDto // Dados do corpo da requisição para criar subcategoria
     ) {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.subcategoryService.createSubcategory(categoryIdSubcategoryId, createSubcategoryDto);
+            // Chama o método createSubcategory do SubcategoryService para criar uma nova subcategoria
+            return this.subcategoryService.createSubcategory(categoryIdSubcategoryId, createSubcategoryDto); // Correto: Chamando createSubcategory
         });
     }
     findAll(categoryIdSubcategoryId) {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.subcategoryService.getAllSubcategories(categoryIdSubcategoryId);
+            // Chama o método getAllSubcategories do SubcategoryService para buscar todas as subcategorias de uma categoria
+            return this.subcategoryService.getAllSubcategories(categoryIdSubcategoryId); // Correto: Chamando getAllSubcategories
         });
     }
-    findOne(categoryIdSubcategoryId, subcategoryId) {
+    findOne(categoryIdSubcategoryId, subcategoryId // Parâmetro da rota: subcategoryId
+    ) {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.subcategoryService.getSubcategoryById(categoryIdSubcategoryId, subcategoryId);
+            // Chama o método getSubcategoryById do SubcategoryService para buscar uma subcategoria por ID
+            return this.subcategoryService.getSubcategoryById(categoryIdSubcategoryId, subcategoryId); // Correto: Chamando getSubcategoryById
         });
     }
-    update(categoryIdSubcategoryId, subcategoryId, updateSubcategoryDto) {
+    update(categoryIdSubcategoryId, subcategoryId, updateSubcategoryDto // Dados do corpo da requisição para atualizar subcategoria
+    ) {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.subcategoryService.updateSubcategory(categoryIdSubcategoryId, subcategoryId, updateSubcategoryDto);
+            // Chama o método updateSubcategory do SubcategoryService para atualizar uma subcategoria
+            return this.subcategoryService.updateSubcategory(categoryIdSubcategoryId, subcategoryId, updateSubcategoryDto); // Correto: Chamando updateSubcategory
         });
     }
-    remove(categoryIdSubcategoryId, subcategoryId) {
+    remove(categoryIdSubcategoryId, subcategoryId // Parâmetro da rota: subcategoryId
+    ) {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.subcategoryService.deleteSubcategory(categoryIdSubcategoryId, subcategoryId);
+            // Chama o método deleteSubcategory do SubcategoryService para remover uma subcategoria
+            return this.subcategoryService.deleteSubcategory(categoryIdSubcategoryId, subcategoryId); // Correto: Chamando deleteSubcategory
         });
     }
 };
@@ -64,7 +72,7 @@ __decorate([
     __param(0, (0, common_1.Param)('categoryIdSubcategoryId')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, create_subcategory_dto_1.CreateSubcategoryDto // Correção: CreateSubcategoryDto
+    __metadata("design:paramtypes", [String, create_subcategory_dto_1.CreateSubcategoryDto // Dados do corpo da requisição para criar subcategoria
     ]),
     __metadata("design:returntype", Promise)
 ], SubcategoryController.prototype, "create", null);
@@ -89,7 +97,8 @@ __decorate([
     __param(1, (0, common_1.Param)('subcategoryId')),
     __param(2, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, update_subcategory_dto_1.UpdateSubcategoryDto]),
+    __metadata("design:paramtypes", [String, String, update_subcategory_dto_1.UpdateSubcategoryDto // Dados do corpo da requisição para atualizar subcategoria
+    ]),
     __metadata("design:returntype", Promise)
 ], SubcategoryController.prototype, "update", null);
 __decorate([
@@ -101,6 +110,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], SubcategoryController.prototype, "remove", null);
 exports.SubcategoryController = SubcategoryController = __decorate([
-    (0, common_1.Controller)('categories/:categoryIdSubcategoryId/subcategories'),
+    (0, common_1.Controller)('categories/:categoryIdSubcategoryId/subcategories') // Rota base para subcategorias dentro de categorias
+    ,
     __metadata("design:paramtypes", [subcategory_service_1.SubcategoryService])
 ], SubcategoryController);
