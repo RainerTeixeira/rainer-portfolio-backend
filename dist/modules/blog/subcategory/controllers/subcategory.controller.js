@@ -1,5 +1,4 @@
 "use strict";
-// src/modules/blog/Subcategory/controllers/Subcategory.controller.ts
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -21,58 +20,63 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SubcategoryController = void 0;
-const common_1 = require("@nestjs/common"); // Importa decorators do NestJS para controllers.
-const subcategory_service_1 = require("../services/subcategory.service"); // Agora 'subcategory'
-const update_subcategory_dto_1 = require("../dto/update-subcategory.dto"); // Agora 'subcategory'
+// src/modules/blog/subcategory/controllers/subcategory.controller.ts
+const common_1 = require("@nestjs/common");
+const subcategory_service_1 = require("../services/subcategory.service");
+const create_subcategory_dto_1 = require("../dto/create-subcategory.dto"); // Correção: CreateSubcategoryDto
+const update_subcategory_dto_1 = require("../dto/update-subcategory.dto");
 let SubcategoryController = class SubcategoryController {
     constructor(subcategoryService) {
         this.subcategoryService = subcategoryService;
     }
-    create(createSubcategoryDto) {
+    create(categoryIdSubcategoryId, createSubcategoryDto // Correção: CreateSubcategoryDto
+    ) {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.subcategoryService.create(createSubcategoryDto);
+            return this.subcategoryService.createSubcategory(categoryIdSubcategoryId, createSubcategoryDto);
         });
     }
-    findAll() {
+    findAll(categoryIdSubcategoryId) {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.subcategoryService.findAll();
+            return this.subcategoryService.getAllSubcategories(categoryIdSubcategoryId);
         });
     }
     findOne(categoryIdSubcategoryId, subcategoryId) {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.subcategoryService.findOne(categoryIdSubcategoryId, subcategoryId);
+            return this.subcategoryService.getSubcategoryById(categoryIdSubcategoryId, subcategoryId);
         });
     }
-    update(categoryIdSubcategoryId, subcategoryId, UpdateSubcategoryDto) {
+    update(categoryIdSubcategoryId, subcategoryId, updateSubcategoryDto) {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.subcategoryService.update(categoryIdSubcategoryId, subcategoryId, UpdateSubcategoryDto);
+            return this.subcategoryService.updateSubcategory(categoryIdSubcategoryId, subcategoryId, updateSubcategoryDto);
         });
     }
     remove(categoryIdSubcategoryId, subcategoryId) {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.subcategoryService.remove(categoryIdSubcategoryId, subcategoryId);
+            return this.subcategoryService.deleteSubcategory(categoryIdSubcategoryId, subcategoryId);
         });
     }
 };
 exports.SubcategoryController = SubcategoryController;
 __decorate([
     (0, common_1.Post)(),
-    __param(0, (0, common_1.Body)()),
+    __param(0, (0, common_1.Param)('categoryIdSubcategoryId')),
+    __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_a = typeof CreateSubcategyDto !== "undefined" && CreateSubcategyDto) === "function" ? _a : Object]),
+    __metadata("design:paramtypes", [String, create_subcategory_dto_1.CreateSubcategoryDto // Correção: CreateSubcategoryDto
+    ]),
     __metadata("design:returntype", Promise)
 ], SubcategoryController.prototype, "create", null);
 __decorate([
     (0, common_1.Get)(),
+    __param(0, (0, common_1.Param)('categoryIdSubcategoryId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], SubcategoryController.prototype, "findAll", null);
 __decorate([
-    (0, common_1.Get)(':categoryIdSubcategoryId/:subcategoryId'),
+    (0, common_1.Get)(':subcategoryId'),
     __param(0, (0, common_1.Param)('categoryIdSubcategoryId')),
     __param(1, (0, common_1.Param)('subcategoryId')),
     __metadata("design:type", Function),
@@ -80,7 +84,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], SubcategoryController.prototype, "findOne", null);
 __decorate([
-    (0, common_1.Put)(':categoryIdSubcategoryId/:subcategoryId'),
+    (0, common_1.Patch)(':subcategoryId'),
     __param(0, (0, common_1.Param)('categoryIdSubcategoryId')),
     __param(1, (0, common_1.Param)('subcategoryId')),
     __param(2, (0, common_1.Body)()),
@@ -89,7 +93,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], SubcategoryController.prototype, "update", null);
 __decorate([
-    (0, common_1.Delete)(':categoryIdSubcategoryId/:subcategoryId'),
+    (0, common_1.Delete)(':subcategoryId'),
     __param(0, (0, common_1.Param)('categoryIdSubcategoryId')),
     __param(1, (0, common_1.Param)('subcategoryId')),
     __metadata("design:type", Function),
@@ -97,6 +101,6 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], SubcategoryController.prototype, "remove", null);
 exports.SubcategoryController = SubcategoryController = __decorate([
-    (0, common_1.Controller)('blog/subcategorias'),
+    (0, common_1.Controller)('categories/:categoryIdSubcategoryId/subcategories'),
     __metadata("design:paramtypes", [subcategory_service_1.SubcategoryService])
 ], SubcategoryController);
