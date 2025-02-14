@@ -1,4 +1,5 @@
 "use strict";
+// src/modules/blog/categories/dto/update-category.dto.ts
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -9,20 +10,23 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ReferenceDto = void 0;
-const swagger_1 = require("@nestjs/swagger");
-class ReferenceDto {
+exports.UpdateCategoryDto = void 0;
+const class_validator_1 = require("class-validator"); // Import decorators de validação
+class UpdateCategoryDto {
 }
-exports.ReferenceDto = ReferenceDto;
+exports.UpdateCategoryDto = UpdateCategoryDto;
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 1, description: 'ID de referência' }),
-    __metadata("design:type", Number)
-], ReferenceDto.prototype, "referenceId", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)({ example: 'Título da Referência', description: 'Título da fonte externa' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], ReferenceDto.prototype, "title", void 0);
+], UpdateCategoryDto.prototype, "name", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'https://exemplo.com', description: 'URL da referência' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], ReferenceDto.prototype, "url", void 0);
+], UpdateCategoryDto.prototype, "slug", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsObject)(),
+    __metadata("design:type", Object)
+], UpdateCategoryDto.prototype, "seo", void 0);

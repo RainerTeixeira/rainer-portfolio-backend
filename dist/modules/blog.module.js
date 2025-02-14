@@ -1,4 +1,5 @@
 "use strict";
+// src/modules/blog/blog.module.ts
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -7,24 +8,30 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BlogModule = void 0;
-// src/modules/blog/blog.module.ts
 const common_1 = require("@nestjs/common");
-const posts_module_1 = require("./blog/posts/posts.module");
-//import { AuthorsModule } from '@src/modules/blog/authors/autor.module';
-//import { CategoriesModule } from '@src/modules/blog/authors/categories.module';
-//import { CommentsModule } from '@src/modules/blog/authors/comments.module';
-//import { ExternalIntegrationsModule } from './external-integrations/external-integrations.module';
+const authors_module_1 = require("./authors/authors.module");
+const categories_module_1 = require("./categories/categories.module");
+const comments_module_1 = require("./comments/comments.module");
+const posts_module_1 = require("./posts/posts.module");
+const subcategoria_module_1 = require("./subcategoria/subcategoria.module");
 let BlogModule = class BlogModule {
 };
 exports.BlogModule = BlogModule;
 exports.BlogModule = BlogModule = __decorate([
     (0, common_1.Module)({
         imports: [
+            authors_module_1.AuthorsModule,
+            categories_module_1.CategoriesModule,
+            comments_module_1.CommentsModule,
             posts_module_1.PostsModule,
-            //AuthorsModule,
-            //CategoriesModule,
-            //CommentsModule,
-            //ExternalIntegrationsModule,
+            subcategoria_module_1.SubcategoriaModule,
+        ],
+        exports: [
+            authors_module_1.AuthorsModule,
+            categories_module_1.CategoriesModule,
+            comments_module_1.CommentsModule,
+            posts_module_1.PostsModule,
+            subcategoria_module_1.SubcategoriaModule,
         ],
     })
 ], BlogModule);

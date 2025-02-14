@@ -1,5 +1,5 @@
 "use strict";
-// src/modules/blog/posts/dto/update-post.dto.ts
+// src/modules/blog/categories/dto/create-category.dto.ts
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -10,33 +10,29 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UpdatePostDto = void 0;
+exports.CreateCategoryDto = void 0;
 const class_validator_1 = require("class-validator"); // Import decorators de validação
-class UpdatePostDto {
+class CreateCategoryDto {
 }
-exports.UpdatePostDto = UpdatePostDto;
+exports.CreateCategoryDto = CreateCategoryDto;
 __decorate([
-    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsNotEmpty)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], UpdatePostDto.prototype, "categoryId", void 0);
+], CreateCategoryDto.prototype, "categoryId", void 0);
 __decorate([
-    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsNotEmpty)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], UpdatePostDto.prototype, "subcategoryId", void 0);
+], CreateCategoryDto.prototype, "name", void 0);
 __decorate([
-    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsNotEmpty)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], UpdatePostDto.prototype, "contentHTML", void 0);
+], CreateCategoryDto.prototype, "slug", void 0);
 __decorate([
+    (0, class_validator_1.IsObject)() // Validação que seo é um objeto (opcional)
+    ,
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsObject)(),
     __metadata("design:type", Object)
-], UpdatePostDto.prototype, "postInfo", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsObject)(),
-    __metadata("design:type", Object)
-], UpdatePostDto.prototype, "seo", void 0);
+], CreateCategoryDto.prototype, "seo", void 0);

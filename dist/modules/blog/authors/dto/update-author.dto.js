@@ -1,5 +1,5 @@
 "use strict";
-// src/modules/blog/posts/dto/update-post.dto.ts
+// src/modules/blog/authors/dto/update-author.dto.ts
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -10,33 +10,28 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UpdatePostDto = void 0;
-const class_validator_1 = require("class-validator"); // Import decorators de validação
-class UpdatePostDto {
+exports.UpdateAuthorDto = void 0;
+const class_validator_1 = require("class-validator"); // Import decorators de validação (opcional)
+class UpdateAuthorDto {
 }
-exports.UpdatePostDto = UpdatePostDto;
+exports.UpdateAuthorDto = UpdateAuthorDto;
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], UpdatePostDto.prototype, "categoryId", void 0);
+], UpdateAuthorDto.prototype, "name", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], UpdatePostDto.prototype, "subcategoryId", void 0);
+], UpdateAuthorDto.prototype, "slug", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], UpdatePostDto.prototype, "contentHTML", void 0);
+    (0, class_validator_1.IsArray)(),
+    __metadata("design:type", Array)
+], UpdateAuthorDto.prototype, "expertise", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsObject)(),
     __metadata("design:type", Object)
-], UpdatePostDto.prototype, "postInfo", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsObject)(),
-    __metadata("design:type", Object)
-], UpdatePostDto.prototype, "seo", void 0);
+], UpdateAuthorDto.prototype, "socialProof", void 0);

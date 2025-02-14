@@ -1,10 +1,10 @@
 // src/modules/blog/authors/controllers/authors.controller.ts
 
-import { Controller, Get, Post, Put, Delete, Body, Param } from '@nestjs/common';
-import { AuthorsService } from '../services/authors.service';
-import { CreateAuthorDto } from '../dto/create-author.dto';
-import { UpdateAuthorDto } from '../dto/update-author.dto';
-import { AuthorDto } from '../dto/author.dto';
+import { Controller, Get, Post, Put, Delete, Body, Param } from '@nestjs/common'; // Importa decorators do NestJS para controllers.
+import { AuthorsService } from '@src/modules/blog/authors/services/authors.service'; // Importa AuthorsService usando alias @src.
+import { CreateAuthorDto } from '@src/modules/blog/authors/dto/create-author.dto'; // Importa CreateAuthorDto usando alias @src.
+import { UpdateAuthorDto } from '@src/modules/blog/authors/dto/update-author.dto'; // Importa UpdateAuthorDto usando alias @src.
+import { AuthorDto } from '@src/modules/blog/authors/dto/author.dto'; // Importa AuthorDto usando alias @src.
 
 @Controller('blog/authors') // Define o endpoint base para este controller
 export class AuthorsController {

@@ -1,14 +1,11 @@
 // src/app.module.ts
 
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { DynamoDbService } from './services/dynamoDb.service'; // Importe o DynamoDbService
-import { BlogModule } from './modules/blog/blog.module'; // Importe o BlogModule
+import { DynamoDbService } from '@src/services/dynamoDb.service'; // Import do DynamoDbService usando @src
+import { BlogModule } from '@src/modules/blog/blog.module';   // Import correto do BlogModule
 
 @Module({
   imports: [BlogModule], // Importe o BlogModule aqui
-  controllers: [AppController],
-  providers: [AppService, DynamoDbService], // Declare o DynamoDbService como provider global
+  providers: [DynamoDbService], // Declare DynamoDbService como provider
 })
 export class AppModule { }
