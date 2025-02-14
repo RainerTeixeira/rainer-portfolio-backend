@@ -4,14 +4,14 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreatePostDto } from '@src/modules/blog/posts/dto/create-post.dto';
 import { UpdatePostDto } from '@src/modules/blog/posts/dto/update-post.dto';
 import { PostDto } from '@src/modules/blog/posts/dto/post.dto';
-import { DynamoDbService } from '@src/services/dynamoDb.service'; // Importa DynamoDbService usando alias @src.
-import { UpdateCommandInput } from '@aws-sdk/lib-dynamodb'; // Importe UpdateCommandInput
+import { DynamoDbService } from '@src/services/dynamoDb.service';
+import { UpdateCommandInput } from '@aws-sdk/lib-dynamodb';
 
 @Injectable()
 export class PostsService {
-  private readonly tableName = 'Posts'; // Nome da tabela DynamoDB para Posts
+  private readonly tableName = 'Posts';
 
-  constructor(private readonly dynamoDbService: DynamoDbService) { } // Injeta DynamoDbService
+  constructor(private readonly dynamoDbService: DynamoDbService) { }
 
   async create(createPostDto: CreatePostDto): Promise<PostDto> {
     const params = {
@@ -19,7 +19,7 @@ export class PostsService {
       Item: createPostDto,
     };
     await this.dynamoDbService.putItem(params);
-    return this.findOne(createPostDto.categoryId + '#' + createPostDto.subcategoryId, createPostDto.postId);
+    return this.findOne(createPostDto.categoryId + '#' + createPostDto.subcategoryId); // Removed postId argument
   }
 
   async findAll(): Promise<PostDto[]> {
@@ -27,34 +27,34 @@ export class PostsService {
     return (result.Items || []).map(item => this.mapPostFromDynamoDb(item));
   }
 
-  async findOne(categoryIdSubcategoryId: string, postId: string): Promise<PostDto> {
+  async findOne(categoryIdSubcategoryId: string): Promise<PostDto> { // Only categoryIdSubcategoryId
+    const [categoryId, subcategoryId] = categoryIdSubcategoryId.split('#'); // Destructure
     const params = {
       TableName: this.tableName,
       Key: {
-        'categoryId#subcategoryId': { S: categoryIdSubcategoryId }, // Chave composta
-        postId: { S: postId },
+        'categoryId#subcategoryId': { S: categoryIdSubcategoryId },
+        postId: { S: createPostDto.postId }, // Add postId to the query
       },
     };
     const result = await this.dynamoDbService.getItem(params);
     if (!result.Item) {
-      throw new NotFoundException(`Post com ID '<span class="math-inline">\{postId\}' na categoria '</span>{categoryIdSubcategoryId}' não encontrado`);
+      throw new NotFoundException(`Post com ID '${createPostDto.postId}' na categoria '${categoryIdSubcategoryId}' não encontrado`);
     }
     return this.mapPostFromDynamoDb(result.Item);
   }
 
   async update(categoryIdSubcategoryId: string, postId: string, updatePostDto: UpdatePostDto): Promise<PostDto> {
-    // Verifica se o post existe antes de atualizar
-    await this.findOne(categoryIdSubcategoryId, postId);
+    await this.findOne(categoryIdSubcategoryId); // Only categoryIdSubcategoryId
 
-    const params: UpdateCommandInput = { // Use UpdateCommandInput type
+    const params: UpdateCommandInput = {
       TableName: this.tableName,
       Key: {
-        'categoryId#subcategoryId': { S: categoryIdSubcategoryId }, // Chave composta
+        'categoryId#subcategoryId': { S: categoryIdSubcategoryId },
         postId: { S: postId },
       },
-      UpdateExpression: 'SET contentHTML = :contentHTML, excerpt = :excerpt, publishDate = :publishDate, slug = :slug, title = :title, postInfo = :postInfo, seo = :seo, #status = :status', // UpdateExpression
+      UpdateExpression: 'SET contentHTML = :contentHTML, excerpt = :excerpt, publishDate = :publishDate, slug = :slug, title = :title, postInfo = :postInfo, seo = :seo, #status = :status',
       ExpressionAttributeNames: {
-        '#status': 'status', // Para 'status' (palavra reservada)
+        '#status': 'status',
       },
       ExpressionAttributeValues: {
         ':contentHTML': { S: updatePostDto.contentHTML },
@@ -63,19 +63,19 @@ export class PostsService {
         ':slug': { S: updatePostDto.slug },
         ':title': { S: updatePostDto.title },
         ':postInfo': {
-          M: { // Mapeando 'postInfo'
+          M: {
             authorId: { S: updatePostDto.postInfo?.authorId || null },
             tags: { L: updatePostDto.postInfo?.tags?.map(tag => ({ S: tag })) || [] },
           }
         },
         ':seo': {
-          M: { // Mapeando 'seo'
+          M: {
             canonical: { S: updatePostDto.seo?.canonical || null },
             description: { S: updatePostDto.seo?.description || null },
             keywords: { L: updatePostDto.seo?.keywords?.map(keyword => ({ S: keyword })) || [] },
           }
         },
-        ':status': { S: updatePostDto.status || 'draft' }, // Valor padrão 'draft' para status
+        ':status': { S: updatePostDto.status || 'draft' },
       },
       ReturnValues: 'ALL_NEW',
     };
@@ -85,28 +85,26 @@ export class PostsService {
   }
 
   async remove(categoryIdSubcategoryId: string, postId: string): Promise<void> {
-    // Verifica se o post existe antes de deletar
-    await this.findOne(categoryIdSubcategoryId, postId);
+    await this.findOne(categoryIdSubcategoryId); // Only categoryIdSubcategoryId
 
     const params = {
       TableName: this.tableName,
       Key: {
-        'categoryId#subcategoryId': { S: categoryIdSubcategoryId }, // Chave composta
+        'categoryId#subcategoryId': { S: categoryIdSubcategoryId },
         postId: { S: postId },
       },
     };
     await this.dynamoDbService.deleteItem(params);
   }
 
-
   private mapPostFromDynamoDb(item: Record<string, any>): PostDto {
     return {
-      'categoryId#subcategoryId': item['categoryId#subcategoryId']?.S, // Acessa chave composta usando index signature
+      'categoryId#subcategoryId': item['categoryId#subcategoryId']?.S,
       postId: item.postId?.S,
       categoryId: item.categoryId?.S,
       subcategoryId: item.subcategoryId?.S,
       contentHTML: item.contentHTML?.S,
-      postInfo: { // Mapeia objeto 'postInfo'
+      postInfo: {
         authorId: item.postInfo?.M?.authorId?.S,
         tags: item.postInfo?.M?.tags?.L?.map((tagItem: any) => tagItem.S) || [],
         likes: Number(item.postInfo?.M?.likes?.N),
@@ -117,7 +115,7 @@ export class PostsService {
       slug: item.slug?.S,
       title: item.title?.S,
       status: item.status?.S,
-      seo: { // Mapeia objeto 'seo'
+      seo: {
         canonical: item.seo?.M?.canonical?.S,
         description: item.seo?.M?.description?.S,
         keywords: item.seo?.M?.keywords?.L?.map((keywordItem: any) => keywordItem.S) || []
