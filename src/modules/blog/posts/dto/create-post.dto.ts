@@ -1,58 +1,80 @@
 // src/modules/blog/posts/dto/create-post.dto.ts
 
-import { PostDto } from '@src/modules/blog/posts/dto/post.dto'; // Import PostDto usando alias @src.
-import { IsNotEmpty, IsString, IsNumber, IsOptional, IsObject, IsArray } from 'class-validator'; // Import decorators de validação
+import { IsNotEmpty, IsString, IsOptional, IsObject, IsArray } from 'class-validator';
 
 export class CreatePostDto {
-    @IsNotEmpty()
-    @IsString()
-    categoryId: string;
+  @IsNotEmpty()
+  @IsString()
+  categoryId: string;
 
-    @IsNotEmpty()
-    @IsString()
-    subcategoryId: string;
+  @IsNotEmpty()
+  @IsString()
+  subcategoryId: string;
 
-    @IsNotEmpty()
-    @IsString()
-    contentHTML: string;
+  @IsNotEmpty()
+  @IsString()
+  contentHTML: string;
 
-    @IsNotEmpty()
-    @IsObject()
-    postInfo: {
-    @IsOptional() // authorId pode ser opcional durante a criação
-    authorId?: string;
-    @IsNotEmpty()
-    excerpt: string;
-    @IsOptional()
-    featuredImageURL?: string;
-    @IsOptional()
-    modifiedDate?: string;
-    @IsNotEmpty()
-    publishDate: string;
-    @IsOptional()
-    @IsNumber()
-    readingTime?: number;
-    @IsNotEmpty()
-    slug: string;
-    @IsOptional()
-    status?: string;
-    @IsArray() // Validação que tags é um array
-    @IsOptional()
+  @IsNotEmpty()
+  @IsObject()
+  postInfo: {
+    authorId?: string; // authorId pode ser opcional durante a criação
     tags?: string[];
-    @IsNotEmpty()
-    title: string;
-    @IsOptional()
-    @IsNumber()
-    views?: number;
+  };
+
+  @IsNotEmpty()
+  @IsString()
+  excerpt: string;
+
+  @IsNotEmpty()
+  @IsString()
+  publishDate: string;
+
+  @IsNotEmpty()
+  @IsString()
+  slug: string;
+
+  @IsNotEmpty()
+  @IsString()
+  title: string;
+
+
+  @IsOptional()
+  @IsObject()
+  seo?: {
+        @IsOptional()
+  @IsString()
+  canonical?: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true }) // Garante que cada item do array é string
+  keywords?: string[];
 };
 
-@IsOptional()
-@IsObject()
-seo ?: {
-    canonical?: string;
-    description?: string;
-    @IsArray() // Validação que keywords é um array
-@IsOptional()
-keywords ?: string[];
-  };
+constructor(
+  categoryId: string,
+  subcategoryId: string,
+  contentHTML: string,
+  postInfo: { authorId?: string; tags?: string[] },
+  excerpt: string,
+  publishDate: string,
+  slug: string,
+  title: string,
+  seo ?: { canonical?: string; description?: string; keywords?: string[] }
+) {
+  this.categoryId = categoryId;
+  this.subcategoryId = subcategoryId;
+  this.contentHTML = contentHTML;
+  this.postInfo = postInfo;
+  this.excerpt = excerpt;
+  this.publishDate = publishDate;
+  this.slug = slug;
+  this.title = title;
+  this.seo = seo;
+}
 }

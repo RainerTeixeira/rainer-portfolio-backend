@@ -1,7 +1,6 @@
 // src/modules/blog/authors/dto/create-author.dto.ts
 
-import { AuthorDto } from '@src/modules/blog/authors/dto/author.dto'; // Import AuthorDto usando alias @src.
-import { IsNotEmpty, IsString, IsArray, IsOptional, IsObject } from 'class-validator'; // Import decorators de validação (opcional, mas recomendado)
+import { IsNotEmpty, IsString, IsArray, IsOptional, IsObject } from 'class-validator';
 
 export class CreateAuthorDto {
     @IsNotEmpty()
@@ -20,14 +19,20 @@ export class CreateAuthorDto {
     @IsString()
     slug: string;
 
-    @IsArray() // Validação que expertise é um array (opcional, dependendo da sua necessidade)
+    @IsOptional()
+    @IsArray()
     expertise?: string[];
 
-    @IsObject() // Validação que socialProof é um objeto (opcional)
     @IsOptional()
-    socialProof?: {
-        facebook?: string;
-        github?: string;
-        medium?: string;
-    };
+    @IsObject()
+    socialProof?: { [key: string]: string };
+
+    constructor(postId: string, authorId: string, name: string, slug: string, expertise?: string[], socialProof?: { [key: string]: string }) {
+        this.postId = postId;
+        this.authorId = authorId;
+        this.name = name;
+        this.slug = slug;
+        this.expertise = expertise;
+        this.socialProof = socialProof;
+    }
 }

@@ -1,7 +1,6 @@
 // src/modules/blog/comments/dto/create-comment.dto.ts
 
-import { CommentDto } from '@src/modules/blog/comments/dto/comment.dto'; // Import CommentDto usando alias @src.
-import { IsNotEmpty, IsNumber, IsString, IsOptional } from 'class-validator'; // Import decorators de validação
+import { IsNotEmpty, IsNumber, IsString, IsOptional } from 'class-validator';
 
 export class CreateCommentDto {
     @IsNotEmpty()
@@ -16,11 +15,14 @@ export class CreateCommentDto {
     @IsString()
     content: string;
 
-    @IsNotEmpty()
+    @IsOptional()
     @IsString()
-    date: string;
+    date?: string;
 
-    @IsOptional() // Status pode ser opcional ao criar, com um valor padrão no backend
-    @IsString()
-    status?: string;
+    constructor(postId: number, authorId: string, content: string, date?: string) {
+        this.postId = postId;
+        this.authorId = authorId;
+        this.content = content;
+        this.date = date;
+    }
 }
