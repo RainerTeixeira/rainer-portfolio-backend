@@ -3,7 +3,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DynamoDbService } from '@src/services/dynamodb.service'; // Importa DynamoDbService usando alias @src.
 import { CreateSubcategoryDto } from '@src/modules/blog/subcategory/dto/create-subcategory.dto'; // Importa CreateSubcategoriaDto usando alias @src.
-import { UpdateSubcategoryDto } from '@src/modules/blog/subcategory/dto/update-subcategory.dto'; // Importa UpdateSubcategoriaDto usando alias @src.
+import { UpdateSubcategoryDto } from '@src/modules/blog/subcategory/dto/update-subcategory.dto'; // Importa UpdateSubcategoryDto usando alias @src.
 import { SubcategoryDto } from '@src/modules/blog/subcategory/dto/subcategory.dto'; // Importa SubcategoryDto usando alias @src.
 
 @Injectable()
@@ -44,14 +44,14 @@ export class SubcategoryService {
         };
         const result = await this.dynamoDbService.getItem(params);
         if (!result.Item) {
-            throw new NotFoundException(`Subcategoria com categoryId#subcategoryId '${categoryIdSubcategoryId}' e subcategoryId '${subcategoryId}' não encontrada`);
+            throw new NotFoundException(`Subcategory com categoryId#subcategoryId '${categoryIdSubcategoryId}' e subcategoryId '${subcategoryId}' não encontrada`);
         }
         return result.Item as SubcategoryDto;
     }
 
-    async update(categoryIdSubcategoryId: string, subcategoryId: string, updateSubcategoryDto: UpdateSubcategoriaDto): Promise<SubcategoryDto> {
+    async update(categoryIdSubcategoryId: string, subcategoryId: string, updateSubcategoryDto: UpdateSubcategoryDto): Promise<SubcategoryDto> {
         await this.findOne(categoryIdSubcategoryId, subcategoryId);
-        const updateExpression = this.dynamoDbService.buildUpdateExpression(updateSubcategoriaDto);
+        const updateExpression = this.dynamoDbService.buildUpdateExpression(updateSubcategoryDto);
         if (!updateExpression) {
             return this.findOne(categoryIdSubcategoryId, subcategoryId);
         }
