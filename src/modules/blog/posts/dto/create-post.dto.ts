@@ -1,67 +1,52 @@
 // src/modules/blog/posts/dto/create-post.dto.ts
+import { IsString, IsOptional, ValidateNested, IsNotEmpty } from 'class-validator';
+import { Type } from 'class-transformer';
+import { PostInfoDto } from './post-info.dto';
+import { PostSeoDto } from './post-seo.dto';
 
-import { IsOptional, IsString, IsObject } from 'class-validator';
-
+/**
+ * DTO (Data Transfer Object) para criar um novo Post.
+ * Define a estrutura dos dados necessários para criar um post,
+ * incluindo validações para garantir a integridade dos dados.
+ */
 export class CreatePostDto {
   @IsString()
+  @IsNotEmpty()
   categoryId: string;
 
   @IsString()
+  @IsNotEmpty()
   subcategoryId: string;
 
   @IsString()
+  @IsNotEmpty()
   contentHTML: string;
 
-  @IsObject()
-  postInfo: { authorId?: string; tags?: string; excerpt?: string; publishDate?: string; slug?: string; title?: string; status?: string }; // Adicione as propriedades faltantes
-
-  @IsString()
-  excerpt: string;
-
-  @IsString()
-  publishDate: string;
-
-  @IsString()
-  slug: string;
-
-  @IsString()
-  title: string;
+  @ValidateNested()
+  @Type(() => PostInfoDto)
+  @IsNotEmpty()
+  postInfo: PostInfoDto;
 
   @IsOptional()
-  @IsObject()
-  seo?: {
-    @IsOptional()
-  @IsString()
-  canonical?: string;
+  @ValidateNested()
+  @Type(() => PostSeoDto)
+  seo?: PostSeoDto;
 
-  @IsOptional()
-  @IsString()
-  description?: string;
-
-  @IsOptional()
-  @IsString({ each: true })
-  keywords?: string[]; // Corrigido para array de strings
-};
-
-constructor(
-  categoryId: string,
-  subcategoryId: string,
-  contentHTML: string,
-  postInfo: { authorId?: string; tags?: string; excerpt?: string; publishDate?: string; slug?: string; title?: string; status?: string }, // Adicione as propriedades faltantes
-  excerpt: string,
-  publishDate: string,
-  slug: string,
-  title: string,
-  seo ?: { canonical?: string; description?: string; keywords?: string[] } // Corrigido para array de strings
-) {
-  this.categoryId = categoryId;
-  this.subcategoryId = subcategoryId;
-  this.contentHTML = contentHTML;
-  this.postInfo = postInfo;
-  this.excerpt = excerpt;
-  this.publishDate = publishDate;
-  this.slug = slug;
-  this.title = title;
-  this.seo = seo;
-}
+  /**
+   * Construtor para CreatePostDto.
+   * Inicializa as propriedades do DTO.
+   */
+  constructor(
+    categoryId: string,
+    subcategoryId: string,
+    contentHTML: string,
+    postInfo: PostInfoDto,
+    seo?: PostSeoDto,
+  ) {
+    this.categoryId = categoryId;
+    this.subcategoryId = subcategoryId;
+    this.contentHTML = contentHTML;
+    this.postInfo = postInfo;
+    this.seo = seo;
+  }
 }
