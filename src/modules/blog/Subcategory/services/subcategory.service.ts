@@ -1,14 +1,14 @@
-// src/modules/blog/subcategoria/services/subcategoria.service.ts
+// src/modules/blog/Subcategory/services/subcaSubcategorytegoria.service.ts
 
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DynamoDbService } from '../../../../services/dynamoDb.service';
-import { CreateSubcategoriaDto } from '../dto/create-subcategoria.dto';
-import { UpdateSubcategoriaDto } from '../dto/update-subcategoria.dto';
-import { SubcategoriaDto } from '../dto/subcategoria.dto';
+import { CreateSubcategoryDto } from '@src/modules/blog/Subcategory/dto/create-subcategory.dto'; // Importa CreateSubcategoriaDto usando alias @src.
+import { UpdateSubcategoryDto } from '@src/modules/blog/Subcategory/dto/update-subcategory.dto'; // Importa UpdateSubcategoriaDto usando alias @src.
+import { SubcategoriaDto } from '@src/modules/blog/Subcategory/dto/subcategory.dto'; // Importa SubcategoriaDto usando alias @src.
 
 @Injectable()
 export class SubcategoriaService {
-    private readonly tableName = 'Subcategoria';
+    private readonly tableName = 'Subcategory';
 
     constructor(private readonly dynamoDbService: DynamoDbService) { }
 
