@@ -1,11 +1,12 @@
+// src/modules/blog/subcategoria/subcategoria.module.ts
+
 import { Module } from '@nestjs/common';
-import { SubcategoriesController } from './subcategories.controller';
-import { SubcategoriesService } from './subcategories.service';
-import { DynamoDbService } from '../../../services/dynamoDb.service'; // Importe o DynamoDbService
+import { SubcategoriaController } from './controllers/subcategoria.controller';
+import { SubcategoriaService } from './services/subcategoria.service';
 
 @Module({
-    imports: [], // Remova a importação de DynamoDBModule, se você tinha antes
-    controllers: [SubcategoriesController],
-    providers: [SubcategoriesService, DynamoDbService], // Adicione DynamoDbService como provider
+    controllers: [SubcategoriaController],
+    providers: [SubcategoriaService],
+    exports: [SubcategoriaService],
 })
-export class SubcategoriesModule { }
+export class SubcategoriaModule { }
