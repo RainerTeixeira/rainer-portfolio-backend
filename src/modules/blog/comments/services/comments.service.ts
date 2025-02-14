@@ -1,10 +1,10 @@
 // src/modules/blog/comments/services/comments.service.ts
 
+import { DynamoDbService } from '@src/services/dynamoDb.service'; // Importe o DynamoDbService
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateCommentDto } from '@src/modules/blog/comments/dto/create-comment.dto';
 import { UpdateCommentDto } from '@src/modules/blog/comments/dto/update-comment.dto';
 import { CommentDto } from '@src/modules/blog/comments/dto/comment.dto';
-import { DynamoDbService } from '@src/services/dynamoDb.service'; // Importa DynamoDbService usando alias @src.
 import { UpdateCommandInput } from '@aws-sdk/lib-dynamodb'; // Importe UpdateCommandInput
 
 

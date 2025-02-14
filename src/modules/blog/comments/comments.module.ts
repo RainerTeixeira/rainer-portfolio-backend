@@ -7,6 +7,7 @@ import { BlogModule } from '@src/modules/blog.module'; // <--- IMPORTA BlogModul
 
 
 @Module({
+    imports: [forwardRef(() => BlogModule)], // Use forwardRef envolvendo BlogModule para resolver dependência circular
     controllers: [CommentsController],
     providers: [CommentsService],
     exports: [CommentsService],
