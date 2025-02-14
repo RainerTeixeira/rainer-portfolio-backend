@@ -1,10 +1,12 @@
+// src/modules/blog/authors/authors.module.ts
+
 import { Module } from '@nestjs/common';
-import { AuthorsController } from './authors.controller';
-import { AuthorsService } from './authors.service';
-import { DynamoDbService } from '../../../services/dynamoDb.service'; // Importe o DynamoDbService
+import { AuthorsController } from './controllers/authors.controller';
+import { AuthorsService } from './services/authors.service';
 
 @Module({
-    controllers: [AuthorsController],
-    providers: [AuthorsService, DynamoDbService], // Adicione DynamoDbService como provider
+    controllers: [AuthorsController], // Declara AuthorsController
+    providers: [AuthorsService],     // Declara AuthorsService
+    exports: [AuthorsService],       // Exporta AuthorsService se precisar usar em outros módulos
 })
 export class AuthorsModule { }
