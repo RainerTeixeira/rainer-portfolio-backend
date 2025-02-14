@@ -1,16 +1,18 @@
 // src/modules/blog/category/dto/category.dto.ts
+import { CategorySeoDto } from './category-seo.dto'; // Importe o DTO de SEO
 
 export class CategoryDto {
-    categoryId: string; // Chave de Partição (categoryId) - String
+    categoryId: string;
     name: string;
     slug: string;
-    seo: {
-        canonical?: string;
-        description?: string;
-        keywords?: string[];
-    };
+    seo?: CategorySeoDto; // Use o DTO de SEO aqui e torne opcional
 
-    constructor(categoryId: string, name: string, slug: string, seo: { canonical?: string, description?: string, keywords?: string[] }) {
+    constructor(
+        categoryId: string,
+        name: string,
+        slug: string,
+        seo?: CategorySeoDto, // Use o DTO de SEO no construtor e torne opcional
+    ) {
         this.categoryId = categoryId;
         this.name = name;
         this.slug = slug;
