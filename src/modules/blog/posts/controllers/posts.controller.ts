@@ -1,10 +1,10 @@
 // src/modules/blog/posts/controllers/posts.controller.ts
 
-import { Controller, Get, Post, Put, Delete, Body, Param } from '@nestjs/common';
-import { PostsService } from '../services/posts.service';
-import { CreatePostDto } from '../dto/create-post.dto';
-import { UpdatePostDto } from '../dto/update-post.dto';
-import { PostDto } from '../dto/post.dto';
+import { Controller, Get, Post, Put, Delete, Body, Param } from '@nestjs/common'; // Importa decorators do NestJS para controllers.
+import { PostsService } from '@src/modules/blog/posts/services/posts.service'; // Importa PostsService usando alias @src.
+import { CreatePostDto } from '@src/modules/blog/posts/dto/create-post.dto'; // Importa CreatePostDto usando alias @src.
+import { UpdatePostDto } from '@src/modules/blog/posts/dto/update-post.dto'; // Importa UpdatePostDto usando alias @src.
+import { PostDto } from '@src/modules/blog/posts/dto/post.dto'; // Importa PostDto usando alias @src.
 
 @Controller('blog/posts')
 export class PostsController {
