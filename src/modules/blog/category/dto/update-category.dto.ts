@@ -1,30 +1,16 @@
 // src/modules/blog/categories/dto/update-category.dto.ts
-
-import { IsOptional, IsString } from 'class-validator';
+import { IsOptional, IsString, IsArray } from 'class-validator'; // Importe IsArray
+import { CategorySeoDto } from './category-seo.dto'; // Importe o DTO de SEO
 
 export class UpdateCategoryDto {
-    @IsOptional()
-    @IsString()
-    name?: string;
+  @IsOptional()
+  @IsString()
+  name?: string;
 
-    @IsOptional()
-    @IsString()
-    slug?: string;
+  @IsOptional()
+  @IsString()
+  slug?: string;
 
-    @IsOptional()
-    seo?: {
-    @IsOptional()
-    @IsString()
-    canonical?: string;
-
-    @IsOptional()
-    @IsString()
-    description?: string;
-
-    @IsOptional()
-    @IsString()
-    keywords?: string;
-};
-
-  // ... outras propriedades
+  @IsOptional()
+  seo?: CategorySeoDto; // Use o DTO de SEO aqui e torne opcional
 }

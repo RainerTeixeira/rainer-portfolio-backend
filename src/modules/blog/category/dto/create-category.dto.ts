@@ -1,6 +1,6 @@
 // src/modules/blog/categories/dto/create-category.dto.ts
-
 import { IsOptional, IsString } from 'class-validator';
+import { CategorySeoDto } from './category-seo.dto'; // Importe o DTO de SEO
 
 export class CreateCategoryDto {
     @IsString()
@@ -13,13 +13,14 @@ export class CreateCategoryDto {
     slug: string;
 
     @IsOptional()
-    seo?: {
-        canonical?: string;
-        description?: string;
-        keywords?: string;
-    };
+    seo?: CategorySeoDto; // Use o DTO de SEO aqui e torne opcional
 
-    constructor(categoryId: string, name: string, slug: string, seo?: { canonical?: string; description?: string; keywords?: string }) {
+    constructor(
+        categoryId: string,
+        name: string,
+        slug: string,
+        seo?: CategorySeoDto, // Use o DTO de SEO no construtor e torne opcional
+    ) {
         this.categoryId = categoryId;
         this.name = name;
         this.slug = slug;
