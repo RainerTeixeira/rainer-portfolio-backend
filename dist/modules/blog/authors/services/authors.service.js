@@ -94,7 +94,7 @@ let AuthorsService = class AuthorsService {
     }
 };
 exports.AuthorsService = AuthorsService;
-exports.AuthorsService = authors_service_1.AuthorsService = __decorate([
+exports.AuthorsService = AuthorsService = __decorate([
     Injectable(),
     __metadata("design:paramtypes", [typeof (_a = typeof DynamoDbService !== "undefined" && DynamoDbService) === "function" ? _a : Object])
-], authors_service_1.AuthorsService);
+], AuthorsService);

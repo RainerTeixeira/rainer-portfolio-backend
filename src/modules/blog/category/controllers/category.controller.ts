@@ -8,21 +8,21 @@ import { CategoryDto } from '@src/modules/blog/category/dto/category.dto'; // Im
 
 @Controller('blog/category')
 export class CategoryController {
-    constructor(private readonly categoriesService: CategoriesService) { }
+    constructor(private readonly categoryService: CategoryService) { }
 
     @Post()
     async create(@Body() createCategoryDto: CreateCategoryDto): Promise<CategoryDto> {
-        return this.categoriesService.create(createCategoryDto);
+        return this.categoryService.create(createCategoryDto);
     }
 
     @Get()
     async findAll(): Promise<CategoryDto[]> {
-        return this.categoriesService.findAll();
+        return this.categoryService.findAll();
     }
 
     @Get(':categoryId')
     async findOne(@Param('categoryId') categoryId: string): Promise<CategoryDto> {
-        return this.categoriesService.findOne(categoryId);
+        return this.categoryService.findOne(categoryId);
     }
 
     @Put(':categoryId')
@@ -30,11 +30,11 @@ export class CategoryController {
         @Param('categoryId') categoryId: string,
         @Body() updateCategoryDto: UpdateCategoryDto,
     ): Promise<CategoryDto> {
-        return this.categoriesService.update(categoryId, updateCategoryDto);
+        return this.categoryService.update(categoryId, updateCategoryDto);
     }
 
     @Delete(':categoryId')
     async remove(@Param('categoryId') categoryId: string): Promise<void> {
-        return this.categoriesService.remove(categoryId);
+        return this.categoryService.remove(categoryId);
     }
 }

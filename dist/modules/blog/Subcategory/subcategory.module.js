@@ -18,6 +18,6 @@ exports.SubcategoryModule = SubcategoryModule = __decorate([
     (0, common_1.Module)({
         controllers: [subcategory_controller_1.SubcategoryController],
         providers: [subcategory_service_1.SubcategoryService],
-        exports: subcategory_service_1.SubcategoryService
+        exports: [subcategory_service_1.SubcategoryService],
     })
 ], SubcategoryModule);
