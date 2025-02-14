@@ -1,42 +1,41 @@
 {
   "compilerOptions": {
-    "allowJs": false,
     "module": "CommonJS",
-    "target": "ES6",
+    "target": "ES2020",
     "lib": [
-      "ES2020"
+      "es2020"
     ],
-    "sourceMap": false,
+    "sourceMap": true,
+    "declaration": false,
     "rootDir": "./src",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "moduleResolution": "node",
-    "types": [
-      "node"
-    ],
-    "noEmit": false,
     "outDir": "./dist",
-    "resolveJsonModule": true,
-    "allowSyntheticDefaultImports": true,
-    "forceConsistentCasingInFileNames": true,
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
     "baseUrl": "./src",
     "paths": {
       "@src/*": [
-        "*"
+        "./*"
       ]
-    }
+    },
+    "incremental": true,
+    "tsBuildInfoFile": "./dist/.tsbuildinfo",
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "strict": true,
+    "noImplicitAny": false,
+    "strictNullChecks": true,
+    "strictPropertyInitialization": false,
+    "noImplicitThis": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
   },
   "include": [
     "src/**/*"
   ],
   "exclude": [
     "node_modules",
-    "dist",
-    "tests",
-    "**/*.test.ts",
-    "**/*.spec.ts"
+    "dist"
   ]
 }

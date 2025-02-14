@@ -1,11 +1,11 @@
 // src/modules/blog/authors/services/authors.service.ts
 
+import { DynamoDbService } from '@src/services/dynamoDb.service'; // Importe DynamoDbService
+import { UpdateCommandInput } from '@aws-sdk/lib-dynamodb'; // Importe UpdateCommandInput
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateAuthorDto } from '@src/modules/blog/authors/dto/create-author.dto';
 import { UpdateAuthorDto } from '@src/modules/blog/authors/dto/update-author.dto';
 import { AuthorDto } from '@src/modules/blog/authors/dto/author.dto';
-import { DynamoDbService } from '@src/services/dynamoDb.service'; // Importe DynamoDbService
-import { UpdateCommandInput } from '@aws-sdk/lib-dynamodb'; // Importe UpdateCommandInput
 
 @Injectable()
 export class AuthorsService {
