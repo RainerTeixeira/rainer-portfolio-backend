@@ -1,7 +1,6 @@
 // src/modules/blog/authors/services/authors.service.ts
 
 import { Controller, Get, Post, Put, Delete, Body, Param } from '@nestjs/common';
-import { AuthorsService } from '@src/modules/blog/authors/services/authors.service';
 import { CreateAuthorDto } from '@src/modules/blog/authors/dto/create-author.dto';
 import { UpdateAuthorDto } from '@src/modules/blog/authors/dto/update-author.dto';
 import { AuthorDto } from '@src/modules/blog/authors/dto/author.dto';

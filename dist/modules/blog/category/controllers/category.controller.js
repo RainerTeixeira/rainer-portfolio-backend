@@ -21,13 +21,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CategoriesController = void 0;
+exports.CategoryController = void 0;
 const common_1 = require("@nestjs/common"); // Importa decorators do NestJS para controllers.
-const categories_service_1 = require("../services/categories.service"); // Importa CategoriesService usando alias @src.
 const create_category_dto_1 = require("../dto/create-category.dto"); // Importa CreateCategoryDto usando alias @src.
 const update_category_dto_1 = require("../dto/update-category.dto"); // Importa UpdateCategoryDto usando alias @src.
-let CategoriesController = class CategoriesController {
+let CategoryController = class CategoryController {
     constructor(categoriesService) {
         this.categoriesService = categoriesService;
     }
@@ -57,27 +57,27 @@ let CategoriesController = class CategoriesController {
         });
     }
 };
-exports.CategoriesController = CategoriesController;
+exports.CategoryController = CategoryController;
 __decorate([
     (0, common_1.Post)(),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [create_category_dto_1.CreateCategoryDto]),
     __metadata("design:returntype", Promise)
-], CategoriesController.prototype, "create", null);
+], CategoryController.prototype, "create", null);
 __decorate([
     (0, common_1.Get)(),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
-], CategoriesController.prototype, "findAll", null);
+], CategoryController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Get)(':categoryId'),
     __param(0, (0, common_1.Param)('categoryId')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
-], CategoriesController.prototype, "findOne", null);
+], CategoryController.prototype, "findOne", null);
 __decorate([
     (0, common_1.Put)(':categoryId'),
     __param(0, (0, common_1.Param)('categoryId')),
@@ -85,15 +85,15 @@ __decorate([
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, update_category_dto_1.UpdateCategoryDto]),
     __metadata("design:returntype", Promise)
-], CategoriesController.prototype, "update", null);
+], CategoryController.prototype, "update", null);
 __decorate([
     (0, common_1.Delete)(':categoryId'),
     __param(0, (0, common_1.Param)('categoryId')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
-], CategoriesController.prototype, "remove", null);
-exports.CategoriesController = CategoriesController = __decorate([
-    (0, common_1.Controller)('blog/categories'),
-    __metadata("design:paramtypes", [categories_service_1.CategoriesService])
-], CategoriesController);
+], CategoryController.prototype, "remove", null);
+exports.CategoryController = CategoryController = __decorate([
+    (0, common_1.Controller)('blog/category'),
+    __metadata("design:paramtypes", [typeof (_a = typeof CategoriesService !== "undefined" && CategoriesService) === "function" ? _a : Object])
+], CategoryController);

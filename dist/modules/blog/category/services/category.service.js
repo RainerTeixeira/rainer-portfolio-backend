@@ -1,5 +1,5 @@
 "use strict";
-// src/modules/blog/categories/services/categories.service.ts
+// src/modules/blog/category/services/categories.service.ts
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -19,13 +19,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CategoriesService = void 0;
+exports.CategoryService = void 0;
 const common_1 = require("@nestjs/common"); // Importa Injectable e NotFoundException do NestJS.
 const dynamoDb_service_1 = require("../../../../services/dynamoDb.service"); // Importa DynamoDbService usando alias @src.
-let CategoriesService = class CategoriesService {
+let CategoryService = class CategoryService {
     constructor(dynamoDbService) {
         this.dynamoDbService = dynamoDbService;
-        this.tableName = 'Categories';
+        this.tableName = 'Category;;
     }
     create(createCategoryDto) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -88,8 +88,8 @@ let CategoriesService = class CategoriesService {
         });
     }
 };
-exports.CategoriesService = CategoriesService;
-exports.CategoriesService = CategoriesService = __decorate([
+exports.CategoryService = CategoryService;
+exports.CategoryService = CategoryService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [dynamoDb_service_1.DynamoDbService])
-], CategoriesService);
+], CategoryService);
