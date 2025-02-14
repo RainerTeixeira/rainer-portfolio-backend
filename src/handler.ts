@@ -125,23 +125,31 @@ export const handler = async (
  */
 if (!process.env.AWS_LAMBDA_FUNCTION_NAME) {
   async function bootstrapLocal() {
+    console.log('🚀 Iniciando servidor local... - Passo 1: Inicio da funcao bootstrapLocal'); // LOG PASS0 1
     console.log('🚀 Iniciando servidor local...'); // Loga o início do servidor local.
 
+    console.log('🚀 Iniciando servidor local... - Passo 2: Criando a aplicacao NestFactory'); // LOG PASS0 2
     // Cria a aplicação NestJS usando Fastify como adaptador HTTP (sem logging detalhado para ambiente local - pode ser ajustado).
     const app = await NestFactory.create<NestFastifyApplication>(
       AppModule, // Módulo raiz da aplicação.
       new FastifyAdapter(), // Usa o adaptador Fastify para servidor local também.
     );
+    console.log('🚀 Iniciando servidor local... - Passo 3: Aplicacao NestFactory Criada'); // LOG PASS0 3
 
+
+    console.log('🚀 Iniciando servidor local... - Passo 4: Iniciando o listen'); // LOG PASS0 4
     // Inicia o servidor local na porta 3000 e no endereço 0.0.0.0 (acessível externamente).
     await app.listen(3000, '0.0.0.0', () => {
+      console.log('🚀 Iniciando servidor local... - Passo 5: Listen Iniciado - Callback'); // LOG PASS0 5
       console.log(`🔌 Servidor ouvindo em http://localhost:3000`); // Loga o endereço do servidor local.
       console.log(`📚 Documentação Swagger em http://localhost:3000/api`); // Loga o endereço da documentação Swagger (se configurada).
     });
+    console.log('🚀 Iniciando servidor local... - Passo 6: Listen Iniciado - Fora do Callback'); // LOG PASS0 6
   }
 
   // Inicializa o servidor local e trata possíveis erros durante a inicialização.
   bootstrapLocal().catch(error => {
+    console.log('🚀 Iniciando servidor local... - Passo ERRO: Dentro do Catch'); // LOG PASS0 ERRO - CATCH
     logError(error); // Loga qualquer erro que ocorra durante a inicialização do servidor local.
     process.exit(1); // Encerra o processo Node.js em caso de falha na inicialização.
   });
