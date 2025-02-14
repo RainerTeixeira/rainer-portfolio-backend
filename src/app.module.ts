@@ -5,7 +5,6 @@ import { DynamoDbService } from '@src/services/dynamoDb.service'; // Import do D
 import { BlogModule } from '@src/modules/blog.module';   // Import correto do BlogModule
 
 @Module({
-  imports: [BlogModule], // Importe o BlogModule aqui
-  providers: [DynamoDbService], // Declare DynamoDbService como provider
+ imports: [BlogModule], // Importe o BlogModule aqui
 })
 export class AppModule { }
