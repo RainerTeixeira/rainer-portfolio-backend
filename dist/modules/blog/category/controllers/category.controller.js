@@ -21,39 +21,39 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CategoryController = void 0;
 const common_1 = require("@nestjs/common"); // Importa decorators do NestJS para controllers.
+const category_service_1 = require("../services/category.service"); // Importa CategoriesService usando alias @src.
 const create_category_dto_1 = require("../dto/create-category.dto"); // Importa CreateCategoryDto usando alias @src.
 const update_category_dto_1 = require("../dto/update-category.dto"); // Importa UpdateCategoryDto usando alias @src.
 let CategoryController = class CategoryController {
-    constructor(categoriesService) {
-        this.categoriesService = categoriesService;
+    constructor(categoryService) {
+        this.categoryService = categoryService;
     }
     create(createCategoryDto) {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.categoriesService.create(createCategoryDto);
+            return this.categoryService.create(createCategoryDto);
         });
     }
     findAll() {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.categoriesService.findAll();
+            return this.categoryService.findAll();
         });
     }
     findOne(categoryId) {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.categoriesService.findOne(categoryId);
+            return this.categoryService.findOne(categoryId);
         });
     }
     update(categoryId, updateCategoryDto) {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.categoriesService.update(categoryId, updateCategoryDto);
+            return this.categoryService.update(categoryId, updateCategoryDto);
         });
     }
     remove(categoryId) {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.categoriesService.remove(categoryId);
+            return this.categoryService.remove(categoryId);
         });
     }
 };
@@ -95,5 +95,5 @@ __decorate([
 ], CategoryController.prototype, "remove", null);
 exports.CategoryController = CategoryController = __decorate([
     (0, common_1.Controller)('blog/category'),
-    __metadata("design:paramtypes", [typeof (_a = typeof CategoriesService !== "undefined" && CategoriesService) === "function" ? _a : Object])
+    __metadata("design:paramtypes", [category_service_1.CategoryService])
 ], CategoryController);

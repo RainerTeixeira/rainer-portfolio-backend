@@ -7,17 +7,17 @@ import { UpdateSubcategoriaDto } from '@src/modules/blog/subcategoria/dto/update
 import { SubcategoriaDto } from '@src/modules/blog/subcategoria/dto/subcategory.dto'; // Importa SubcategoriaDto usando alias @src.
 
 @Controller('blog/subcategorias')
-export class SubcategoriaController {
-    constructor(private readonly subcategoriaService: SubcategoriaService) { }
+export class SubcategoryController {
+    constructor(private readonly subcategoryService: SubcategoriaService) { }
 
     @Post()
-    async create(@Body() createSubcategoriaDto: CreateSubcategoriaDto): Promise<SubcategoriaDto> {
-        return this.subcategoriaService.create(createSubcategoriaDto);
+    async create(@Body() createSubcategoryDto: CreateSubcategyDto): Promise<SubcategoryDto> {
+        return this.subcategoryService.create(createSubcategoriaDto);
     }
 
     @Get()
     async findAll(): Promise<SubcategoriaDto[]> {
-        return this.subcategoriaService.findAll();
+        return this.subcategoryService.findAll();
     }
 
     @Get(':categoryIdSubcategoryId/:subcategoryId')
@@ -25,7 +25,7 @@ export class SubcategoriaController {
         @Param('categoryIdSubcategoryId') categoryIdSubcategoryId: string,
         @Param('subcategoryId') subcategoryId: string,
     ): Promise<SubcategoriaDto> {
-        return this.subcategoriaService.findOne(categoryIdSubcategoryId, subcategoryId);
+        return this.subcategoryService.findOne(categoryIdSubcategoryId, subcategoryId);
     }
 
     @Put(':categoryIdSubcategoryId/:subcategoryId')
@@ -34,7 +34,7 @@ export class SubcategoriaController {
         @Param('subcategoryId') subcategoryId: string,
         @Body() updateSubcategoriaDto: UpdateSubcategoriaDto,
     ): Promise<SubcategoriaDto> {
-        return this.subcategoriaService.update(categoryIdSubcategoryId, subcategoryId, updateSubcategoriaDto);
+        return this.subcategoryService.update(categoryIdSubcategoryId, subcategoryId, updateSubcategoriaDto);
     }
 
     @Delete(':categoryIdSubcategoryId/:subcategoryId')
@@ -42,6 +42,6 @@ export class SubcategoriaController {
         @Param('categoryIdSubcategoryId') categoryIdSubcategoryId: string,
         @Param('subcategoryId') subcategoryId: string,
     ): Promise<void> {
-        return this.subcategoriaService.remove(categoryIdSubcategoryId, subcategoryId);
+        return this.subcategoryService.remove(categoryIdSubcategoryId, subcategoryId);
     }
 }

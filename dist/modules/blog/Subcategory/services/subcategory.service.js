@@ -19,23 +19,23 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SubcategoriaService = void 0;
+exports.SubcategoryService = void 0;
 const common_1 = require("@nestjs/common");
 const dynamodb_service_1 = require("../../../../services/dynamodb.service"); // Importa DynamoDbService usando alias @src.
-let SubcategoriaService = class SubcategoriaService {
+let SubcategoryService = class SubcategoryService {
     constructor(dynamoDbService) {
         this.dynamoDbService = dynamoDbService;
         this.tableName = 'Subcategory';
     }
-    create(createSubcategoriaDto) {
+    create(createSubcategoryDto) {
         return __awaiter(this, void 0, void 0, function* () {
-            const categorySubcategoryId = `${createSubcategoriaDto.categoryId}#${createSubcategoriaDto.subcategoryId}`;
+            const categorySubcategoryId = `${createSubcategoryDto.categoryId}#${createSubcategoryDto.subcategoryId}`;
             const params = {
                 TableName: this.tableName,
-                Item: Object.assign(Object.assign({}, createSubcategoriaDto), { 'categoryId#subcategoryId': categorySubcategoryId }),
+                Item: Object.assign(Object.assign({}, createSubcategoryDto), { 'categoryId#subcategoryId': categorySubcategoryId }),
             };
             yield this.dynamoDbService.putItem(params);
-            return this.findOne(categorySubcategoryId, createSubcategoriaDto.subcategoryId);
+            return this.findOne(categorySubcategoryId, createSubcategoryDto.subcategoryId);
         });
     }
     findAll() {
@@ -63,7 +63,7 @@ let SubcategoriaService = class SubcategoriaService {
             return result.Item;
         });
     }
-    update(categoryIdSubcategoryId, subcategoryId, updateSubcategoriaDto) {
+    update(categoryIdSubcategoryId, subcategoryId, updateSubcategoryDto) {
         return __awaiter(this, void 0, void 0, function* () {
             yield this.findOne(categoryIdSubcategoryId, subcategoryId);
             const updateExpression = this.dynamoDbService.buildUpdateExpression(updateSubcategoriaDto);
@@ -92,8 +92,8 @@ let SubcategoriaService = class SubcategoriaService {
         });
     }
 };
-exports.SubcategoriaService = SubcategoriaService;
-exports.SubcategoriaService = SubcategoriaService = __decorate([
+exports.SubcategoryService = SubcategoryService;
+exports.SubcategoryService = SubcategoryService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [dynamodb_service_1.DynamoDbService])
-], SubcategoriaService);
+], SubcategoryService);

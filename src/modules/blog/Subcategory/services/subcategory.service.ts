@@ -4,37 +4,37 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { DynamoDbService } from '@src/services/dynamodb.service'; // Importa DynamoDbService usando alias @src.
 import { CreateSubcategoryDto } from '@src/modules/blog/subcategory/dto/create-subcategory.dto'; // Importa CreateSubcategoriaDto usando alias @src.
 import { UpdateSubcategoryDto } from '@src/modules/blog/subcategory/dto/update-subcategory.dto'; // Importa UpdateSubcategoriaDto usando alias @src.
-import { SubcategoriaDto } from '@src/modules/blog/subcategory/dto/subcategory.dto'; // Importa SubcategoriaDto usando alias @src.
+import { SubcategoryDto } from '@src/modules/blog/subcategory/dto/subcategory.dto'; // Importa SubcategoryDto usando alias @src.
 
 @Injectable()
-export class SubcategoriaService {
+export class SubcategoryService {
     private readonly tableName = 'Subcategory';
 
     constructor(private readonly dynamoDbService: DynamoDbService) { }
 
-    async create(createSubcategoriaDto: CreateSubcategoriaDto): Promise<SubcategoriaDto> {
-        const categorySubcategoryId = `${createSubcategoriaDto.categoryId}#${createSubcategoriaDto.subcategoryId}`;
+    async create(createSubcategoryDto: CreateSubcategoryDto): Promise<SubcategoryDto> {
+        const categorySubcategoryId = `${createSubcategoryDto.categoryId}#${createSubcategoryDto.subcategoryId}`;
 
         const params = {
             TableName: this.tableName,
             Item: {
-                ...createSubcategoriaDto,
+                ...createSubcategoryDto,
                 'categoryId#subcategoryId': categorySubcategoryId, // Chave de partição composta
             },
         };
         await this.dynamoDbService.putItem(params);
-        return this.findOne(categorySubcategoryId, createSubcategoriaDto.subcategoryId);
+        return this.findOne(categorySubcategoryId, createSubcategoryDto.subcategoryId);
     }
 
-    async findAll(): Promise<SubcategoriaDto[]> {
+    async findAll(): Promise<SubcategoryDto[]> {
         const params = {
             TableName: this.tableName,
         };
         const result = await this.dynamoDbService.scanItems(params);
-        return (result.Items as SubcategoriaDto[]) || [];
+        return (result.Items as SubcategoryDto[]) || [];
     }
 
-    async findOne(categoryIdSubcategoryId: string, subcategoryId: string): Promise<SubcategoriaDto> {
+    async findOne(categoryIdSubcategoryId: string, subcategoryId: string): Promise<SubcategoryDto> {
         const params = {
             TableName: this.tableName,
             Key: {
@@ -46,10 +46,10 @@ export class SubcategoriaService {
         if (!result.Item) {
             throw new NotFoundException(`Subcategoria com categoryId#subcategoryId '${categoryIdSubcategoryId}' e subcategoryId '${subcategoryId}' não encontrada`);
         }
-        return result.Item as SubcategoriaDto;
+        return result.Item as SubcategoryDto;
     }
 
-    async update(categoryIdSubcategoryId: string, subcategoryId: string, updateSubcategoriaDto: UpdateSubcategoriaDto): Promise<SubcategoriaDto> {
+    async update(categoryIdSubcategoryId: string, subcategoryId: string, updateSubcategoryDto: UpdateSubcategoriaDto): Promise<SubcategoryDto> {
         await this.findOne(categoryIdSubcategoryId, subcategoryId);
         const updateExpression = this.dynamoDbService.buildUpdateExpression(updateSubcategoriaDto);
         if (!updateExpression) {
@@ -67,7 +67,7 @@ export class SubcategoriaService {
         };
 
         const result = await this.dynamoDbService.updateItem(params);
-        return result.Attributes as SubcategoriaDto;
+        return result.Attributes as SubcategoryDto;
     }
 
     async remove(categoryIdSubcategoryId: string, subcategoryId: string): Promise<void> {

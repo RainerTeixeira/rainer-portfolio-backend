@@ -7,6 +7,6 @@ import { SubcategoryService } from '@src/modules/blog/subcategory/services/subca
 @Module({
     controllers: [SubcategoryController],
     providers: [SubcategoryService],
-    exports: SubcategoryService],
+    exports: [SubcategoryService],
 })
 export class SubcategoryModule { }
