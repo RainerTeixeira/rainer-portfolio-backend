@@ -43,7 +43,7 @@ let PostsController = class PostsController {
     }
     findOne(categoryIdSubcategoryId, postId) {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.postsService.findOne(categoryIdSubcategoryId, postId);
+            return this.postsService.findOne(categoryIdSubcategoryId);
         });
     }
     update(categoryIdSubcategoryId, postId, updatePostDto) {
