@@ -58,7 +58,7 @@ export class CategoryService {
                     M: { // Formato correto para mapa (objeto) no DynamoDB
                         canonical: { S: updateCategoryDto.seo?.canonical || null }, // Se for opcional, use || null para evitar undefined
                         description: { S: updateCategoryDto.seo?.description || null },
-                        keywords: { L: updateCategoryDto.seo?.keywords?.map(keyword => ({ S: keyword })) || [] } // Se for array, mapeie para formato de lista do DynamoDB
+                        keywords: { L: updateCategoryDto.seo?.keywords?.map((keyword: string) => ({ S: keyword })) || [] } // Se for array, mapeie para formato de lista do DynamoDB
                     }
                 },
             },
