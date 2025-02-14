@@ -17,6 +17,19 @@ const class_validator_1 = require("class-validator");
  * Contém informações adicionais sobre o post, como autor, tags, trecho, etc.
  */
 class PostInfoDto {
+    constructor(publishDate, slug, title, authorId, tags, excerpt, featuredImageURL, modifiedDate, readingTime, status, views) {
+        this.publishDate = publishDate;
+        this.slug = slug;
+        this.title = title;
+        this.authorId = authorId;
+        this.tags = tags;
+        this.excerpt = excerpt;
+        this.featuredImageURL = featuredImageURL;
+        this.modifiedDate = modifiedDate;
+        this.readingTime = readingTime;
+        this.status = status;
+        this.views = views;
+    }
 }
 exports.PostInfoDto = PostInfoDto;
 __decorate([
@@ -47,8 +60,7 @@ __decorate([
 ], PostInfoDto.prototype, "modifiedDate", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsNotEmpty)() // Garante que publishDate não seja vazio
-    ,
+    (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], PostInfoDto.prototype, "publishDate", void 0);
 __decorate([
@@ -58,8 +70,7 @@ __decorate([
 ], PostInfoDto.prototype, "readingTime", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsNotEmpty)() // Garante que slug não seja vazio
-    ,
+    (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], PostInfoDto.prototype, "slug", void 0);
 __decorate([
@@ -69,8 +80,7 @@ __decorate([
 ], PostInfoDto.prototype, "status", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsNotEmpty)() // Garante que title não seja vazio
-    ,
+    (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], PostInfoDto.prototype, "title", void 0);
 __decorate([
