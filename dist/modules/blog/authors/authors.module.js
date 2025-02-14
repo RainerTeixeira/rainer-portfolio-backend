@@ -8,16 +8,16 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthorsModule = void 0;
-const common_1 = require("@nestjs/common");
-const authors_controller_1 = require("./controllers/authors.controller");
-const authors_service_1 = require("./services/authors.service");
+const common_1 = require("@nestjs/common"); // Importa o decorator Module para definir o módulo.
+const authors_controller_1 = require("./controllers/authors.controller"); // Importa AuthorsController usando @src.
+const authors_service_1 = require("./services/authors.service"); // Importa AuthorsService usando @src.
 let AuthorsModule = class AuthorsModule {
 };
 exports.AuthorsModule = AuthorsModule;
 exports.AuthorsModule = AuthorsModule = __decorate([
     (0, common_1.Module)({
-        controllers: [authors_controller_1.AuthorsController], // Declara AuthorsController
-        providers: [authors_service_1.AuthorsService], // Declara AuthorsService
-        exports: [authors_service_1.AuthorsService], // Exporta AuthorsService se precisar usar em outros módulos
+        controllers: [authors_controller_1.AuthorsController], // Declara os controllers deste módulo.
+        providers: [authors_service_1.AuthorsService], // Declara os providers (services) deste módulo.
+        exports: [authors_service_1.AuthorsService], // Exporta AuthorsService para outros módulos.
     })
 ], AuthorsModule);

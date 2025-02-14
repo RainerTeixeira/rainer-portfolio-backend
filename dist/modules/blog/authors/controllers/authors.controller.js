@@ -23,10 +23,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthorsController = void 0;
-const common_1 = require("@nestjs/common");
-const authors_service_1 = require("../services/authors.service");
-const create_author_dto_1 = require("../dto/create-author.dto");
-const update_author_dto_1 = require("../dto/update-author.dto");
+const common_1 = require("@nestjs/common"); // Importa decorators do NestJS para controllers.
+const authors_service_1 = require("../services/authors.service"); // Importa AuthorsService usando alias @src.
+const create_author_dto_1 = require("../dto/create-author.dto"); // Importa CreateAuthorDto usando alias @src.
+const update_author_dto_1 = require("../dto/update-author.dto"); // Importa UpdateAuthorDto usando alias @src.
 let AuthorsController = class AuthorsController {
     constructor(authorsService) {
         this.authorsService = authorsService;

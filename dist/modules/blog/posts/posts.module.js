@@ -8,9 +8,9 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PostsModule = void 0;
-const common_1 = require("@nestjs/common");
-const posts_controller_1 = require("./controllers/posts.controller");
-const posts_service_1 = require("./services/posts.service");
+const common_1 = require("@nestjs/common"); // Importa o decorator Module do NestJS.
+const posts_controller_1 = require("./controllers/posts.controller"); // Importa PostsController usando alias @src.
+const posts_service_1 = require("./services/posts.service"); // Importa PostsService usando alias @src.
 let PostsModule = class PostsModule {
 };
 exports.PostsModule = PostsModule;
