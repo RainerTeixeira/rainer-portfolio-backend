@@ -1,10 +1,10 @@
 // src/modules/blog/Subcategory/services/subcaSubcategorytegoria.service.ts
 
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { DynamoDbService } from '@src/services/dynamodb.service'; // Importa DynamoDbService usando alias @src.
-import { CreateSubcategoryDto } from '@src/modules/blog/subcategory/dto/create-subcategory.dto'; // Importa CreateSubcategoryDto usando alias @src.
-import { UpdateSubcategoryDto } from '@src/modules/blog/subcategory/dto/update-subcategory.dto'; // Importa UpdateSubcategoryDto usando alias @src.
-import { SubcategoryDto } from '@src/modules/blog/subcategory/dto/subcategory.dto'; // Importa SubcategoryDto usando alias @src.
+import { DynamoDbService } from '@src/services/dynamoDb.service'; // Importa DynamoDbService com 'Db' correto
+import { CreateSubcategoryDto } from '../dto/create-subcategory.dto';
+import { UpdateSubcategoryDto } from '../dto/update-subcategory.dto';
+import { SubcategoryDto } from '../dto/subcategory.dto';
 
 @Injectable()
 export class SubcategoryService {
@@ -23,60 +23,85 @@ export class SubcategoryService {
             },
         };
         await this.dynamoDbService.putItem(params);
-        return this.findOne(categorySubcategoryId, createSubcategoryDto.subcategoryId);
+        return this.getSubcategoryById(categorySubcategoryId, createSubcategoryDto.subcategoryId); // Changed findOne to getSubcategoryById for clarity and consistency
     }
 
-    async findAll(): Promise<SubcategoryDto[]> {
+    async getAllSubcategories(categoryIdSubcategoryId: string): Promise<SubcategoryDto[]> { // Changed findAll to getAllSubcategories and adjusted logic
         const params = {
             TableName: this.tableName,
+            FilterExpression: 'begins_with(#pk, :pk_prefix)', // Corrected FilterExpression for partition key query
+            ExpressionAttributeNames: {
+                '#pk': 'categoryId#subcategoryId',
+            },
+            ExpressionAttributeValues: {
+                ':pk_prefix': categoryIdSubcategoryId,
+            },
         };
         const result = await this.dynamoDbService.scanItems(params);
-        return (result.Items as SubcategoryDto[]) || [];
+        if (!result.Items) {
+            return [];
+        }
+        return result.Items.map(item => ({ // Explicitly map to SubcategoryDto
+            'categoryId#subcategoryId': item['categoryId#subcategoryId']?.S,
+            subcategoryId: item.subcategoryId?.S,
+            name: item.name?.S,
+            slug: item.slug?.S,
+        } as SubcategoryDto)) || [];
     }
 
-    async findOne(categoryIdSubcategoryId: string, subcategoryId: string): Promise<SubcategoryDto> {
+    async getSubcategoryById(categoryIdSubcategoryId: string, subcategoryId: string): Promise<SubcategoryDto> { // Renamed findOne to getSubcategoryById for clarity
         const params = {
             TableName: this.tableName,
             Key: {
-                'categoryId#subcategoryId': { S: categoryIdSubcategoryId },
-                subcategoryId: { S: subcategoryId },
+                'categoryId#subcategoryId': categoryIdSubcategoryId,
+                subcategoryId: subcategoryId,
             },
         };
         const result = await this.dynamoDbService.getItem(params);
         if (!result.Item) {
-            throw new NotFoundException(`Subcategory com categoryId#subcategoryId '${categoryIdSubcategoryId}' e subcategoryId '${subcategoryId}' não encontrada`);
+            throw new NotFoundException(`Subcategory com ID '${subcategoryId}' na categoria '${categoryIdSubcategoryId}' não encontrada`);
         }
-        return result.Item as SubcategoryDto;
+        return { // Explicitly map to SubcategoryDto
+            'categoryId#subcategoryId': result.Item['categoryId#subcategoryId']?.S,
+            subcategoryId: result.Item.subcategoryId?.S,
+            name: result.Item.name?.S,
+            slug: result.Item.slug?.S,
+        } as SubcategoryDto;
     }
 
-    async update(categoryIdSubcategoryId: string, subcategoryId: string, updateSubcategoryDto: UpdateSubcategoryDto): Promise<SubcategoryDto> {
-        await this.findOne(categoryIdSubcategoryId, subcategoryId);
+    async updateSubcategory(categoryIdSubcategoryId: string, subcategoryId: string, updateSubcategoryDto: UpdateSubcategoryDto): Promise<SubcategoryDto> { // Renamed update to updateSubcategory for clarity
+        await this.getSubcategoryById(categoryIdSubcategoryId, subcategoryId); // Use getSubcategoryById
         const updateExpression = this.dynamoDbService.buildUpdateExpression(updateSubcategoryDto);
         if (!updateExpression) {
-            return this.findOne(categoryIdSubcategoryId, subcategoryId);
+            return this.getSubcategoryById(categoryIdSubcategoryId, subcategoryId); // Use getSubcategoryById
         }
 
         const params = {
             TableName: this.tableName,
             Key: {
-                'categoryId#subcategoryId': { S: categoryIdSubcategoryId },
-                subcategoryId: { S: subcategoryId },
+                'categoryId#subcategoryId': categoryIdSubcategoryId,
+                subcategoryId: subcategoryId,
             },
             ...updateExpression,
             ReturnValues: 'ALL_NEW',
         };
 
         const result = await this.dynamoDbService.updateItem(params);
-        return result.Attributes as SubcategoryDto;
+        return {  // Explicitly map to SubcategoryDto
+            'categoryId#subcategoryId': result.Attributes['categoryId#subcategoryId']?.S,
+            subcategoryId: result.Attributes.subcategoryId?.S,
+            name: result.Attributes.name?.S,
+            slug: result.Attributes.slug?.S,
+        } as SubcategoryDto;
     }
 
-    async remove(categoryIdSubcategoryId: string, subcategoryId: string): Promise<void> {
-        await this.findOne(categoryIdSubcategoryId, subcategoryId);
+    async removeSubcategory(categoryIdSubcategoryId: string, subcategoryId: string): Promise<void> { // Renamed remove to removeSubcategory for clarity
+        await this.getSubcategoryById(categoryIdSubcategoryId, subcategoryId); // Use getSubcategoryById
         const params = {
             TableName: this.tableName,
             Key: {
-                'categoryId#subcategoryId': { S: categoryIdSubcategoryId },
-                subcategoryId: { S: subcategoryId },
+                'categoryId#subcategoryId': categoryIdSubcategoryId,
+                subcategoryId: subcategoryId,
             },
         };
         await this.dynamoDbService.deleteItem(params);

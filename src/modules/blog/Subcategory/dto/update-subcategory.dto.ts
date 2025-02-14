@@ -1,9 +1,4 @@
-// src/modules/blog/subcategory/dto/update-subcategory.dto.ts
-
-import { SubcategoryDto } from '@src/modules/blog/subcategory/dto/subcategory.dto'; // Importa SubcategoryDto usando alias @src.
-import { IsOptional, IsString, IsObject } from 'class-validator'; // Import decorators de validação
-
-import { IsString, IsOptional } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator'; // Import decorators de validação
 
 export class UpdateSubcategoryDto {
     @IsOptional()

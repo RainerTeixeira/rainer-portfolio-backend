@@ -19,7 +19,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PostsService = void 0;
-// src/modules/blog/posts/services/posts.service.ts
 const common_1 = require("@nestjs/common");
 const aws_sdk_1 = require("aws-sdk");
 const uuid_1 = require("uuid");
@@ -109,6 +108,9 @@ let PostsService = class PostsService {
                 // IndexName: 'PostsIndex', // Se você tiver um GSI para consulta por todos os posts, descomente e use o nome do índice
             };
             const result = yield this.dynamoDb.scan(params).promise(); // ou query se usar GSI
+            if (!result.Items) { // Adicionando verificação para result.Items
+                return []; // Retorna um array vazio se result.Items for undefined/null
+            }
             return result.Items.map(item => {
                 var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _0, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10;
                 return {

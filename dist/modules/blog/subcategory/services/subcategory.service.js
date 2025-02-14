@@ -21,7 +21,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SubcategoryService = void 0;
 const common_1 = require("@nestjs/common");
-const dynamodb_service_1 = require("../../../../services/dynamodb.service"); // Importa DynamoDbService usando alias @src.
+const dynamoDb_service_1 = require("../../../../services/dynamoDb.service"); // Importa DynamoDbService com 'Db' correto
 let SubcategoryService = class SubcategoryService {
     constructor(dynamoDbService) {
         this.dynamoDbService = dynamoDbService;
@@ -35,57 +35,87 @@ let SubcategoryService = class SubcategoryService {
                 Item: Object.assign(Object.assign({}, createSubcategoryDto), { 'categoryId#subcategoryId': categorySubcategoryId }),
             };
             yield this.dynamoDbService.putItem(params);
-            return this.findOne(categorySubcategoryId, createSubcategoryDto.subcategoryId);
+            return this.getSubcategoryById(categorySubcategoryId, createSubcategoryDto.subcategoryId); // Changed findOne to getSubcategoryById for clarity and consistency
         });
     }
-    findAll() {
+    getAllSubcategories(categoryIdSubcategoryId) {
         return __awaiter(this, void 0, void 0, function* () {
             const params = {
                 TableName: this.tableName,
+                FilterExpression: 'begins_with(#pk, :pk_prefix)', // Corrected FilterExpression for partition key query
+                ExpressionAttributeNames: {
+                    '#pk': 'categoryId#subcategoryId',
+                },
+                ExpressionAttributeValues: {
+                    ':pk_prefix': categoryIdSubcategoryId,
+                },
             };
             const result = yield this.dynamoDbService.scanItems(params);
-            return result.Items || [];
+            if (!result.Items) {
+                return [];
+            }
+            return result.Items.map(item => {
+                var _a, _b, _c, _d;
+                return ({
+                    'categoryId#subcategoryId': (_a = item['categoryId#subcategoryId']) === null || _a === void 0 ? void 0 : _a.S,
+                    subcategoryId: (_b = item.subcategoryId) === null || _b === void 0 ? void 0 : _b.S,
+                    name: (_c = item.name) === null || _c === void 0 ? void 0 : _c.S,
+                    slug: (_d = item.slug) === null || _d === void 0 ? void 0 : _d.S,
+                });
+            }) || [];
         });
     }
-    findOne(categoryIdSubcategoryId, subcategoryId) {
+    getSubcategoryById(categoryIdSubcategoryId, subcategoryId) {
         return __awaiter(this, void 0, void 0, function* () {
+            var _a, _b, _c, _d;
             const params = {
                 TableName: this.tableName,
                 Key: {
-                    'categoryId#subcategoryId': { S: categoryIdSubcategoryId },
-                    subcategoryId: { S: subcategoryId },
+                    'categoryId#subcategoryId': categoryIdSubcategoryId,
+                    subcategoryId: subcategoryId,
                 },
             };
             const result = yield this.dynamoDbService.getItem(params);
             if (!result.Item) {
-                throw new common_1.NotFoundException(`Subcategory com categoryId#subcategoryId '${categoryIdSubcategoryId}' e subcategoryId '${subcategoryId}' não encontrada`);
+                throw new common_1.NotFoundException(`Subcategory com ID '${subcategoryId}' na categoria '${categoryIdSubcategoryId}' não encontrada`);
             }
-            return result.Item;
+            return {
+                'categoryId#subcategoryId': (_a = result.Item['categoryId#subcategoryId']) === null || _a === void 0 ? void 0 : _a.S,
+                subcategoryId: (_b = result.Item.subcategoryId) === null || _b === void 0 ? void 0 : _b.S,
+                name: (_c = result.Item.name) === null || _c === void 0 ? void 0 : _c.S,
+                slug: (_d = result.Item.slug) === null || _d === void 0 ? void 0 : _d.S,
+            };
         });
     }
-    update(categoryIdSubcategoryId, subcategoryId, updateSubcategoryDto) {
+    updateSubcategory(categoryIdSubcategoryId, subcategoryId, updateSubcategoryDto) {
         return __awaiter(this, void 0, void 0, function* () {
-            yield this.findOne(categoryIdSubcategoryId, subcategoryId);
+            var _a, _b, _c, _d;
+            yield this.getSubcategoryById(categoryIdSubcategoryId, subcategoryId); // Use getSubcategoryById
             const updateExpression = this.dynamoDbService.buildUpdateExpression(updateSubcategoryDto);
             if (!updateExpression) {
-                return this.findOne(categoryIdSubcategoryId, subcategoryId);
+                return this.getSubcategoryById(categoryIdSubcategoryId, subcategoryId); // Use getSubcategoryById
             }
             const params = Object.assign(Object.assign({ TableName: this.tableName, Key: {
-                    'categoryId#subcategoryId': { S: categoryIdSubcategoryId },
-                    subcategoryId: { S: subcategoryId },
+                    'categoryId#subcategoryId': categoryIdSubcategoryId,
+                    subcategoryId: subcategoryId,
                 } }, updateExpression), { ReturnValues: 'ALL_NEW' });
             const result = yield this.dynamoDbService.updateItem(params);
-            return result.Attributes;
+            return {
+                'categoryId#subcategoryId': (_a = result.Attributes['categoryId#subcategoryId']) === null || _a === void 0 ? void 0 : _a.S,
+                subcategoryId: (_b = result.Attributes.subcategoryId) === null || _b === void 0 ? void 0 : _b.S,
+                name: (_c = result.Attributes.name) === null || _c === void 0 ? void 0 : _c.S,
+                slug: (_d = result.Attributes.slug) === null || _d === void 0 ? void 0 : _d.S,
+            };
         });
     }
-    remove(categoryIdSubcategoryId, subcategoryId) {
+    removeSubcategory(categoryIdSubcategoryId, subcategoryId) {
         return __awaiter(this, void 0, void 0, function* () {
-            yield this.findOne(categoryIdSubcategoryId, subcategoryId);
+            yield this.getSubcategoryById(categoryIdSubcategoryId, subcategoryId); // Use getSubcategoryById
             const params = {
                 TableName: this.tableName,
                 Key: {
-                    'categoryId#subcategoryId': { S: categoryIdSubcategoryId },
-                    subcategoryId: { S: subcategoryId },
+                    'categoryId#subcategoryId': categoryIdSubcategoryId,
+                    subcategoryId: subcategoryId,
                 },
             };
             yield this.dynamoDbService.deleteItem(params);
@@ -95,5 +125,5 @@ let SubcategoryService = class SubcategoryService {
 exports.SubcategoryService = SubcategoryService;
 exports.SubcategoryService = SubcategoryService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [dynamodb_service_1.DynamoDbService])
+    __metadata("design:paramtypes", [dynamoDb_service_1.DynamoDbService])
 ], SubcategoryService);

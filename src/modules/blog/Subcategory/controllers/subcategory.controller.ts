@@ -1,47 +1,49 @@
-// src/modules/blog/Subcategory/controllers/Subcategory.controller.ts
+// src/modules/blog/subcategory/controllers/subcategory.controller.ts
+import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { SubcategoryService } from '../services/subcategory.service';
+import { CreateSubcategoryDto } from '../dto/create-subcategory.dto'; // Correção: CreateSubcategoryDto
+import { UpdateSubcategoryDto } from '../dto/update-subcategory.dto';
+import { SubcategoryDto } from '../dto/subcategory.dto';
 
-import { Controller, Get, Post, Put, Delete, Body, Param } from '@nestjs/common'; // Importa decorators do NestJS para controllers.
-import { SubcategoryService } from '@src/modules/blog/subcategory/services/subcategory.service'; // Agora 'subcategory'
-import { CreateSubcategoryDto } from '@src/modules/blog/subcategory/dto/create-subcategory.dto'; // Agora 'subcategory'
-import { UpdateSubcategoryDto } from '@src/modules/blog/subcategory/dto/update-subcategory.dto'; // Agora 'subcategory'
-import { SubcategoryDto } from '@src/modules/blog/subcategory/dto/subcategory.dto'; // Agora 'subcategory'
-
-@Controller('blog/subcategorias')
+@Controller('categories/:categoryIdSubcategoryId/subcategories')
 export class SubcategoryController {
     constructor(private readonly subcategoryService: SubcategoryService) { }
 
     @Post()
-    async create(@Body() createSubcategoryDto: CreateSubcategyDto): Promise<SubcategoryDto> {
-        return this.subcategoryService.create(createSubcategoryDto);
+    async create(
+        @Param('categoryIdSubcategoryId') categoryIdSubcategoryId: string,
+        @Body() createSubcategoryDto: CreateSubcategoryDto // Correção: CreateSubcategoryDto
+    ): Promise<SubcategoryDto> {
+        return this.subcategoryService.createSubcategory(categoryIdSubcategoryId, createSubcategoryDto);
     }
 
     @Get()
-    async findAll(): Promise<SubcategoryDto[]> {
-        return this.subcategoryService.findAll();
+    async findAll(@Param('categoryIdSubcategoryId') categoryIdSubcategoryId: string): Promise<SubcategoryDto[]> {
+        return this.subcategoryService.getAllSubcategories(categoryIdSubcategoryId);
     }
 
-    @Get(':categoryIdSubcategoryId/:subcategoryId')
+    @Get(':subcategoryId')
     async findOne(
         @Param('categoryIdSubcategoryId') categoryIdSubcategoryId: string,
-        @Param('subcategoryId') subcategoryId: string,
+        @Param('subcategoryId') subcategoryId: string
     ): Promise<SubcategoryDto> {
-        return this.subcategoryService.findOne(categoryIdSubcategoryId, subcategoryId);
+        return this.subcategoryService.getSubcategoryById(categoryIdSubcategoryId, subcategoryId);
     }
 
-    @Put(':categoryIdSubcategoryId/:subcategoryId')
+    @Patch(':subcategoryId')
     async update(
         @Param('categoryIdSubcategoryId') categoryIdSubcategoryId: string,
         @Param('subcategoryId') subcategoryId: string,
-        @Body() UpdateSubcategoryDto: UpdateSubcategoryDto,
+        @Body() updateSubcategoryDto: UpdateSubcategoryDto
     ): Promise<SubcategoryDto> {
-        return this.subcategoryService.update(categoryIdSubcategoryId, subcategoryId, UpdateSubcategoryDto);
+        return this.subcategoryService.updateSubcategory(categoryIdSubcategoryId, subcategoryId, updateSubcategoryDto);
     }
 
-    @Delete(':categoryIdSubcategoryId/:subcategoryId')
+    @Delete(':subcategoryId')
     async remove(
         @Param('categoryIdSubcategoryId') categoryIdSubcategoryId: string,
-        @Param('subcategoryId') subcategoryId: string,
+        @Param('subcategoryId') subcategoryId: string
     ): Promise<void> {
-        return this.subcategoryService.remove(categoryIdSubcategoryId, subcategoryId);
+        return this.subcategoryService.deleteSubcategory(categoryIdSubcategoryId, subcategoryId);
     }
 }
