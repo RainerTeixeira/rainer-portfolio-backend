@@ -1,6 +1,6 @@
 // src/modules/blog/posts/dto/post-info.dto.ts
 import { IsString, IsOptional, IsArray, IsNumber, IsNotEmpty } from 'class-validator';
-
+import { AuthorDto } from '@src/modules/blog/authors/dto/author.dto';
 /**
  * DTO para o objeto aninhado 'postInfo' dentro do PostDto.
  * Contém informações adicionais sobre o post, como autor, tags, trecho, etc.

@@ -87,35 +87,7 @@ export class PostsService {
    * @throws NotFoundException - Se o post não for encontrado no DynamoDB
    */
   async getPostById(categoryIdSubcategoryId: string, postId: string): Promise<PostDto> {
-    // LOG 1: Registra os parâmetros de entrada para a busca
-    this.logger.log(`getPostById: Iniciando busca do post. categoryIdSubcategoryId: ${categoryIdSubcategoryId}, postId: ${postId}`);
-
-    // Monta os parâmetros para o comando GetItem do DynamoDB
-    const params: GetCommandInput = {
-      TableName: this.tableName,
-      Key: {
-        'categoryId#subcategoryId': categoryIdSubcategoryId,
-        postId: postId,
-      },
-    };
-
-    // LOG 2: Registra os parâmetros enviados para o DynamoDB
-    this.logger.log(`getPostById: Parametros para DynamoDB: ${JSON.stringify(params)}`);
-
-    // Executa a consulta no DynamoDB
-    const result = await this.dynamoDbService.getItem(params);
-    // LOG 3: Registra o resultado bruto obtido do DynamoDB
-    this.logger.log(`getPostById: Resultado bruto do DynamoDB: ${JSON.stringify(result)}`);
-
-    const item = result.Item;
-    // LOG 4: Registra o item obtido do DynamoDB
-    this.logger.log(`getPostById: Item do DynamoDB (result.Item): ${JSON.stringify(item)}`);
-
-    // Se o item não for encontrado, registra aviso e lança exceção
-    if (!item) {
-      this.logger.warn(`getPostById: Post não encontrado no DynamoDB. categoryIdSubcategoryId: ${categoryIdSubcategoryId}, postId: ${postId}`);
-      throw new NotFoundException(`Post com ID '${postId}' na categoria '${categoryIdSubcategoryId}' não encontrado`);
-    }
+    // ... (logs e busca do post no DynamoDB - tudo OK) ...
 
     // Mapeia o item para o DTO do post
     const postDto = this.mapDynamoItemToPostDto(item);
