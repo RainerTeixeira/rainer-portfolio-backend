@@ -2,8 +2,7 @@
 import { AuthorSocialProofDto } from './author-social-proof.dto';
 
 export class AuthorDto {
-    postId: string; // Chave de Partição
-    authorId: string; // Chave de Classificação
+    authorId: string; // Chave de Partição
     expertise: string[]; // Lista de Strings
     name: string;
     slug: string;
