@@ -1,16 +1,17 @@
-// src/modules/blog/posts/controllers/posts.controller.ts
-
 import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe } from '@nestjs/common';
 import { PostsService } from '../services/posts.service';
 import { CreatePostDto } from '../dto/create-post.dto';
 import { UpdatePostDto } from '../dto/update-post.dto';
 import { PostDto } from '../dto/post.dto';
+import { FullPostDto } from '../dto/full-post.dto.ts'; // Importe o novo DTO
 
 /**
  * Controller responsável por gerenciar os posts.
- * A rota base indica que os posts estão relacionados a uma categoria e subcategoria.
+ * Rotas base:
+ * - /categories/:categoryIdSubcategoryId/posts (para posts dentro de categorias/subcategorias)
+ * - /blog (para rotas gerais de blog, como listagem de todos os posts e detalhes de posts individuais)
  */
-@Controller('categories/:categoryIdSubcategoryId/posts') // Rota base: posts dentro de uma categoria/subcategoria
+@Controller() // Remova a rota base 'categories/:categoryIdSubcategoryId/posts' do Controller
 export class PostsController {
   /**
    * Injeta o serviço de posts que contém a lógica de negócio para manipular os posts.
@@ -19,68 +20,82 @@ export class PostsController {
 
   /**
    * Rota POST para criação de um novo post.
-   * Recebe o parâmetro de rota 'categoryIdSubcategoryId' e os dados do post no corpo da requisição.
-   * Retorna o post criado.
+   * Mantém a rota base anterior: /categories/:categoryIdSubcategoryId/posts
    */
-  @Post()
+  @Post('categories/:categoryIdSubcategoryId/posts')
   async create(
-    @Param('categoryIdSubcategoryId') categoryIdSubcategoryId: string, // Parâmetro de rota que representa a chave composta da categoria e subcategoria
-    @Body() createPostDto: CreatePostDto, // DTO contendo os dados para criação do post
+    @Param('categoryIdSubcategoryId') categoryIdSubcategoryId: string,
+    @Body() createPostDto: CreatePostDto,
   ): Promise<PostDto> {
-    // Chama o método createPost do serviço para criar o post
     return this.postsService.createPost(categoryIdSubcategoryId, createPostDto);
   }
 
   /**
-   * Rota GET para buscar todos os posts.
-   * Retorna um array de PostDto.
+   * Rota GET para buscar todos os posts (agora em /blog).
+   * Rota para obter todos os posts do blog, sem filtro de categoria/subcategoria.
    */
-  @Get()
-  async findAll(): Promise<PostDto[]> {
-    // Chama o método getAllPosts do serviço para obter todos os posts
-    return this.postsService.getAllPosts();
+  @Get('blog') // Nova rota: /blog
+  async findAllBlogPosts(): Promise<FullPostDto[]> { // Retorna FullPostDto para incluir author e comments
+    return this.postsService.getAllBlogPosts();
+  }
+
+
+  /**
+   * Rota GET para buscar um post específico (agora em /blog/:categoryIdSubcategoryId/:postId).
+   * Rota para obter um post específico por categoria/subcategoria e postId, incluindo autor e comentários.
+   */
+  @Get('blog/:categoryIdSubcategoryId/:postId') // Nova rota: /blog/:categoryIdSubcategoryId/:postId
+  async findOneBlogPost(
+    @Param('categoryIdSubcategoryId') categoryIdSubcategoryId: string,
+    @Param('postId') postId: string,
+  ): Promise<FullPostDto> { // Retorna FullPostDto para incluir author e comments
+    return this.postsService.getFullPostById(categoryIdSubcategoryId, postId);
   }
 
   /**
-   * Rota GET para buscar um post específico.
-   * Recebe os parâmetros 'categoryIdSubcategoryId' e 'postId' da rota.
-   * Retorna o post correspondente ao ID informado.
+   * Rota GET para buscar todos os posts DENTRO de uma categoria/subcategoria (mantém a rota anterior).
+   * Mantém a rota anterior: /categories/:categoryIdSubcategoryId/posts
    */
-  @Get(':postId')
+  @Get('categories/:categoryIdSubcategoryId/posts')
+  async findAll(@Param('categoryIdSubcategoryId') categoryIdSubcategoryId: string): Promise<PostDto[]> {
+    return this.postsService.getAllPosts(categoryIdSubcategoryId); // Modifiquei para aceitar categoryIdSubcategoryId como parâmetro
+  }
+
+
+  /**
+   * Rota GET para buscar um post específico DENTRO de uma categoria/subcategoria (mantém a rota anterior).
+   * Mantém a rota anterior: /categories/:categoryIdSubcategoryId/posts/:postId
+   */
+  @Get('categories/:categoryIdSubcategoryId/posts/:postId')
   async findOne(
-    @Param('categoryIdSubcategoryId') categoryIdSubcategoryId: string, // Parâmetro de rota para a chave composta da categoria/subcategoria
-    @Param('postId') postId: string, // Parâmetro de rota para o ID do post
+    @Param('categoryIdSubcategoryId') categoryIdSubcategoryId: string,
+    @Param('postId') postId: string,
   ): Promise<PostDto> {
-    // Chama o método getPostById do serviço para buscar o post pelo ID
-    return this.postsService.getPostById(categoryIdSubcategoryId, postId);
+    return this.postsService.getPostById(categoryIdSubcategoryId, postId); // Mantém chamada a getPostById
   }
 
   /**
-   * Rota PATCH para atualizar um post existente.
-   * Recebe os parâmetros 'categoryIdSubcategoryId' e 'postId', além dos dados atualizados no corpo da requisição.
-   * Retorna o post atualizado.
+   * Rota PATCH para atualizar um post existente (mantém a rota anterior).
+   * Mantém a rota anterior: /categories/:categoryIdSubcategoryId/posts/:postId
    */
-  @Patch(':postId')
+  @Patch('categories/:categoryIdSubcategoryId/posts/:postId')
   async update(
-    @Param('categoryIdSubcategoryId') categoryIdSubcategoryId: string, // Parâmetro de rota para a chave composta da categoria/subcategoria
-    @Param('postId') postId: string, // Parâmetro de rota para o ID do post a ser atualizado
-    @Body() updatePostDto: UpdatePostDto, // DTO contendo os dados para atualização do post
+    @Param('categoryIdSubcategoryId') categoryIdSubcategoryId: string,
+    @Param('postId') postId: string,
+    @Body() updatePostDto: UpdatePostDto,
   ): Promise<PostDto> {
-    // Chama o método updatePost do serviço para atualizar o post
     return this.postsService.updatePost(categoryIdSubcategoryId, postId, updatePostDto);
   }
 
   /**
-   * Rota DELETE para remover um post.
-   * Recebe os parâmetros 'categoryIdSubcategoryId' e 'postId'.
-   * Não retorna nenhum conteúdo em caso de sucesso.
+   * Rota DELETE para remover um post (mantém a rota anterior).
+   * Mantém a rota anterior: /categories/:categoryIdSubcategoryId/posts/:postId
    */
-  @Delete(':postId')
+  @Delete('categories/:categoryIdSubcategoryId/posts/:postId')
   async remove(
-    @Param('categoryIdSubcategoryId') categoryIdSubcategoryId: string, // Parâmetro de rota para a chave composta da categoria/subcategoria
-    @Param('postId') postId: string, // Parâmetro de rota para o ID do post a ser removido
+    @Param('categoryIdSubcategoryId') categoryIdSubcategoryId: string,
+    @Param('postId') postId: string,
   ): Promise<void> {
-    // Chama o método deletePost do serviço para remover o post
     return this.postsService.deletePost(categoryIdSubcategoryId, postId);
   }
 }
