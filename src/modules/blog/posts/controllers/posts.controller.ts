@@ -1,3 +1,5 @@
+// src/modules/blog/posts/controllers/posts.controller.ts
+
 import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe, Logger } from '@nestjs/common';
 import { PostsService } from '../services/posts.service'; // Importa o PostsService
 import { CreatePostDto } from '../dto/create-post.dto'; // Importa o DTO para criação de posts
