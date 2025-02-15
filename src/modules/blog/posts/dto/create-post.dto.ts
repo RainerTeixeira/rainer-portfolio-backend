@@ -3,7 +3,7 @@ import { IsString, IsOptional, ValidateNested, IsNotEmpty } from 'class-validato
 import { Type } from 'class-transformer';
 import { PostInfoDto } from './post-info.dto';
 import { PostSeoDto } from './post-seo.dto';
-
+import { PostContentDto } from './post-content.dto';  // Importa o DTO PostContentDto para uso neste arquivo
 /**
  * DTO (Data Transfer Object) para criar um novo Post.
  * Define a estrutura dos dados necessários para criar um post,
@@ -20,7 +20,7 @@ export class CreatePostDto {
 
   @IsString()
   @IsNotEmpty()
-  contentHTML: string;
+  contentHTML: PostContentDto;
 
   @ValidateNested()
   @Type(() => PostInfoDto)
