@@ -11,6 +11,10 @@ export class PostInfoDto {
     authorId?: string;
 
     @IsOptional()
+    @IsString()
+    authorName?: string;
+
+    @IsOptional()
     @IsArray()
     @IsString({ each: true })
     tags?: string[];
@@ -56,6 +60,7 @@ export class PostInfoDto {
         slug: string,
         title: string,
         authorId?: string,
+        authorName?: string, // Adicione authorName ao construtor
         tags?: string[],
         excerpt?: string,
         featuredImageURL?: string,
@@ -68,6 +73,7 @@ export class PostInfoDto {
         this.slug = slug;
         this.title = title;
         this.authorId = authorId;
+        this.authorName = authorName; // Inicialize authorName no construtor
         this.tags = tags;
         this.excerpt = excerpt;
         this.featuredImageURL = featuredImageURL;
