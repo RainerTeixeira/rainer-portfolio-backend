@@ -292,12 +292,12 @@ export class DynamoDbService {
   }
 
   /**
-   /*/
-  /* Método privado para mapear mensagens de erro específicas do DynamoDB para mensagens mais amigáveis e em português.
-   /* Facilita a interpretação dos erros para usuários da aplicação, abstraindo detalhes técnicos do AWS SDK.
-   /* @param error - Objeto de erro original do DynamoDB.
-   /* @param operation - String que identifica a operação do DynamoDB que falhou (ex: 'getItem', 'putItem').
-   /* @returns string - Mensagem de erro amigável em português correspondente ao erro original, ou uma mensagem genérica.
+   /* /
+  /*  Método privado para mapear mensagens de erro específicas do DynamoDB para mensagens mais amigáveis e em português.
+   /*  Facilita a interpretação dos erros para usuários da aplicação, abstraindo detalhes técnicos do AWS SDK.
+   /*  @param error - Objeto de erro original do DynamoDB.
+   /*  @param operation - String que identifica a operação do DynamoDB que falhou (ex: 'getItem', 'putItem').
+   /*  @returns string - Mensagem de erro amigável em português correspondente ao erro original, ou uma mensagem genérica.
    /*/
   private mapErrorMessage(error: any, operation: string): string {
     // Mapeamento de nomes de erros comuns do DynamoDB para mensagens em português.
