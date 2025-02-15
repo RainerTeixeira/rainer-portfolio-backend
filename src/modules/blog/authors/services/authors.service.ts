@@ -1,99 +1,147 @@
-// src/modules/blog/authors/services/authors.service.ts
+import { DynamoDbService } from '@src/services/dynamoDb.service'; // Importa o serviço DynamoDbService
+import { Injectable, NotFoundException, Logger } from '@nestjs/common'; // Importa Injectable, NotFoundException e Logger do NestJS
+import { UpdateCommandInput } from '@aws-sdk/lib-dynamodb'; // Importa UpdateCommandInput do AWS SDK for DynamoDB
+import { CreateAuthorDto } from '@src/modules/blog/authors/dto/create-author.dto'; // Importa DTO para criação de autor
+import { UpdateAuthorDto } from '@src/modules/blog/authors/dto/update-author.dto'; // Importa DTO para atualização de autor
+import { AuthorDto } from '@src/modules/blog/authors/dto/author.dto'; // Importa DTO para representação de autor
 
-import { DynamoDbService } from '@src/services/dynamoDb.service'; // Importe o DynamoDbService
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { UpdateCommandInput } from '@aws-sdk/lib-dynamodb'; // Importe UpdateCommandInput
-import { CreateAuthorDto } from '@src/modules/blog/authors/dto/create-author.dto';
-import { UpdateAuthorDto } from '@src/modules/blog/authors/dto/update-author.dto';
-import { AuthorDto } from '@src/modules/blog/authors/dto/author.dto';
-
+/**
+ * @Injectable()
+ * Serviço responsável pela lógica de negócio da entidade Author (Autor).
+ * Este serviço interage com o DynamoDB para realizar operações CRUD (Create, Read, Update, Delete)
+ * na tabela 'Authors'.
+ */
 @Injectable()
 export class AuthorsService {
-    private readonly tableName = 'Authors'; // Nome da tabela DynamoDB para Authors
+    private readonly tableName = 'Authors'; // Nome da tabela DynamoDB para Autores
+    private readonly logger = new Logger(AuthorsService.name); // Logger para registrar eventos e erros neste serviço
 
-    constructor(private readonly dynamoDbService: DynamoDbService) { } // Injeta DynamoDbService
+    /**
+     * Injeta a instância de DynamoDbService para interagir com o DynamoDB.
+     * @param dynamoDbService Serviço de acesso ao DynamoDB.
+     */
+    constructor(private readonly dynamoDbService: DynamoDbService) { }
 
+    /**
+     * Cria um novo autor no DynamoDB.
+     * @param createAuthorDto DTO contendo os dados para criar um novo autor.
+     * @returns Uma Promise que resolve para um AuthorDto representando o autor criado.
+     */
     async create(createAuthorDto: CreateAuthorDto): Promise<AuthorDto> {
+        this.logger.log(`Criando autor com authorId: ${createAuthorDto.authorId}`); // Log de criação de autor
         const params = {
             TableName: this.tableName,
-            Item: createAuthorDto,
+            Item: createAuthorDto, // Utiliza o DTO de criação como item a ser inserido
         };
-        await this.dynamoDbService.putItem(params);
-        return this.findOne(createAuthorDto.postId, createAuthorDto.authorId); // Retorna o autor criado
+        await this.dynamoDbService.putItem(params); // Salva o autor no DynamoDB
+        return this.findOne(createAuthorDto.authorId); // Retorna o autor recém-criado
     }
 
+    /**
+     * Busca todos os autores no DynamoDB.
+     * @returns Uma Promise que resolve para um array de AuthorDto, contendo todos os autores.
+     */
     async findAll(): Promise<AuthorDto[]> {
+        this.logger.log('Buscando todos os autores.'); // Log de busca de todos os autores
         const params = {
             TableName: this.tableName,
-            //  IndexName: 'your-index-name', // Se precisar usar um GSI
+            // IndexName: 'your-index-name', // Exemplo de uso de GSI (Índice Secundário Global) se necessário
         };
-        const result = await this.dynamoDbService.scan(params); // Use scan instead of scanItems
-        return (result.Items || []).map(item => this.mapAuthorFromDynamoDb(item));
+        const result = await this.dynamoDbService.scan(params); // Escaneia a tabela Authors
+        return (result.Items || []).map(item => this.mapAuthorFromDynamoDb(item)); // Mapeia e retorna os itens como AuthorDto
     }
 
-    async findOne(postId: string, authorId: string): Promise<AuthorDto> {
+    /**
+     * Busca um autor específico pelo seu authorId no DynamoDB.
+     * @param authorId ID do autor a ser buscado.
+     * @returns Uma Promise que resolve para um AuthorDto, se o autor for encontrado.
+     * @throws NotFoundException Se o autor não for encontrado.
+     */
+    async findOne(authorId: string): Promise<AuthorDto> {
+        this.logger.log(`Buscando autor com authorId: ${authorId}`); // Log de busca de autor por ID
         const params = {
             TableName: this.tableName,
             Key: {
-                postId: { S: postId }, // postId como String
-                authorId: { S: authorId }, // authorId como String
+                authorId: authorId, // Usa authorId como chave primária para busca
             },
         };
-        const result = await this.dynamoDbService.getItem(params);
+        const result = await this.dynamoDbService.getItem(params); // Busca o item no DynamoDB pela chave
+
         if (!result.Item) {
-            throw new NotFoundException(`Author com postId '<span class="math-inline">\{postId\}' e authorId '</span>{authorId}' não encontrado`);
+            this.logger.warn(`Autor com authorId '${authorId}' não encontrado.`); // Log de aviso se autor não encontrado
+            throw new NotFoundException(`Autor com authorId '${authorId}' não encontrado`); // Lança exceção NotFoundException
         }
-        return this.mapAuthorFromDynamoDb(result.Item);
+        return this.mapAuthorFromDynamoDb(result.Item); // Mapeia e retorna o item como AuthorDto
     }
 
-    async update(postId: string, authorId: string, updateAuthorDto: UpdateAuthorDto): Promise<AuthorDto> {
+    /**
+     * Atualiza um autor existente no DynamoDB.
+     * @param authorId ID do autor a ser atualizado.
+     * @param updateAuthorDto DTO contendo os dados a serem atualizados do autor.
+     * @returns Uma Promise que resolve para um AuthorDto representando o autor atualizado.
+     * @throws NotFoundException Se o autor não for encontrado.
+     */
+    async update(authorId: string, updateAuthorDto: UpdateAuthorDto): Promise<AuthorDto> {
+        this.logger.log(`Atualizando autor com authorId: ${authorId}`); // Log de atualização de autor
         // Verifica se o autor existe antes de atualizar
-        await this.findOne(postId, authorId);
+        await this.findOne(authorId); // Garante que o autor existe antes de prosseguir
 
-        const updateExpression = this.dynamoDbService.buildUpdateExpression(updateAuthorDto);
+        const updateExpression = this.dynamoDbService.buildUpdateExpression(updateAuthorDto); // Constrói a expressão de atualização
         if (!updateExpression) {
-            return this.findOne(postId, authorId); // Se não houver campos para atualizar, retorna o autor existente
+            this.logger.warn(`Nenhum campo para atualizar fornecido para authorId: ${authorId}. Retornando autor existente.`); // Log de aviso se não houver campos para atualizar
+            return this.findOne(authorId); // Se não houver campos para atualizar, retorna o autor existente
         }
 
-        const params: UpdateCommandInput = { // Use UpdateCommandInput type
+        const params: UpdateCommandInput = { // Parâmetros para a operação de atualização no DynamoDB
             TableName: this.tableName,
             Key: {
-                postId: { S: postId },
-                authorId: { S: authorId },
+                authorId: authorId, // Usa authorId como chave primária para atualização
             },
             ...updateExpression, // Aplica UpdateExpression, ExpressionAttributeNames e ExpressionAttributeValues
-            ReturnValues: 'ALL_NEW', // Retorna o item atualizado
+            ReturnValues: 'ALL_NEW', // Retorna todos os atributos do item APÓS a atualização
         };
 
-        const result = await this.dynamoDbService.updateItem(params);
-        return this.mapAuthorFromDynamoDb(result.Attributes as Record<string, any>) as AuthorDto; // Retorna o autor atualizado
+        const result = await this.dynamoDbService.updateItem(params); // Executa a operação de atualização no DynamoDB
+        return this.mapAuthorFromDynamoDb(result.Attributes as Record<string, any>) as AuthorDto; // Mapeia e retorna o autor atualizado
     }
 
-    async remove(postId: string, authorId: string): Promise<void> {
+    /**
+     * Remove um autor do DynamoDB pelo seu authorId.
+     * @param authorId ID do autor a ser removido.
+     * @returns Uma Promise que resolve void (sem retorno), indicando sucesso na remoção.
+     * @throws NotFoundException Se o autor não for encontrado.
+     */
+    async remove(authorId: string): Promise<void> {
+        this.logger.log(`Removendo autor com authorId: ${authorId}`); // Log de remoção de autor
         // Verifica se o autor existe antes de deletar
-        await this.findOne(postId, authorId);
+        await this.findOne(authorId); // Garante que o autor existe antes de prosseguir
 
         const params = {
             TableName: this.tableName,
             Key: {
-                postId: { S: postId },
-                authorId: { S: authorId },
+                authorId: authorId, // Usa authorId como chave primária para remoção
             },
         };
-        await this.dynamoDbService.deleteItem(params);
+        await this.dynamoDbService.deleteItem(params); // Remove o autor do DynamoDB
     }
 
+    /**
+     * Mapeia um item retornado do DynamoDB para um AuthorDto.
+     * Converte o formato de dados do DynamoDB para o formato AuthorDto da aplicação.
+     * @param item Item retornado do DynamoDB.
+     * @returns Um AuthorDto preenchido com os dados do item do DynamoDB.
+     * @private
+     */
     private mapAuthorFromDynamoDb(item: Record<string, any>): AuthorDto {
         return {
-            postId: item.postId?.S,
-            authorId: item.authorId?.S,
-            name: item.name?.S,
-            slug: item.slug?.S,
-            expertise: item.expertise?.L?.map((expertiseItem: any) => expertiseItem.S) || [],
-            socialProof: Object.entries(item.socialProof?.M || {}).reduce((obj: { [key: string]: string }, [key, value]: [string, any]) => { // Specify types for reduce function
-                obj[key] = value?.S; // Use optional chaining and nullish coalescing
+            authorId: item.authorId?.S, // Extrai e mapeia authorId (String)
+            name: item.name?.S, // Extrai e mapeia name (String)
+            slug: item.slug?.S, // Extrai e mapeia slug (String)
+            expertise: item.expertise?.L?.map((expertiseItem: any) => expertiseItem.S) || [], // Extrai e mapeia expertise (Lista de Strings)
+            socialProof: Object.entries(item.socialProof?.M || {}).reduce((obj: { [key: string]: string }, [key, value]: [string, any]) => { // Extrai e mapeia socialProof (Mapa String -> String)
+                obj[key] = value?.S;
                 return obj;
-            }, {}) as { [key: string]: string } || {}, // Explicit type for reduce initial value and return
+            }, {}) as { [key: string]: string } || {},
         } as AuthorDto;
     }
 }
