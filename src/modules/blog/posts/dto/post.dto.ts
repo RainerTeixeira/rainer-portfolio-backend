@@ -12,7 +12,7 @@ export class PostDto {
     categoryId: string;
     subcategoryId: string;
     contentHTML: string;
-    postInfo?: PostInfoDto; // Objeto aninhado para informações do post
+    postInfo: PostInfoDto; // Objeto aninhado para informações do post
     seo?: PostSeoDto; // Objeto aninhado para SEO
 
     /**
