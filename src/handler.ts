@@ -3,6 +3,7 @@ import { AppModule } from './app.module';
 import { Context, APIGatewayProxyEvent } from 'aws-lambda';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import serverless from 'serverless-http';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger'; // Importe os módulos do Swagger UI
 
 // Variável para armazenar em cache a instância do servidor NestJS para otimizar cold starts.
 // 'cachedServer' mantém a instância do servidor entre invocações da Lambda, evitando reinicializações desnecessárias.
@@ -135,6 +136,22 @@ if (!process.env.AWS_LAMBDA_FUNCTION_NAME) {
       new FastifyAdapter(), // Usa o adaptador Fastify para servidor local também.
     );
     console.log('🚀 Iniciando servidor local... - Passo 3: Aplicacao NestFactory Criada'); // LOG PASS0 3
+
+    // ----------------------------------------------------------------------
+    //  Configuração do Swagger UI para documentação da API (Adicionado agora!)
+    // ----------------------------------------------------------------------
+    const config = new DocumentBuilder()
+      .setTitle('API do Rainer Portfolio') // Título da documentação no Swagger UI
+      .setDescription('API Backend para o Portfólio do Rainer Teixeira') // Descrição da API
+      .setVersion('1.0') // Versão da API
+      .addTag('portfolio') // Tag para agrupar as rotas (opcional)
+      .build(); // Finaliza a configuração do DocumentBuilder
+
+    const document = SwaggerModule.createDocument(app, config); // Cria o documento de especificação OpenAPI (Swagger)
+
+    SwaggerModule.setup('api', app, document); // Configura o Swagger UI para ser servido na rota /api
+    // Agora você pode acessar a documentação em http://localhost:3000/api no seu navegador
+    // ----------------------------------------------------------------------
 
 
     console.log('🚀 Iniciando servidor local... - Passo 4: Iniciando o listen'); // LOG PASS0 4
