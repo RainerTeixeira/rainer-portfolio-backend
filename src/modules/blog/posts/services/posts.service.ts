@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
-import { CreatePostDto, UpdatePostDto, PostDto, FullPostDto } from '../dto';
+import { CreatePostDto, UpdatePostDto, PostDto, FullPostDto } from '@src/modules/blog/posts/dto';
 import { DynamoDbService } from '@src/services/dynamoDb.service';
 import {
   GetCommandInput,
