@@ -1,41 +1,36 @@
 // src/modules/blog/posts/controllers/posts.controller.ts
 
 import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe, Logger } from '@nestjs/common';
-import { PostsService } from '../services/posts.service'; // Importa o PostsService
-import { CreatePostDto } from '../dto/create-post.dto'; // Importa o DTO para criação de posts
-import { UpdatePostDto } from '../dto/update-post.dto'; // Importa o DTO para atualização de posts
-import { PostDto } from '../dto/post.dto'; // Importa o DTO para posts (estrutura básica)
-import { FullPostDto } from '../dto/full-post.dto'; // Importa o DTO para posts completos (com autor e comentários)
+import { PostsService } from '../services/posts.service'; // Ensure correct path to PostsService
+import { CreatePostDto } from '../dto/create-post.dto';
+import { UpdatePostDto } from '../dto/update-post.dto';
+import { PostDto } from '../dto/post.dto';
+import { FullPostDto } from '../dto/full-post.dto';
 
 /**
  * @Controller PostsController
- * @description Controller responsável por gerenciar os posts do blog.
- *
- * Este controller define as rotas para operações CRUD (Create, Read, Update, Delete)
- * relacionadas a posts, além de rotas específicas para listagem geral de posts do blog
- * e detalhes de um post específico, incluindo autor e comentários.
- *
- * Rotas base:
- * - /categories/:categoryIdSubcategoryId/posts (para posts dentro de categorias/subcategorias) - Rotas para gerenciamento dentro de categorias.
- * - /blog (para rotas gerais do blog) - Rotas para funcionalidades gerais do blog (listagem geral, detalhes de posts).
+ * @description Controller for managing blog posts.
+ * Defines endpoints for creating, retrieving, updating, and deleting posts.
+ * This controller handles requests related to posts within categories/subcategories
+ * and general blog post listings.
  */
-@Controller() // Remove a rota base do controller para permitir rotas customizadas mais flexíveis
+@Controller() // Base route for this controller (can be adjusted if needed)
 export class PostsController {
-  private readonly logger = new Logger(PostsController.name); // Logger para PostsController
+  private readonly logger = new Logger(PostsController.name);
 
   /**
    * @constructor
-   * @param {PostsService} postsService - Serviço injetado paraPostsController.
-   * @description Injeta o serviço de posts que contém a lógica de negócio para manipular os posts.
+   * @param {PostsService} postsService - Injects the PostsService dependency.
+   * @description Constructor for PostsController, injecting the PostsService.
    */
-  constructor(private readonly postsService: PostsService) { }
+  constructor(private readonly postsService: PostsService) { } // Inject PostsService
 
   /**
    * @Post categories/:categoryIdSubcategoryId/posts
-   * @description Rota POST para criar um novo post dentro de uma categoria/subcategoria.
-   * @param {string} categoryIdSubcategoryId - Chave composta da categoria e subcategoria ('categoriaId#subcategoriaId').
-   * @param {CreatePostDto} createPostDto - DTO contendo os dados para criação do post (title, content, etc.).
-   * @returns {Promise<PostDto>} - Retorna uma Promise que resolve para o PostDto do post criado.
+   * @description Endpoint to create a new post within a specific category/subcategory.
+   * @param {string} categoryIdSubcategoryId - Combined key for category and subcategory.
+   * @param {CreatePostDto} createPostDto - Data transfer object for creating a post.
+   * @returns {Promise<PostDto>} - Promise resolving to the created PostDto.
    */
   @Post('categories/:categoryIdSubcategoryId/posts')
   async create(
@@ -48,32 +43,22 @@ export class PostsController {
 
   /**
    * @Get blog
-   * @description Rota GET para buscar todos os posts do blog (listagem geral).
-   *
-   * Esta rota retorna uma lista de todos os posts do blog, incluindo informações do autor e comentários
-   * (retornado em FullPostDto). Rota acessível em /blog.
-   *
-   * @returns {Promise<FullPostDto[]>} - Retorna uma Promise que resolve para um array de FullPostDto,
-   *                                     contendo todos os posts do blog com autor e comentários.
+   * @description Endpoint to retrieve all blog posts for the main blog listing.
+   * @returns {Promise<FullPostDto[]>} - Promise resolving to an array of FullPostDto,
+   *                                     each containing full post details including author and comments.
    */
   @Get('blog')
-  async findAllBlogPosts(): Promise<FullPostDto[]> {
+  async findAllBlogPosts(): Promise<FullPostDto[]> { // Method name matches the service method
     this.logger.log('Buscando todos os posts do blog para a rota /blog');
-    return this.postsService.getAllBlogPosts();
+    return this.postsService.getAllPosts(); // Call the correct service method
   }
-
 
   /**
    * @Get blog/:categoryIdSubcategoryId/:postId
-   * @description Rota GET para buscar um post específico do blog, incluindo autor e comentários.
-   *
-   * Retorna um post completo (FullPostDto) com detalhes do autor e comentários relacionados.
-   * Rota acessível em /blog/:categoryIdSubcategoryId/:postId.
-   *
-   * @param {string} categoryIdSubcategoryId - Chave composta da categoria e subcategoria do post.
-   * @param {string} postId - ID do post a ser buscado.
-   * @returns {Promise<FullPostDto>} - Retorna uma Promise que resolve para um FullPostDto,
-   *                                     contendo o post completo com autor e comentários.
+   * @description Endpoint to retrieve a specific blog post by ID and category/subcategory for the main blog.
+   * @param {string} categoryIdSubcategoryId - Combined key for category and subcategory.
+   * @param {string} postId - Unique identifier for the post.
+   * @returns {Promise<FullPostDto>} - Promise resolving to a FullPostDto containing full post details.
    */
   @Get('blog/:categoryIdSubcategoryId/:postId')
   async findOneBlogPost(
@@ -86,33 +71,23 @@ export class PostsController {
 
   /**
    * @Get categories/:categoryIdSubcategoryId/posts
-   * @description Rota GET para buscar todos os posts dentro de uma categoria/subcategoria específica.
-   *
-   * Retorna uma lista de PostDto (estrutura básica de posts) para a categoria/subcategoria informada.
-   * Rota acessível em /categories/:categoryIdSubcategoryId/posts.
-   *
-   * @param {string} categoryIdSubcategoryId - Chave composta da categoria e subcategoria para filtrar os posts.
-   * @returns {Promise<PostDto[]>} - Retorna uma Promise que resolve para um array de PostDto,
-   *                                   contendo os posts da categoria/subcategoria especificada.
+   * @description Endpoint to retrieve all posts within a specific category/subcategory.
+   * @param {string} categoryIdSubcategoryId - Combined key for category and subcategory.
+   * @returns {Promise<PostDto[]>} - Promise resolving to an array of PostDto,
+   *                                   each containing basic post details.
    */
   @Get('categories/:categoryIdSubcategoryId/posts')
   async findAll(@Param('categoryIdSubcategoryId') categoryIdSubcategoryId: string): Promise<PostDto[]> {
     this.logger.log(`Buscando todos os posts da categoria/subcategoria: ${categoryIdSubcategoryId}`);
-    return this.postsService.getAllPosts(categoryIdSubcategoryId); // Passa categoryIdSubcategoryId para filtrar posts
+    return this.postsService.getAllPosts(categoryIdSubcategoryId);
   }
-
 
   /**
    * @Get categories/:categoryIdSubcategoryId/posts/:postId
-   * @description Rota GET para buscar um post específico dentro de uma categoria/subcategoria.
-   *
-   * Retorna um PostDto (estrutura básica de post) correspondente ao ID e categoria/subcategoria informados.
-   * Rota acessível em /categories/:categoryIdSubcategoryId/posts/:postId.
-   *
-   * @param {string} categoryIdSubcategoryId - Chave composta da categoria e subcategoria do post.
-   * @param {string} postId - ID do post a ser buscado.
-   * @returns {Promise<PostDto>} - Retorna uma Promise que resolve para um PostDto,
-   *                                 contendo o post da categoria/subcategoria especificada.
+   * @description Endpoint to retrieve a specific post within a category/subcategory by its ID.
+   * @param {string} categoryIdSubcategoryId - Combined key for category and subcategory.
+   * @param {string} postId - Unique identifier for the post.
+   * @returns {Promise<PostDto>} - Promise resolving to a PostDto containing basic post details.
    */
   @Get('categories/:categoryIdSubcategoryId/posts/:postId')
   async findOne(
@@ -120,20 +95,16 @@ export class PostsController {
     @Param('postId') postId: string,
   ): Promise<PostDto> {
     this.logger.log(`Buscando post específico: ${postId} na categoria/subcategoria: ${categoryIdSubcategoryId}`);
-    return this.postsService.getPostById(categoryIdSubcategoryId, postId); // Mantém chamada a getPostById
+    return this.postsService.getPostById(categoryIdSubcategoryId, postId);
   }
 
   /**
    * @Patch categories/:categoryIdSubcategoryId/posts/:postId
-   * @description Rota PATCH para atualizar um post existente dentro de uma categoria/subcategoria.
-   *
-   * Recebe os dados para atualização no corpo da requisição e retorna o PostDto atualizado.
-   * Rota acessível em /categories/:categoryIdSubcategoryId/posts/:postId.
-   *
-   * @param {string} categoryIdSubcategoryId - Chave composta da categoria e subcategoria do post.
-   * @param {string} postId - ID do post a ser atualizado.
-   * @param {UpdatePostDto} updatePostDto - DTO contendo os dados para atualização do post.
-   * @returns {Promise<PostDto>} - Retorna uma Promise que resolve para o PostDto atualizado.
+   * @description Endpoint to update an existing post within a category/subcategory.
+   * @param {string} categoryIdSubcategoryId - Combined key for category and subcategory.
+   * @param {string} postId - Unique identifier for the post.
+   * @param {UpdatePostDto} updatePostDto - Data transfer object containing fields to update.
+   * @returns {Promise<PostDto>} - Promise resolving to the updated PostDto.
    */
   @Patch('categories/:categoryIdSubcategoryId/posts/:postId')
   async update(
@@ -147,14 +118,10 @@ export class PostsController {
 
   /**
    * @Delete categories/:categoryIdSubcategoryId/posts/:postId
-   * @description Rota DELETE para remover um post existente dentro de uma categoria/subcategoria.
-   *
-   * Não retorna conteúdo em caso de sucesso (código 204 No Content implícito).
-   * Rota acessível em /categories/:categoryIdSubcategoryId/posts/:postId.
-   *
-   * @param {string} categoryIdSubcategoryId - Chave composta da categoria e subcategoria do post.
-   * @param {string} postId - ID do post a ser removido.
-   * @returns {Promise<void>} - Retorna uma Promise que resolve para void (operação de deleção).
+   * @description Endpoint to delete a post from a category/subcategory.
+   * @param {string} categoryIdSubcategoryId - Combined key for category and subcategory.
+   * @param {string} postId - Unique identifier for the post.
+   * @returns {Promise<void>} - Promise resolving to void after successful deletion.
    */
   @Delete('categories/:categoryIdSubcategoryId/posts/:postId')
   async remove(

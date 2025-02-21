@@ -10,13 +10,9 @@ import { BlogModule } from '@src/modules/blog.module'; // Importa o BlogModule (
  * Este módulo agrupa o controlador e o serviço de posts e importa o BlogModule utilizando forwardRef para evitar dependências circulares.
  */
 @Module({
-    // Usa forwardRef para adiar a resolução do BlogModule e resolver dependência circular
-    imports: [forwardRef(() => BlogModule)],
-    // Define o controlador deste módulo
+    imports: [forwardRef(() => BlogModule)], // Usa forwardRef para adiar a resolução do BlogModule e resolver dependência circular
     controllers: [PostsController],
-    // Define os provedores (serviços) deste módulo
     providers: [PostsService],
-    // Exporta o PostsService para que outros módulos (como o BlogModule) possam utilizá-lo
     exports: [PostsService],
 })
 export class PostsModule { }
