@@ -12,7 +12,7 @@ import {
   HttpStatus
 } from '@nestjs/common';
 import { PostsService } from '../services/posts.service';
-import { CreatePostDto, UpdatePostDto, PostDto, FullPostDto } from '../dto';
+import { CreatePostDto, UpdatePostDto, PostDto, FullPostDto } from '@src/modules/blog/posts/dto';
 
 @Controller()
 export class PostsController {
