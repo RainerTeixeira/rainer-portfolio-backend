@@ -18,6 +18,7 @@ import {
 } from '@aws-sdk/lib-dynamodb';
 import { AuthorsService } from '@src/modules/blog/authors/services/authors.service';
 import { v4 as uuidv4 } from 'uuid';
+import { AuthorDto } from '../authors/dto'; // Import AuthorDto - assuming it's needed for caching authors
 
 const DEFAULT_CACHE_TTL = 300; // 5 minutos
 
@@ -50,7 +51,7 @@ export class PostsService {
           ...createPostDto,
           postInfo: {
             ...createPostDto.postInfo,
-            authorName: author.name,
+            authorName: author.name, // Assuming author.name exists in AuthorDto
             readingTime: Number(createPostDto.postInfo.readingTime) || 0,
             views: Number(createPostDto.postInfo.views) || 0
           }
@@ -87,7 +88,10 @@ export class PostsService {
           : { ':type': 'POST' }
       };
 
-      const result = await this.dynamoDbService.query(params);
+      const result = await this.dynamoDbService.query(params); // <-- Linha onde ocorre o erro original
+      if (!result || !result.Items) { // Add safety check for result and result.Items
+        return []; // Return empty array if no items found or result is undefined
+      }
       const posts = (result.Items || []).map(item => this.mapDynamoItemToPostDto(item));
 
       await this.cacheManager.set(cacheKey, posts, this.cacheTTL);
@@ -173,7 +177,7 @@ export class PostsService {
   private async getAuthorWithCache(authorId: string) {
     try {
       const cacheKey = `author_${authorId}`;
-      const cached = await this.cacheManager.get<AuthorDto>(cacheKey);
+      const cached = await this.cacheManager.get<AuthorDto>(cacheKey); // Assume AuthorDto is the correct type
       if (cached) return cached;
 
       const author = await this.authorsService.getAuthorById(authorId);
