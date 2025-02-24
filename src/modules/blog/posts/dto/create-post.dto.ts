@@ -18,7 +18,9 @@ export class CreatePostDto {
   @IsNotEmpty()
   subcategoryId: string;
 
-  @IsString()
+  // Alteração: validação como objeto aninhado
+  @ValidateNested()
+  @Type(() => PostContentDto)
   @IsNotEmpty()
   contentHTML: PostContentDto;
 
