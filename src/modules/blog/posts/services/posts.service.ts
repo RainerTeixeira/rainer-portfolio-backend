@@ -1,5 +1,3 @@
-//src\modules\blog\posts\services\posts.service.ts
-
 import {
   Injectable,
   NotFoundException,
@@ -20,7 +18,7 @@ import {
 } from '@aws-sdk/lib-dynamodb';
 import { AuthorsService } from '@src/modules/blog/authors/services/authors.service';
 import { v4 as uuidv4 } from 'uuid';
-import { AuthorDto } from '../authors/dto'; // Import AuthorDto - assuming it's needed for caching authors
+import { AuthorDto } from '../authors/dto';
 
 const DEFAULT_CACHE_TTL = 300; // 5 minutos
 
@@ -38,7 +36,14 @@ export class PostsService {
     this.cacheTTL = parseInt(process.env.CACHE_TTL) || DEFAULT_CACHE_TTL;
   }
 
+  /**
+   * Cria um novo post.
+   * @param categoryIdSubcategoryId - ID da categoria e subcategoria.
+   * @param createPostDto - Dados para criação do post.
+   * @returns O post criado.
+   */
   async createPost(categoryIdSubcategoryId: string, createPostDto: CreatePostDto): Promise<PostDto> {
+    this.logger.debug('Iniciando criação do post');
     try {
       const postId = uuidv4();
       const author = await this.getAuthorWithCache(createPostDto.postInfo.authorId);
@@ -53,7 +58,7 @@ export class PostsService {
           ...createPostDto,
           postInfo: {
             ...createPostDto.postInfo,
-            authorName: author.name, // Assuming author.name exists in AuthorDto
+            authorName: author.name,
             readingTime: Number(createPostDto.postInfo.readingTime) || 0,
             views: Number(createPostDto.postInfo.views) || 0
           }
@@ -62,6 +67,7 @@ export class PostsService {
 
       await this.dynamoDbService.putItem(params);
       await this.invalidateCache(categoryIdSubcategoryId, postId);
+      this.logger.debug('Post criado com sucesso');
       return this.mapDynamoItemToPostDto(params.Item);
     } catch (error) {
       this.logger.error(`Erro ao criar post: ${error.message}`, error.stack);
@@ -69,52 +75,68 @@ export class PostsService {
     }
   }
 
+  /**
+   * Busca todos os posts com paginação.
+   * @param lastKey - Chave para paginação.
+   * @returns Lista de posts e a última chave.
+   */
   async getAllPosts(lastKey?: any): Promise<{ posts: PostDto[], lastKey: any | null }> {
+    this.logger.debug('Iniciando busca de todos os posts');
     try {
       const cacheKey = `posts_page_${lastKey ? JSON.stringify(lastKey) : 'first'}`;
-      const cached = await this.cacheManager.get<{ posts: PostDto[], lastKey: any | null }>(cacheKey);
 
+      const cached = await this.cacheManager.get<{ posts: PostDto[], lastKey: any | null }>(cacheKey);
       if (cached) {
         this.logger.debug(`Cache hit para ${cacheKey}`);
         return cached;
       }
 
-      const params: QueryCommandInput = {
-        TableName: this.tableName,
-        IndexName: 'PostsByStatusIndex', // Usa o novo GSI
-        KeyConditionExpression: '#status = :published AND #publishDate <= :now',
+      const now = new Date().toISOString();
+
+      const queryParams: any = {
+        TableName: "Posts",
+        IndexName: "PostsByStatusIndex",
+        KeyConditionExpression: "#status = :published AND #publishDate <= :now",
         ExpressionAttributeNames: {
-          '#status': 'postInfo.status',
-          '#publishDate': 'postInfo.publishDate'
+          "#status": "postInfo.status",
+          "#publishDate": "postInfo.publishDate"
         },
         ExpressionAttributeValues: {
-          ':published': { S: 'published' },
-          ':now': { S: new Date().toISOString() }
+          ":published": "published",
+          ":now": now
         },
-        ScanIndexForward: false, // Ordenação DESC (mais novos primeiro)
-        Limit: 20, // Paginação: 20 posts por vez
-        ExclusiveStartKey: lastKey || undefined, // Para buscar a próxima página
+        ScanIndexForward: false,
+        Limit: 20
       };
 
-      this.logger.debug(`Executando query com params: ${JSON.stringify(params)}`);
+      if (lastKey) {
+        queryParams.ExclusiveStartKey = lastKey;
+      }
 
-      const result = await this.dynamoDbService.query(params);
-      const posts = (result.Items || []).map(item => this.mapDynamoItemToPostDto(item));
+      const result = await this.dynamoDbService.query(queryParams);
+      const newLastKey = result.LastEvaluatedKey || null;
 
-      const response = {
-        posts,
-        lastKey: result.LastEvaluatedKey || null
-      };
+      const posts: PostDto[] = result.Items.map(item => this.mapToPostDto(item));
 
-      await this.cacheManager.set(cacheKey, response, this.cacheTTL);
-      return response;
+      await this.cacheManager.set(cacheKey, { posts, lastKey: newLastKey }, { ttl: 60 * 5 });
+
+      this.logger.debug('Posts obtidos com sucesso');
+      return { posts, lastKey: newLastKey };
+
     } catch (error) {
-      this.logger.error(`Erro ao buscar posts: ${error.message}`);
-      throw new NotFoundException('Posts não encontrados');
+      this.logger.error('Erro ao obter as postagens', error);
+      throw new Error('Erro ao obter as postagens');
     }
   }
 
+  /**
+   * Busca um post pelo ID.
+   * @param categoryIdSubcategoryId - ID da categoria e subcategoria.
+   * @param postId - ID do post.
+   * @returns O post encontrado.
+   */
   async getPostById(categoryIdSubcategoryId: string, postId: string): Promise<PostDto> {
+    this.logger.debug(`Iniciando busca do post ${postId}`);
     try {
       const cacheKey = `post_${categoryIdSubcategoryId}_${postId}`;
       const cached = await this.cacheManager.get<PostDto>(cacheKey);
@@ -134,6 +156,7 @@ export class PostsService {
 
       const post = this.mapDynamoItemToPostDto(result.Item);
       await this.cacheManager.set(cacheKey, post, this.cacheTTL);
+      this.logger.debug(`Post ${postId} encontrado com sucesso`);
       return post;
     } catch (error) {
       this.logger.error(`Erro ao buscar post: ${error.message}`);
@@ -141,11 +164,15 @@ export class PostsService {
     }
   }
 
-  async updatePost(
-    categoryIdSubcategoryId: string,
-    postId: string,
-    updatePostDto: UpdatePostDto
-  ): Promise<PostDto> {
+  /**
+   * Atualiza um post.
+   * @param categoryIdSubcategoryId - ID da categoria e subcategoria.
+   * @param postId - ID do post.
+   * @param updatePostDto - Dados para atualização do post.
+   * @returns O post atualizado.
+   */
+  async updatePost(categoryIdSubcategoryId: string, postId: string, updatePostDto: UpdatePostDto): Promise<PostDto> {
+    this.logger.debug(`Iniciando atualização do post ${postId}`);
     try {
       const updateExpression = this.dynamoDbService.buildUpdateExpression(updatePostDto);
 
@@ -161,6 +188,7 @@ export class PostsService {
 
       const result = await this.dynamoDbService.updateItem(params);
       await this.invalidateCache(categoryIdSubcategoryId, postId);
+      this.logger.debug(`Post ${postId} atualizado com sucesso`);
       return this.mapDynamoItemToPostDto(result.Attributes);
     } catch (error) {
       this.logger.error(`Erro ao atualizar post: ${error.message}`);
@@ -168,7 +196,13 @@ export class PostsService {
     }
   }
 
+  /**
+   * Deleta um post.
+   * @param categoryIdSubcategoryId - ID da categoria e subcategoria.
+   * @param postId - ID do post.
+   */
   async deletePost(categoryIdSubcategoryId: string, postId: string): Promise<void> {
+    this.logger.debug(`Iniciando deleção do post ${postId}`);
     try {
       const params: DeleteCommandInput = {
         TableName: this.tableName,
@@ -180,6 +214,7 @@ export class PostsService {
 
       await this.dynamoDbService.deleteItem(params);
       await this.invalidateCache(categoryIdSubcategoryId, postId);
+      this.logger.debug(`Post ${postId} deletado com sucesso`);
     } catch (error) {
       this.logger.error(`Erro ao deletar post: ${error.message}`);
       throw new BadRequestException('Falha ao deletar post');
@@ -189,7 +224,7 @@ export class PostsService {
   private async getAuthorWithCache(authorId: string) {
     try {
       const cacheKey = `author_${authorId}`;
-      const cached = await this.cacheManager.get<AuthorDto>(cacheKey); // Assume AuthorDto is the correct type
+      const cached = await this.cacheManager.get<AuthorDto>(cacheKey);
       if (cached) return cached;
 
       const author = await this.authorsService.getAuthorById(authorId);
@@ -230,8 +265,16 @@ export class PostsService {
     };
   }
 
+  /**
+   * Método adicional para obter post completo.
+   * @param categoryIdSubcategoryId - ID da categoria e subcategoria.
+   * @param postId - ID do post.
+   * @returns O post completo.
+   */
   async getFullPostById(categoryIdSubcategoryId: string, postId: string): Promise<FullPostDto> {
+    this.logger.debug(`Iniciando busca completa do post ${postId}`);
     const post = await this.getPostById(categoryIdSubcategoryId, postId);
+    this.logger.debug(`Post completo ${postId} encontrado com sucesso`);
     return {
       ...post,
       metadata: {
