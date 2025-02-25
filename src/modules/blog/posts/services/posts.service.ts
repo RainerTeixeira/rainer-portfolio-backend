@@ -67,6 +67,7 @@ export class PostsService {
     }
   }
 
+  // src/modules/blog/posts/services/posts.service.ts
   async getAllPosts(categoryIdSubcategoryId?: string): Promise<PostDto[]> {
     try {
       const cacheKey = `posts_${categoryIdSubcategoryId || 'all'}`;
@@ -77,21 +78,25 @@ export class PostsService {
         return cached;
       }
 
-      const params: QueryCommandInput = {
-        TableName: this.tableName,
-        IndexName: 'GSI1',
-        KeyConditionExpression: categoryIdSubcategoryId
-          ? 'categoryId#subcategoryId = :hashKey'
-          : 'entityType = :type',
-        ExpressionAttributeValues: categoryIdSubcategoryId
-          ? { ':hashKey': categoryIdSubcategoryId }
-          : { ':type': 'POST' }
-      };
+      const params: QueryCommandInput = categoryIdSubcategoryId
+        ? {
+          TableName: this.tableName,
+          IndexName: 'GSI1',
+          KeyConditionExpression: '#composite = :hashKey',
+          ExpressionAttributeNames: { '#composite': 'categoryId#subcategoryId' },
+          ExpressionAttributeValues: { ':hashKey': categoryIdSubcategoryId },
+        }
+        : {
+          TableName: this.tableName,
+          IndexName: 'GSI1',
+          KeyConditionExpression: '#entity = :type',
+          ExpressionAttributeNames: { '#entity': 'entityType' },
+          ExpressionAttributeValues: { ':type': 'POST' },
+        };
 
-      const result = await this.dynamoDbService.query(params); // <-- Linha onde ocorre o erro original
-      if (!result || !result.Items) { // Add safety check for result and result.Items
-        return []; // Return empty array if no items found or result is undefined
-      }
+      this.logger.debug(`Executando query com params: ${JSON.stringify(params)}`); // Log para depuração
+
+      const result = await this.dynamoDbService.query(params);
       const posts = (result.Items || []).map(item => this.mapDynamoItemToPostDto(item));
 
       await this.cacheManager.set(cacheKey, posts, this.cacheTTL);

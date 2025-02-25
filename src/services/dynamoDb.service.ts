@@ -10,7 +10,7 @@ import {
   QueryCommand,
   BatchWriteItemCommand, // Correção: Importe BatchWriteItemCommand (já estava correto)
   BatchGetItemCommand,
-} from '@aws-sdk/client-dynamodb';
+} from '@aws-sdk/lib-dynamodb';
 import {
   DynamoDBDocumentClient,
   TranslateConfig,
@@ -187,6 +187,23 @@ export class DynamoDbService {
       this.handleError('queryItems', error, 'Erro na operação queryItems'); // Adicionando nome da operação no handleError
     }
   }
+
+  /**
+   * Consulta itens do DynamoDB utilizando a operação Query.
+   * Ideal para buscas baseadas em chave de partição e, opcionalmente, chave de classificação.
+   * @param params - Objeto contendo os parâmetros para a operação QueryCommandInput.
+   * @returns Promise<any> - Promise que resolve para a resposta do DynamoDB contendo os itens que correspondem à consulta.
+   * @throws DynamoDBError - Em caso de falha na operação do DynamoDB, lança um erro tratado.
+   */
+  async query(params: QueryCommandInput) {
+    try {
+      const command = new QueryCommand(params); // Cria um comando QueryCommand com os parâmetros fornecidos.
+      return await this.docClient.send(command); // Envia o comando para o DynamoDB e aguarda a resposta.
+    } catch (error) {
+      this.handleError('query', error, 'Erro na operação query'); // Trata e lança o erro
+    }
+  }
+
 
   /**
    * Realiza operações de escrita em lote no DynamoDB, permitindo criar ou deletar múltiplos itens de forma eficiente
