@@ -1,3 +1,5 @@
+//src\modules\blog\posts\services\posts.service.ts
+
 import {
   Injectable,
   NotFoundException,
@@ -67,45 +69,49 @@ export class PostsService {
     }
   }
 
-  // src/modules/blog/posts/services/posts.service.ts
-  async getAllPosts(categoryIdSubcategoryId?: string): Promise<PostDto[]> {
-    try {
-      const cacheKey = `posts_${categoryIdSubcategoryId || 'all'}`;
-      const cached = await this.cacheManager.get<PostDto[]>(cacheKey);
+  async getAllPosts(lastKey?: any): Promise<{ posts: PostDto[], lastKey: any | null }> {
+  try {
+    const cacheKey = `posts_page_${lastKey ? JSON.stringify(lastKey) : 'first'}`;
+    const cached = await this.cacheManager.get<{ posts: PostDto[], lastKey: any | null }>(cacheKey);
 
-      if (cached) {
-        this.logger.debug(`Cache hit para ${cacheKey}`);
-        return cached;
-      }
-
-      const params: QueryCommandInput = categoryIdSubcategoryId
-        ? {
-          TableName: this.tableName,
-          IndexName: 'GSI1',
-          KeyConditionExpression: '#composite = :hashKey',
-          ExpressionAttributeNames: { '#composite': 'categoryId#subcategoryId' },
-          ExpressionAttributeValues: { ':hashKey': categoryIdSubcategoryId },
-        }
-        : {
-          TableName: this.tableName,
-          IndexName: 'GSI1',
-          KeyConditionExpression: '#entity = :type',
-          ExpressionAttributeNames: { '#entity': 'entityType' },
-          ExpressionAttributeValues: { ':type': 'POST' },
-        };
-
-      this.logger.debug(`Executando query com params: ${JSON.stringify(params)}`); // Log para depuração
-
-      const result = await this.dynamoDbService.query(params);
-      const posts = (result.Items || []).map(item => this.mapDynamoItemToPostDto(item));
-
-      await this.cacheManager.set(cacheKey, posts, this.cacheTTL);
-      return posts;
-    } catch (error) {
-      this.logger.error(`Erro ao buscar posts: ${error.message}`);
-      throw new NotFoundException('Posts não encontrados');
+    if (cached) {
+      this.logger.debug(`Cache hit para ${cacheKey}`);
+      return cached;
     }
+
+    const params: QueryCommandInput = {
+      TableName: this.tableName,
+      IndexName: 'PostsByDateIndex', // Agora usando o novo índice
+      KeyConditionExpression: '#status = :published',
+      ExpressionAttributeNames: {
+        '#status': 'status'
+      },
+      ExpressionAttributeValues: {
+        ':published': 'published'
+      },
+      ScanIndexForward: false, // Ordenação DESC (mais novos primeiro)
+      Limit: 20, // Paginação: 20 posts por vez
+      ExclusiveStartKey: lastKey || undefined, // Para buscar a próxima página
+    };
+
+    this.logger.debug(`Executando query com params: ${JSON.stringify(params)}`);
+
+    const result = await this.dynamoDbService.query(params);
+    const posts = (result.Items || []).map(item => this.mapDynamoItemToPostDto(item));
+
+    const response = {
+      posts,
+      lastKey: result.LastEvaluatedKey || null
+    };
+
+    await this.cacheManager.set(cacheKey, response, this.cacheTTL);
+    return response;
+  } catch (error) {
+    this.logger.error(`Erro ao buscar posts: ${error.message}`);
+    throw new NotFoundException('Posts não encontrados');
   }
+}
+
 
   async getPostById(categoryIdSubcategoryId: string, postId: string): Promise<PostDto> {
     try {
