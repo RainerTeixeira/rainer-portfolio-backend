@@ -20,6 +20,12 @@ export class PostsController {
 
   constructor(private readonly postsService: PostsService) { }
 
+  /**
+   * Cria um novo post em uma categoria/subcategoria específica.
+   * @param categoryIdSubcategoryId - ID da categoria/subcategoria.
+   * @param createPostDto - Dados para criação do post.
+   * @returns O post criado.
+   */
   @Post('categories/:categoryIdSubcategoryId/posts')
   async create(
     @Param('categoryIdSubcategoryId') categoryIdSubcategoryId: string,
@@ -32,6 +38,10 @@ export class PostsController {
     }
   }
 
+  /**
+   * Retorna todos os posts do blog.
+   * @returns Lista de posts completos do blog.
+   */
   @Get('blog')
   async findAllBlogPosts(): Promise<FullPostDto[]> {
     try {
@@ -41,6 +51,12 @@ export class PostsController {
     }
   }
 
+  /**
+   * Retorna um post específico do blog.
+   * @param categoryIdSubcategoryId - ID da categoria/subcategoria.
+   * @param postId - ID do post.
+   * @returns O post completo.
+   */
   @Get('blog/:categoryIdSubcategoryId/:postId')
   async findOneBlogPost(
     @Param('categoryIdSubcategoryId') categoryIdSubcategoryId: string,
@@ -53,6 +69,11 @@ export class PostsController {
     }
   }
 
+  /**
+   * Retorna todos os posts de uma categoria/subcategoria específica.
+   * @param categoryIdSubcategoryId - ID da categoria/subcategoria.
+   * @returns Lista de posts.
+   */
   @Get('categories/:categoryIdSubcategoryId/posts')
   async findAll(
     @Param('categoryIdSubcategoryId') categoryIdSubcategoryId: string
@@ -64,6 +85,12 @@ export class PostsController {
     }
   }
 
+  /**
+   * Retorna um post específico de uma categoria/subcategoria.
+   * @param categoryIdSubcategoryId - ID da categoria/subcategoria.
+   * @param postId - ID do post.
+   * @returns O post.
+   */
   @Get('categories/:categoryIdSubcategoryId/posts/:postId')
   async findOne(
     @Param('categoryIdSubcategoryId') categoryIdSubcategoryId: string,
@@ -76,6 +103,13 @@ export class PostsController {
     }
   }
 
+  /**
+   * Atualiza um post específico de uma categoria/subcategoria.
+   * @param categoryIdSubcategoryId - ID da categoria/subcategoria.
+   * @param postId - ID do post.
+   * @param updatePostDto - Dados para atualização do post.
+   * @returns O post atualizado.
+   */
   @Patch('categories/:categoryIdSubcategoryId/posts/:postId')
   async update(
     @Param('categoryIdSubcategoryId') categoryIdSubcategoryId: string,
@@ -89,6 +123,11 @@ export class PostsController {
     }
   }
 
+  /**
+   * Remove um post específico de uma categoria/subcategoria.
+   * @param categoryIdSubcategoryId - ID da categoria/subcategoria.
+   * @param postId - ID do post.
+   */
   @Delete('categories/:categoryIdSubcategoryId/posts/:postId')
   async remove(
     @Param('categoryIdSubcategoryId') categoryIdSubcategoryId: string,
@@ -101,6 +140,11 @@ export class PostsController {
     }
   }
 
+  /**
+   * Manipula erros lançados durante as operações do controlador.
+   * @param message - Mensagem de erro.
+   * @param error - Objeto de erro.
+   */
   private handleError(message: string, error: any) {
     this.logger.error(`${message}: ${error.message}`, error.stack);
 
