@@ -4,5 +4,19 @@ import { CommentDto } from '../../comments/dto/comment.dto'; // Crie este DTO se
 
 export class FullPostDto extends PostDto {
     author?: AuthorDto;
-    comments?: CommentDto[]; // Array de CommentDto
+    comments?: CommentDto[];
+
+    constructor(post: PostDto, author?: AuthorDto, comments?: CommentDto[]) {
+        super(
+            post['categoryId#subcategoryId'],
+            post.postId,
+            post.categoryId,
+            post.subcategoryId,
+            post.contentHTML,
+            post.postInfo,
+            post.seo
+        );
+        this.author = author;
+        this.comments = comments;
+    }
 }
