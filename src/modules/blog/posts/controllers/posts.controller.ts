@@ -10,10 +10,15 @@ import {
   Logger,
   HttpException,
   HttpStatus,
-  NotFoundException
+  NotFoundException,
 } from '@nestjs/common';
 import { PostsService } from '../services/posts.service';
-import { CreatePostDto, UpdatePostDto, PostDetailDto, PostSummaryDto } from '../dto'; // <-- Importação correta das DTOs
+import {
+  CreatePostDto,
+  UpdatePostDto,
+  PostDetailDto,
+  PostSummaryDto,
+} from '../dto'; // Importação correta das DTOs
 
 @Controller('posts')
 export class PostsController {
@@ -23,28 +28,33 @@ export class PostsController {
 
   /**
    * Cria um novo post.
+   *
    * @param categoryIdSubcategoryId - Identificador da categoria e subcategoria.
    * @param createPostDto - Dados para criação do post.
-   * @returns O post criado.
+   * @returns O post criado como PostDetailDto.
    */
   @Post('categories/:categoryIdSubcategoryId/posts')
   async create(
     @Param('categoryIdSubcategoryId') categoryIdSubcategoryId: string,
-    @Body() createPostDto: CreatePostDto // <-- Usando CreatePostDto para o Body
-  ): Promise<PostDetailDto> { // <-- Retornando Promise<PostDetailDto>
+    @Body() createPostDto: CreatePostDto
+  ): Promise<PostDetailDto> {
     try {
-      return await this.postsService.createPost(categoryIdSubcategoryId, createPostDto);
+      return await this.postsService.createPost(
+        categoryIdSubcategoryId,
+        createPostDto
+      );
     } catch (error) {
       return this.handleError('Erro ao criar post', error);
     }
   }
 
   /**
-   * Busca todos os posts do blog.
-   * @returns Uma lista de resumos dos posts.
+   * Retorna os 20 posts mais recentes do blog.
+   *
+   * @returns Uma lista de resumos dos posts (PostSummaryDto).
    */
   @Get('blog')
-  async findAllBlogPosts(): Promise<PostSummaryDto[]> { // <-- Retornando Promise<PostSummaryDto[]>
+  async findAllBlogPosts(): Promise<PostSummaryDto[]> {
     try {
       return await this.postsService.getLatestPosts();
     } catch (error) {
@@ -54,17 +64,22 @@ export class PostsController {
 
   /**
    * Busca um post do blog pelo seu ID.
+   * Nota: Não é aplicado ParseUUIDPipe para o parâmetro postId nesta rota.
+   *
    * @param categoryIdSubcategoryId - Identificador da categoria e subcategoria.
    * @param postId - Identificador do post.
-   * @returns O post encontrado.
+   * @returns O post encontrado como PostDetailDto.
    */
   @Get('blog/:categoryIdSubcategoryId/:postId')
   async findOneBlogPost(
     @Param('categoryIdSubcategoryId') categoryIdSubcategoryId: string,
-    @Param('postId', ParseUUIDPipe) postId: string
-  ): Promise<PostDetailDto> { // <-- Retornando Promise<PostDetailDto>
+    @Param('postId') postId: string
+  ): Promise<PostDetailDto> {
     try {
-      return await this.postsService.getFullPostById(categoryIdSubcategoryId, postId);
+      return await this.postsService.getPostById(
+        categoryIdSubcategoryId,
+        postId
+      );
     } catch (error) {
       return this.handleError('Erro ao buscar post', error);
     }
@@ -72,17 +87,21 @@ export class PostsController {
 
   /**
    * Busca um post pelo seu ID.
+   *
    * @param categoryIdSubcategoryId - Identificador da categoria e subcategoria.
-   * @param postId - Identificador do post.
-   * @returns O post encontrado.
+   * @param postId - Identificador do post (validação com ParseUUIDPipe).
+   * @returns O post encontrado como PostDetailDto.
    */
   @Get('categories/:categoryIdSubcategoryId/posts/:postId')
   async findOne(
     @Param('categoryIdSubcategoryId') categoryIdSubcategoryId: string,
     @Param('postId', ParseUUIDPipe) postId: string
-  ): Promise<PostDetailDto> { // <-- Retornando Promise<PostDetailDto>
+  ): Promise<PostDetailDto> {
     try {
-      return await this.postsService.getPostById(categoryIdSubcategoryId, postId);
+      return await this.postsService.getPostById(
+        categoryIdSubcategoryId,
+        postId
+      );
     } catch (error) {
       return this.handleError('Erro ao buscar post', error);
     }
@@ -90,19 +109,24 @@ export class PostsController {
 
   /**
    * Atualiza um post existente.
+   *
    * @param categoryIdSubcategoryId - Identificador da categoria e subcategoria.
-   * @param postId - Identificador do post.
+   * @param postId - Identificador do post (validação com ParseUUIDPipe).
    * @param updatePostDto - Dados para atualização do post.
-   * @returns O post atualizado.
+   * @returns O post atualizado como PostDetailDto.
    */
   @Patch('categories/:categoryIdSubcategoryId/posts/:postId')
   async update(
     @Param('categoryIdSubcategoryId') categoryIdSubcategoryId: string,
     @Param('postId', ParseUUIDPipe) postId: string,
-    @Body() updatePostDto: UpdatePostDto // <-- Usando UpdatePostDto para o Body
-  ): Promise<PostDetailDto> { // <-- Retornando Promise<PostDetailDto>
+    @Body() updatePostDto: UpdatePostDto
+  ): Promise<PostDetailDto> {
     try {
-      return await this.postsService.updatePost(categoryIdSubcategoryId, postId, updatePostDto);
+      return await this.postsService.updatePost(
+        categoryIdSubcategoryId,
+        postId,
+        updatePostDto
+      );
     } catch (error) {
       return this.handleError('Erro ao atualizar post', error);
     }
@@ -110,27 +134,29 @@ export class PostsController {
 
   /**
    * Remove um post.
+   *
    * @param categoryIdSubcategoryId - Identificador da categoria e subcategoria.
-   * @param postId - Identificador do post.
+   * @param postId - Identificador do post (validação com ParseUUIDPipe).
    */
   @Delete('categories/:categoryIdSubcategoryId/posts/:postId')
   async remove(
     @Param('categoryIdSubcategoryId') categoryIdSubcategoryId: string,
     @Param('postId', ParseUUIDPipe) postId: string
-  ): Promise<void> { // <-- Retornando Promise<void>
+  ): Promise<void> {
     try {
       await this.postsService.deletePost(categoryIdSubcategoryId, postId);
-      return; // Retorno explícito de void
+      return;
     } catch (error) {
       return this.handleError('Erro ao remover post', error);
     }
   }
 
   /**
-   * Manipula erros lançados pelos métodos do controlador.
-   * @param message - Mensagem de erro.
+   * Manipula e loga erros ocorridos nos métodos do controlador.
+   *
+   * @param message - Mensagem de erro customizada.
    * @param error - Objeto de erro.
-   * @returns Lança uma exceção HTTP.
+   * @returns Lança uma exceção HTTP com status apropriado.
    */
   private handleError(message: string, error: any): any {
     this.logger.error(`${message}: ${error.message}`, error.stack);
@@ -139,9 +165,10 @@ export class PostsController {
       throw error;
     }
 
-    const status = error instanceof NotFoundException
-      ? HttpStatus.NOT_FOUND
-      : HttpStatus.INTERNAL_SERVER_ERROR;
+    const status =
+      error instanceof NotFoundException
+        ? HttpStatus.NOT_FOUND
+        : HttpStatus.INTERNAL_SERVER_ERROR;
 
     throw new HttpException(message, status);
   }
