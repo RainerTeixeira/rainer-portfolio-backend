@@ -1,6 +1,4 @@
-// src/modules/blog/comments/controllers/comments.controller.ts
-
-import { Controller, Get, Post, Put, Delete, Body, Param, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param } from '@nestjs/common';
 import { CommentsService } from '@src/modules/blog/comments/services/comments.service';
 import { CreateCommentDto } from '@src/modules/blog/comments/dto/create-comment.dto';
 import { UpdateCommentDto } from '@src/modules/blog/comments/dto/update-comment.dto';
@@ -22,7 +20,7 @@ export class CommentsController {
 
     @Get(':postId/:authorId')
     async findOne(
-        @Param('postId', ParseIntPipe) postId: number,
+        @Param('postId') postId: string, // Removido ParseIntPipe
         @Param('authorId') authorId: string,
     ): Promise<CommentDto> {
         return this.commentsService.findOne(postId, authorId);
@@ -30,7 +28,7 @@ export class CommentsController {
 
     @Put(':postId/:authorId')
     async update(
-        @Param('postId', ParseIntPipe) postId: number,
+        @Param('postId') postId: string, // Removido ParseIntPipe
         @Param('authorId') authorId: string,
         @Body() updateCommentDto: UpdateCommentDto,
     ): Promise<CommentDto> {
@@ -39,7 +37,7 @@ export class CommentsController {
 
     @Delete(':postId/:authorId')
     async remove(
-        @Param('postId', ParseIntPipe) postId: number,
+        @Param('postId') postId: string, // Removido ParseIntPipe
         @Param('authorId') authorId: string,
     ): Promise<void> {
         return this.commentsService.remove(postId, authorId);
