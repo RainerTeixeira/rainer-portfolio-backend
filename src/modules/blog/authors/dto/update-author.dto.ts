@@ -1,22 +1,8 @@
 // src/modules/blog/authors/dto/update-author.dto.ts
-import { IsString, IsArray, IsOptional, ValidateNested } from 'class-validator';
-import { Type } from 'class-transformer';
-import { AuthorSocialProofDto } from './author-social-proof.dto';
+import { IsString, IsOptional } from 'class-validator';
+import { IsSocialProof } from './Social-proof-validator.dto';
 
 export class UpdateAuthorDto {
-    @IsOptional()
-    @IsString()
-    postId?: string; // Opcional para update
-
-    @IsOptional()
-    @IsString()
-    authorId?: string; // Opcional para update
-
-    @IsOptional()
-    @IsArray()
-    @IsString({ each: true })
-    expertise?: string[];
-
     @IsOptional()
     @IsString()
     name?: string;
@@ -26,7 +12,6 @@ export class UpdateAuthorDto {
     slug?: string;
 
     @IsOptional()
-    @ValidateNested()
-    @Type(() => AuthorSocialProofDto)
-    socialProof?: AuthorSocialProofDto;
+    @IsSocialProof({ message: 'socialProof deve ser um objeto com chaves e valores do tipo string.' })
+    socialProof?: Record<string, string>;
 }
