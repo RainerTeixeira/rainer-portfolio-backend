@@ -185,7 +185,9 @@ export class AuthorsService {
         // Define os parâmetros para consulta no DynamoDB
         const params = {
             TableName: this.tableName,
-            Key: { authorId },
+            Key: {
+                authorId: { S: authorId } // Tipo de dado correto para chave primária
+            }
         };
 
         // Consulta o DynamoDB pelo autor
