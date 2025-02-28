@@ -40,7 +40,4 @@ export class PostDetailDto extends PostSummaryDto {
     @IsString()
     modifiedDate?: string; // Adicionando modifiedDate para Detail DTO
 
-    @IsOptional()
-    @IsString()
-    excerpt?: string; // Adicionando excerpt para Detail DTO
 }
