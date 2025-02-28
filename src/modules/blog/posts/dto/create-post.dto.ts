@@ -1,14 +1,6 @@
-// src/modules/blog/posts/dto/create-post.dto.ts
-import { IsString, IsOptional, ValidateNested, IsNotEmpty } from 'class-validator';
-import { Type } from 'class-transformer';
-import { PostInfoDto } from './post-info.dto';
-import { PostSeoDto } from './post-seo.dto';
-import { PostContentDto } from './post-content.dto';  // Importa o DTO PostContentDto para uso neste arquivo
-/**
- * DTO (Data Transfer Object) para criar um novo Post.
- * Define a estrutura dos dados necessários para criar um post,
- * incluindo validações para garantir a integridade dos dados.
- */
+// src/modules/blog/posts/dto/Create-post.dto.ts
+import { IsString, IsNotEmpty, IsOptional, IsNumber, IsArray } from 'class-validator';
+
 export class CreatePostDto {
   @IsString()
   @IsNotEmpty()
@@ -18,37 +10,62 @@ export class CreatePostDto {
   @IsNotEmpty()
   subcategoryId: string;
 
-  // Alteração: validação como objeto aninhado
-  @ValidateNested()
-  @Type(() => PostContentDto)
+  @IsString()
   @IsNotEmpty()
-  contentHTML: PostContentDto;
+  contentHTML: string;
 
-  @ValidateNested()
-  @Type(() => PostInfoDto)
+  @IsString()
   @IsNotEmpty()
-  postInfo: PostInfoDto;
+  authorId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  publishDate: string; // Formato ISO, por exemplo "2024-09-15T10:00:00Z"
+
+  @IsString()
+  @IsNotEmpty()
+  slug: string;
+
+  @IsString()
+  @IsNotEmpty()
+  title: string;
 
   @IsOptional()
-  @ValidateNested()
-  @Type(() => PostSeoDto)
-  seo?: PostSeoDto;
+  @IsString()
+  excerpt?: string;
 
-  /**
-   * Construtor para CreatePostDto.
-   * Inicializa as propriedades do DTO.
-   */
-  constructor(
-    categoryId: string,
-    subcategoryId: string,
-    contentHTML: string,
-    postInfo: PostInfoDto,
-    seo?: PostSeoDto,
-  ) {
-    this.categoryId = categoryId;
-    this.subcategoryId = subcategoryId;
-    this.contentHTML = contentHTML;
-    this.postInfo = postInfo;
-    this.seo = seo;
-  }
+  @IsOptional()
+  @IsString()
+  featuredImageURL?: string;
+
+  @IsOptional()
+  @IsNumber()
+  readingTime?: number;
+
+  @IsOptional()
+  @IsString()
+  status?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  tags?: string[];
+
+  @IsOptional()
+  @IsNumber()
+  views?: number; // Geralmente inicializado com 0 no backend, mas pode ser opcional aqui
+
+  // Campos de SEO (opcionais na criação)
+  @IsOptional()
+  @IsString()
+  canonical?: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  keywords?: string[];
 }
