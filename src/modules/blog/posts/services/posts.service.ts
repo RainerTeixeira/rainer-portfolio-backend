@@ -42,6 +42,10 @@ export class PostsService {
     this.cacheTTL = parseInt(process.env.CACHE_TTL) || DEFAULT_CACHE_TTL;
   }
 
+
+
+
+  
   /**
    * Cria um novo post.
    *
@@ -93,6 +97,10 @@ export class PostsService {
       throw new BadRequestException('Falha ao criar post');
     }
   }
+
+
+
+
 
 
 
