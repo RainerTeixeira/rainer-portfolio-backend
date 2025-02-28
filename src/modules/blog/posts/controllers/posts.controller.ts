@@ -2,174 +2,122 @@ import {
   Controller,
   Get,
   Post,
-  Body,
-  Patch,
-  Param,
+  Put,
   Delete,
-  ParseUUIDPipe,
-  Logger,
-  HttpException,
+  Param,
+  Body,
+  Query,
+  HttpCode,
   HttpStatus,
+  UseInterceptors,
+  CacheInterceptor,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
-import { PostsService } from '../services/posts.service';
 import {
   CreatePostDto,
   UpdatePostDto,
   PostDetailDto,
-  PostSummaryDto,
-} from '../dto'; // Importação correta das DTOs
+  BlogSummaryDto,
+  PostContentDto,
+  PostOperationResponseDto,
+} from '../dto';
+import { PostsService } from '@src/modules/blog/posts/services/posts.service.ts';
+import { CacheClear } from '@src/common/decorators/cache-clear.decorator';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
-@Controller('posts')
+@ApiTags('Blog Posts')
+@Controller('blog')
+@UseInterceptors(CacheInterceptor)
 export class PostsController {
-  private readonly logger = new Logger(PostsController.name);
-
   constructor(private readonly postsService: PostsService) { }
 
-  /**
-   * Cria um novo post.
-   *
-   * @param categoryIdSubcategoryId - Identificador da categoria e subcategoria.
-   * @param createPostDto - Dados para criação do post.
-   * @returns O post criado como PostDetailDto.
-   */
-  @Post('categories/:categoryIdSubcategoryId/posts')
-  async create(
-    @Param('categoryIdSubcategoryId') categoryIdSubcategoryId: string,
+  @Post('posts')
+  @HttpCode(HttpStatus.CREATED)
+  @CacheClear(['blog_summary', 'latest_posts'])
+  @ApiOperation({ summary: 'Cria um novo post' })
+  @ApiResponse({ status: 201, type: PostOperationResponseDto })
+  async createPost(
     @Body() createPostDto: CreatePostDto
-  ): Promise<PostDetailDto> {
+  ): Promise<PostOperationResponseDto> {
     try {
-      return await this.postsService.createPost(
-        categoryIdSubcategoryId,
-        createPostDto
-      );
+      const post = await this.postsService.createPost(createPostDto);
+      return { success: true, data: post };
     } catch (error) {
-      return this.handleError('Erro ao criar post', error);
+      throw new BadRequestException({ success: false, error: error.message });
     }
   }
 
-  /**
-   * Retorna os 20 posts mais recentes do blog.
-   *
-   * @returns Uma lista de resumos dos posts (PostSummaryDto).
-   */
-  @Get('blog')
-  async findAllBlogPosts(): Promise<PostSummaryDto[]> {
+  @Get()
+  @ApiOperation({ summary: 'Obtém o resumo do blog' })
+  @ApiResponse({ status: 200, type: BlogSummaryDto })
+  async getBlogSummary(): Promise<BlogSummaryDto> {
+    return this.postsService.getBlogSummary();
+  }
+
+  @Get('posts/:id')
+  @ApiOperation({ summary: 'Obtém um post completo por ID' })
+  @ApiResponse({ status: 200, type: PostContentDto })
+  async getFullPost(
+    @Param('id') postId: string
+  ): Promise<PostContentDto> {
     try {
-      return await this.postsService.getLatestPosts();
+      return await this.postsService.getFullPostContent(postId);
     } catch (error) {
-      return this.handleError('Erro ao listar posts do blog', error);
+      throw new NotFoundException('Post não encontrado');
     }
   }
 
-  /**
-   * Busca um post do blog pelo seu ID.
-   * Nota: Não é aplicado ParseUUIDPipe para o parâmetro postId nesta rota.
-   *
-   * @param categoryIdSubcategoryId - Identificador da categoria e subcategoria.
-   * @param postId - Identificador do post.
-   * @returns O post encontrado como PostDetailDto.
-   */
-  @Get('blog/:categoryIdSubcategoryId/:postId')
-  async findOneBlogPost(
-    @Param('categoryIdSubcategoryId') categoryIdSubcategoryId: string,
-    @Param('postId') postId: string
-  ): Promise<PostDetailDto> {
-    try {
-      return await this.postsService.getPostById(
-        categoryIdSubcategoryId,
-        postId
-      );
-    } catch (error) {
-      return this.handleError('Erro ao buscar post', error);
-    }
+  @Get('categoria/:categoryId')
+  @ApiOperation({ summary: 'Lista posts por categoria' })
+  @ApiResponse({ status: 200, type: [PostSummaryDto] })
+  async getPostsByCategory(
+    @Param('categoryId') categoryId: string,
+    @Query('page') page = 1,
+    @Query('limit') limit = 10
+  ): Promise<PostSummaryDto[]> {
+    return this.postsService.getPostsByCategory(categoryId, page, limit);
   }
 
-  /**
-   * Busca um post pelo seu ID.
-   *
-   * @param categoryIdSubcategoryId - Identificador da categoria e subcategoria.
-   * @param postId - Identificador do post (validação com ParseUUIDPipe).
-   * @returns O post encontrado como PostDetailDto.
-   */
-  @Get('categories/:categoryIdSubcategoryId/posts/:postId')
-  async findOne(
-    @Param('categoryIdSubcategoryId') categoryIdSubcategoryId: string,
-    @Param('postId', ParseUUIDPipe) postId: string
-  ): Promise<PostDetailDto> {
-    try {
-      return await this.postsService.getPostById(
-        categoryIdSubcategoryId,
-        postId
-      );
-    } catch (error) {
-      return this.handleError('Erro ao buscar post', error);
-    }
+  @Get('subcategoria/:subcategoryId')
+  @ApiOperation({ summary: 'Lista posts por subcategoria' })
+  @ApiResponse({ status: 200, type: [PostSummaryDto] })
+  async getPostsBySubcategory(
+    @Param('subcategoryId') subcategoryId: string,
+    @Query('page') page = 1,
+    @Query('limit') limit = 10
+  ): Promise<PostSummaryDto[]> {
+    return this.postsService.getPostsBySubcategory(subcategoryId, page, limit);
   }
 
-  /**
-   * Atualiza um post existente.
-   *
-   * @param categoryIdSubcategoryId - Identificador da categoria e subcategoria.
-   * @param postId - Identificador do post (validação com ParseUUIDPipe).
-   * @param updatePostDto - Dados para atualização do post.
-   * @returns O post atualizado como PostDetailDto.
-   */
-  @Patch('categories/:categoryIdSubcategoryId/posts/:postId')
-  async update(
-    @Param('categoryIdSubcategoryId') categoryIdSubcategoryId: string,
-    @Param('postId', ParseUUIDPipe) postId: string,
+  @Put('posts/:id')
+  @CacheClear(['blog_summary', 'latest_posts', 'post_*'])
+  @ApiOperation({ summary: 'Atualiza um post existente' })
+  @ApiResponse({ status: 200, type: PostOperationResponseDto })
+  async updatePost(
+    @Param('id') postId: string,
     @Body() updatePostDto: UpdatePostDto
-  ): Promise<PostDetailDto> {
+  ): Promise<PostOperationResponseDto> {
     try {
-      return await this.postsService.updatePost(
-        categoryIdSubcategoryId,
-        postId,
-        updatePostDto
-      );
+      const post = await this.postsService.updatePost(postId, updatePostDto);
+      return { success: true, data: post };
     } catch (error) {
-      return this.handleError('Erro ao atualizar post', error);
+      throw new BadRequestException({ success: false, error: error.message });
     }
   }
 
-  /**
-   * Remove um post.
-   *
-   * @param categoryIdSubcategoryId - Identificador da categoria e subcategoria.
-   * @param postId - Identificador do post (validação com ParseUUIDPipe).
-   */
-  @Delete('categories/:categoryIdSubcategoryId/posts/:postId')
-  async remove(
-    @Param('categoryIdSubcategoryId') categoryIdSubcategoryId: string,
-    @Param('postId', ParseUUIDPipe) postId: string
-  ): Promise<void> {
+  @Delete('posts/:id')
+  @CacheClear(['blog_summary', 'latest_posts', 'post_*'])
+  @ApiOperation({ summary: 'Remove um post' })
+  @ApiResponse({ status: 200, type: PostOperationResponseDto })
+  async deletePost(
+    @Param('id') postId: string
+  ): Promise<PostOperationResponseDto> {
     try {
-      await this.postsService.deletePost(categoryIdSubcategoryId, postId);
-      return;
+      await this.postsService.deletePost(postId);
+      return { success: true };
     } catch (error) {
-      return this.handleError('Erro ao remover post', error);
+      throw new BadRequestException({ success: false, error: error.message });
     }
-  }
-
-  /**
-   * Manipula e loga erros ocorridos nos métodos do controlador.
-   *
-   * @param message - Mensagem de erro customizada.
-   * @param error - Objeto de erro.
-   * @returns Lança uma exceção HTTP com status apropriado.
-   */
-  private handleError(message: string, error: any): any {
-    this.logger.error(`${message}: ${error.message}`, error.stack);
-
-    if (error instanceof HttpException) {
-      throw error;
-    }
-
-    const status =
-      error instanceof NotFoundException
-        ? HttpStatus.NOT_FOUND
-        : HttpStatus.INTERNAL_SERVER_ERROR;
-
-    throw new HttpException(message, status);
   }
 }
