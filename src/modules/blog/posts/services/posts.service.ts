@@ -60,7 +60,7 @@ export class PostsService {
 
 
 
-  /**
+/**
  * Cria um novo post utilizando os dados do DTO.
  *
  * Antes de criar o post, verifica se o autor informado já existe:
@@ -72,32 +72,38 @@ export class PostsService {
  * @throws BadRequestException Caso ocorra alguma falha na criação do post.
  */
   async createPost(createPostDto: CreatePostDto): Promise<PostDetailDto> {
-    this.logger.debug('Iniciando criação do post');
-    try {
-      // Concatena categoryId e subcategoryId para formar a chave de partição
-      const categoryIdSubcategoryId = `${createPostDto.categoryId}#${createPostDto.subcategoryId}`;
-      // Gera o postId, que é a chave de classificação
-      const postId = uuidv4();
+    this.logger.debug(`Iniciando criação do post para categoria ${createPostDto.categoryId} e subcategoria ${createPostDto.subcategoryId}`);
 
-      // Verifica se o autor já existe; se não, cria um novo autor.
+    try {
+      const categoryIdSubcategoryId = `${createPostDto.categoryId}#${createPostDto.subcategoryId}`;
+      const postId = uuidv4();
+      this.logger.debug(`Gerado postId: ${postId}`);
+
       let author;
       try {
+        this.logger.debug(`Verificando existência do autor ID: ${createPostDto.authorId}`);
         author = await this.authorsService.getAuthorById(createPostDto.authorId);
+        this.logger.debug(`Autor encontrado: ${author.name}`);
       } catch (error) {
         if (error instanceof NotFoundException) {
-          // Autor não encontrado: cria um novo autor com dados mínimos
-          // OBS: Adapte os campos obrigatórios do CreateAuthorDto conforme sua implementação.
+          this.logger.warn(`Autor ID: ${createPostDto.authorId} não encontrado, criando um novo.`);
           const newAuthorDto = {
             authorId: createPostDto.authorId,
             name: 'Autor Padrão',
           };
-          author = await this.authorsService.create(newAuthorDto);
+          try {
+            author = await this.authorsService.create(newAuthorDto);
+            this.logger.debug(`Novo autor criado: ${author.authorId}`);
+          } catch (authorError) {
+            this.logger.error(`Erro ao criar autor: ${authorError.message}`, authorError.stack);
+            throw new BadRequestException('Falha ao criar o autor');
+          }
         } else {
+          this.logger.error(`Erro ao buscar autor: ${error.message}`, error.stack);
           throw error;
         }
       }
 
-      // Monta o item que será salvo no DynamoDB, combinando os dados do DTO com metadados adicionais
       const item = {
         'categoryId#subcategoryId': categoryIdSubcategoryId,
         postId,
@@ -109,16 +115,17 @@ export class PostsService {
         author,
       };
 
+      this.logger.debug(`Salvando post no DynamoDB: ${JSON.stringify(item)}`);
       const params: PutCommandInput = {
         TableName: this.tableName,
         Item: item,
       };
 
-      // Salva o item no DynamoDB
       await this.dynamoDbService.putItem(params);
-      // Invalida o cache relacionado ao post recém-criado
+      this.logger.debug(`Post salvo no DynamoDB com sucesso. ID: ${postId}`);
+
       await this.invalidateCache(categoryIdSubcategoryId, postId);
-      this.logger.debug('Post criado com sucesso');
+      this.logger.debug(`Cache invalidado para categoria ${categoryIdSubcategoryId} e post ${postId}`);
 
       return this.mapDynamoItemToPostDto(item);
     } catch (error) {
@@ -126,11 +133,6 @@ export class PostsService {
       throw new BadRequestException('Falha ao criar post');
     }
   }
-
-
-
-
-
 
 
 
@@ -162,8 +164,8 @@ export class PostsService {
         '#pd': 'publishDate',
       },
       ExpressionAttributeValues: {
-        ':status': 'published',
-        ':now': now,
+        ':status': { S: 'published' }, // Tipo correto
+        ':now': { S: now } // Tipo e formato correto
       },
       ScanIndexForward: false, // Ordena de forma decrescente
       Limit: 20,
@@ -180,6 +182,8 @@ export class PostsService {
       throw new Error('Erro ao buscar posts mais recentes');
     }
   }
+
+
 
   /**
    * Busca um post específico pelo seu ID.
@@ -290,6 +294,7 @@ export class PostsService {
     }
   }
 
+
   /**
    * Invalida o cache relacionado a um post específico.
    *
@@ -334,18 +339,20 @@ export class PostsService {
    */
   private mapDynamoItemToPostDetailDto(item: any): PostDetailDto {
     return {
-      title: item.title,
-      featuredImageURL: item.featuredImageURL,
-      description: item.description,
-      contentHTML: item.contentHTML,
-      authorId: item.authorId,
-      canonical: item.canonical,
-      keywords: item.keywords,
-      readingTime: item.readingTime ? Number(item.readingTime) : 0,
-      views: item.views ? Number(item.views) : 0,
-      slug: item.slug,
-      status: item.status,
-      modifiedDate: item.modifiedDate,
+      title: item.title.S,
+      featuredImageURL: item.featuredImageURL?.S,
+      description: item.description.S,
+      contentHTML: item.contentHTML.S,
+      authorId: item.authorId.S,
+      canonical: item.canonical?.S,
+      keywords: item.keywords?.SS || [],
+      readingTime: item.readingTime?.N ? parseInt(item.readingTime.N) : 0,
+      views: item.views?.N ? parseInt(item.views.N) : 0,
+      slug: item.slug.S,
+      status: item.status.S,
+      modifiedDate: item.modifiedDate.S,
+      tags: item.tags?.SS || [],
+      publishDate: item.publishDate.S
     };
   }
 
@@ -404,4 +411,7 @@ export class PostsService {
       throw new NotFoundException('Post não encontrado');
     }
   }
+
+
+
 }
