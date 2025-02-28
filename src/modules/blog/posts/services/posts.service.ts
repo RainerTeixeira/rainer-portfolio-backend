@@ -43,40 +43,35 @@ export class PostsService {
   }
 
 
-
-
-  
   /**
-   * Cria um novo post.
-   *
-   * @param categoryIdSubcategoryId - Identificador da categoria e subcategoria.
-   * @param createPostDto - Dados para criação do post.
-   * @returns O post criado como PostDetailDto.
-   */
-  async createPost(
-    categoryIdSubcategoryId: string,
-    createPostDto: CreatePostDto
-  ): Promise<PostDetailDto> {
+ * Cria um novo post utilizando apenas a DTO.
+ *
+ * @param createPostDto - Dados para criação do post.
+ * @returns O post criado como PostDetailDto.
+ */
+  async createPost(createPostDto: CreatePostDto): Promise<PostDetailDto> {
     this.logger.debug('Iniciando criação do post');
     try {
-      const postId = uuidv4(); // Gera um ID único para o post
+      // Concatena categoryId e subcategoryId para formar a chave de partição
+      const categoryIdSubcategoryId = `${createPostDto.categoryId}#${createPostDto.subcategoryId}`;
+      // Gera um ID único para o post (chave de classificação)
+      const postId = uuidv4();
 
       // Recupera informações do autor utilizando cache para otimização
       // Caso o autor não seja encontrado, o método já lança NotFoundException
       const author = await this.getAuthorWithCache(createPostDto.authorId);
 
-      // Constrói o item a ser armazenado no DynamoDB, incluindo os dados do autor
+      // Constrói o item a ser armazenado no DynamoDB
       const item = {
         'categoryId#subcategoryId': categoryIdSubcategoryId,
         postId,
         collection: 'posts', // Campo usado para índices
         createdAt: new Date().toISOString(), // Data/hora atual
         ...createPostDto,
-        // Garante que os campos numéricos sejam convertidos corretamente
+        // Converte os campos numéricos para garantir o tipo correto
         readingTime: Number(createPostDto.readingTime) || 0,
         views: Number(createPostDto.views) || 0,
-        // Você pode optar por armazenar apenas o authorId ou o objeto completo,
-        // conforme a necessidade do seu domínio. Exemplo armazenando o objeto completo:
+        // Armazena o objeto do autor conforme a necessidade do domínio
         author,
       };
 
@@ -85,18 +80,20 @@ export class PostsService {
         Item: item,
       };
 
+      // Armazena o item no DynamoDB
       await this.dynamoDbService.putItem(params);
+      // Invalida cache relacionado ao post recém-criado
       await this.invalidateCache(categoryIdSubcategoryId, postId);
       this.logger.debug('Post criado com sucesso');
 
-      // Aqui, o mapeamento pode incluir os dados do post que deseja retornar,
-      // inclusive o author, se necessário.
+      // Mapeia o item armazenado para o DTO de retorno
       return this.mapDynamoItemToPostDto(item);
     } catch (error) {
       this.logger.error(`Erro ao criar post: ${error.message}`, error.stack);
       throw new BadRequestException('Falha ao criar post');
     }
   }
+
 
 
 
@@ -379,7 +376,6 @@ export class PostsService {
         slug: result.Item.slug,
         status: result.Item.status,
         modifiedDate: result.Item.modifiedDate,
-        excerpt: result.Item.excerpt,
       };
 
       await this.cacheManager.set(cacheKey, postDetailDto, { ttl: this.cacheTTL });

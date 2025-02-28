@@ -32,10 +32,6 @@ export class UpdatePostDto {
 
     @IsOptional()
     @IsString()
-    excerpt?: string;
-
-    @IsOptional()
-    @IsString()
     featuredImageURL?: string;
 
     @IsOptional()
