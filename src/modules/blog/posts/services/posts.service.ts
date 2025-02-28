@@ -3,18 +3,23 @@ import {
   NotFoundException,
   Logger,
   Inject,
-  BadRequestException
+  BadRequestException,
 } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
-import { CreatePostDto, UpdatePostDto, PostDetailDto, PostSummaryDto } from '@src/modules/blog/posts/dto';
+import {
+  CreatePostDto,
+  UpdatePostDto,
+  PostDetailDto,
+  PostSummaryDto,
+} from '@src/modules/blog/posts/dto';
 import { DynamoDbService } from '@src/services/dynamoDb.service';
 import {
   GetCommandInput,
   QueryCommandInput,
   PutCommandInput,
   UpdateCommandInput,
-  DeleteCommandInput
+  DeleteCommandInput,
 } from '@aws-sdk/lib-dynamodb';
 import { AuthorsService } from '@src/modules/blog/authors/services/authors.service';
 import { v4 as uuidv4 } from 'uuid';
@@ -33,36 +38,42 @@ export class PostsService {
     private readonly authorsService: AuthorsService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache
   ) {
+    // Define o TTL do cache com base na variável de ambiente ou utiliza o valor padrão
     this.cacheTTL = parseInt(process.env.CACHE_TTL) || DEFAULT_CACHE_TTL;
   }
 
   /**
    * Cria um novo post.
+   *
    * @param categoryIdSubcategoryId - Identificador da categoria e subcategoria.
    * @param createPostDto - Dados para criação do post.
-   * @returns O post criado.
+   * @returns O post criado como PostDetailDto.
    */
-  async createPost(categoryIdSubcategoryId: string, createPostDto: CreatePostDto): Promise<PostDetailDto> {
+  async createPost(
+    categoryIdSubcategoryId: string,
+    createPostDto: CreatePostDto
+  ): Promise<PostDetailDto> {
     this.logger.debug('Iniciando criação do post');
     try {
       const postId = uuidv4();
+      // Recupera informações do autor, utilizando cache para otimização
       const author = await this.getAuthorWithCache(createPostDto.authorId);
 
-      // Constrói o item usando os campos do DTO já no nível raiz
+      // Constrói o item a ser armazenado no DynamoDB
       const item = {
         'categoryId#subcategoryId': categoryIdSubcategoryId,
         postId,
-        collection: 'posts', // Usado para o índice
+        collection: 'posts', // Campo usado para índices
         createdAt: new Date().toISOString(),
         ...createPostDto,
-        // Garantindo tipos corretos
+        // Converte para tipos numéricos, se necessário
         readingTime: Number(createPostDto.readingTime) || 0,
-        views: Number(createPostDto.views) || 0
+        views: Number(createPostDto.views) || 0,
       };
 
       const params: PutCommandInput = {
         TableName: this.tableName,
-        Item: item
+        Item: item,
       };
 
       await this.dynamoDbService.putItem(params);
@@ -70,14 +81,18 @@ export class PostsService {
       this.logger.debug('Post criado com sucesso');
       return this.mapDynamoItemToPostDto(item);
     } catch (error) {
-      this.logger.error(`Erro ao criar post: ${error.message}`, error.stack);
+      this.logger.error(
+        `Erro ao criar post: ${error.message}`,
+        error.stack
+      );
       throw new BadRequestException('Falha ao criar post');
     }
   }
 
   /**
-   * Busca os 20 posts mais recentes.
-   * @returns Uma lista dos posts mais recentes.
+   * Busca os 20 posts mais recentes (publicados).
+   *
+   * @returns Uma lista de posts como PostSummaryDto.
    */
   async getLatestPosts(): Promise<PostSummaryDto[]> {
     this.logger.debug('Buscando os 20 posts mais recentes');
@@ -88,8 +103,8 @@ export class PostsService {
       return cachedPosts;
     }
 
-    // Defina a variável 'now' para obter a data e hora atual
-    const now = new Date().toISOString(); // Obtém a data e hora atual no formato ISO 8601
+    // Obtém a data/hora atual no formato ISO 8601 para comparação
+    const now = new Date().toISOString();
 
     const queryParams: QueryCommandInput = {
       TableName: this.tableName,
@@ -101,14 +116,17 @@ export class PostsService {
       },
       ExpressionAttributeValues: {
         ':status': 'published',
-        ':now': now, // Agora 'now' está definida e pode ser usada aqui
+        ':now': now,
       },
       ScanIndexForward: false,
       Limit: 20,
     };
+
     try {
       const result = await this.dynamoDbService.query(queryParams);
-      const posts = result.Items ? result.Items.map(this.mapDynamoItemToPostDto) : [];
+      const posts = result.Items
+        ? result.Items.map(this.mapDynamoItemToPostDto)
+        : [];
       await this.cacheManager.set(cacheKey, posts, { ttl: this.cacheTTL });
       this.logger.debug(`Foram encontrados ${posts.length} posts`);
       return posts;
@@ -120,11 +138,15 @@ export class PostsService {
 
   /**
    * Busca um post pelo seu ID.
+   *
    * @param categoryIdSubcategoryId - Identificador da categoria e subcategoria.
    * @param postId - Identificador do post.
-   * @returns O post encontrado.
+   * @returns O post encontrado como PostDetailDto.
    */
-  async getPostById(categoryIdSubcategoryId: string, postId: string): Promise<PostDetailDto> {
+  async getPostById(
+    categoryIdSubcategoryId: string,
+    postId: string
+  ): Promise<PostDetailDto> {
     this.logger.debug(`Iniciando busca do post ${postId}`);
     try {
       const cacheKey = `post_${categoryIdSubcategoryId}_${postId}`;
@@ -135,14 +157,16 @@ export class PostsService {
         TableName: this.tableName,
         Key: {
           'categoryId#subcategoryId': categoryIdSubcategoryId,
-          postId
-        }
+          postId,
+        },
       };
 
       const result = await this.dynamoDbService.getItem(params);
-      if (!result.Item) throw new NotFoundException('Post não encontrado');
+      if (!result.Item)
+        throw new NotFoundException('Post não encontrado');
 
-      const post = this.mapDynamoItemToPostDto(result.Item);
+      // Aguarda a obtenção do post completo
+      const post = await this.getFullPostById(categoryIdSubcategoryId, postId);
       await this.cacheManager.set(cacheKey, post, this.cacheTTL);
       this.logger.debug(`Post ${postId} encontrado com sucesso`);
       return post;
@@ -154,23 +178,30 @@ export class PostsService {
 
   /**
    * Atualiza um post existente.
+   *
    * @param categoryIdSubcategoryId - Identificador da categoria e subcategoria.
    * @param postId - Identificador do post.
    * @param updatePostDto - Dados para atualização do post.
-   * @returns O post atualizado.
+   * @returns O post atualizado como PostDetailDto.
    */
-  async updatePost(categoryIdSubcategoryId: string, postId: string, updatePostDto: UpdatePostDto): Promise<PostDetailDto> {
+  async updatePost(
+    categoryIdSubcategoryId: string,
+    postId: string,
+    updatePostDto: UpdatePostDto
+  ): Promise<PostDetailDto> {
     this.logger.debug(`Iniciando atualização do post ${postId}`);
     try {
-      const updateExpression = this.dynamoDbService.buildUpdateExpression(updatePostDto);
+      const updateExpression = this.dynamoDbService.buildUpdateExpression(
+        updatePostDto
+      );
       const params: UpdateCommandInput = {
         TableName: this.tableName,
         Key: {
           'categoryId#subcategoryId': categoryIdSubcategoryId,
-          postId
+          postId,
         },
         ...updateExpression,
-        ReturnValues: 'ALL_NEW'
+        ReturnValues: 'ALL_NEW',
       };
 
       const result = await this.dynamoDbService.updateItem(params);
@@ -185,18 +216,22 @@ export class PostsService {
 
   /**
    * Deleta um post.
+   *
    * @param categoryIdSubcategoryId - Identificador da categoria e subcategoria.
    * @param postId - Identificador do post.
    */
-  async deletePost(categoryIdSubcategoryId: string, postId: string): Promise<void> {
+  async deletePost(
+    categoryIdSubcategoryId: string,
+    postId: string
+  ): Promise<void> {
     this.logger.debug(`Iniciando deleção do post ${postId}`);
     try {
       const params: DeleteCommandInput = {
         TableName: this.tableName,
         Key: {
           'categoryId#subcategoryId': categoryIdSubcategoryId,
-          postId
-        }
+          postId,
+        },
       };
 
       await this.dynamoDbService.deleteItem(params);
@@ -209,9 +244,10 @@ export class PostsService {
   }
 
   /**
-   * Busca um autor com cache.
+   * Busca um autor utilizando cache.
+   *
    * @param authorId - Identificador do autor.
-   * @returns O autor encontrado.
+   * @returns O autor encontrado como AuthorDto.
    */
   private async getAuthorWithCache(authorId: string): Promise<AuthorDto> {
     try {
@@ -230,52 +266,115 @@ export class PostsService {
 
   /**
    * Invalida o cache para um post específico.
+   *
    * @param categoryIdSubcategoryId - Identificador da categoria e subcategoria.
    * @param postId - Identificador do post.
    */
-  private async invalidateCache(categoryIdSubcategoryId: string, postId: string) {
+  private async invalidateCache(
+    categoryIdSubcategoryId: string,
+    postId: string
+  ) {
     try {
       const keys = [
         `post_${categoryIdSubcategoryId}_${postId}`,
         `posts_${categoryIdSubcategoryId}`,
-        'posts_all'
+        'posts_all',
       ];
-      await Promise.all(keys.map(key => this.cacheManager.del(key)));
+      await Promise.all(keys.map((key) => this.cacheManager.del(key)));
     } catch (error) {
       this.logger.error(`Erro ao invalidar cache: ${error.message}`);
     }
   }
 
   /**
-   * Mapeia um item do DynamoDB para um DTO de post.
-   * @param item - Item do DynamoDB.
-   * @returns O DTO de post.
+   * Mapeia um item do DynamoDB para um DTO de post (detalhado ou resumo).
+   *
+   * @param item - Item retornado do DynamoDB.
+   * @returns O DTO de post (PostDetailDto).
    */
   private mapDynamoItemToPostDto(item: any): PostDetailDto {
     return {
       title: item.title,
       featuredImageURL: item.featuredImageURL,
-      description: item.description
+      description: item.description,
+    };
+  }
+
+  /**
+   * Mapeia um item do DynamoDB para um DTO de post detalhado.
+   *
+   * @param item - Item retornado do DynamoDB.
+   * @returns O DTO de post detalhado (PostDetailDto).
+   */
+  private mapDynamoItemToPostDetailDto(item: any): PostDetailDto {
+    // Aqui você pode mapear todos os campos relevantes do item para o DTO
+    return {
+      title: item.title,
+      featuredImageURL: item.featuredImageURL,
+      description: item.description,
     };
   }
 
   /**
    * Busca um post completo pelo seu ID.
+   *
    * @param categoryIdSubcategoryId - Identificador da categoria e subcategoria.
    * @param postId - Identificador do post.
-   * @returns O post completo encontrado.
+   * @returns O post completo encontrado (PostDetailDto) com todos os campos mapeados.
    */
-  async getFullPostById(categoryIdSubcategoryId: string, postId: string): Promise<FullPostDto> {
+  async getFullPostById(
+    categoryIdSubcategoryId: string,
+    postId: string
+  ): Promise<PostDetailDto> {
     this.logger.debug(`Iniciando busca completa do post ${postId}`);
-    const post = await this.getPostById(categoryIdSubcategoryId, postId);
-    this.logger.debug(`Post completo ${postId} encontrado com sucesso`);
-    return {
-      ...post,
-      metadata: {
-        fetchedAt: new Date().toISOString(),
-        source: 'cache/database'
+    try {
+      const cacheKey = `post_detail_${categoryIdSubcategoryId}_${postId}`;
+      const cached = await this.cacheManager.get<PostDetailDto>(cacheKey);
+      if (cached) return cached;
+
+      const params: GetCommandInput = {
+        TableName: this.tableName,
+        Key: {
+          'categoryId#subcategoryId': categoryIdSubcategoryId,
+          postId,
+        },
+      };
+
+      const result = await this.dynamoDbService.getItem(params);
+      if (!result.Item) {
+        throw new NotFoundException('Post não encontrado');
       }
-    };
+
+      // Mapeia o item retornado para o DTO PostDetailDto com todos os campos definidos
+      const postDetailDto: PostDetailDto = {
+        // Campos herdados de PostSummaryDto (ex.: title, featuredImageURL, description)
+        title: result.Item.title,
+        featuredImageURL: result.Item.featuredImageURL,
+        description: result.Item.description,
+        // Campos exclusivos de PostDetailDto
+        contentHTML: result.Item.contentHTML,
+        authorId: result.Item.authorId,
+        canonical: result.Item.canonical,
+        keywords: result.Item.keywords,
+        readingTime: result.Item.readingTime ? Number(result.Item.readingTime) : 0,
+        views: result.Item.views ? Number(result.Item.views) : 0,
+        slug: result.Item.slug,
+        status: result.Item.status,
+        modifiedDate: result.Item.modifiedDate,
+        excerpt: result.Item.excerpt,
+      };
+
+      await this.cacheManager.set(cacheKey, postDetailDto, { ttl: this.cacheTTL });
+      this.logger.debug(`Post completo ${postId} encontrado com sucesso`);
+      return postDetailDto;
+    } catch (error) {
+      this.logger.error(`Erro ao buscar post completo: ${error.message}`);
+      throw new NotFoundException('Post não encontrado');
+    }
   }
+
+
+
+
 
 }
