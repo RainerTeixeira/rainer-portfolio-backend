@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Put, Param, Delete, Logger } from '@nestjs
 import { AuthorsService } from '../services/authors.service'; // Importa AuthorsService
 import { CreateAuthorDto } from '../dto/Create-author.dto'; // Importa DTO para criação de autor
 import { UpdateAuthorDto } from '../dto/Update-author.dto'; // Importa DTO para atualização de autor
-import { AuthorDto } from '../dto/Author-detail.dto'; // Importa DTO para representação de autor
+import { AuthorDetailDto } from '../dto/Author-detail.dto'; // Importa DTO para representação de autor
 
 /**
  * @Controller('blog/authors')
@@ -24,10 +24,10 @@ export class AuthorsController {
      * Rota POST para criar um novo autor.
      * Endpoint: POST /blog/authors
      * @param createAuthorDto DTO contendo os dados para criação do autor, recebidos no corpo da requisição.
-     * @returns Uma Promise que resolve para um AuthorDto representando o autor criado.
+     * @returns Uma Promise que resolve para um AuthorDetailDto representando o autor criado.
      */
     @Post()
-    async create(@Body() createAuthorDto: CreateAuthorDto): Promise<AuthorDto> {
+    async create(@Body() createAuthorDto: CreateAuthorDto): Promise<AuthorDetailDto> {
         this.logger.log('Endpoint POST /blog/authors acionado'); // Log de acesso ao endpoint POST
         return this.authorsService.create(createAuthorDto); // Chama o serviço para criar o autor
     }
@@ -35,10 +35,10 @@ export class AuthorsController {
     /**
      * Rota GET para buscar todos os autores.
      * Endpoint: GET /blog/authors
-     * @returns Uma Promise que resolve para um array de AuthorDto, contendo todos os autores.
+     * @returns Uma Promise que resolve para um array de AuthorDetailDto, contendo todos os autores.
      */
     @Get()
-    async findAll(): Promise<AuthorDto[]> {
+    async findAll(): Promise<AuthorDetailDto[]> {
         this.logger.log('Endpoint GET /blog/authors acionado'); // Log de acesso ao endpoint GET (todos)
         return this.authorsService.findAll(); // Chama o serviço para buscar todos os autores
     }
@@ -47,10 +47,10 @@ export class AuthorsController {
      * Rota GET para buscar um autor específico pelo authorId.
      * Endpoint: GET /blog/authors/:authorId
      * @param authorId ID do autor a ser buscado, extraído dos parâmetros da rota.
-     * @returns Uma Promise que resolve para um AuthorDto, se o autor for encontrado.
+     * @returns Uma Promise que resolve para um AuthorDetailDto, se o autor for encontrado.
      */
     @Get(':authorId')
-    async findOne(@Param('authorId') authorId: string): Promise<AuthorDto> {
+    async findOne(@Param('authorId') authorId: string): Promise<AuthorDetailDto> {
         this.logger.log(`Endpoint GET /blog/authors/${authorId} acionado`); // Log de acesso ao endpoint GET (por ID)
         return this.authorsService.findOne(authorId); // Chama o serviço para buscar um autor por ID
     }
@@ -60,13 +60,13 @@ export class AuthorsController {
      * Endpoint: PUT /blog/authors/:authorId
      * @param authorId ID do autor a ser atualizado, extraído dos parâmetros da rota.
      * @param updateAuthorDto DTO contendo os dados para atualização do autor, recebidos no corpo da requisição.
-     * @returns Uma Promise que resolve para um AuthorDto representando o autor atualizado.
+     * @returns Uma Promise que resolve para um AuthorDetailDto representando o autor atualizado.
      */
     @Put(':authorId')
     async update(
         @Param('authorId') authorId: string,
         @Body() updateAuthorDto: UpdateAuthorDto,
-    ): Promise<AuthorDto> {
+    ): Promise<AuthorDetailDto> {
         this.logger.log(`Endpoint PUT /blog/authors/${authorId} acionado`); // Log de acesso ao endpoint PUT
         return this.authorsService.update(authorId, updateAuthorDto); // Chama o serviço para atualizar o autor
     }

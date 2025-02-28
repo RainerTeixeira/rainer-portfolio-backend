@@ -3,7 +3,7 @@ import { Injectable, NotFoundException, Logger } from '@nestjs/common'; // Impor
 import { UpdateCommandInput } from '@aws-sdk/lib-dynamodb'; // Importa UpdateCommandInput do AWS SDK for DynamoDB
 import { CreateAuthorDto } from '@src/modules/blog/authors/dto/Create-author.dto'; // Importa DTO para criação de autor
 import { UpdateAuthorDto } from '@src/modules/blog/authors/dto/Update-author.dto'; // Importa DTO para atualização de autor
-import { AuthorDto } from '@src/modules/blog/authors/dto/Author-detail.dto'; // Importa DTO para representação de autor
+import { AuthorDetailDto } from '@src/modules/blog/authors/dto/author-detail.dto';
 
 /**
  * @Injectable()
@@ -25,9 +25,9 @@ export class AuthorsService {
     /**
      * Cria um novo autor no DynamoDB.
      * @param createAuthorDto DTO contendo os dados para criar um novo autor.
-     * @returns Uma Promise que resolve para um AuthorDto representando o autor criado.
+     * @returns Uma Promise que resolve para um AuthorDetailDto representando o autor criado.
      */
-    async create(createAuthorDto: CreateAuthorDto): Promise<AuthorDto> {
+    async create(createAuthorDto: CreateAuthorDto): Promise<AuthorDetailDto> {
         this.logger.log(`Criando autor com authorId: ${createAuthorDto.authorId}`); // Log de criação de autor
         const params = {
             TableName: this.tableName,
@@ -37,51 +37,77 @@ export class AuthorsService {
         return this.findOne(createAuthorDto.authorId); // Retorna o autor recém-criado
     }
 
+
+
+    
     /**
      * Busca todos os autores no DynamoDB.
-     * @returns Uma Promise que resolve para um array de AuthorDto, contendo todos os autores.
+     * @returns Uma Promise que resolve para um array de AuthorDetailDto ou uma mensagem caso não haja autores.
      */
-    async findAll(): Promise<AuthorDto[]> {
-        this.logger.log('Buscando todos os autores.'); // Log de busca de todos os autores
+    async findAll(): Promise<AuthorDetailDto[] | { message: string }> {
+        this.logger.log('Buscando todos os autores.');
+
         const params = {
             TableName: this.tableName,
-            // IndexName: 'your-index-name', // Exemplo de uso de GSI (Índice Secundário Global) se necessário
         };
-        const result = await this.dynamoDbService.scan(params); // Escaneia a tabela Authors
-        return (result.Items || []).map(item => this.mapAuthorFromDynamoDb(item)); // Mapeia e retorna os itens como AuthorDto
+
+        const result = await this.dynamoDbService.scan(params);
+
+        console.log("Dados brutos do DynamoDB:", JSON.stringify(result.Items, null, 2));
+
+        // Se não houver itens, retorna uma mensagem informando que não há autores cadastrados
+        if (!result.Items || result.Items.length === 0) {
+            return { message: "Nenhum autor cadastrado." };
+        }
+
+        // Agora usamos o método estático do DTO para fazer a conversão
+        return result.Items.map(AuthorDetailDto.fromDynamoDB); // Utiliza o método estático do DTO
     }
+
+
 
     /**
      * Busca um autor específico pelo seu authorId no DynamoDB.
      * @param authorId ID do autor a ser buscado.
-     * @returns Uma Promise que resolve para um AuthorDto, se o autor for encontrado.
+     * @returns Uma Promise que resolve para um AuthorDetailDto, se o autor for encontrado.
      * @throws NotFoundException Se o autor não for encontrado.
      */
-    async findOne(authorId: string): Promise<AuthorDto> {
+    async findOne(authorId: string): Promise<AuthorDetailDto> {
         this.logger.log(`Buscando autor com authorId: ${authorId}`); // Log de busca de autor por ID
+
+        // Parâmetros para buscar o autor pela chave primária
         const params = {
             TableName: this.tableName,
             Key: {
-                authorId: authorId, // Usa authorId como chave primária para busca
+                authorId: authorId, // Usa authorId como chave primária para a busca
             },
         };
-        const result = await this.dynamoDbService.getItem(params); // Busca o item no DynamoDB pela chave
 
+        // Realiza a busca no DynamoDB usando getItem
+        const result = await this.dynamoDbService.getItem(params);
+
+        // Verifica se o autor foi encontrado
         if (!result.Item) {
             this.logger.warn(`Autor com authorId '${authorId}' não encontrado.`); // Log de aviso se autor não encontrado
             throw new NotFoundException(`Autor com authorId '${authorId}' não encontrado`); // Lança exceção NotFoundException
         }
-        return this.mapAuthorFromDynamoDb(result.Item); // Mapeia e retorna o item como AuthorDto
+
+        // Mapeia e retorna o item como AuthorDetailDto
+        return AuthorDetailDto.fromDynamoDB(result.Item); // Usa o método estático para converter os dados do DynamoDB
     }
+
+
+
+
 
     /**
      * Atualiza um autor existente no DynamoDB.
      * @param authorId ID do autor a ser atualizado.
      * @param updateAuthorDto DTO contendo os dados a serem atualizados do autor.
-     * @returns Uma Promise que resolve para um AuthorDto representando o autor atualizado.
+     * @returns Uma Promise que resolve para um AuthorDetailDto representando o autor atualizado.
      * @throws NotFoundException Se o autor não for encontrado.
      */
-    async update(authorId: string, updateAuthorDto: UpdateAuthorDto): Promise<AuthorDto> {
+    async update(authorId: string, updateAuthorDto: UpdateAuthorDto): Promise<AuthorDetailDto> {
         this.logger.log(`Atualizando autor com authorId: ${authorId}`); // Log de atualização de autor
         // Verifica se o autor existe antes de atualizar
         await this.findOne(authorId); // Garante que o autor existe antes de prosseguir
@@ -102,7 +128,7 @@ export class AuthorsService {
         };
 
         const result = await this.dynamoDbService.updateItem(params); // Executa a operação de atualização no DynamoDB
-        return this.mapAuthorFromDynamoDb(result.Attributes as Record<string, any>) as AuthorDto; // Mapeia e retorna o autor atualizado
+        return this.mapAuthorFromDynamoDb(result.Attributes as Record<string, any>) as AuthorDetailDto; // Mapeia e retorna o autor atualizado
     }
 
     /**
@@ -126,13 +152,13 @@ export class AuthorsService {
     }
 
     /**
-     * Mapeia um item retornado do DynamoDB para um AuthorDto.
-     * Converte o formato de dados do DynamoDB para o formato AuthorDto da aplicação.
+     * Mapeia um item retornado do DynamoDB para um AuthorDetailDto.
+     * Converte o formato de dados do DynamoDB para o formato AuthorDetailDto da aplicação.
      * @param item Item retornado do DynamoDB.
-     * @returns Um AuthorDto preenchido com os dados do item do DynamoDB.
+     * @returns Um AuthorDetailDto preenchido com os dados do item do DynamoDB.
      * @private
      */
-    private mapAuthorFromDynamoDb(item: Record<string, any>): AuthorDto {
+    private mapAuthorFromDynamoDb(item: Record<string, any>): AuthorDetailDto {
         return {
             authorId: item.authorId?.S, // Extrai e mapeia authorId (String)
             name: item.name?.S, // Extrai e mapeia name (String)
@@ -142,6 +168,6 @@ export class AuthorsService {
                 obj[key] = value?.S;
                 return obj;
             }, {}) as { [key: string]: string } || {},
-        } as AuthorDto;
+        } as AuthorDetailDto;
     }
 }
