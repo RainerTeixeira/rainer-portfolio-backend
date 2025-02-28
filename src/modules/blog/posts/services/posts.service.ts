@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
-import { CreatePostDto, UpdatePostDto, PostDto, FullPostDto } from '@src/modules/blog/posts/dto';
+import { CreatePostDto, UpdatePostDto, PostDetailDto, PostSummaryDto } from '@src/modules/blog/posts/dto';
 import { DynamoDbService } from '@src/services/dynamoDb.service';
 import {
   GetCommandInput,
@@ -42,7 +42,7 @@ export class PostsService {
    * @param createPostDto - Dados para criação do post.
    * @returns O post criado.
    */
-  async createPost(categoryIdSubcategoryId: string, createPostDto: CreatePostDto): Promise<PostDto> {
+  async createPost(categoryIdSubcategoryId: string, createPostDto: CreatePostDto): Promise<PostDetailDto> {
     this.logger.debug('Iniciando criação do post');
     try {
       const postId = uuidv4();
@@ -79,26 +79,33 @@ export class PostsService {
    * Busca os 20 posts mais recentes.
    * @returns Uma lista dos posts mais recentes.
    */
-  async getLatestPosts(): Promise<PostDto[]> {
+  async getLatestPosts(): Promise<PostSummaryDto[]> {
     this.logger.debug('Buscando os 20 posts mais recentes');
     const cacheKey = 'latest_posts';
-    const cachedPosts = await this.cacheManager.get<PostDto[]>(cacheKey);
+    const cachedPosts = await this.cacheManager.get<PostDetailDto[]>(cacheKey);
     if (cachedPosts) {
       this.logger.debug('Retornando posts do cache');
       return cachedPosts;
     }
 
+    // Defina a variável 'now' para obter a data e hora atual
+    const now = new Date().toISOString(); // Obtém a data e hora atual no formato ISO 8601
+
     const queryParams: QueryCommandInput = {
       TableName: this.tableName,
       IndexName: 'postsByPublishDate-index',
-      KeyConditionExpression: 'collection = :col',
+      KeyConditionExpression: '#st = :status AND #pd < :now',
+      ExpressionAttributeNames: {
+        '#st': 'status',
+        '#pd': 'publishDate',
+      },
       ExpressionAttributeValues: {
-        ':col': 'posts'
+        ':status': 'published',
+        ':now': now, // Agora 'now' está definida e pode ser usada aqui
       },
       ScanIndexForward: false,
-      Limit: 20
+      Limit: 20,
     };
-
     try {
       const result = await this.dynamoDbService.query(queryParams);
       const posts = result.Items ? result.Items.map(this.mapDynamoItemToPostDto) : [];
@@ -117,11 +124,11 @@ export class PostsService {
    * @param postId - Identificador do post.
    * @returns O post encontrado.
    */
-  async getPostById(categoryIdSubcategoryId: string, postId: string): Promise<PostDto> {
+  async getPostById(categoryIdSubcategoryId: string, postId: string): Promise<PostDetailDto> {
     this.logger.debug(`Iniciando busca do post ${postId}`);
     try {
       const cacheKey = `post_${categoryIdSubcategoryId}_${postId}`;
-      const cached = await this.cacheManager.get<PostDto>(cacheKey);
+      const cached = await this.cacheManager.get<PostDetailDto>(cacheKey);
       if (cached) return cached;
 
       const params: GetCommandInput = {
@@ -152,7 +159,7 @@ export class PostsService {
    * @param updatePostDto - Dados para atualização do post.
    * @returns O post atualizado.
    */
-  async updatePost(categoryIdSubcategoryId: string, postId: string, updatePostDto: UpdatePostDto): Promise<PostDto> {
+  async updatePost(categoryIdSubcategoryId: string, postId: string, updatePostDto: UpdatePostDto): Promise<PostDetailDto> {
     this.logger.debug(`Iniciando atualização do post ${postId}`);
     try {
       const updateExpression = this.dynamoDbService.buildUpdateExpression(updatePostDto);
@@ -168,7 +175,7 @@ export class PostsService {
 
       const result = await this.dynamoDbService.updateItem(params);
       await this.invalidateCache(categoryIdSubcategoryId, postId);
-      this.logger.debug(`Post ${postId atualizado com sucesso`);
+      this.logger.debug(`Post ${postId} atualizado com sucesso`);
       return this.mapDynamoItemToPostDto(result.Attributes);
     } catch (error) {
       this.logger.error(`Erro ao atualizar post: ${error.message}`);
@@ -194,7 +201,7 @@ export class PostsService {
 
       await this.dynamoDbService.deleteItem(params);
       await this.invalidateCache(categoryIdSubcategoryId, postId);
-      this.logger.debug(`Post ${postId deletado com sucesso`);
+      this.logger.debug(`Post ${postId} deletado com sucesso`);
     } catch (error) {
       this.logger.error(`Erro ao deletar post: ${error.message}`);
       throw new BadRequestException('Falha ao deletar post');
@@ -244,28 +251,11 @@ export class PostsService {
    * @param item - Item do DynamoDB.
    * @returns O DTO de post.
    */
-  private mapDynamoItemToPostDto(item: any): PostDto {
+  private mapDynamoItemToPostDto(item: any): PostDetailDto {
     return {
-      'categoryId#subcategoryId': item['categoryId#subcategoryId'],
-      postId: item.postId,
-      categoryId: item.categoryId,
-      subcategoryId: item.subcategoryId,
-      contentHTML: item.contentHTML,
-      authorId: item.authorId,
-      excerpt: item.excerpt,
-      featuredImageURL: item.featuredImageURL,
-      modifiedDate: item.modifiedDate,
-      publishDate: item.publishDate,
-      readingTime: Number(item.readingTime) || 0,
-      slug: item.slug,
-      status: item.status,
       title: item.title,
-      views: Number(item.views) || 0,
-      canonical: item.canonical,
-      description: item.description,
-      keywords: item.keywords,
-      collection: item.collection,
-      createdAt: item.createdAt
+      featuredImageURL: item.featuredImageURL,
+      description: item.description
     };
   }
 
@@ -278,7 +268,7 @@ export class PostsService {
   async getFullPostById(categoryIdSubcategoryId: string, postId: string): Promise<FullPostDto> {
     this.logger.debug(`Iniciando busca completa do post ${postId}`);
     const post = await this.getPostById(categoryIdSubcategoryId, postId);
-    this.logger.debug(`Post completo ${postId encontrado com sucesso`);
+    this.logger.debug(`Post completo ${postId} encontrado com sucesso`);
     return {
       ...post,
       metadata: {
@@ -287,5 +277,5 @@ export class PostsService {
       }
     };
   }
-    
+
 }
