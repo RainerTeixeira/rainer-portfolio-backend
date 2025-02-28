@@ -27,12 +27,25 @@ import { AuthorDto } from '@src/modules/blog/authors/dto/Author-detail.dto';
 
 const DEFAULT_CACHE_TTL = 300; // 5 minutos
 
+/**
+ * @Injectable()
+ *
+ * Serviço responsável pela lógica de negócio relacionada aos posts.
+ * Este serviço interage com o DynamoDB para realizar operações CRUD (Create, Read, Update, Delete)
+ * na tabela 'Posts' e utiliza cache para otimização.
+ */
 @Injectable()
 export class PostsService {
   private tableName = 'Posts';
   private readonly logger = new Logger(PostsService.name);
   private readonly cacheTTL: number;
 
+  /**
+   * Injeta as dependências necessárias:
+   * @param dynamoDbService Serviço para interagir com o DynamoDB.
+   * @param authorsService Serviço para gerenciar autores, utilizado para obter informações do autor.
+   * @param cacheManager Gerenciador de cache para armazenar dados temporariamente.
+   */
   constructor(
     private readonly dynamoDbService: DynamoDbService,
     private readonly authorsService: AuthorsService,
@@ -43,35 +56,56 @@ export class PostsService {
   }
 
 
+
+
+
+
   /**
- * Cria um novo post utilizando apenas a DTO.
+ * Cria um novo post utilizando os dados do DTO.
  *
- * @param createPostDto - Dados para criação do post.
- * @returns O post criado como PostDetailDto.
+ * Antes de criar o post, verifica se o autor informado já existe:
+ * - Se o autor existir, utiliza as informações existentes.
+ * - Se o autor não existir, cria um novo autor utilizando um DTO mínimo.
+ *
+ * @param createPostDto Dados para criação do post.
+ * @returns Uma Promise que resolve para um PostDetailDto representando o post criado.
+ * @throws BadRequestException Caso ocorra alguma falha na criação do post.
  */
   async createPost(createPostDto: CreatePostDto): Promise<PostDetailDto> {
     this.logger.debug('Iniciando criação do post');
     try {
       // Concatena categoryId e subcategoryId para formar a chave de partição
       const categoryIdSubcategoryId = `${createPostDto.categoryId}#${createPostDto.subcategoryId}`;
-      // Gera um ID único para o post (chave de classificação)
+      // Gera o postId, que é a chave de classificação
       const postId = uuidv4();
 
-      // Recupera informações do autor utilizando cache para otimização
-      // Caso o autor não seja encontrado, o método já lança NotFoundException
-      const author = await this.getAuthorWithCache(createPostDto.authorId);
+      // Verifica se o autor já existe; se não, cria um novo autor.
+      let author;
+      try {
+        author = await this.authorsService.getAuthorById(createPostDto.authorId);
+      } catch (error) {
+        if (error instanceof NotFoundException) {
+          // Autor não encontrado: cria um novo autor com dados mínimos
+          // OBS: Adapte os campos obrigatórios do CreateAuthorDto conforme sua implementação.
+          const newAuthorDto = {
+            authorId: createPostDto.authorId,
+            name: 'Autor Padrão',
+          };
+          author = await this.authorsService.create(newAuthorDto);
+        } else {
+          throw error;
+        }
+      }
 
-      // Constrói o item a ser armazenado no DynamoDB
+      // Monta o item que será salvo no DynamoDB, combinando os dados do DTO com metadados adicionais
       const item = {
         'categoryId#subcategoryId': categoryIdSubcategoryId,
         postId,
-        collection: 'posts', // Campo usado para índices
-        createdAt: new Date().toISOString(), // Data/hora atual
+        collection: 'posts',
+        createdAt: new Date().toISOString(),
         ...createPostDto,
-        // Converte os campos numéricos para garantir o tipo correto
         readingTime: Number(createPostDto.readingTime) || 0,
         views: Number(createPostDto.views) || 0,
-        // Armazena o objeto do autor conforme a necessidade do domínio
         author,
       };
 
@@ -80,13 +114,12 @@ export class PostsService {
         Item: item,
       };
 
-      // Armazena o item no DynamoDB
+      // Salva o item no DynamoDB
       await this.dynamoDbService.putItem(params);
-      // Invalida cache relacionado ao post recém-criado
+      // Invalida o cache relacionado ao post recém-criado
       await this.invalidateCache(categoryIdSubcategoryId, postId);
       this.logger.debug('Post criado com sucesso');
 
-      // Mapeia o item armazenado para o DTO de retorno
       return this.mapDynamoItemToPostDto(item);
     } catch (error) {
       this.logger.error(`Erro ao criar post: ${error.message}`, error.stack);
@@ -101,10 +134,13 @@ export class PostsService {
 
 
 
+
+
   /**
-   * Busca os 20 posts mais recentes (publicados).
+   * Busca os 20 posts mais recentes que estão publicados.
    *
    * @returns Uma lista de posts como PostSummaryDto.
+   * @throws Error Caso ocorra alguma falha na consulta.
    */
   async getLatestPosts(): Promise<PostSummaryDto[]> {
     this.logger.debug('Buscando os 20 posts mais recentes');
@@ -117,7 +153,6 @@ export class PostsService {
 
     // Obtém a data/hora atual no formato ISO 8601 para comparação
     const now = new Date().toISOString();
-
     const queryParams: QueryCommandInput = {
       TableName: this.tableName,
       IndexName: 'postsByPublishDate-index',
@@ -130,15 +165,13 @@ export class PostsService {
         ':status': 'published',
         ':now': now,
       },
-      ScanIndexForward: false,
+      ScanIndexForward: false, // Ordena de forma decrescente
       Limit: 20,
     };
 
     try {
       const result = await this.dynamoDbService.query(queryParams);
-      const posts = result.Items
-        ? result.Items.map(this.mapDynamoItemToPostDto)
-        : [];
+      const posts = result.Items ? result.Items.map(this.mapDynamoItemToPostDto) : [];
       await this.cacheManager.set(cacheKey, posts, { ttl: this.cacheTTL });
       this.logger.debug(`Foram encontrados ${posts.length} posts`);
       return posts;
@@ -149,11 +182,12 @@ export class PostsService {
   }
 
   /**
-   * Busca um post pelo seu ID.
+   * Busca um post específico pelo seu ID.
    *
-   * @param categoryIdSubcategoryId - Identificador da categoria e subcategoria.
-   * @param postId - Identificador do post.
+   * @param categoryIdSubcategoryId Chave de partição formada por "categoryId#subcategoryId".
+   * @param postId Chave de classificação do post.
    * @returns O post encontrado como PostDetailDto.
+   * @throws NotFoundException Caso o post não seja encontrado.
    */
   async getPostById(
     categoryIdSubcategoryId: string,
@@ -177,9 +211,9 @@ export class PostsService {
       if (!result.Item)
         throw new NotFoundException('Post não encontrado');
 
-      // Aguarda a obtenção do post completo
+      // Obtém o post completo com todos os campos necessários
       const post = await this.getFullPostById(categoryIdSubcategoryId, postId);
-      await this.cacheManager.set(cacheKey, post, this.cacheTTL);
+      await this.cacheManager.set(cacheKey, post, { ttl: this.cacheTTL });
       this.logger.debug(`Post ${postId} encontrado com sucesso`);
       return post;
     } catch (error) {
@@ -191,10 +225,11 @@ export class PostsService {
   /**
    * Atualiza um post existente.
    *
-   * @param categoryIdSubcategoryId - Identificador da categoria e subcategoria.
-   * @param postId - Identificador do post.
-   * @param updatePostDto - Dados para atualização do post.
+   * @param categoryIdSubcategoryId Chave de partição formada por "categoryId#subcategoryId".
+   * @param postId Chave de classificação do post.
+   * @param updatePostDto Dados para atualização do post.
    * @returns O post atualizado como PostDetailDto.
+   * @throws BadRequestException Caso ocorra alguma falha na atualização.
    */
   async updatePost(
     categoryIdSubcategoryId: string,
@@ -203,9 +238,7 @@ export class PostsService {
   ): Promise<PostDetailDto> {
     this.logger.debug(`Iniciando atualização do post ${postId}`);
     try {
-      const updateExpression = this.dynamoDbService.buildUpdateExpression(
-        updatePostDto
-      );
+      const updateExpression = this.dynamoDbService.buildUpdateExpression(updatePostDto);
       const params: UpdateCommandInput = {
         TableName: this.tableName,
         Key: {
@@ -227,10 +260,12 @@ export class PostsService {
   }
 
   /**
-   * Deleta um post.
+   * Deleta um post do DynamoDB.
    *
-   * @param categoryIdSubcategoryId - Identificador da categoria e subcategoria.
-   * @param postId - Identificador do post.
+   * @param categoryIdSubcategoryId Chave de partição formada por "categoryId#subcategoryId".
+   * @param postId Chave de classificação do post.
+   * @returns void.
+   * @throws BadRequestException Caso ocorra alguma falha na deleção.
    */
   async deletePost(
     categoryIdSubcategoryId: string,
@@ -256,34 +291,10 @@ export class PostsService {
   }
 
   /**
-   * Busca um autor utilizando cache.
+   * Invalida o cache relacionado a um post específico.
    *
-   * @param authorId - Identificador do autor.
-   * @returns O autor encontrado como AuthorDto.
-   */
-  private async getAuthorWithCache(authorId: string): Promise<AuthorDetailDto> {
-    const cacheKey = `author_${authorId}`;
-    const cached = await this.cacheManager.get<AuthorDetailDto>(cacheKey);
-    if (cached) {
-      return cached;
-    }
-
-    // Consulta o serviço de authors (pode ser uma chamada ao DynamoDB ou repositório)
-    const author = await this.authorsService.getAuthorById(authorId);
-    if (!author) {
-      this.logger.error(`Autor não encontrado: ${authorId}`);
-      throw new NotFoundException('Autor não encontrado');
-    }
-
-    await this.cacheManager.set(cacheKey, author, this.cacheTTL);
-    return author;
-  }
-
-  /**
-   * Invalida o cache para um post específico.
-   *
-   * @param categoryIdSubcategoryId - Identificador da categoria e subcategoria.
-   * @param postId - Identificador do post.
+   * @param categoryIdSubcategoryId Chave de partição formada por "categoryId#subcategoryId".
+   * @param postId Chave de classificação do post.
    */
   private async invalidateCache(
     categoryIdSubcategoryId: string,
@@ -302,10 +313,10 @@ export class PostsService {
   }
 
   /**
-   * Mapeia um item do DynamoDB para um DTO de post (detalhado ou resumo).
+   * Mapeia um item do DynamoDB para um DTO de post resumido.
    *
-   * @param item - Item retornado do DynamoDB.
-   * @returns O DTO de post (PostDetailDto).
+   * @param item Item retornado do DynamoDB.
+   * @returns Um PostDetailDto com os dados essenciais do post.
    */
   private mapDynamoItemToPostDto(item: any): PostDetailDto {
     return {
@@ -318,24 +329,33 @@ export class PostsService {
   /**
    * Mapeia um item do DynamoDB para um DTO de post detalhado.
    *
-   * @param item - Item retornado do DynamoDB.
-   * @returns O DTO de post detalhado (PostDetailDto).
+   * @param item Item retornado do DynamoDB.
+   * @returns Um PostDetailDto com todos os dados do post.
    */
   private mapDynamoItemToPostDetailDto(item: any): PostDetailDto {
-    // Aqui você pode mapear todos os campos relevantes do item para o DTO
     return {
       title: item.title,
       featuredImageURL: item.featuredImageURL,
       description: item.description,
+      contentHTML: item.contentHTML,
+      authorId: item.authorId,
+      canonical: item.canonical,
+      keywords: item.keywords,
+      readingTime: item.readingTime ? Number(item.readingTime) : 0,
+      views: item.views ? Number(item.views) : 0,
+      slug: item.slug,
+      status: item.status,
+      modifiedDate: item.modifiedDate,
     };
   }
 
   /**
    * Busca um post completo pelo seu ID.
    *
-   * @param categoryIdSubcategoryId - Identificador da categoria e subcategoria.
-   * @param postId - Identificador do post.
-   * @returns O post completo encontrado (PostDetailDto) com todos os campos mapeados.
+   * @param categoryIdSubcategoryId Chave de partição formada por "categoryId#subcategoryId".
+   * @param postId Chave de classificação do post.
+   * @returns O post completo encontrado como PostDetailDto.
+   * @throws NotFoundException Caso o post não seja encontrado.
    */
   async getFullPostById(
     categoryIdSubcategoryId: string,
@@ -362,11 +382,9 @@ export class PostsService {
 
       // Mapeia o item retornado para o DTO PostDetailDto com todos os campos definidos
       const postDetailDto: PostDetailDto = {
-        // Campos herdados de PostSummaryDto (ex.: title, featuredImageURL, description)
         title: result.Item.title,
         featuredImageURL: result.Item.featuredImageURL,
         description: result.Item.description,
-        // Campos exclusivos de PostDetailDto
         contentHTML: result.Item.contentHTML,
         authorId: result.Item.authorId,
         canonical: result.Item.canonical,
@@ -386,9 +404,4 @@ export class PostsService {
       throw new NotFoundException('Post não encontrado');
     }
   }
-
-
-
-
-
 }
