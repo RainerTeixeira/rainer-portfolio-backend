@@ -23,7 +23,7 @@ import {
 } from '@aws-sdk/lib-dynamodb';
 import { AuthorsService } from '@src/modules/blog/authors/services/authors.service';
 import { v4 as uuidv4 } from 'uuid';
-import { AuthorDto } from '../authors/dto';
+import { AuthorDto } from '@src/modules/blog/authors/dto/Author-detail.dto';
 
 const DEFAULT_CACHE_TTL = 300; // 5 minutos
 
@@ -55,20 +55,25 @@ export class PostsService {
   ): Promise<PostDetailDto> {
     this.logger.debug('Iniciando criação do post');
     try {
-      const postId = uuidv4();
-      // Recupera informações do autor, utilizando cache para otimização
+      const postId = uuidv4(); // Gera um ID único para o post
+
+      // Recupera informações do autor utilizando cache para otimização
+      // Caso o autor não seja encontrado, o método já lança NotFoundException
       const author = await this.getAuthorWithCache(createPostDto.authorId);
 
-      // Constrói o item a ser armazenado no DynamoDB
+      // Constrói o item a ser armazenado no DynamoDB, incluindo os dados do autor
       const item = {
         'categoryId#subcategoryId': categoryIdSubcategoryId,
         postId,
         collection: 'posts', // Campo usado para índices
-        createdAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(), // Data/hora atual
         ...createPostDto,
-        // Converte para tipos numéricos, se necessário
+        // Garante que os campos numéricos sejam convertidos corretamente
         readingTime: Number(createPostDto.readingTime) || 0,
         views: Number(createPostDto.views) || 0,
+        // Você pode optar por armazenar apenas o authorId ou o objeto completo,
+        // conforme a necessidade do seu domínio. Exemplo armazenando o objeto completo:
+        author,
       };
 
       const params: PutCommandInput = {
@@ -79,15 +84,17 @@ export class PostsService {
       await this.dynamoDbService.putItem(params);
       await this.invalidateCache(categoryIdSubcategoryId, postId);
       this.logger.debug('Post criado com sucesso');
+
+      // Aqui, o mapeamento pode incluir os dados do post que deseja retornar,
+      // inclusive o author, se necessário.
       return this.mapDynamoItemToPostDto(item);
     } catch (error) {
-      this.logger.error(
-        `Erro ao criar post: ${error.message}`,
-        error.stack
-      );
+      this.logger.error(`Erro ao criar post: ${error.message}`, error.stack);
       throw new BadRequestException('Falha ao criar post');
     }
   }
+
+
 
   /**
    * Busca os 20 posts mais recentes (publicados).
@@ -249,19 +256,22 @@ export class PostsService {
    * @param authorId - Identificador do autor.
    * @returns O autor encontrado como AuthorDto.
    */
-  private async getAuthorWithCache(authorId: string): Promise<AuthorDto> {
-    try {
-      const cacheKey = `author_${authorId}`;
-      const cached = await this.cacheManager.get<AuthorDto>(cacheKey);
-      if (cached) return cached;
+  private async getAuthorWithCache(authorId: string): Promise<AuthorDetailDto> {
+    const cacheKey = `author_${authorId}`;
+    const cached = await this.cacheManager.get<AuthorDetailDto>(cacheKey);
+    if (cached) {
+      return cached;
+    }
 
-      const author = await this.authorsService.getAuthorById(authorId);
-      await this.cacheManager.set(cacheKey, author, this.cacheTTL);
-      return author;
-    } catch (error) {
+    // Consulta o serviço de authors (pode ser uma chamada ao DynamoDB ou repositório)
+    const author = await this.authorsService.getAuthorById(authorId);
+    if (!author) {
       this.logger.error(`Autor não encontrado: ${authorId}`);
       throw new NotFoundException('Autor não encontrado');
     }
+
+    await this.cacheManager.set(cacheKey, author, this.cacheTTL);
+    return author;
   }
 
   /**

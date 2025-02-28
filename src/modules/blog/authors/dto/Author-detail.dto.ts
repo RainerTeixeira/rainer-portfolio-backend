@@ -1,8 +1,11 @@
-// src/modules/blog/authors/dto/create-author.dto.ts
+// src/modules/blog/authors/dto/author-detail.dto.ts
 import { IsString, IsOptional } from 'class-validator';
 import { IsSocialProof } from './Social-proof-validator.dto';
 
-export class CreateAuthorDto {
+export class AuthorDetailDto {
+    @IsString()
+    authorId: string;
+
     @IsString()
     name: string;
 

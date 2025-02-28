@@ -1,9 +1,9 @@
 import { DynamoDbService } from '@src/services/dynamoDb.service'; // Importa o serviço DynamoDbService
 import { Injectable, NotFoundException, Logger } from '@nestjs/common'; // Importa Injectable, NotFoundException e Logger do NestJS
 import { UpdateCommandInput } from '@aws-sdk/lib-dynamodb'; // Importa UpdateCommandInput do AWS SDK for DynamoDB
-import { CreateAuthorDto } from '@src/modules/blog/authors/dto/create-author.dto'; // Importa DTO para criação de autor
-import { UpdateAuthorDto } from '@src/modules/blog/authors/dto/update-author.dto'; // Importa DTO para atualização de autor
-import { AuthorDto } from '@src/modules/blog/authors/dto/author.dto'; // Importa DTO para representação de autor
+import { CreateAuthorDto } from '@src/modules/blog/authors/dto/Create-author.dto'; // Importa DTO para criação de autor
+import { UpdateAuthorDto } from '@src/modules/blog/authors/dto/Update-author.dto'; // Importa DTO para atualização de autor
+import { AuthorDto } from '@src/modules/blog/authors/dto/Author-detail.dto'; // Importa DTO para representação de autor
 
 /**
  * @Injectable()
