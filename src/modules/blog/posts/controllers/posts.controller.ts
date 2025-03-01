@@ -13,6 +13,7 @@ import {
   HttpException,
   HttpStatus,
   NotFoundException,
+  UseInterceptors,
 } from '@nestjs/common';
 import { PostsService } from '../services/posts.service';
 import {
@@ -23,8 +24,10 @@ import {
   BlogSummaryDto,
   PostContentDto,
 } from '../dto';
+import { ResponseInterceptor } from '../../../../interceptors/response.interceptor';
 
 @Controller('posts')
+@UseInterceptors(ResponseInterceptor)
 export class PostsController {
   private readonly logger = new Logger(PostsController.name);
 
