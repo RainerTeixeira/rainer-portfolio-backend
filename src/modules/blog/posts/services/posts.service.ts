@@ -27,6 +27,7 @@ import {
   UpdateCommandInput,
   DeleteCommandInput,
 } from '@aws-sdk/lib-dynamodb';
+import { CacheClear } from '../../../../common/decorators/cache-clear.decorator';
 
 @Injectable()
 export class PostsService {
@@ -43,6 +44,7 @@ export class PostsService {
    * @param createPostDto - Dados para criação do post.
    * @returns O post criado.
    */
+  @CacheClear(['posts:*', 'post-details:*'])
   async createPost(createPostDto: CreatePostDto): Promise<PostDetailDto> {
     try {
       const compositeKey = `${createPostDto.categoryId}#${createPostDto.subcategoryId}`;
@@ -185,6 +187,7 @@ export class PostsService {
    * @param updatePostDto - Dados para atualização do post.
    * @returns O post atualizado.
    */
+  @CacheClear(['posts:*', 'post-details:*'])
   async updatePost(
     postId: string,
     updatePostDto: UpdatePostDto
@@ -216,6 +219,7 @@ export class PostsService {
    * Deleta um post.
    * @param postId - Identificador do post.
    */
+  @CacheClear(['posts:*', 'post-details:*'])
   async deletePost(postId: string): Promise<void> {
     try {
       const post = await this.getPostById(postId);
