@@ -7,6 +7,8 @@ import {
   Param,
   Delete,
   ParseUUIDPipe,
+  ParseIntPipe,
+  Query,
   Logger,
   HttpException,
   HttpStatus,
@@ -20,34 +22,24 @@ import {
   PostSummaryDto,
   BlogSummaryDto,
   PostContentDto,
-  PostOperationResponseDto,
-  CategoryStatsDto,
-  SeoMetadataDto,
 } from '../dto';
 
 @Controller('posts')
 export class PostsController {
   private readonly logger = new Logger(PostsController.name);
 
-  constructor(private readonly postsService: PostsService) { }
+  constructor(private readonly postsService: PostsService) {}
 
   /**
    * Cria um novo post.
    *
-   * @param categoryIdSubcategoryId - Identificador da categoria e subcategoria.
    * @param createPostDto - Dados para criação do post.
    * @returns O post criado como PostDetailDto.
    */
-  @Post('categories/:categoryIdSubcategoryId/posts')
-  async create(
-    @Param('categoryIdSubcategoryId') categoryIdSubcategoryId: string,
-    @Body() createPostDto: CreatePostDto
-  ): Promise<PostDetailDto> {
+  @Post()
+  async create(@Body() createPostDto: CreatePostDto): Promise<PostDetailDto> {
     try {
-      return await this.postsService.createPost(
-        categoryIdSubcategoryId,
-        createPostDto
-      );
+      return await this.postsService.createPost(createPostDto);
     } catch (error) {
       return this.handleError('Erro ao criar post', error);
     }
@@ -68,45 +60,68 @@ export class PostsController {
   }
 
   /**
-   * Busca um post do blog pelo seu ID.
-   * Nota: Não é aplicado ParseUUIDPipe para o parâmetro postId nesta rota.
+   * Listagem paginada de posts.
    *
-   * @param categoryIdSubcategoryId - Identificador da categoria e subcategoria.
-   * @param postId - Identificador do post.
-   * @returns O post encontrado como PostDetailDto.
+   * @param page - Número da página.
+   * @param limit - Limite de posts por página.
+   * @returns Uma lista paginada de resumos dos posts e o total de posts.
    */
-  @Get('blog/:categoryIdSubcategoryId/:postId')
-  async findOneBlogPost(
-    @Param('categoryIdSubcategoryId') categoryIdSubcategoryId: string,
-    @Param('postId') postId: string
-  ): Promise<PostDetailDto> {
+  @Get('blog/posts')
+  async getPaginatedPosts(
+    @Query('page', ParseIntPipe) page: number = 1,
+    @Query('limit', ParseIntPipe) limit: number = 10
+  ): Promise<{ data: PostSummaryDto[]; total: number }> {
     try {
-      return await this.postsService.getPostById(
-        categoryIdSubcategoryId,
-        postId
-      );
+      return await this.postsService.getPaginatedPosts(page, limit);
     } catch (error) {
-      return this.handleError('Erro ao buscar post', error);
+      return this.handleError('Erro ao listar posts paginados', error);
+    }
+  }
+
+  /**
+   * Busca de posts com filtros.
+   *
+   * @param query - Termo de busca.
+   * @param categoryId - Identificador da categoria (opcional).
+   * @returns Uma lista de resumos dos posts que correspondem aos filtros.
+   */
+  @Get('blog/search')
+  async searchPosts(
+    @Query('q') query: string,
+    @Query('category') categoryId?: string
+  ): Promise<PostSummaryDto[]> {
+    try {
+      return await this.postsService.searchPosts(query, categoryId);
+    } catch (error) {
+      return this.handleError('Erro ao buscar posts', error);
+    }
+  }
+
+  /**
+   * Busca o conteúdo completo de um post pelo slug.
+   *
+   * @param slug - Slug do post.
+   * @returns O conteúdo completo do post com dados relacionados.
+   */
+  @Get('blog/:slug/full')
+  async getFullPostContent(@Param('slug') slug: string): Promise<PostContentDto> {
+    try {
+      return await this.postsService.getFullPostContentBySlug(slug);
+    } catch (error) {
+      return this.handleError('Erro ao buscar conteúdo completo do post', error);
     }
   }
 
   /**
    * Busca um post pelo seu ID.
    *
-   * @param categoryIdSubcategoryId - Identificador da categoria e subcategoria.
    * @param postId - Identificador do post (validação com ParseUUIDPipe).
    * @returns O post encontrado como PostDetailDto.
    */
-  @Get('categories/:categoryIdSubcategoryId/posts/:postId')
-  async findOne(
-    @Param('categoryIdSubcategoryId') categoryIdSubcategoryId: string,
-    @Param('postId', ParseUUIDPipe) postId: string
-  ): Promise<PostDetailDto> {
+  @Get(':postId')
+  async findOne(@Param('postId', ParseUUIDPipe) postId: string): Promise<PostDetailDto> {
     try {
-      return await this.postsService.getPostById(
-        categoryIdSubcategoryId,
-        postId
-      );
+      return await this.postsService.getPostById(postId);
     } catch (error) {
       return this.handleError('Erro ao buscar post', error);
     }
@@ -115,23 +130,17 @@ export class PostsController {
   /**
    * Atualiza um post existente.
    *
-   * @param categoryIdSubcategoryId - Identificador da categoria e subcategoria.
    * @param postId - Identificador do post (validação com ParseUUIDPipe).
    * @param updatePostDto - Dados para atualização do post.
    * @returns O post atualizado como PostDetailDto.
    */
-  @Patch('categories/:categoryIdSubcategoryId/posts/:postId')
+  @Patch(':postId')
   async update(
-    @Param('categoryIdSubcategoryId') categoryIdSubcategoryId: string,
     @Param('postId', ParseUUIDPipe) postId: string,
     @Body() updatePostDto: UpdatePostDto
   ): Promise<PostDetailDto> {
     try {
-      return await this.postsService.updatePost(
-        categoryIdSubcategoryId,
-        postId,
-        updatePostDto
-      );
+      return await this.postsService.updatePost(postId, updatePostDto);
     } catch (error) {
       return this.handleError('Erro ao atualizar post', error);
     }
@@ -140,16 +149,12 @@ export class PostsController {
   /**
    * Remove um post.
    *
-   * @param categoryIdSubcategoryId - Identificador da categoria e subcategoria.
    * @param postId - Identificador do post (validação com ParseUUIDPipe).
    */
-  @Delete('categories/:categoryIdSubcategoryId/posts/:postId')
-  async remove(
-    @Param('categoryIdSubcategoryId') categoryIdSubcategoryId: string,
-    @Param('postId', ParseUUIDPipe) postId: string
-  ): Promise<void> {
+  @Delete(':postId')
+  async remove(@Param('postId', ParseUUIDPipe) postId: string): Promise<void> {
     try {
-      await this.postsService.deletePost(categoryIdSubcategoryId, postId);
+      await this.postsService.deletePost(postId);
       return;
     } catch (error) {
       return this.handleError('Erro ao remover post', error);

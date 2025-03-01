@@ -527,4 +527,68 @@ export class PostsService {
       readingTime: item.readingTime,
     };
   }
+
+  /**
+   * Busca posts paginados.
+   * @param page - Número da página.
+   * @param limit - Limite de posts por página.
+   * @returns Uma lista paginada de resumos dos posts e o total de posts.
+   */
+  async getPaginatedPosts(page: number, limit: number): Promise<{ data: PostSummaryDto[]; total: number }> {
+    // Implementação fictícia para exemplo
+    const total = 100; // Total de posts (exemplo)
+    const data: PostSummaryDto[] = []; // Lista de posts paginados (exemplo)
+    return { data, total };
+  }
+
+  /**
+   * Busca posts com filtros.
+   * @param query - Termo de busca.
+   * @param categoryId - Identificador da categoria (opcional).
+   * @returns Uma lista de resumos dos posts que correspondem aos filtros.
+   */
+  async searchPosts(query: string, categoryId?: string): Promise<PostSummaryDto[]> {
+    // Implementação fictícia para exemplo
+    const posts: PostSummaryDto[] = []; // Lista de posts filtrados (exemplo)
+    return posts;
+  }
+
+  /**
+   * Busca o conteúdo completo de um post pelo slug.
+   * @param slug - Slug do post.
+   * @returns O conteúdo completo do post com dados relacionados.
+   */
+  async getFullPostContentBySlug(slug: string): Promise<PostContentDto> {
+    // Implementação fictícia para exemplo
+    const post: PostContentDto = {
+      // Dados do post (exemplo)
+      postId: '1',
+      categoryId: '1',
+      subcategoryId: '1',
+      title: 'Post Title',
+      contentHTML: '<p>Content</p>',
+      authorId: '1',
+      slug,
+      featuredImageURL: 'https://example.com/image.jpg',
+      description: 'Description',
+      publishDate: new Date().toISOString(),
+      readingTime: 5,
+      views: 100,
+      status: 'published',
+      tags: ['tag1'],
+      keywords: ['keyword1'],
+      canonical: 'https://example.com/post',
+      relatedPosts: [],
+      metadata: {
+        seo: {
+          title: 'SEO Title',
+          description: 'SEO Description',
+          keywords: 'keyword1, keyword2',
+          canonical: 'https://example.com/post',
+        },
+        readingTime: 5,
+      },
+    };
+    return post;
+  }
 }
