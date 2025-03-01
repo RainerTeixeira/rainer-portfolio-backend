@@ -18,7 +18,12 @@ import {
   UpdatePostDto,
   PostDetailDto,
   PostSummaryDto,
-} from '../dto'; // Importação correta das DTOs
+  BlogSummaryDto,
+  PostContentDto,
+  PostOperationResponseDto,
+  CategoryStatsDto,
+  SeoMetadataDto,
+} from '../dto';
 
 @Controller('posts')
 export class PostsController {

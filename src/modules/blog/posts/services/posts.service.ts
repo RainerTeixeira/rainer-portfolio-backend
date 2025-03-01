@@ -15,6 +15,9 @@ import {
   BlogSummaryDto,
   PostContentDto,
   PostSummaryDto,
+  PostOperationResponseDto,
+  CategoryStatsDto,
+  SeoMetadataDto,
 } from '../dto';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -239,8 +242,23 @@ export class PostsService {
    * @param postId - Identificador do post.
    * @returns O post encontrado.
    */
-  private async getPostById(postId: string): Promise<any> {
-    // Implementação da busca por ID
+  private async getPostById(postId: string): Promise<PostDetailDto> {
+    try {
+      const params: GetCommandInput = {
+        TableName: this.tableName,
+        Key: { postId },
+      };
+
+      const result = await this.dynamoDbService.getItem(params);
+      if (!result.Item) {
+        throw new NotFoundException('Post não encontrado');
+      }
+
+      return this.mapToDetailDto(result.Item);
+    } catch (error) {
+      this.logger.error(`Erro ao buscar post por ID: ${error.message}`);
+      throw new NotFoundException('Post não encontrado');
+    }
   }
 
   /**
@@ -250,15 +268,57 @@ export class PostsService {
    * @returns Uma lista de posts relacionados.
    */
   private async getRelatedPosts(categoryId: string, excludePostId: string): Promise<PostSummaryDto[]> {
-    // Implementação de posts relacionados
+    try {
+      const params: QueryCommandInput = {
+        TableName: this.tableName,
+        IndexName: 'categoryId-index', // Supondo que exista um índice secundário global em categoryId
+        KeyConditionExpression: '#categoryId = :categoryId AND postId <> :excludePostId',
+        ExpressionAttributeNames: {
+          '#categoryId': 'categoryId',
+        },
+        ExpressionAttributeValues: {
+          ':categoryId': categoryId,
+          ':excludePostId': excludePostId,
+        },
+        Limit: 5,
+      };
+
+      const result = await this.dynamoDbService.query(params);
+      return result.Items.map(item => this.mapToSummaryDto(item));
+    } catch (error) {
+      this.logger.error(`Erro ao buscar posts relacionados: ${error.message}`);
+      throw new BadRequestException('Falha ao carregar posts relacionados');
+    }
   }
 
   /**
    * Busca estatísticas de categorias.
    * @returns Uma lista de estatísticas de categorias.
    */
-  private async getCategoriesStats(): Promise<any[]> {
-    // Implementação de estatísticas de categorias
+  private async getCategoriesStats(): Promise<CategoryStatsDto[]> {
+    try {
+      // Implementação fictícia para exemplo
+      const categoriesStats: CategoryStatsDto[] = [
+        {
+          id: 'category1',
+          name: 'Categoria 1',
+          postCount: 10,
+          latestPost: {
+            postId: 'post1',
+            title: 'Post 1',
+            featuredImage: 'https://example.com/image1.jpg',
+            publishDate: new Date().toISOString(),
+            readingTime: 5,
+          },
+        },
+        // Adicione mais categorias conforme necessário
+      ];
+
+      return categoriesStats;
+    } catch (error) {
+      this.logger.error(`Erro ao buscar estatísticas de categorias: ${error.message}`);
+      throw new BadRequestException('Falha ao carregar estatísticas de categorias');
+    }
   }
 
   /**
@@ -269,7 +329,27 @@ export class PostsService {
    * @returns Uma lista de posts resumidos.
    */
   private async queryPostsByCategory(categoryId: string, page: number, limit: number): Promise<PostSummaryDto[]> {
-    // Implementação da query por categoria
+    try {
+      const params: QueryCommandInput = {
+        TableName: this.tableName,
+        IndexName: 'categoryId-index', // Supondo que exista um índice secundário global em categoryId
+        KeyConditionExpression: '#categoryId = :categoryId',
+        ExpressionAttributeNames: {
+          '#categoryId': 'categoryId',
+        },
+        ExpressionAttributeValues: {
+          ':categoryId': categoryId,
+        },
+        Limit: limit,
+        ExclusiveStartKey: page > 1 ? { categoryId, postId: `page${page - 1}` } : undefined,
+      };
+
+      const result = await this.dynamoDbService.query(params);
+      return result.Items.map(item => this.mapToSummaryDto(item));
+    } catch (error) {
+      this.logger.error(`Erro ao buscar posts por categoria: ${error.message}`);
+      throw new BadRequestException('Falha ao carregar posts por categoria');
+    }
   }
 
   /**
@@ -280,7 +360,27 @@ export class PostsService {
    * @returns Uma lista de posts resumidos.
    */
   private async queryPostsBySubcategory(subcategoryId: string, page: number, limit: number): Promise<PostSummaryDto[]> {
-    // Implementação da query por subcategoria
+    try {
+      const params: QueryCommandInput = {
+        TableName: this.tableName,
+        IndexName: 'subcategoryId-index', // Supondo que exista um índice secundário global em subcategoryId
+        KeyConditionExpression: '#subcategoryId = :subcategoryId',
+        ExpressionAttributeNames: {
+          '#subcategoryId': 'subcategoryId',
+        },
+        ExpressionAttributeValues: {
+          ':subcategoryId': subcategoryId,
+        },
+        Limit: limit,
+        ExclusiveStartKey: page > 1 ? { subcategoryId, postId: `page${page - 1}` } : undefined,
+      };
+
+      const result = await this.dynamoDbService.query(params);
+      return result.Items.map(item => this.mapToSummaryDto(item));
+    } catch (error) {
+      this.logger.error(`Erro ao buscar posts por subcategoria: ${error.message}`);
+      throw new BadRequestException('Falha ao carregar posts por subcategoria');
+    }
   }
 
   /**
@@ -288,8 +388,29 @@ export class PostsService {
    * @param post - Post para o qual os metadados serão gerados.
    * @returns Metadados SEO.
    */
-  private generateSeoMetadata(post: PostDetailDto) {
-    // Implementação da geração de metadados SEO
+  private generateSeoMetadata(post: PostDetailDto): SeoMetadataDto {
+    return {
+      title: post.title,
+      description: post.description,
+      keywords: post.keywords.join(', '),
+      canonical: post.canonical,
+      og: {
+        type: 'article',
+        image: post.featuredImageURL,
+        publishedTime: post.publishDate,
+      },
+      structuredData: {
+        '@context': 'https://schema.org',
+        '@type': 'BlogPosting',
+        headline: post.title,
+        image: post.featuredImageURL,
+        datePublished: post.publishDate,
+        author: {
+          '@type': 'Person',
+          name: 'Autor do Post', // Substitua pelo nome real do autor
+        },
+      },
+    };
   }
 
   /**
@@ -298,7 +419,9 @@ export class PostsService {
    * @returns Tempo de leitura em minutos.
    */
   private calculateReadingTime(content: string): number {
-    // Implementação do cálculo de tempo de leitura
+    const wordsPerMinute = 200; // Média de palavras lidas por minuto
+    const textLength = content.split(/\s+/).length; // Contagem de palavras
+    return Math.ceil(textLength / wordsPerMinute);
   }
 
   /**
@@ -306,8 +429,10 @@ export class PostsService {
    * @param compositeKey - Chave composta do post.
    * @param postId - Identificador do post.
    */
-  private async refreshRelatedCaches(compositeKey: string, postId: string) {
-    // Implementação da invalidação de cache
+  private async refreshRelatedCaches(compositeKey: string, postId: string): Promise<void> {
+    // Implementação fictícia para exemplo
+    await this.cacheManager.del(`post_${postId}`);
+    await this.cacheManager.del(`category_${compositeKey}`);
   }
 
   /**
@@ -316,7 +441,24 @@ export class PostsService {
    * @returns DTO de detalhe de post.
    */
   private mapToDetailDto(item: any): PostDetailDto {
-    // Implementação do mapeamento para DTO
+    return {
+      postId: item.postId,
+      categoryId: item.categoryId,
+      subcategoryId: item.subcategoryId,
+      title: item.title,
+      contentHTML: item.contentHTML,
+      authorId: item.authorId,
+      slug: item.slug,
+      featuredImageURL: item.featuredImageURL,
+      description: item.description,
+      publishDate: item.publishDate,
+      readingTime: item.readingTime,
+      views: item.views,
+      status: item.status,
+      tags: item.tags,
+      keywords: item.keywords,
+      canonical: item.canonical,
+    };
   }
 
   /**
@@ -325,7 +467,9 @@ export class PostsService {
    * @returns Expressão de atualização.
    */
   private buildUpdateExpression(updateData: UpdatePostDto): string {
-    // Implementação da construção da expressão de atualização
+    const updateFields = Object.keys(updateData).filter(key => key !== 'postId');
+    const updateExpression = `SET ${updateFields.map(field => `#${field} = :${field}`).join(', ')}`;
+    return updateExpression;
   }
 
   /**
@@ -334,6 +478,53 @@ export class PostsService {
    * @returns Dados sanitizados.
    */
   private sanitizePostData(postData: CreatePostDto | UpdatePostDto): any {
-    // Implementação da sanitização dos dados
+    const sanitizedData = { ...postData };
+    delete sanitizedData.postId; // Remover postId se existir
+    return sanitizedData;
+  }
+
+  /**
+   * Busca os 20 posts mais recentes.
+   * @returns Uma lista de resumos dos posts.
+   */
+  async getLatestPosts(): Promise<PostSummaryDto[]> {
+    try {
+      const params: QueryCommandInput = {
+        TableName: this.tableName,
+        IndexName: 'postsByPublishDate-index', // Supondo que exista um índice secundário global em publishDate
+        KeyConditionExpression: '#status = :status AND #publishDate < :currentDate',
+        ExpressionAttributeNames: {
+          '#status': 'status',
+          '#publishDate': 'publishDate',
+        },
+        ExpressionAttributeValues: {
+          ':status': 'published',
+          ':currentDate': new Date().toISOString(),
+        },
+        ScanIndexForward: false, // Ordenação decrescente
+        Limit: 20,
+      };
+
+      const result = await this.dynamoDbService.query(params);
+      return result.Items.map(item => this.mapToSummaryDto(item));
+    } catch (error) {
+      this.logger.error(`Erro ao buscar posts mais recentes: ${error.message}`);
+      throw new BadRequestException('Falha ao carregar posts mais recentes');
+    }
+  }
+
+  /**
+   * Mapeia um item para um DTO de resumo de post.
+   * @param item - Item a ser mapeado.
+   * @returns DTO de resumo de post.
+   */
+  private mapToSummaryDto(item: any): PostSummaryDto {
+    return {
+      postId: item.postId,
+      title: item.title,
+      featuredImage: item.featuredImageURL,
+      publishDate: item.publishDate,
+      readingTime: item.readingTime,
+    };
   }
 }
