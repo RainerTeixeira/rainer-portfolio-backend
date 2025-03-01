@@ -35,6 +35,11 @@ export class PostsService {
     @Inject(CACHE_MANAGER) private cacheManager: Cache
   ) { }
 
+  /**
+   * Cria um novo post.
+   * @param createPostDto - Dados para criação do post.
+   * @returns O post criado.
+   */
   async createPost(createPostDto: CreatePostDto): Promise<PostDetailDto> {
     try {
       const compositeKey = `${createPostDto.categoryId}#${createPostDto.subcategoryId}`;
@@ -62,6 +67,10 @@ export class PostsService {
     }
   }
 
+  /**
+   * Busca o resumo do blog.
+   * @returns O resumo do blog.
+   */
   async getBlogSummary(): Promise<BlogSummaryDto> {
     const cacheKey = 'blog_summary';
     try {
@@ -91,6 +100,11 @@ export class PostsService {
     }
   }
 
+  /**
+   * Busca o conteúdo completo de um post.
+   * @param postId - Identificador do post.
+   * @returns O conteúdo completo do post.
+   */
   async getFullPostContent(postId: string): Promise<PostContentDto> {
     try {
       const post = await this.getPostById(postId);
@@ -110,6 +124,13 @@ export class PostsService {
     }
   }
 
+  /**
+   * Busca posts por categoria.
+   * @param categoryId - Identificador da categoria.
+   * @param page - Número da página.
+   * @param limit - Limite de posts por página.
+   * @returns Uma lista de posts resumidos.
+   */
   async getPostsByCategory(
     categoryId: string,
     page: number,
@@ -129,6 +150,13 @@ export class PostsService {
     }
   }
 
+  /**
+   * Busca posts por subcategoria.
+   * @param subcategoryId - Identificador da subcategoria.
+   * @param page - Número da página.
+   * @param limit - Limite de posts por página.
+   * @returns Uma lista de posts resumidos.
+   */
   async getPostsBySubcategory(
     subcategoryId: string,
     page: number,
@@ -148,6 +176,12 @@ export class PostsService {
     }
   }
 
+  /**
+   * Atualiza um post existente.
+   * @param postId - Identificador do post.
+   * @param updatePostDto - Dados para atualização do post.
+   * @returns O post atualizado.
+   */
   async updatePost(
     postId: string,
     updatePostDto: UpdatePostDto
@@ -175,6 +209,10 @@ export class PostsService {
     }
   }
 
+  /**
+   * Deleta um post.
+   * @param postId - Identificador do post.
+   */
   async deletePost(postId: string): Promise<void> {
     try {
       const post = await this.getPostById(postId);
@@ -195,46 +233,106 @@ export class PostsService {
   }
 
   // Métodos auxiliares...
+
+  /**
+   * Busca um post pelo seu ID.
+   * @param postId - Identificador do post.
+   * @returns O post encontrado.
+   */
   private async getPostById(postId: string): Promise<any> {
     // Implementação da busca por ID
   }
 
+  /**
+   * Busca posts relacionados.
+   * @param categoryId - Identificador da categoria.
+   * @param excludePostId - Identificador do post a ser excluído.
+   * @returns Uma lista de posts relacionados.
+   */
   private async getRelatedPosts(categoryId: string, excludePostId: string): Promise<PostSummaryDto[]> {
     // Implementação de posts relacionados
   }
 
+  /**
+   * Busca estatísticas de categorias.
+   * @returns Uma lista de estatísticas de categorias.
+   */
   private async getCategoriesStats(): Promise<any[]> {
     // Implementação de estatísticas de categorias
   }
 
+  /**
+   * Busca posts por categoria.
+   * @param categoryId - Identificador da categoria.
+   * @param page - Número da página.
+   * @param limit - Limite de posts por página.
+   * @returns Uma lista de posts resumidos.
+   */
   private async queryPostsByCategory(categoryId: string, page: number, limit: number): Promise<PostSummaryDto[]> {
     // Implementação da query por categoria
   }
 
+  /**
+   * Busca posts por subcategoria.
+   * @param subcategoryId - Identificador da subcategoria.
+   * @param page - Número da página.
+   * @param limit - Limite de posts por página.
+   * @returns Uma lista de posts resumidos.
+   */
   private async queryPostsBySubcategory(subcategoryId: string, page: number, limit: number): Promise<PostSummaryDto[]> {
     // Implementação da query por subcategoria
   }
 
+  /**
+   * Gera metadados SEO para um post.
+   * @param post - Post para o qual os metadados serão gerados.
+   * @returns Metadados SEO.
+   */
   private generateSeoMetadata(post: PostDetailDto) {
     // Implementação da geração de metadados SEO
   }
 
+  /**
+   * Calcula o tempo de leitura de um conteúdo.
+   * @param content - Conteúdo para o qual o tempo de leitura será calculado.
+   * @returns Tempo de leitura em minutos.
+   */
   private calculateReadingTime(content: string): number {
     // Implementação do cálculo de tempo de leitura
   }
 
+  /**
+   * Atualiza os caches relacionados a um post.
+   * @param compositeKey - Chave composta do post.
+   * @param postId - Identificador do post.
+   */
   private async refreshRelatedCaches(compositeKey: string, postId: string) {
     // Implementação da invalidação de cache
   }
 
+  /**
+   * Mapeia um item para um DTO de detalhe de post.
+   * @param item - Item a ser mapeado.
+   * @returns DTO de detalhe de post.
+   */
   private mapToDetailDto(item: any): PostDetailDto {
     // Implementação do mapeamento para DTO
   }
 
+  /**
+   * Constrói a expressão de atualização para um post.
+   * @param updateData - Dados de atualização.
+   * @returns Expressão de atualização.
+   */
   private buildUpdateExpression(updateData: UpdatePostDto): string {
     // Implementação da construção da expressão de atualização
   }
 
+  /**
+   * Sanitiza os dados de um post.
+   * @param postData - Dados do post a serem sanitizados.
+   * @returns Dados sanitizados.
+   */
   private sanitizePostData(postData: CreatePostDto | UpdatePostDto): any {
     // Implementação da sanitização dos dados
   }
