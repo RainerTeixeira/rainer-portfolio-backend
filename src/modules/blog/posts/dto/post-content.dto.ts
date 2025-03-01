@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { PostDetailDto } from './post-detail.dto';
-import { PostSummaryDto } from './blog-summary.dto';
+import { PostSummaryDto } from './post-summary.dto';
 import { SeoMetadataDto } from './seo-metadata.dto';
 
 export class PostContentDto extends PostDetailDto {

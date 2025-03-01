@@ -488,29 +488,11 @@ export class PostsService {
    * @returns Uma lista de resumos dos posts.
    */
   async getLatestPosts(): Promise<PostSummaryDto[]> {
-    try {
-      const params: QueryCommandInput = {
-        TableName: this.tableName,
-        IndexName: 'postsByPublishDate-index', // Supondo que exista um índice secundário global em publishDate
-        KeyConditionExpression: '#status = :status AND #publishDate < :currentDate',
-        ExpressionAttributeNames: {
-          '#status': 'status',
-          '#publishDate': 'publishDate',
-        },
-        ExpressionAttributeValues: {
-          ':status': 'published',
-          ':currentDate': new Date().toISOString(),
-        },
-        ScanIndexForward: false, // Ordenação decrescente
-        Limit: 20,
-      };
-
-      const result = await this.dynamoDbService.query(params);
-      return result.Items.map(item => this.mapToSummaryDto(item));
-    } catch (error) {
-      this.logger.error(`Erro ao buscar posts mais recentes: ${error.message}`);
-      throw new BadRequestException('Falha ao carregar posts mais recentes');
-    }
+    return this.getCachedOrQuery(
+      'latest_posts',
+      () => this.queryLatestPostsFromDb(),
+      300 // 5 minutos
+    );
   }
 
   /**
@@ -590,5 +572,43 @@ export class PostsService {
       },
     };
     return post;
+  }
+
+  /**
+   * Cache hierárquico para listagens.
+   * @param cacheKey - Chave do cache.
+   * @param queryFn - Função de consulta ao banco de dados.
+   * @param ttl - Tempo de vida do cache em segundos.
+   * @returns Resultado da consulta ou do cache.
+   */
+  private async getCachedOrQuery(
+    cacheKey: string,
+    queryFn: () => Promise<any>,
+    ttl: number
+  ): Promise<any> {
+    const cached = await this.cacheManager.get(cacheKey);
+    if (cached) return cached;
+
+    const result = await queryFn();
+    await this.cacheManager.set(cacheKey, result, ttl);
+    return result;
+  }
+
+  /**
+   * Pré-cache de conteúdo popular.
+   */
+  async warmUpPopularPostsCache(): Promise<void> {
+    const popularPosts = await this.dynamoDbService.query({
+      TableName: this.tableName,
+      IndexName: 'views-index',
+      Limit: 20,
+      ScanIndexForward: false
+    });
+
+    await Promise.all(
+      popularPosts.Items.map(post => 
+        this.cacheManager.set(`post_${post.slug}`, post, 3600)
+      )
+    );
   }
 }

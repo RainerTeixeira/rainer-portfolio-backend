@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { PostSummaryDto } from './blog-summary.dto';
+import { PostSummaryDto } from './post-summary.dto';
 import { IsUUID, IsString, IsNumber } from 'class-validator';
 
 export class CategoryStatsDto {

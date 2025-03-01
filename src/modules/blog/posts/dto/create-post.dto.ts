@@ -7,8 +7,12 @@ import {
   IsUrl,
   IsISO8601,
   IsUUID,
+  MaxLength,
+  Matches,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { SanitizeHTML } from 'path/to/sanitize-html.decorator';
+import { IsUniqueSlug } from 'path/to/is-unique-slug.decorator';
 
 export class CreatePostDto {
   @ApiProperty({
@@ -33,6 +37,8 @@ export class CreatePostDto {
   })
   @IsString()
   @IsNotEmpty()
+  @MaxLength(20000, { message: 'O conteúdo não pode exceder 20.000 caracteres' })
+  @SanitizeHTML() // Usar decorator personalizado para sanitização
   contentHTML: string;
 
   @ApiProperty({
@@ -57,6 +63,10 @@ export class CreatePostDto {
   })
   @IsString()
   @IsNotEmpty()
+  @Matches(/^[a-z0-9-]+$/, { 
+    message: 'Slug deve conter apenas letras minúsculas, números e hifens' 
+  })
+  @IsUniqueSlug() // Decorator personalizado para verificar unicidade
   slug: string;
 
   @ApiProperty({
