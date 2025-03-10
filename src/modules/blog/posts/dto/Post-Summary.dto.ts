@@ -1,48 +1,31 @@
-import {
-    IsString,
-    IsNotEmpty,
-    IsOptional,
-    IsNumber,
-    IsUrl,
-    IsISO8601,
-    IsUUID,
-} from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsString, IsUrl, IsArray, IsOptional } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class PostSummaryDto {
-    @ApiProperty({
-        description: 'ID único do post',
-        example: '550e8400-e29b-41d4-a716-446655440003',
-    })
-    @IsUUID()
-    postId: string;
-
-    @ApiProperty({
-        description: 'Título do post',
-        example: 'Título do Post',
-    })
+    @ApiProperty({ description: 'Título do post', example: 'Guia Definitivo: Construindo APIs Escaláveis com NestJS' })
     @IsString()
     title: string;
 
-    @ApiPropertyOptional({
-        description: 'URL da imagem destacada',
-        example: 'https://example.com/image.jpg',
-    })
+    @ApiProperty({ description: 'URL da imagem destacada', example: 'url-imagem-destaque-nestjs.jpg' })
     @IsUrl()
-    @IsOptional()
-    featuredImage?: string;
+    featuredImageURL: string;
 
-    @ApiProperty({
-        description: 'Data de publicação no formato ISO 8601',
-        example: '2024-01-01T12:00:00Z',
-    })
-    @IsISO8601()
-    publishDate: string;
+    @ApiProperty({ description: 'Descrição breve do post', example: 'Descubra como utilizar NestJS para desenvolver APIs escaláveis...' })
+    @IsString()
+    description: string;
 
-    @ApiProperty({
-        description: 'Tempo estimado de leitura em minutos',
-        example: 5,
-    })
-    @IsNumber()
-    readingTime: number;
+    // SEO Metadata
+    @ApiProperty({ description: 'URL canônica do post', example: 'https://meusite.com/blog/guia-definitivo-apis-nestjs' })
+    @IsUrl()
+    canonical: string;
+
+    @ApiProperty({ description: 'Palavras-chave para SEO', example: ['API escalável', 'Backend seguro', 'NestJS', 'TypeScript'] })
+    @IsArray()
+    @IsString({ each: true })
+    keywords: string[];
+
+    @ApiProperty({ description: 'Tags associadas ao post', example: ['APIs', 'Backend', 'NestJS', 'TypeScript'] })
+    @IsArray()
+    @IsString({ each: true })
+    tags: string[];
 }
