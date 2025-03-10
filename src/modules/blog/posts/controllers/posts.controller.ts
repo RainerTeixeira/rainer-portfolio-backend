@@ -6,9 +6,9 @@ import {
   Patch,
   Param,
   Delete,
-  ParseUUIDPipe,
-  ParseIntPipe,
   Query,
+  ParseIntPipe,
+  ParseUUIDPipe,
   Logger,
   HttpException,
   HttpStatus,
@@ -17,12 +17,10 @@ import {
 } from '@nestjs/common';
 import { PostsService } from '../services/posts.service';
 import {
-  CreatePostDto,
-  UpdatePostDto,
-  PostDetailDto,
-  PostSummaryDto,
-  BlogSummaryDto,
+  PostCreateDto,
+  PostUpdateDto,
   PostContentDto,
+  PostSummaryDto,
 } from '../dto';
 import { ResponseInterceptor } from '../../../../interceptors/response.interceptor';
 
@@ -31,158 +29,101 @@ import { ResponseInterceptor } from '../../../../interceptors/response.intercept
 export class PostsController {
   private readonly logger = new Logger(PostsController.name);
 
-  constructor(private readonly postsService: PostsService) {}
+  constructor(private readonly postsService: PostsService) { }
 
   /**
-   * Cria um novo post.
-   *
-   * @param createPostDto - Dados para criação do post.
-   * @returns O post criado como PostDetailDto.
+   * Método auxiliar para centralizar o tratamento de erros.
+   */
+  private async execute<T>(
+    operation: () => Promise<T>,
+    errorMessage: string,
+  ): Promise<T> {
+    try {
+      return await operation();
+    } catch (error) {
+      this.logger.error(`${errorMessage}: ${error.message}`, error.stack);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      const status =
+        error instanceof NotFoundException
+          ? HttpStatus.NOT_FOUND
+          : HttpStatus.INTERNAL_SERVER_ERROR;
+      throw new HttpException(errorMessage, status);
+    }
+  }
+
+  /**
+   * GET /posts
+   * Retorna uma lista paginada de posts no formato resumido (PostSummaryDto).
+   * Por padrão, retorna 10 posts por página.
+   * Aceita o query parameter ?page para navegação.
+   */
+  @Get()
+  async getPosts(
+    @Query('page', ParseIntPipe) page: number = 1,
+  ): Promise<{ data: PostSummaryDto[]; total: number }> {
+    const limit = 10; // Define limit here or in config
+    return this.execute(
+      () => this.postsService.getPaginatedPosts(page, limit),
+      'Erro ao listar posts',
+    );
+  }
+
+  /**
+   * POST /posts
+   * Cria um novo post utilizando PostCreateDto e retorna o post completo (PostContentDto).
    */
   @Post()
-  async create(@Body() createPostDto: CreatePostDto): Promise<PostDetailDto> {
-    try {
-      return await this.postsService.createPost(createPostDto);
-    } catch (error) {
-      return this.handleError('Erro ao criar post', error);
-    }
+  async createPost(
+    @Body() postCreateDto: PostCreateDto,
+  ): Promise<PostContentDto> {
+    return this.execute(
+      () => this.postsService.createPost(postCreateDto),
+      'Erro ao criar post',
+    );
   }
 
   /**
-   * Retorna os 20 posts mais recentes do blog.
-   *
-   * @returns Uma lista de resumos dos posts (PostSummaryDto).
+   * GET /posts/slug/:slug
+   * Retorna um post completo (PostContentDto) com base no slug.
    */
-  @Get('blog')
-  async findAllBlogPosts(): Promise<PostSummaryDto[]> {
-    try {
-      return await this.postsService.getLatestPosts();
-    } catch (error) {
-      return this.handleError('Erro ao listar posts do blog', error);
-    }
+  @Get('slug/:slug')
+  async getPostBySlug(
+    @Param('slug') slug: string,
+  ): Promise<PostContentDto> {
+    return this.execute(
+      () => this.postsService.getPostBySlug(slug),
+      'Erro ao buscar post pelo slug',
+    );
   }
 
   /**
-   * Listagem paginada de posts.
-   *
-   * @param page - Número da página.
-   * @param limit - Limite de posts por página.
-   * @returns Uma lista paginada de resumos dos posts e o total de posts.
+   * PATCH /posts/:id
+   * Permite atualização parcial dos dados do post utilizando PostUpdateDto.
    */
-  @Get('blog/posts')
-  async getPaginatedPosts(
-    @Query('page', ParseIntPipe) page: number = 1,
-    @Query('limit', ParseIntPipe) limit: number = 10
-  ): Promise<{ data: PostSummaryDto[]; total: number }> {
-    try {
-      return await this.postsService.getPaginatedPosts(page, limit);
-    } catch (error) {
-      return this.handleError('Erro ao listar posts paginados', error);
-    }
+  @Patch(':id')
+  async updatePost(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() postUpdateDto: PostUpdateDto,
+  ): Promise<PostContentDto> {
+    return this.execute(
+      () => this.postsService.updatePost(id, postUpdateDto),
+      'Erro ao atualizar post',
+    );
   }
 
   /**
-   * Busca de posts com filtros.
-   *
-   * @param query - Termo de busca.
-   * @param categoryId - Identificador da categoria (opcional).
-   * @returns Uma lista de resumos dos posts que correspondem aos filtros.
+   * DELETE /posts/:id
+   * Remove o post pelo seu identificador.
    */
-  @Get('blog/search')
-  async searchPosts(
-    @Query('q') query: string,
-    @Query('category') categoryId?: string
-  ): Promise<PostSummaryDto[]> {
-    try {
-      return await this.postsService.searchPosts(query, categoryId);
-    } catch (error) {
-      return this.handleError('Erro ao buscar posts', error);
-    }
-  }
-
-  /**
-   * Busca o conteúdo completo de um post pelo slug.
-   *
-   * @param slug - Slug do post.
-   * @returns O conteúdo completo do post com dados relacionados.
-   */
-  @Get('blog/:slug/full')
-  async getFullPostContent(@Param('slug') slug: string): Promise<PostContentDto> {
-    try {
-      return await this.postsService.getFullPostContentBySlug(slug);
-    } catch (error) {
-      return this.handleError('Erro ao buscar conteúdo completo do post', error);
-    }
-  }
-
-  /**
-   * Busca um post pelo seu ID.
-   *
-   * @param postId - Identificador do post (validação com ParseUUIDPipe).
-   * @returns O post encontrado como PostDetailDto.
-   */
-  @Get(':postId')
-  async findOne(@Param('postId', ParseUUIDPipe) postId: string): Promise<PostDetailDto> {
-    try {
-      return await this.postsService.getPostById(postId);
-    } catch (error) {
-      return this.handleError('Erro ao buscar post', error);
-    }
-  }
-
-  /**
-   * Atualiza um post existente.
-   *
-   * @param postId - Identificador do post (validação com ParseUUIDPipe).
-   * @param updatePostDto - Dados para atualização do post.
-   * @returns O post atualizado como PostDetailDto.
-   */
-  @Patch(':postId')
-  async update(
-    @Param('postId', ParseUUIDPipe) postId: string,
-    @Body() updatePostDto: UpdatePostDto
-  ): Promise<PostDetailDto> {
-    try {
-      return await this.postsService.updatePost(postId, updatePostDto);
-    } catch (error) {
-      return this.handleError('Erro ao atualizar post', error);
-    }
-  }
-
-  /**
-   * Remove um post.
-   *
-   * @param postId - Identificador do post (validação com ParseUUIDPipe).
-   */
-  @Delete(':postId')
-  async remove(@Param('postId', ParseUUIDPipe) postId: string): Promise<void> {
-    try {
-      await this.postsService.deletePost(postId);
-      return;
-    } catch (error) {
-      return this.handleError('Erro ao remover post', error);
-    }
-  }
-
-  /**
-   * Manipula e loga erros ocorridos nos métodos do controlador.
-   *
-   * @param message - Mensagem de erro customizada.
-   * @param error - Objeto de erro.
-   * @returns Lança uma exceção HTTP com status apropriado.
-   */
-  private handleError(message: string, error: any): any {
-    this.logger.error(`${message}: ${error.message}`, error.stack);
-
-    if (error instanceof HttpException) {
-      throw error;
-    }
-
-    const status =
-      error instanceof NotFoundException
-        ? HttpStatus.NOT_FOUND
-        : HttpStatus.INTERNAL_SERVER_ERROR;
-
-    throw new HttpException(message, status);
+  @Delete(':id')
+  async deletePost(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<void> {
+    return this.execute(
+      () => this.postsService.deletePost(id),
+      'Erro ao remover post',
+    );
   }
 }
