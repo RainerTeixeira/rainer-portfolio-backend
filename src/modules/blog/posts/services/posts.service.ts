@@ -8,13 +8,10 @@ import {
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { DynamoDbService } from '../../../../services/dynamoDb.service';
-import {
-  PostCreateDto,
-  PostUpdateDto,
-  PostContentDto,
-  PostSummaryDto,
-  PostDetailDto,
-} from '../dto';
+import { PostCreateDto } from '@src/modules/blog/posts/dto/post-create.dto';
+import { PostUpdateDto } from '@src/modules/blog/posts/dto/post-update.dto';
+import { PostContentDto } from '@src/modules/blog/posts/dto/post-content.dto';
+import { PostSummaryDto } from '@src/modules/blog/posts/dto/post-summary.dto';
 import { v4 as uuidv4 } from 'uuid';
 import {
   GetCommandInput,
@@ -48,16 +45,16 @@ export class PostsService {
     try {
       const compositeKey = `${createPostDto.categoryId}#${createPostDto.subcategoryId}`;
       const postId = uuidv4();
-      const publishDate = new Date().toISOString(); // Generate publish date on creation
+      const publishDate = new Date().toISOString(); // Gera a data de publicação na criação
 
       const postItem = {
         'categoryId#subcategoryId': compositeKey,
         postId,
         createdAt: new Date().toISOString(),
         modifiedDate: new Date().toISOString(),
-        publishDate: publishDate, // Add publishDate
-        views: 0, // Initialize views
-        status: 'draft', // Default status to draft, adjust as needed
+        publishDate: publishDate, // Adiciona a data de publicação
+        views: 0, // Inicializa visualizações
+        status: 'draft', // Status padrão como rascunho, ajuste conforme necessário
         ...this.sanitizePostData(createPostDto),
       };
 
@@ -68,7 +65,7 @@ export class PostsService {
 
       await this.dynamoDbService.putItem(params);
       await this.refreshRelatedCaches(compositeKey, postId);
-      return this.mapToContentDto(postItem); // Map to PostContentDto as requested
+      return this.mapToContentDto(postItem); // Mapeia para PostContentDto conforme solicitado
     } catch (error) {
       this.logger.error(`Erro ao criar post: ${error.message}`);
       throw new BadRequestException('Falha ao criar post');
@@ -86,7 +83,7 @@ export class PostsService {
     return this.getCachedOrQuery(
       cacheKey,
       () => this.queryPaginatedPostsFromDb(page, limit),
-      300, // Cache for 5 minutes
+      300, // Cache por 5 minutos
     );
   }
 
@@ -96,24 +93,23 @@ export class PostsService {
    * @returns O post completo do post como PostContentDto.
    */
   async getPostBySlug(slug: string): Promise<PostContentDto> {
-    // In a real scenario, you would likely need a GSI to efficiently query by slug
-    // For now, this is a placeholder implementation assuming slug is part of post data.
-    // Consider adding a GSI for 'slug' if frequent lookup by slug is needed.
-    const dummyPost: PostContentDto = { // Replace with actual logic to fetch by slug
-      title: 'Dummy Post Title',
+    // Em um cenário real, você provavelmente precisaria de um GSI para consultar eficientemente pelo slug
+    // Por enquanto, esta é uma implementação de placeholder assumindo que o slug faz parte dos dados do post.
+    // Considere adicionar um GSI para 'slug' se a consulta frequente por slug for necessária.
+    const dummyPost: PostContentDto = { // Substitua pela lógica real para buscar pelo slug
+      title: 'Título do Post Exemplo',
       slug: slug,
-      contentHTML: '<p>This is a dummy post content.</p>',
-      featuredImageURL: 'https://example.com/dummy-image.jpg',
-      keywords: ['dummy', 'post'],
+      contentHTML: '<p>Este é um conteúdo de post de exemplo.</p>',
+      featuredImageURL: 'https://example.com/exemplo-imagem.jpg',
+      keywords: ['exemplo', 'post'],
       publishDate: new Date().toISOString(),
       modifiedDate: new Date().toISOString(),
       readingTime: 3,
-      tags: ['dummy-tag'],
+      tags: ['exemplo-tag'],
       views: 50,
     };
-    return dummyPost; // Replace with actual database lookup and mapping
+    return dummyPost; // Substitua pela busca real no banco de dados e mapeamento
   }
-
 
   /**
    * Busca um post pelo seu ID.
@@ -147,8 +143,8 @@ export class PostsService {
   @CacheClear(['posts:*', 'post-details:*', 'latest_posts', 'paginated_posts:*'])
   async updatePost(postId: string, updatePostDto: PostUpdateDto): Promise<PostContentDto> {
     try {
-      const existingPost = await this.getPostById(postId); // Ensure getPostById retrieves item with composite key
-      const compositeKey = existingPost['categoryId#subcategoryId']; // Retrieve composite key from existing post
+      const existingPost = await this.getPostById(postId); // Garante que getPostById recupere o item com chave composta
+      const compositeKey = existingPost['categoryId#subcategoryId']; // Recupera a chave composta do post existente
 
       const updateParams: UpdateCommandInput = {
         TableName: this.tableName,
@@ -157,15 +153,14 @@ export class PostsService {
           postId: postId,
         },
         UpdateExpression: this.buildUpdateExpression(updatePostDto),
-        ExpressionAttributeNames: this.getUpdateExpressionAttributeNames(updatePostDto), // Generate names
-        ExpressionAttributeValues: this.getUpdateExpressionAttributeValues(updatePostDto), // Generate values
+        ExpressionAttributeNames: this.getUpdateExpressionAttributeNames(updatePostDto), // Gera nomes
+        ExpressionAttributeValues: this.getUpdateExpressionAttributeValues(updatePostDto), // Gera valores
         ReturnValues: 'ALL_NEW',
       };
 
-
       const result = await this.dynamoDbService.updateItem(updateParams);
       await this.refreshRelatedCaches(compositeKey, postId);
-      return this.mapToContentDto(result.Attributes); // Map to PostContentDto
+      return this.mapToContentDto(result.Attributes); // Mapeia para PostContentDto
     } catch (error) {
       this.logger.error(`Erro ao atualizar post: ${error.message}`);
       throw new BadRequestException('Falha ao atualizar post');
@@ -198,7 +193,6 @@ export class PostsService {
 
   // ────────────────────────── Métodos Auxiliares ──────────────────────────
 
-
   /**
    * Consulta para listagem paginada de posts do DynamoDB.
    * @param page - Número da página.
@@ -206,28 +200,26 @@ export class PostsService {
    * @returns Dados paginados e total de posts.
    */
   private async queryPaginatedPostsFromDb(page: number, limit: number): Promise<{ data: PostSummaryDto[]; total: number }> {
-    const startIndex = (page - 1) * limit; // Calculate start index for pagination - DynamoDB Scan doesn't directly support offset
+    const startIndex = (page - 1) * limit; // Calcula o índice inicial para paginação - DynamoDB Scan não suporta diretamente offset
     const scanParams: ScanCommandInput = {
       TableName: this.tableName,
-      Limit: limit, // Limit items per page
+      Limit: limit, // Limita itens por página
     };
 
     try {
-      const result = await this.dynamoDbService.scan(scanParams); // Use Scan for now - consider more efficient approaches for large datasets
+      const result = await this.dynamoDbService.scan(scanParams); // Usa Scan por enquanto - considere abordagens mais eficientes para grandes conjuntos de dados
       const items = result.Items || [];
-      const total = items.length; // Inefficient total calculation for Scan - for large datasets, consider a dedicated count mechanism
+      const total = items.length; // Cálculo ineficiente de total para Scan - para grandes conjuntos de dados, considere um mecanismo de contagem dedicado
 
-      const paginatedItems = items.slice(0, limit); // Apply limit after scan (Scan reads from start) -  for true pagination, use exclusiveStartKey and lastEvaluatedKey in subsequent requests.
+      const paginatedItems = items.slice(0, limit); // Aplica limite após scan (Scan lê desde o início) - para paginação verdadeira, use exclusiveStartKey e lastEvaluatedKey em solicitações subsequentes.
       const data = paginatedItems.map(item => this.mapToSummaryDto(item));
 
-
-      return { data, total }; // Returning total as items.length here is just for example. For real total count in DynamoDB with Scan, it's complex and inefficient.
+      return { data, total }; // Retorna total como items.length aqui apenas como exemplo. Para contagem total real no DynamoDB com Scan, é complexo e ineficiente.
     } catch (error) {
       this.logger.error(`Erro ao executar Scan paginado: ${error.message}`, error.stack);
-      return { data: [], total: 0 }; // Return empty data and total on error
+      return { data: [], total: 0 }; // Retorna dados vazios e total em caso de erro
     }
   }
-
 
   /**
    * Mapeia um item retornado do banco de dados para o DTO de detalhe do post.
@@ -272,10 +264,9 @@ export class PostsService {
       readingTime: item.readingTime,
       tags: item.tags,
       views: item.views,
-      // ... map other fields as needed based on your PostContentDto - adjust if you have more fields in PostContentDto
+      // ... mapeia outros campos conforme necessário com base no seu PostContentDto - ajuste se você tiver mais campos em PostContentDto
     };
   }
-
 
   /**
    * Mapeia um item retornado do banco de dados para o DTO de resumo do post.
@@ -287,7 +278,7 @@ export class PostsService {
       postId: item.postId,
       title: item.title,
       featuredImageURL: item.featuredImageURL,
-      description: item.description, // Assuming description is in your DynamoDB item
+      description: item.description, // Supondo que a descrição esteja no seu item do DynamoDB
       publishDate: item.publishDate,
       readingTime: item.readingTime,
     };
@@ -304,9 +295,9 @@ export class PostsService {
   }
 
   /**
-   * Gera ExpressionAttributeNames para update expression to avoid reserved words.
+   * Gera ExpressionAttributeNames para update expression para evitar palavras reservadas.
    * @param updateData - Dados para atualização.
-   * @returns ExpressionAttributeNames object.
+   * @returns Objeto ExpressionAttributeNames.
    */
   private getUpdateExpressionAttributeNames(updateData: PostUpdateDto): any {
     const attributeNames: any = {};
@@ -317,9 +308,9 @@ export class PostsService {
   }
 
   /**
-   * Gera ExpressionAttributeValues for update expression.
+   * Gera ExpressionAttributeValues para update expression.
    * @param updateData - Dados para atualização.
-   * @returns ExpressionAttributeValues object.
+   * @returns Objeto ExpressionAttributeValues.
    */
   private getUpdateExpressionAttributeValues(updateData: PostUpdateDto): any {
     const attributeValues: any = {};
@@ -328,7 +319,6 @@ export class PostsService {
     });
     return attributeValues;
   }
-
 
   /**
    * Sanitiza os dados do post, removendo campos que não devem ser enviados ao banco.
@@ -369,7 +359,7 @@ export class PostsService {
   private async refreshRelatedCaches(compositeKey: string, postId: string): Promise<void> {
     await this.cacheManager.del(`post_${postId}`);
     await this.cacheManager.del(`category_${compositeKey}`);
-    await this.cacheManager.del(this.latestPostsCacheKey); // Clear latest posts cache
-    await this.cacheManager.del(this.paginatedPostsCacheKeyPrefix); // Clear paginated posts cache prefix - consider more specific invalidation if needed.
+    await this.cacheManager.del(this.latestPostsCacheKey); // Limpa o cache dos posts mais recentes
+    await this.cacheManager.del(this.paginatedPostsCacheKeyPrefix); // Limpa o prefixo do cache de posts paginados - considere uma invalidação mais específica se necessário.
   }
 }

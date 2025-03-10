@@ -16,12 +16,10 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { PostsService } from '../services/posts.service';
-import {
-  PostCreateDto,
-  PostUpdateDto,
-  PostContentDto,
-  PostSummaryDto,
-} from '../dto';
+import { PostCreateDto } from '@src/modules/blog/posts/dto/post-create.dto';
+import { PostUpdateDto } from '@src/modules/blog/posts/dto/post-update.dto';
+import { PostContentDto } from '@src/modules/blog/posts/dto/post-content.dto';
+import { PostSummaryDto } from '@src/modules/blog/posts/dto/post-summary.dto';
 import { ResponseInterceptor } from '../../../../interceptors/response.interceptor';
 
 @Controller('posts')

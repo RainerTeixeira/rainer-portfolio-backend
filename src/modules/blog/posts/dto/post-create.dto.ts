@@ -42,3 +42,4 @@ export class PostCreateDto extends PostBaseDto {
   @IsString()
   @IsNotEmpty()
   authorId: string;
+}
