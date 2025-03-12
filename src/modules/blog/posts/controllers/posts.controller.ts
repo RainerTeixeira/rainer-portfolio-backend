@@ -22,7 +22,7 @@ import { PostContentDto } from '@src/modules/blog/posts/dto/post-content.dto';
 import { PostSummaryDto } from '@src/modules/blog/posts/dto/post-summary.dto';
 import { ResponseInterceptor } from '../../../../interceptors/response.interceptor';
 
-@Controller('posts')
+@Controller('blog/posts')
 @UseInterceptors(ResponseInterceptor)
 export class PostsController {
   private readonly logger = new Logger(PostsController.name);
@@ -36,8 +36,11 @@ export class PostsController {
     operation: () => Promise<T>,
     errorMessage: string,
   ): Promise<T> {
+    this.logger.debug(`Executando operação: ${errorMessage}`);
     try {
-      return await operation();
+      const result = await operation();
+      this.logger.verbose(`Operação concluída com sucesso: ${errorMessage}`);
+      return result;
     } catch (error) {
       this.logger.error(`${errorMessage}: ${error.message}`, error.stack);
       if (error instanceof HttpException) {
@@ -52,16 +55,15 @@ export class PostsController {
   }
 
   /**
-   * GET /posts
-   * Retorna uma lista paginada de posts no formato resumido (PostSummaryDto).
-   * Por padrão, retorna 10 posts por página.
-   * Aceita o query parameter ?page para navegação.
+   * GET /blog/posts
+   * Retorna uma lista paginada de posts.
    */
   @Get()
   async getPosts(
     @Query('page', ParseIntPipe) page: number = 1,
   ): Promise<{ data: PostSummaryDto[]; total: number }> {
-    const limit = 10; // Define limit here or in config
+    const limit = 10;
+    this.logger.debug(`Recebida requisição GET para listar posts. Página: ${page}`);
     return this.execute(
       () => this.postsService.getPaginatedPosts(page, limit),
       'Erro ao listar posts',
@@ -69,13 +71,14 @@ export class PostsController {
   }
 
   /**
-   * POST /posts
-   * Cria um novo post utilizando PostCreateDto e retorna o post completo (PostContentDto).
+   * POST /blog/posts
+   * Cria um novo post.
    */
   @Post()
   async createPost(
     @Body() postCreateDto: PostCreateDto,
   ): Promise<PostContentDto> {
+    this.logger.debug(`Recebida requisição POST para criação de post`);
     return this.execute(
       () => this.postsService.createPost(postCreateDto),
       'Erro ao criar post',
@@ -83,13 +86,14 @@ export class PostsController {
   }
 
   /**
-   * GET /posts/slug/:slug
-   * Retorna um post completo (PostContentDto) com base no slug.
+   * GET /blog/posts/:slug
+   * Retorna um post completo com base no slug.
    */
-  @Get('slug/:slug')
+  @Get(':slug')
   async getPostBySlug(
     @Param('slug') slug: string,
   ): Promise<PostContentDto> {
+    this.logger.debug(`Recebida requisição GET para post com slug: ${slug}`);
     return this.execute(
       () => this.postsService.getPostBySlug(slug),
       'Erro ao buscar post pelo slug',
@@ -97,14 +101,15 @@ export class PostsController {
   }
 
   /**
-   * PATCH /posts/:id
-   * Permite atualização parcial dos dados do post utilizando PostUpdateDto.
+   * PATCH /blog/posts/:id
+   * Atualiza parcialmente um post.
    */
   @Patch(':id')
   async updatePost(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() postUpdateDto: PostUpdateDto,
   ): Promise<PostContentDto> {
+    this.logger.debug(`Recebida requisição PATCH para atualizar post ID: ${id}`);
     return this.execute(
       () => this.postsService.updatePost(id, postUpdateDto),
       'Erro ao atualizar post',
@@ -112,13 +117,14 @@ export class PostsController {
   }
 
   /**
-   * DELETE /posts/:id
-   * Remove o post pelo seu identificador.
+   * DELETE /blog/posts/:id
+   * Remove um post.
    */
   @Delete(':id')
   async deletePost(
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<void> {
+    this.logger.debug(`Recebida requisição DELETE para remover post ID: ${id}`);
     return this.execute(
       () => this.postsService.deletePost(id),
       'Erro ao remover post',
