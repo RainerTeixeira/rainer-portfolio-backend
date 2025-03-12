@@ -37,6 +37,8 @@ export class PostsService {
 
   /**
    * Cria um novo post.
+   * @param createPostDto - Dados para criação do post.
+   * @returns O post criado como PostContentDto.
    */
   @CacheClear(['posts:*', 'post-details:*', 'latest_posts', 'paginated_posts:*'])
   async createPost(createPostDto: PostCreateDto): Promise<PostContentDto> {
@@ -75,6 +77,9 @@ export class PostsService {
 
   /**
    * Retorna uma listagem paginada de posts.
+   * @param page - Número da página.
+   * @param limit - Limite de posts por página.
+   * @returns Objeto com a lista de posts e o total de posts.
    */
   async getPaginatedPosts(page: number, limit: number): Promise<{ data: PostSummaryDto[]; total: number }> {
     const cacheKey = `${this.paginatedPostsCacheKeyPrefix}page:${page}_limit:${limit}`;
@@ -88,6 +93,8 @@ export class PostsService {
 
   /**
    * Retorna um post completo com base no slug.
+   * @param slug - Slug do post.
+   * @returns O post completo como PostContentDto.
    */
   async getPostBySlug(slug: string): Promise<PostContentDto> {
     this.logger.debug(`Buscando post pelo slug: ${slug}`);
@@ -109,6 +116,8 @@ export class PostsService {
 
   /**
    * Busca um post pelo seu ID.
+   * @param postId - Identificador do post.
+   * @returns O post encontrado como PostDetailDto.
    */
   async getPostById(postId: string): Promise<any> {
     this.logger.debug(`Buscando post pelo ID: ${postId}`);
@@ -132,6 +141,9 @@ export class PostsService {
 
   /**
    * Atualiza um post existente.
+   * @param postId - Identificador do post.
+   * @param updatePostDto - Dados para atualização do post.
+   * @returns O post atualizado como PostContentDto.
    */
   @CacheClear(['posts:*', 'post-details:*', 'latest_posts', 'paginated_posts:*'])
   async updatePost(postId: string, updatePostDto: PostUpdateDto): Promise<PostContentDto> {
@@ -165,6 +177,7 @@ export class PostsService {
 
   /**
    * Deleta um post.
+   * @param postId - Identificador do post.
    */
   @CacheClear(['posts:*', 'post-details:*', 'latest_posts', 'paginated_posts:*'])
   async deletePost(postId: string): Promise<void> {
@@ -191,6 +204,12 @@ export class PostsService {
 
   // ────────────────────────── Métodos Auxiliares ──────────────────────────
 
+  /**
+   * Consulta para listagem paginada de posts do DynamoDB.
+   * @param page - Número da página.
+   * @param limit - Limite por página.
+   * @returns Dados paginados e total de posts.
+   */
   private async queryPaginatedPostsFromDb(page: number, limit: number): Promise<{ data: PostSummaryDto[]; total: number }> {
     this.logger.debug(`Executando query para paginação. Página: ${page}, Limite: ${limit}`);
     const startIndex = (page - 1) * limit;
@@ -214,6 +233,11 @@ export class PostsService {
     }
   }
 
+  /**
+   * Mapeia um item retornado do banco de dados para o DTO de detalhe do post.
+   * @param item - Item retornado.
+   * @returns PostDetailDto.
+   */
   private mapToDetailDto(item: any): any {
     return {
       postId: item.postId,
@@ -235,6 +259,11 @@ export class PostsService {
     };
   }
 
+  /**
+   * Mapeia um item retornado do banco de dados para o DTO de conteúdo do post.
+   * @param item - Item retornado.
+   * @returns PostContentDto.
+   */
   private mapToContentDto(item: any): PostContentDto {
     return {
       title: item.title,
@@ -250,6 +279,11 @@ export class PostsService {
     };
   }
 
+  /**
+   * Mapeia um item retornado do banco de dados para o DTO de resumo do post.
+   * @param item - Item retornado.
+   * @returns PostSummaryDto.
+   */
   private mapToSummaryDto(item: any): PostSummaryDto {
     return {
       postId: item.postId,
@@ -261,11 +295,21 @@ export class PostsService {
     };
   }
 
+  /**
+   * Constrói a expressão de atualização para o comando de update no DynamoDB.
+   * @param updateData - Dados para atualização.
+   * @returns Expressão de atualização.
+   */
   private buildUpdateExpression(updateData: PostUpdateDto): string {
     const updateFields = Object.keys(updateData).filter(key => key !== 'postId');
     return `SET ${updateFields.map(field => `#${field} = :${field}`).join(', ')}`;
   }
 
+  /**
+   * Gera ExpressionAttributeNames para update expression para evitar palavras reservadas.
+   * @param updateData - Dados para atualização.
+   * @returns Objeto ExpressionAttributeNames.
+   */
   private getUpdateExpressionAttributeNames(updateData: PostUpdateDto): any {
     const attributeNames: any = {};
     Object.keys(updateData).filter(key => key !== 'postId').forEach(field => {
@@ -274,6 +318,11 @@ export class PostsService {
     return attributeNames;
   }
 
+  /**
+   * Gera ExpressionAttributeValues para update expression.
+   * @param updateData - Dados para atualização.
+   * @returns Objeto ExpressionAttributeValues.
+   */
   private getUpdateExpressionAttributeValues(updateData: PostUpdateDto): any {
     const attributeValues: any = {};
     Object.keys(updateData).filter(key => key !== 'postId').forEach(field => {
@@ -282,6 +331,11 @@ export class PostsService {
     return attributeValues;
   }
 
+  /**
+   * Sanitiza os dados do post, removendo campos que não devem ser enviados ao banco.
+   * @param postData - Dados do post.
+   * @returns Dados sanitizados.
+   */
   private sanitizePostData(postData: PostCreateDto | PostUpdateDto): any {
     const sanitizedData = { ...postData };
     delete sanitizedData.postId;
@@ -289,6 +343,13 @@ export class PostsService {
     return sanitizedData;
   }
 
+  /**
+   * Tenta recuperar um valor do cache. Caso não exista, executa a função de consulta e armazena o resultado.
+   * @param cacheKey - Chave do cache.
+   * @param queryFn - Função que realiza a consulta.
+   * @param ttl - Tempo de vida do cache em segundos.
+   * @returns O resultado da consulta.
+   */
   private async getCachedOrQuery(
     cacheKey: string,
     queryFn: () => Promise<any>,
@@ -306,6 +367,11 @@ export class PostsService {
     return result;
   }
 
+  /**
+   * Atualiza os caches relacionados a um post, removendo chaves antigas.
+   * @param compositeKey - Chave composta (categoria#subcategoria).
+   * @param postId - Identificador do post.
+   */
   private async refreshRelatedCaches(compositeKey: string, postId: string): Promise<void> {
     this.logger.debug(`Atualizando caches relacionados ao post ID: ${postId}`);
     await this.cacheManager.del(`post_${postId}`);

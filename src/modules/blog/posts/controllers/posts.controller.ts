@@ -1,3 +1,4 @@
+// PostsController.ts
 import {
   Controller,
   Get,
@@ -30,7 +31,10 @@ export class PostsController {
   constructor(private readonly postsService: PostsService) { }
 
   /**
-   * Método auxiliar para centralizar o tratamento de erros.
+   * Executa uma operação e lida com erros.
+   * @param operation - Função que realiza a operação.
+   * @param errorMessage - Mensagem de erro a ser lançada em caso de falha.
+   * @returns Resultado da operação.
    */
   private async execute<T>(
     operation: () => Promise<T>,
@@ -55,8 +59,9 @@ export class PostsController {
   }
 
   /**
-   * GET /blog/posts
-   * Retorna uma lista paginada de posts.
+   * Retorna uma listagem paginada de posts.
+   * @param page - Número da página.
+   * @returns Objeto com a lista de posts e o total de posts.
    */
   @Get()
   async getPosts(
@@ -71,8 +76,9 @@ export class PostsController {
   }
 
   /**
-   * POST /blog/posts
    * Cria um novo post.
+   * @param postCreateDto - Dados para criação do post.
+   * @returns O post criado como PostContentDto.
    */
   @Post()
   async createPost(
@@ -86,8 +92,9 @@ export class PostsController {
   }
 
   /**
-   * GET /blog/posts/:slug
    * Retorna um post completo com base no slug.
+   * @param slug - Slug do post.
+   * @returns O post completo como PostContentDto.
    */
   @Get(':slug')
   async getPostBySlug(
@@ -101,8 +108,10 @@ export class PostsController {
   }
 
   /**
-   * PATCH /blog/posts/:id
-   * Atualiza parcialmente um post.
+   * Atualiza um post existente.
+   * @param id - Identificador do post.
+   * @param postUpdateDto - Dados para atualização do post.
+   * @returns O post atualizado como PostContentDto.
    */
   @Patch(':id')
   async updatePost(
@@ -117,8 +126,8 @@ export class PostsController {
   }
 
   /**
-   * DELETE /blog/posts/:id
-   * Remove um post.
+   * Deleta um post.
+   * @param id - Identificador do post.
    */
   @Delete(':id')
   async deletePost(
