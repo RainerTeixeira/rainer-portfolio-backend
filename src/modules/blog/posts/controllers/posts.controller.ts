@@ -1,4 +1,3 @@
-// PostsController.ts
 import {
   Controller,
   Get,
@@ -31,22 +30,23 @@ export class PostsController {
   constructor(private readonly postsService: PostsService) { }
 
   /**
-   * Executa uma operação e lida com erros.
+   * Executa uma operação e lida com erros, registrando informações detalhadas.
    * @param operation - Função que realiza a operação.
-   * @param errorMessage - Mensagem de erro a ser lançada em caso de falha.
+   * @param errorMessage - Mensagem de erro a ser exibida e registrada.
    * @returns Resultado da operação.
    */
   private async execute<T>(
     operation: () => Promise<T>,
     errorMessage: string,
   ): Promise<T> {
-    this.logger.debug(`Executando operação: ${errorMessage}`);
+    this.logger.debug(`Iniciando operação: ${errorMessage}`);
     try {
       const result = await operation();
       this.logger.verbose(`Operação concluída com sucesso: ${errorMessage}`);
       return result;
     } catch (error) {
-      this.logger.error(`${errorMessage}: ${error.message}`, error.stack);
+      // Log detalhado do erro
+      this.logger.error(`${errorMessage}: ${error?.message}`, error?.stack);
       if (error instanceof HttpException) {
         throw error;
       }
@@ -54,14 +54,18 @@ export class PostsController {
         error instanceof NotFoundException
           ? HttpStatus.NOT_FOUND
           : HttpStatus.INTERNAL_SERVER_ERROR;
-      throw new HttpException(errorMessage, status);
+      // Propaga mais detalhes na exceção sem alterar a lógica existente
+      throw new HttpException(
+        { message: errorMessage, originalError: error?.message },
+        status,
+      );
     }
   }
 
   /**
    * Retorna uma listagem paginada de posts.
-   * @param page - Número da página.
-   * @returns Objeto com a lista de posts e o total de posts.
+   * @param page - Número da página (padrão é 1).
+   * @returns Objeto contendo a lista de posts e o total de posts.
    */
   @Get()
   async getPosts(
@@ -84,7 +88,7 @@ export class PostsController {
   async createPost(
     @Body() postCreateDto: PostCreateDto,
   ): Promise<PostContentDto> {
-    this.logger.debug(`Recebida requisição POST para criação de post`);
+    this.logger.debug('Recebida requisição POST para criação de post');
     return this.execute(
       () => this.postsService.createPost(postCreateDto),
       'Erro ao criar post',
@@ -109,7 +113,7 @@ export class PostsController {
 
   /**
    * Atualiza um post existente.
-   * @param id - Identificador do post.
+   * @param id - Identificador do post (UUID).
    * @param postUpdateDto - Dados para atualização do post.
    * @returns O post atualizado como PostContentDto.
    */
@@ -127,7 +131,7 @@ export class PostsController {
 
   /**
    * Deleta um post.
-   * @param id - Identificador do post.
+   * @param id - Identificador do post (UUID).
    */
   @Delete(':id')
   async deletePost(
