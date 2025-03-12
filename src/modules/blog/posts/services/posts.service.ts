@@ -36,7 +36,7 @@ export class PostsService {
   ) { }
 
   /**
-   * Cria um novo post.
+   * Cria um novo post no DynamoDB e atualiza os caches relacionados.
    * @param createPostDto - Dados para criação do post.
    * @returns O post criado como PostContentDto.
    */
@@ -70,8 +70,11 @@ export class PostsService {
       this.logger.verbose(`Post criado com sucesso, ID: ${postId}`);
       return this.mapToContentDto(postItem);
     } catch (error) {
-      this.logger.error(`Erro ao criar post: ${error.message}`, error.stack);
-      throw new BadRequestException('Falha ao criar post');
+      this.logger.error(`Erro ao criar post: ${error?.message}`, error?.stack);
+      throw new BadRequestException({
+        message: 'Falha ao criar post',
+        originalError: error?.message,
+      });
     }
   }
 
@@ -115,9 +118,10 @@ export class PostsService {
   }
 
   /**
-   * Busca um post pelo seu ID.
+   * Busca um post pelo seu ID no DynamoDB.
    * @param postId - Identificador do post.
-   * @returns O post encontrado como PostDetailDto.
+   * @returns O post encontrado como objeto de detalhe.
+   * @throws NotFoundException se o post não for encontrado.
    */
   async getPostById(postId: string): Promise<any> {
     this.logger.debug(`Buscando post pelo ID: ${postId}`);
@@ -134,13 +138,16 @@ export class PostsService {
       }
       return this.mapToDetailDto(result.Item);
     } catch (error) {
-      this.logger.error(`Erro ao buscar post por ID: ${error.message}`, error.stack);
-      throw new NotFoundException('Post não encontrado');
+      this.logger.error(`Erro ao buscar post por ID: ${error?.message}`, error?.stack);
+      throw new NotFoundException({
+        message: 'Post não encontrado',
+        originalError: error?.message,
+      });
     }
   }
 
   /**
-   * Atualiza um post existente.
+   * Atualiza um post existente no DynamoDB.
    * @param postId - Identificador do post.
    * @param updatePostDto - Dados para atualização do post.
    * @returns O post atualizado como PostContentDto.
@@ -170,13 +177,16 @@ export class PostsService {
       this.logger.verbose(`Post atualizado com sucesso, ID: ${postId}`);
       return this.mapToContentDto(result.Attributes);
     } catch (error) {
-      this.logger.error(`Erro ao atualizar post: ${error.message}`, error.stack);
-      throw new BadRequestException('Falha ao atualizar post');
+      this.logger.error(`Erro ao atualizar post: ${error?.message}`, error?.stack);
+      throw new BadRequestException({
+        message: 'Falha ao atualizar post',
+        originalError: error?.message,
+      });
     }
   }
 
   /**
-   * Deleta um post.
+   * Deleta um post do DynamoDB.
    * @param postId - Identificador do post.
    */
   @CacheClear(['posts:*', 'post-details:*', 'latest_posts', 'paginated_posts:*'])
@@ -197,18 +207,21 @@ export class PostsService {
       await this.refreshRelatedCaches(post['categoryId#subcategoryId'], postId);
       this.logger.verbose(`Post deletado com sucesso, ID: ${postId}`);
     } catch (error) {
-      this.logger.error(`Erro ao deletar post: ${error.message}`, error.stack);
-      throw new BadRequestException('Falha ao deletar post');
+      this.logger.error(`Erro ao deletar post: ${error?.message}`, error?.stack);
+      throw new BadRequestException({
+        message: 'Falha ao deletar post',
+        originalError: error?.message,
+      });
     }
   }
 
   // ────────────────────────── Métodos Auxiliares ──────────────────────────
 
   /**
-   * Consulta para listagem paginada de posts do DynamoDB.
+   * Executa uma consulta de paginação de posts no DynamoDB.
    * @param page - Número da página.
-   * @param limit - Limite por página.
-   * @returns Dados paginados e total de posts.
+   * @param limit - Limite de posts por página.
+   * @returns Objeto contendo os dados paginados e o total de posts.
    */
   private async queryPaginatedPostsFromDb(page: number, limit: number): Promise<{ data: PostSummaryDto[]; total: number }> {
     this.logger.debug(`Executando query para paginação. Página: ${page}, Limite: ${limit}`);
@@ -228,15 +241,15 @@ export class PostsService {
       this.logger.verbose(`Query paginada concluída. Total de itens: ${total}`);
       return { data, total };
     } catch (error) {
-      this.logger.error(`Erro ao executar Scan paginado: ${error.message}`, error.stack);
+      this.logger.error(`Erro ao executar Scan paginado: ${error?.message}`, error?.stack);
       return { data: [], total: 0 };
     }
   }
 
   /**
-   * Mapeia um item retornado do banco de dados para o DTO de detalhe do post.
-   * @param item - Item retornado.
-   * @returns PostDetailDto.
+   * Mapeia um item do DynamoDB para o DTO de detalhe do post.
+   * @param item - Item retornado do banco.
+   * @returns Objeto com os detalhes do post.
    */
   private mapToDetailDto(item: any): any {
     return {
@@ -260,9 +273,9 @@ export class PostsService {
   }
 
   /**
-   * Mapeia um item retornado do banco de dados para o DTO de conteúdo do post.
-   * @param item - Item retornado.
-   * @returns PostContentDto.
+   * Mapeia um item do DynamoDB para o DTO de conteúdo do post.
+   * @param item - Item retornado do banco.
+   * @returns Objeto do tipo PostContentDto.
    */
   private mapToContentDto(item: any): PostContentDto {
     return {
@@ -280,9 +293,9 @@ export class PostsService {
   }
 
   /**
-   * Mapeia um item retornado do banco de dados para o DTO de resumo do post.
-   * @param item - Item retornado.
-   * @returns PostSummaryDto.
+   * Mapeia um item do DynamoDB para o DTO de resumo do post.
+   * @param item - Item retornado do banco.
+   * @returns Objeto do tipo PostSummaryDto.
    */
   private mapToSummaryDto(item: any): PostSummaryDto {
     return {
@@ -297,8 +310,8 @@ export class PostsService {
 
   /**
    * Constrói a expressão de atualização para o comando de update no DynamoDB.
-   * @param updateData - Dados para atualização.
-   * @returns Expressão de atualização.
+   * @param updateData - Dados para atualização do post.
+   * @returns A string com a expressão de atualização.
    */
   private buildUpdateExpression(updateData: PostUpdateDto): string {
     const updateFields = Object.keys(updateData).filter(key => key !== 'postId');
@@ -306,9 +319,9 @@ export class PostsService {
   }
 
   /**
-   * Gera ExpressionAttributeNames para update expression para evitar palavras reservadas.
-   * @param updateData - Dados para atualização.
-   * @returns Objeto ExpressionAttributeNames.
+   * Gera os ExpressionAttributeNames para a update expression, evitando conflitos com palavras reservadas.
+   * @param updateData - Dados para atualização do post.
+   * @returns Objeto com os nomes dos atributos.
    */
   private getUpdateExpressionAttributeNames(updateData: PostUpdateDto): any {
     const attributeNames: any = {};
@@ -319,9 +332,9 @@ export class PostsService {
   }
 
   /**
-   * Gera ExpressionAttributeValues para update expression.
-   * @param updateData - Dados para atualização.
-   * @returns Objeto ExpressionAttributeValues.
+   * Gera os ExpressionAttributeValues para a update expression.
+   * @param updateData - Dados para atualização do post.
+   * @returns Objeto com os valores dos atributos.
    */
   private getUpdateExpressionAttributeValues(updateData: PostUpdateDto): any {
     const attributeValues: any = {};
@@ -334,7 +347,7 @@ export class PostsService {
   /**
    * Sanitiza os dados do post, removendo campos que não devem ser enviados ao banco.
    * @param postData - Dados do post.
-   * @returns Dados sanitizados.
+   * @returns Objeto com os dados sanitizados.
    */
   private sanitizePostData(postData: PostCreateDto | PostUpdateDto): any {
     const sanitizedData = { ...postData };
@@ -344,11 +357,11 @@ export class PostsService {
   }
 
   /**
-   * Tenta recuperar um valor do cache. Caso não exista, executa a função de consulta e armazena o resultado.
+   * Recupera dados do cache ou executa a consulta e armazena o resultado.
    * @param cacheKey - Chave do cache.
-   * @param queryFn - Função que realiza a consulta.
-   * @param ttl - Tempo de vida do cache em segundos.
-   * @returns O resultado da consulta.
+   * @param queryFn - Função que executa a consulta.
+   * @param ttl - Tempo de vida do cache (em segundos).
+   * @returns Dados obtidos do cache ou da consulta.
    */
   private async getCachedOrQuery(
     cacheKey: string,
@@ -369,7 +382,7 @@ export class PostsService {
 
   /**
    * Atualiza os caches relacionados a um post, removendo chaves antigas.
-   * @param compositeKey - Chave composta (categoria#subcategoria).
+   * @param compositeKey - Chave composta no formato "categoria#subcategoria".
    * @param postId - Identificador do post.
    */
   private async refreshRelatedCaches(compositeKey: string, postId: string): Promise<void> {
