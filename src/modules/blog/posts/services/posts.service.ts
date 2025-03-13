@@ -259,7 +259,7 @@ export class PostsService {
     };
 
     const result = await this.dynamoDbService.query(params);
-    const items = result.Items ||;
+    const items = result.Items || [];
     // Para obter o total de itens de forma eficiente, você pode precisar de um mecanismo separado
     // ou considerar as limitações do nível gratuito para capacidade de leitura.
 
@@ -307,11 +307,11 @@ export class PostsService {
       slug: item.slug,
       contentHTML: item.contentHTML,
       featuredImageURL: item.featuredImageURL,
-      keywords: item.keywords ? (Array.isArray(item.keywords) ? item.keywords : [item.keywords]) :, // Garante que keywords seja sempre um array
+      keywords: item.keywords ? (Array.isArray(item.keywords) ? item.keywords : [item.keywords]) : [], // Garante que keywords seja sempre um array
       publishDate: item.publishDate,
       modifiedDate: item.modifiedDate,
       readingTime: Number(item.readingTime),
-      tags: item.tags ? (Array.isArray(item.tags) ? item.tags : [item.tags]) :, // Garante que tags seja sempre um array
+      tags: item.tags ? (Array.isArray(item.tags) ? item.tags : [item.tags]) : [], // Garante que tags seja sempre um array
       views: Number(item.views),
     };
   }
@@ -348,7 +348,7 @@ export class PostsService {
 
       // Verifica se é um Set e converte para array, senão tenta a lógica anterior
       keywords: item.keywords instanceof Set ? Array.from(item.keywords).map(k => String(k)) :
-        (item.keywords?.SS || (Array.isArray(item.keywords) ? item.keywords.map(k => String(k)) :)),
+        (item.keywords?.SS || (Array.isArray(item.keywords) ? item.keywords.map(k => String(k)) : [])),
 
       publishDate: item.publishDate?.S || (item.publishDate as string) || '',
       modifiedDate: item.modifiedDate?.S || (item.modifiedDate as string) || '',
@@ -356,7 +356,7 @@ export class PostsService {
 
       // Mesma lógica para tags
       tags: item.tags instanceof Set ? Array.from(item.tags).map(t => String(t)) :
-        (item.tags?.SS || (Array.isArray(item.tags) ? item.tags.map(t => String(t)) :)),
+        (item.tags?.SS || (Array.isArray(item.tags) ? item.tags.map(t => String(t)) : [])),
 
       views: Number(item.views?.N) || 0,
     };
