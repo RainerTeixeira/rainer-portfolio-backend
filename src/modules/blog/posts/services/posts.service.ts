@@ -23,8 +23,10 @@ import {
 } from '@aws-sdk/lib-dynamodb';
 import { CacheClear } from '@src/common/decorators/cache-clear.decorator.ts';
 import { AttributeValue } from '@aws-sdk/client-dynamodb';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 @Injectable()
+@ApiTags('Posts')
 export class PostsService {
   private readonly logger = new Logger(PostsService.name);
   private readonly tableName = 'Posts';
@@ -42,6 +44,9 @@ export class PostsService {
    * @returns O post criado como PostContentDto.
    */
   @CacheClear(['posts:*', 'post-details:*', 'latest_posts', 'paginated_posts:*'])
+  @ApiOperation({ summary: 'Cria um novo post' })
+  @ApiResponse({ status: 201, description: 'Post criado com sucesso.', type: PostContentDto })
+  @ApiResponse({ status: 400, description: 'Falha ao criar post.' })
   async createPost(createPostDto: PostCreateDto): Promise<PostContentDto> {
     this.logger.debug(`Iniciando criação do post com dados: ${JSON.stringify(createPostDto)}`);
     try {
@@ -80,19 +85,44 @@ export class PostsService {
   }
 
   /**
-   * Retorna uma listagem paginada de posts.
-   * @param page - Número da página.
-   * @param limit - Limite de posts por página.
-   * @returns Objeto com a lista de posts e o total de posts.
-   */
-  async getPaginatedPosts(page: number, limit: number): Promise<{ data: PostSummaryDto; total: number }> {
-    const cacheKey = `${this.paginatedPostsCacheKeyPrefix}page:${page}_limit:${limit}`;
-    this.logger.debug(`Iniciando consulta paginada: Página ${page}, Limite ${limit}`);
-    return this.getCachedOrQuery(
+     * Retorna uma listagem paginada de posts.
+     * @param page - Número da página.
+     * @param limit - Limite de posts por página.
+     * @param nextKey - Chave para a próxima página (opcional).
+     * @returns Objeto com a lista de posts, o total de posts e uma mensagem se não houver mais posts.
+     */
+  @ApiOperation({ summary: 'Retorna uma listagem paginada de posts' })
+  @ApiResponse({ status: 200, description: 'Listagem de posts retornada com sucesso.', type: [PostSummaryDto] })
+  @ApiResponse({ status: 400, description: 'Falha ao listar posts paginados.' })
+  async getPaginatedPosts(page: number, limit: number, nextKey?: string): Promise<{ data: PostSummaryDto; total: number; message?: string; hasMore: boolean; nextKey?: string }> {
+    const cacheKey = `${this.paginatedPostsCacheKeyPrefix}page:${page}_limit:${limit}_nextKey:${nextKey}`;
+    this.logger.debug(`Iniciando consulta paginada: Página ${page}, Limite ${limit}, NextKey: ${nextKey}`);
+
+    const parsedNextKey = nextKey ? JSON.parse(Buffer.from(nextKey, 'base64').toString('ascii')) : undefined;
+
+    const result = await this.getCachedOrQuery(
       cacheKey,
-      () => this.queryPaginatedPostsFromDb(page, limit),
+      () => this.queryPaginatedPostsFromDb(page, limit, parsedNextKey),
       300, // Cache por 5 minutos
     );
+
+    const response = {
+      data: result.data,
+      total: result.total,
+      hasMore: result.hasMore,
+      nextKey: result.lastEvaluatedKey ? Buffer.from(JSON.stringify(result.lastEvaluatedKey)).toString('base64') : undefined,
+      message: undefined,
+    };
+
+    if (!response.hasMore && response.data.length === 0 && page > 1) {
+      response.message = 'Não há mais posts a exibir.';
+    } else if (!response.hasMore && response.data.length > 0) {
+      response.message = 'Todos os posts foram carregados.';
+    } else if (!response.hasMore && page === 1 && response.data.length === 0) {
+      response.message = 'Nenhum post encontrado.';
+    }
+
+    return response;
   }
 
   /**
@@ -100,6 +130,10 @@ export class PostsService {
    * @param slug - Slug do post.
    * @returns O post completo como PostContentDto.
    */
+  @ApiOperation({ summary: 'Retorna um post completo com base no slug' })
+  @ApiResponse({ status: 200, description: 'Post retornado com sucesso.', type: PostContentDto })
+  @ApiResponse({ status: 400, description: 'Falha ao buscar post por slug.' })
+  @ApiResponse({ status: 404, description: 'Post não encontrado.' })
   async getPostBySlug(slug: string): Promise<PostContentDto | null> {
     this.logger.debug(`Iniciando busca de post pelo slug: ${slug}`);
     try {
@@ -136,6 +170,9 @@ export class PostsService {
    * @returns O post encontrado como objeto de detalhe.
    * @throws NotFoundException se o post não for encontrado.
    */
+  @ApiOperation({ summary: 'Busca um post pelo seu ID' })
+  @ApiResponse({ status: 200, description: 'Post retornado com sucesso.', type: PostContentDto })
+  @ApiResponse({ status: 404, description: 'Post não encontrado.' })
   async getPostById(postId: string): Promise<any> {
     this.logger.debug(`Iniciando busca de post pelo ID: ${postId}`);
     try {
@@ -173,6 +210,10 @@ export class PostsService {
    * @returns O post atualizado como PostContentDto.
    */
   @CacheClear(['posts:*', 'post-details:*', 'latest_posts', 'paginated_posts:*'])
+  @ApiOperation({ summary: 'Atualiza um post existente' })
+  @ApiResponse({ status: 200, description: 'Post atualizado com sucesso.', type: PostContentDto })
+  @ApiResponse({ status: 400, description: 'Falha ao atualizar post.' })
+  @ApiResponse({ status: 404, description: 'Post não encontrado.' })
   async updatePost(postId: string, updatePostDto: PostUpdateDto): Promise<PostContentDto> {
     this.logger.debug(`Iniciando atualização do post ID: ${postId} com dados: ${JSON.stringify(updatePostDto)}`);
     try {
@@ -210,6 +251,10 @@ export class PostsService {
    * @param postId - Identificador do post.
    */
   @CacheClear(['posts:*', 'post-details:*', 'latest_posts', 'paginated_posts:*'])
+  @ApiOperation({ summary: 'Deleta um post' })
+  @ApiResponse({ status: 200, description: 'Post deletado com sucesso.' })
+  @ApiResponse({ status: 400, description: 'Falha ao remover post.' })
+  @ApiResponse({ status: 404, description: 'Post não encontrado.' })
   async deletePost(postId: string): Promise<void> {
     this.logger.debug(`Iniciando deleção do post ID: ${postId}`);
     try {
@@ -238,36 +283,42 @@ export class PostsService {
   // ────────────────────────── Métodos Auxiliares ──────────────────────────
 
   /**
-   * Executa uma consulta de paginação de posts no DynamoDB.
-   * @param page - Número da página.
-   * @param limit - Limite de posts por página.
-   * @returns Objeto contendo os dados paginados e o total de posts.
-   */
-  private async queryPaginatedPostsFromDb(page: number, limit: number): Promise<{ data: PostSummaryDto; total: number; message?: string }> {
-    this.logger.debug(`Iniciando consulta paginada: Página ${page}, Limite ${limit}`);
+     * Executa uma consulta de paginação de posts no DynamoDB.
+     * @param page - Número da página.
+     * @param limit - Limite de posts por página.
+     * @param lastEvaluatedKey - Chave para iniciar a próxima página (opcional).
+     * @returns Objeto contendo os dados paginados, o total de posts (aproximado) e um indicador se há mais posts.
+     */
+  private async queryPaginatedPostsFromDb(page: number, limit: number, lastEvaluatedKey?: Record<string, AttributeValue>): Promise<{ data: PostSummaryDto; total: number; message?: string; hasMore: boolean; lastEvaluatedKey?: Record<string, AttributeValue> }> {
+    this.logger.debug(`Iniciando consulta paginada: Página ${page}, Limite ${limit}, LastEvaluatedKey: ${JSON.stringify(lastEvaluatedKey)}`);
 
     const params: QueryCommandInput = {
       TableName: this.tableName,
       IndexName: 'postsByPublishDate-index', // Nome do GSI para buscar posts publicados por data
-      KeyConditionExpression: 'status = :status',
+      KeyConditionExpression: '#status = :status',
+      ExpressionAttributeNames: {
+        '#status': 'status',
+      },
       ExpressionAttributeValues: {
         ':status': 'published',
       },
       ScanIndexForward: false, // Order by publishDate descending (most recent first)
       Limit: limit,
-      // ExclusiveStartKey: undefined, // Para paginação real, utilize o LastEvaluatedKey da resposta anterior
+      ExclusiveStartKey: lastEvaluatedKey, // Use a chave para iniciar a próxima página
     };
 
     const result = await this.dynamoDbService.query(params);
     const items = result.Items || [];
-    // Para obter o total de itens de forma eficiente, você pode precisar de um mecanismo separado
-    // ou considerar as limitações do nível gratuito para capacidade de leitura.
-
     const data = items.map(item => this.mapToSummaryDto(item));
 
     this.logger.verbose(`Consulta paginada concluída. Itens na página: ${data.length}`);
 
-    return { data, total: -1 }; // O total pode ser complexo de obter em cada requisição no nível gratuito
+    return {
+      data,
+      total: -1, // O total pode ser complexo de obter em cada requisição no nível gratuito
+      hasMore: !!result.LastEvaluatedKey, // Indica se há mais resultados
+      lastEvaluatedKey: result.LastEvaluatedKey, // Retorna a chave para a próxima página
+    };
   }
 
   /**
@@ -307,11 +358,11 @@ export class PostsService {
       slug: item.slug,
       contentHTML: item.contentHTML,
       featuredImageURL: item.featuredImageURL,
-      keywords: item.keywords ? (Array.isArray(item.keywords) ? item.keywords : [item.keywords]) : [], // Garante que keywords seja sempre um array
+      keywords: item.keywords ? (Array.isArray(item.keywords) ? item.keywords : [item.keywords]) : [],
       publishDate: item.publishDate,
       modifiedDate: item.modifiedDate,
       readingTime: Number(item.readingTime),
-      tags: item.tags ? (Array.isArray(item.tags) ? item.tags : [item.tags]) : [], // Garante que tags seja sempre um array
+      tags: item.tags ? (Array.isArray(item.tags) ? item.tags : [item.tags]) : [],
       views: Number(item.views),
     };
   }
