@@ -19,11 +19,11 @@ import {
   QueryCommandInput,
   UpdateCommandInput,
   DeleteCommandInput,
-  ScanCommand,
   ScanCommandInput,
 } from '@aws-sdk/lib-dynamodb';
 import { CacheClear } from '@src/common/decorators/cache-clear.decorator.ts';
 import { AttributeValue } from '@aws-sdk/client-dynamodb';
+
 @Injectable()
 export class PostsService {
   private readonly logger = new Logger(PostsService.name);
@@ -52,7 +52,7 @@ export class PostsService {
       const postItem = {
         'categoryId#subcategoryId': compositeKey,
         postId,
-        createdAt: new Date().toISOString(),
+        publishDate: new Date().toISOString(),
         modifiedDate: new Date().toISOString(),
         publishDate: publishDate,
         views: 0,
@@ -85,7 +85,7 @@ export class PostsService {
    * @param limit - Limite de posts por página.
    * @returns Objeto com a lista de posts e o total de posts.
    */
-  async getPaginatedPosts(page: number, limit: number): Promise<{ data: PostSummaryDto[]; total: number }> {
+  async getPaginatedPosts(page: number, limit: number): Promise<{ data: PostSummaryDto; total: number }> {
     const cacheKey = `${this.paginatedPostsCacheKeyPrefix}page:${page}_limit:${limit}`;
     this.logger.debug(`Iniciando consulta paginada: Página ${page}, Limite ${limit}`);
     return this.getCachedOrQuery(
@@ -96,35 +96,34 @@ export class PostsService {
   }
 
   /**
-       * Retorna um post completo com base no slug.
-       * @param slug - Slug do post.
-       * @returns O post completo como PostContentDto.
-       */
+   * Retorna um post completo com base no slug.
+   * @param slug - Slug do post.
+   * @returns O post completo como PostContentDto.
+   */
   async getPostBySlug(slug: string): Promise<PostContentDto | null> {
     this.logger.debug(`Iniciando busca de post pelo slug: ${slug}`);
-
-    const params: ScanCommandInput = {
-      TableName: this.tableName,
-      FilterExpression: "slug = :slugValue",
-      ExpressionAttributeValues: {
-        ":slugValue": { S: slug },
-      },
-    };
-
     try {
-      const command = new ScanCommand(params);
-      const response = await this.dynamoDbService.scan(params); // 👈 Linha corrigida: usando dynamoDbService.scan
+      const params: QueryCommandInput = {
+        TableName: this.tableName,
+        IndexName: 'slug-index', // Nome do GSI para buscar por slug
+        KeyConditionExpression: 'slug = :slug',
+        ExpressionAttributeValues: {
+          ':slug': slug,
+        },
+        Limit: 1,
+      };
 
-      if (response.Items && response.Items.length > 0) {
-        const item = response.Items[0]; // Pega o primeiro item (assume slug único)
-        return this.mapDynamoDBItemToPostContentDto(item);
+      const result = await this.dynamoDbService.query(params);
+
+      if (result.Items && result.Items.length > 0) {
+        return this.mapDynamoDBItemToPostContentDto(result.Items[0]);
       } else {
         this.logger.log(`Post com slug '${slug}' não encontrado.`);
-        return null; // Retorna null se não encontrar
+        return null;
       }
     } catch (error) {
       this.logger.error(`Erro ao buscar post por slug '${slug}' no DynamoDB`, error);
-      throw new BadRequestException({ // Ou outro tipo de exceção, se preferir
+      throw new BadRequestException({
         message: 'Falha ao buscar post por slug',
         originalError: error?.message,
       });
@@ -140,17 +139,24 @@ export class PostsService {
   async getPostById(postId: string): Promise<any> {
     this.logger.debug(`Iniciando busca de post pelo ID: ${postId}`);
     try {
-      const params: GetCommandInput = {
+      const params: QueryCommandInput = {
         TableName: this.tableName,
-        Key: { postId },
+        IndexName: 'postId-index', // Nome do GSI para buscar por postId
+        KeyConditionExpression: 'postId = :postId',
+        ExpressionAttributeValues: {
+          ':postId': postId,
+        },
+        Limit: 1,
       };
 
-      const result = await this.dynamoDbService.getItem(params);
-      if (!result.Item) {
+      const result = await this.dynamoDbService.query(params);
+
+      if (!result.Items || result.Items.length === 0) {
         this.logger.warn(`Post não encontrado para ID: ${postId}`);
         throw new NotFoundException('Post não encontrado');
       }
-      return this.mapToDetailDto(result.Item);
+
+      return this.mapToDetailDto(result.Items[0]);
     } catch (error) {
       this.logger.error(`Erro ao buscar post por ID: ${error?.message}`, error?.stack);
       throw new NotFoundException({
@@ -237,27 +243,31 @@ export class PostsService {
    * @param limit - Limite de posts por página.
    * @returns Objeto contendo os dados paginados e o total de posts.
    */
-  private async queryPaginatedPostsFromDb(page: number, limit: number): Promise<{ data: PostSummaryDto[]; total: number; message?: string }> {
+  private async queryPaginatedPostsFromDb(page: number, limit: number): Promise<{ data: PostSummaryDto; total: number; message?: string }> {
     this.logger.debug(`Iniciando consulta paginada: Página ${page}, Limite ${limit}`);
 
-    const result = await this.dynamoDbService.scan({ TableName: this.tableName });
-    const items = result.Items || [];
-    const total = items.length;
+    const params: QueryCommandInput = {
+      TableName: this.tableName,
+      IndexName: 'postsByPublishDate-index', // Nome do GSI para buscar posts publicados por data
+      KeyConditionExpression: 'status = :status',
+      ExpressionAttributeValues: {
+        ':status': 'published',
+      },
+      ScanIndexForward: false, // Order by publishDate descending (most recent first)
+      Limit: limit,
+      // ExclusiveStartKey: undefined, // Para paginação real, utilize o LastEvaluatedKey da resposta anterior
+    };
 
-    const start = (page - 1) * limit;
-    const end = page * limit;
+    const result = await this.dynamoDbService.query(params);
+    const items = result.Items ||;
+    // Para obter o total de itens de forma eficiente, você pode precisar de um mecanismo separado
+    // ou considerar as limitações do nível gratuito para capacidade de leitura.
 
-    // Se o início da página for maior ou igual ao total de itens, significa que não há mais posts
-    if (start >= total) {
-      return { data: [], total, message: "Fim dos posts" };
-    }
+    const data = items.map(item => this.mapToSummaryDto(item));
 
-    const paginatedItems = items.slice(start, end);
-    const data = paginatedItems.map(item => this.mapToSummaryDto(item));
+    this.logger.verbose(`Consulta paginada concluída. Itens na página: ${data.length}`);
 
-    this.logger.verbose(`Consulta paginada concluída. Total de itens: ${total}`);
-
-    return { data, total };
+    return { data, total: -1 }; // O total pode ser complexo de obter em cada requisição no nível gratuito
   }
 
   /**
@@ -287,22 +297,21 @@ export class PostsService {
   }
 
   /**
-    /**
-     * Mapeia um item do DynamoDB para o DTO de conteúdo do post.
-     * @param item - Item retornado do banco.
-     * @returns Objeto do tipo PostContentDto.
-     */
+   * Mapeia um item do DynamoDB para o DTO de conteúdo do post.
+   * @param item - Item retornado do banco.
+   * @returns Objeto do tipo PostContentDto.
+   */
   private mapToContentDto(item: any): PostContentDto {
     return {
       title: item.title,
       slug: item.slug,
       contentHTML: item.contentHTML,
       featuredImageURL: item.featuredImageURL,
-      keywords: item.keywords ? (Array.isArray(item.keywords) ? item.keywords : [item.keywords]) : [], // Garante que keywords seja sempre um array
+      keywords: item.keywords ? (Array.isArray(item.keywords) ? item.keywords : [item.keywords]) :, // Garante que keywords seja sempre um array
       publishDate: item.publishDate,
       modifiedDate: item.modifiedDate,
       readingTime: Number(item.readingTime),
-      tags: item.tags ? (Array.isArray(item.tags) ? item.tags : [item.tags]) : [], // Garante que tags seja sempre um array
+      tags: item.tags ? (Array.isArray(item.tags) ? item.tags : [item.tags]) :, // Garante que tags seja sempre um array
       views: Number(item.views),
     };
   }
@@ -323,25 +332,36 @@ export class PostsService {
     };
   }
 
+
   /**
-   * Nova função para mapear um item do DynamoDB (AttributeValue) para PostContentDto.
-   * @param item - Item do DynamoDB no formato AttributeValue.
-   * @returns Objeto do tipo PostContentDto.
+   * Converte um item do DynamoDB (AttributeValue) em um objeto do tipo PostContentDto.
+   *
+   * @param item - Objeto do DynamoDB no formato Record<string, AttributeValue>.
+   * @returns Objeto do tipo PostContentDto contendo os dados extraídos do DynamoDB.
    */
   private mapDynamoDBItemToPostContentDto(item: Record<string, AttributeValue>): PostContentDto {
     return {
-      title: item.title?.S || '',
-      slug: item.slug?.S || '',
-      contentHTML: item.contentHTML?.S || '',
-      featuredImageURL: item.featuredImageURL?.S || '',
-      keywords: item.keywords?.SS || [], // 'SS' para String Set
-      publishDate: item.publishDate?.S || '',
-      modifiedDate: item.modifiedDate?.S || '',
-      readingTime: Number(item.readingTime?.N) || 0, // 'N' para Number
-      tags: item.tags?.SS || [], // 'SS' para String Set
-      views: Number(item.views?.N) || 0, // 'N' para Number
+      title: item.title?.S || (item.title as string) || '',
+      slug: item.slug?.S || (item.slug as string) || '',
+      contentHTML: item.contentHTML?.S || (item.contentHTML as string) || '',
+      featuredImageURL: item.featuredImageURL?.S || (item.featuredImageURL as string) || '',
+
+      // Verifica se é um Set e converte para array, senão tenta a lógica anterior
+      keywords: item.keywords instanceof Set ? Array.from(item.keywords).map(k => String(k)) :
+        (item.keywords?.SS || (Array.isArray(item.keywords) ? item.keywords.map(k => String(k)) :)),
+
+      publishDate: item.publishDate?.S || (item.publishDate as string) || '',
+      modifiedDate: item.modifiedDate?.S || (item.modifiedDate as string) || '',
+      readingTime: Number(item.readingTime?.N) || 0,
+
+      // Mesma lógica para tags
+      tags: item.tags instanceof Set ? Array.from(item.tags).map(t => String(t)) :
+        (item.tags?.SS || (Array.isArray(item.tags) ? item.tags.map(t => String(t)) :)),
+
+      views: Number(item.views?.N) || 0,
     };
   }
+
 
   /**
    * Constrói a expressão de atualização para o comando de update no DynamoDB.

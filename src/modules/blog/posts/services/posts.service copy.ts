@@ -50,7 +50,7 @@ export class PostsService {
       const postItem = {
         'categoryId#subcategoryId': compositeKey,
         postId,
-        createdAt: new Date().toISOString(),
+        publishDate: new Date().toISOString(),
         modifiedDate: new Date().toISOString(),
         ...this.sanitizePostData(createPostDto),
       };
