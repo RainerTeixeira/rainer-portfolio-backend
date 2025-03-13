@@ -5,6 +5,27 @@ import { DynamoDbService } from '@src/services/dynamoDb.service';
 import { BlogModule } from '@src/modules/blog.module';
 import { ResponseInterceptor } from './interceptors/response.interceptor';
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Blog:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           description: ID do blog
+ *         title:
+ *           type: string
+ *           description: Título do blog
+ *         content:
+ *           type: string
+ *           description: Conteúdo do blog
+ *       required:
+ *         - id
+ *         - title
+ *         - content
+ */
 @Module({
   imports: [
     CacheModule.register({

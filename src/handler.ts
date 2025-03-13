@@ -36,9 +36,13 @@ function logError(error: unknown): void {
 }
 
 /**
- * Função assíncrona para inicializar ou retornar a instância cached do servidor NestJS com Fastify.
- * O padrão de "cache" aqui é fundamental para performance em ambiente Lambda, minimizando cold starts.
- * @returns Promise<any> Promise que resolve com o servidor NestJS configurado para Lambda.
+ * @swagger
+ * /:
+ *   get:
+ *     summary: Retorna a página inicial
+ *     responses:
+ *       200:
+ *         description: Página inicial
  */
 async function bootstrapServer(): Promise<any> {
   // Verifica se já existe uma instância cached do servidor.
@@ -59,6 +63,22 @@ async function bootstrapServer(): Promise<any> {
 
     // Inicializa a aplicação NestJS.
     await app.init();
+
+    // ----------------------------------------------------------------------
+    //  Configuração do Swagger UI para documentação da API (Adicionado agora!)
+    // ----------------------------------------------------------------------
+    const config = new DocumentBuilder()
+      .setTitle('API do Rainer Portfolio') // Título da documentação no Swagger UI
+      .setDescription('API Backend para o Portfólio do Rainer Teixeira') // Descrição da API
+      .setVersion('1.0') // Versão da API
+      .addTag('portfolio') // Tag para agrupar as rotas (opcional)
+      .build(); // Finaliza a configuração do DocumentBuilder
+
+    const document = SwaggerModule.createDocument(app, config); // Cria o documento de especificação OpenAPI (Swagger)
+
+    SwaggerModule.setup('api', app, document); // Configura o Swagger UI para ser servido na rota /api
+    // Agora você pode acessar a documentação em http://localhost:3000/api no seu navegador
+    // ----------------------------------------------------------------------
 
     // Cria um servidor "serverless" a partir da instância do Fastify, utilizando a biblioteca 'serverless-http'.
     // Esse servidor serverless é compatível com o formato de eventos do AWS Lambda e API Gateway.
@@ -120,9 +140,13 @@ export const handler = async (
 };
 
 /**
- * Bloco de código para execução local da aplicação NestJS (fora do ambiente Lambda).
- * Este bloco só é executado se a variável de ambiente AWS_LAMBDA_FUNCTION_NAME não estiver definida,
- * indicando que não estamos rodando dentro do AWS Lambda.
+ * @swagger
+ * /local:
+ *   get:
+ *     summary: Inicializa o servidor local
+ *     responses:
+ *       200:
+ *         description: Servidor local inicializado
  */
 if (!process.env.AWS_LAMBDA_FUNCTION_NAME) {
   async function bootstrapLocal() {
