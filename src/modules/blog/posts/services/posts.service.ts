@@ -19,10 +19,11 @@ import {
   QueryCommandInput,
   UpdateCommandInput,
   DeleteCommandInput,
+  ScanCommand,
   ScanCommandInput,
 } from '@aws-sdk/lib-dynamodb';
-import { CacheClear } from '../../../../common/decorators/cache-clear.decorator';
-
+import { CacheClear } from '@src/common/decorators/cache-clear.decorator.ts';
+import { AttributeValue } from '@aws-sdk/client-dynamodb';
 @Injectable()
 export class PostsService {
   private readonly logger = new Logger(PostsService.name);
@@ -70,7 +71,7 @@ export class PostsService {
       this.logger.verbose(`Post criado com sucesso, ID: ${postId}`);
       return this.mapToContentDto(postItem);
     } catch (error) {
-      this.logger.error(`Erro ao criar post: ${error?.message}`, error?.stack);
+      this.logger.error(`Erro na criação do post: ${error?.message}`, error?.stack);
       throw new BadRequestException({
         message: 'Falha ao criar post',
         originalError: error?.message,
@@ -86,7 +87,7 @@ export class PostsService {
    */
   async getPaginatedPosts(page: number, limit: number): Promise<{ data: PostSummaryDto[]; total: number }> {
     const cacheKey = `${this.paginatedPostsCacheKeyPrefix}page:${page}_limit:${limit}`;
-    this.logger.debug(`Buscando posts paginados. Página: ${page}, Limite: ${limit}`);
+    this.logger.debug(`Iniciando consulta paginada: Página ${page}, Limite ${limit}`);
     return this.getCachedOrQuery(
       cacheKey,
       () => this.queryPaginatedPostsFromDb(page, limit),
@@ -95,26 +96,39 @@ export class PostsService {
   }
 
   /**
-   * Retorna um post completo com base no slug.
-   * @param slug - Slug do post.
-   * @returns O post completo como PostContentDto.
-   */
-  async getPostBySlug(slug: string): Promise<PostContentDto> {
-    this.logger.debug(`Buscando post pelo slug: ${slug}`);
-    // Implementação provisória – substituir por consulta real
-    const dummyPost: PostContentDto = {
-      title: 'Título do Post Exemplo',
-      slug: slug,
-      contentHTML: '<p>Este é um conteúdo de post de exemplo.</p>',
-      featuredImageURL: 'https://example.com/exemplo-imagem.jpg',
-      keywords: ['exemplo', 'post'],
-      publishDate: new Date().toISOString(),
-      modifiedDate: new Date().toISOString(),
-      readingTime: 3,
-      tags: ['exemplo-tag'],
-      views: 50,
+       * Retorna um post completo com base no slug.
+       * @param slug - Slug do post.
+       * @returns O post completo como PostContentDto.
+       */
+  async getPostBySlug(slug: string): Promise<PostContentDto | null> {
+    this.logger.debug(`Iniciando busca de post pelo slug: ${slug}`);
+
+    const params: ScanCommandInput = {
+      TableName: this.tableName,
+      FilterExpression: "slug = :slugValue",
+      ExpressionAttributeValues: {
+        ":slugValue": { S: slug },
+      },
     };
-    return dummyPost;
+
+    try {
+      const command = new ScanCommand(params);
+      const response = await this.dynamoDbService.scan(params); // 👈 Linha corrigida: usando dynamoDbService.scan
+
+      if (response.Items && response.Items.length > 0) {
+        const item = response.Items[0]; // Pega o primeiro item (assume slug único)
+        return this.mapDynamoDBItemToPostContentDto(item);
+      } else {
+        this.logger.log(`Post com slug '${slug}' não encontrado.`);
+        return null; // Retorna null se não encontrar
+      }
+    } catch (error) {
+      this.logger.error(`Erro ao buscar post por slug '${slug}' no DynamoDB`, error);
+      throw new BadRequestException({ // Ou outro tipo de exceção, se preferir
+        message: 'Falha ao buscar post por slug',
+        originalError: error?.message,
+      });
+    }
   }
 
   /**
@@ -124,7 +138,7 @@ export class PostsService {
    * @throws NotFoundException se o post não for encontrado.
    */
   async getPostById(postId: string): Promise<any> {
-    this.logger.debug(`Buscando post pelo ID: ${postId}`);
+    this.logger.debug(`Iniciando busca de post pelo ID: ${postId}`);
     try {
       const params: GetCommandInput = {
         TableName: this.tableName,
@@ -177,7 +191,7 @@ export class PostsService {
       this.logger.verbose(`Post atualizado com sucesso, ID: ${postId}`);
       return this.mapToContentDto(result.Attributes);
     } catch (error) {
-      this.logger.error(`Erro ao atualizar post: ${error?.message}`, error?.stack);
+      this.logger.error(`Erro na atualização do post: ${error?.message}`, error?.stack);
       throw new BadRequestException({
         message: 'Falha ao atualizar post',
         originalError: error?.message,
@@ -207,9 +221,9 @@ export class PostsService {
       await this.refreshRelatedCaches(post['categoryId#subcategoryId'], postId);
       this.logger.verbose(`Post deletado com sucesso, ID: ${postId}`);
     } catch (error) {
-      this.logger.error(`Erro ao deletar post: ${error?.message}`, error?.stack);
+      this.logger.error(`Erro na deleção do post: ${error?.message}`, error?.stack);
       throw new BadRequestException({
-        message: 'Falha ao deletar post',
+        message: 'Falha ao remover post',
         originalError: error?.message,
       });
     }
@@ -223,27 +237,27 @@ export class PostsService {
    * @param limit - Limite de posts por página.
    * @returns Objeto contendo os dados paginados e o total de posts.
    */
-  private async queryPaginatedPostsFromDb(page: number, limit: number): Promise<{ data: PostSummaryDto[]; total: number }> {
-    this.logger.debug(`Executando query para paginação. Página: ${page}, Limite: ${limit}`);
-    const startIndex = (page - 1) * limit;
-    const scanParams: ScanCommandInput = {
-      TableName: this.tableName,
-      Limit: limit,
-    };
+  private async queryPaginatedPostsFromDb(page: number, limit: number): Promise<{ data: PostSummaryDto[]; total: number; message?: string }> {
+    this.logger.debug(`Iniciando consulta paginada: Página ${page}, Limite ${limit}`);
 
-    try {
-      const result = await this.dynamoDbService.scan(scanParams);
-      const items = result.Items || [];
-      const total = items.length;
-      const paginatedItems = items.slice(0, limit);
-      const data = paginatedItems.map(item => this.mapToSummaryDto(item));
+    const result = await this.dynamoDbService.scan({ TableName: this.tableName });
+    const items = result.Items || [];
+    const total = items.length;
 
-      this.logger.verbose(`Query paginada concluída. Total de itens: ${total}`);
-      return { data, total };
-    } catch (error) {
-      this.logger.error(`Erro ao executar Scan paginado: ${error?.message}`, error?.stack);
-      return { data: [], total: 0 };
+    const start = (page - 1) * limit;
+    const end = page * limit;
+
+    // Se o início da página for maior ou igual ao total de itens, significa que não há mais posts
+    if (start >= total) {
+      return { data: [], total, message: "Fim dos posts" };
     }
+
+    const paginatedItems = items.slice(start, end);
+    const data = paginatedItems.map(item => this.mapToSummaryDto(item));
+
+    this.logger.verbose(`Consulta paginada concluída. Total de itens: ${total}`);
+
+    return { data, total };
   }
 
   /**
@@ -273,22 +287,23 @@ export class PostsService {
   }
 
   /**
-   * Mapeia um item do DynamoDB para o DTO de conteúdo do post.
-   * @param item - Item retornado do banco.
-   * @returns Objeto do tipo PostContentDto.
-   */
+    /**
+     * Mapeia um item do DynamoDB para o DTO de conteúdo do post.
+     * @param item - Item retornado do banco.
+     * @returns Objeto do tipo PostContentDto.
+     */
   private mapToContentDto(item: any): PostContentDto {
     return {
       title: item.title,
       slug: item.slug,
       contentHTML: item.contentHTML,
       featuredImageURL: item.featuredImageURL,
-      keywords: item.keywords,
+      keywords: item.keywords ? (Array.isArray(item.keywords) ? item.keywords : [item.keywords]) : [], // Garante que keywords seja sempre um array
       publishDate: item.publishDate,
       modifiedDate: item.modifiedDate,
-      readingTime: item.readingTime,
-      tags: item.tags,
-      views: item.views,
+      readingTime: Number(item.readingTime),
+      tags: item.tags ? (Array.isArray(item.tags) ? item.tags : [item.tags]) : [], // Garante que tags seja sempre um array
+      views: Number(item.views),
     };
   }
 
@@ -305,6 +320,26 @@ export class PostsService {
       description: item.description,
       publishDate: item.publishDate,
       readingTime: item.readingTime,
+    };
+  }
+
+  /**
+   * Nova função para mapear um item do DynamoDB (AttributeValue) para PostContentDto.
+   * @param item - Item do DynamoDB no formato AttributeValue.
+   * @returns Objeto do tipo PostContentDto.
+   */
+  private mapDynamoDBItemToPostContentDto(item: Record<string, AttributeValue>): PostContentDto {
+    return {
+      title: item.title?.S || '',
+      slug: item.slug?.S || '',
+      contentHTML: item.contentHTML?.S || '',
+      featuredImageURL: item.featuredImageURL?.S || '',
+      keywords: item.keywords?.SS || [], // 'SS' para String Set
+      publishDate: item.publishDate?.S || '',
+      modifiedDate: item.modifiedDate?.S || '',
+      readingTime: Number(item.readingTime?.N) || 0, // 'N' para Number
+      tags: item.tags?.SS || [], // 'SS' para String Set
+      views: Number(item.views?.N) || 0, // 'N' para Number
     };
   }
 
@@ -374,7 +409,7 @@ export class PostsService {
       this.logger.debug(`Cache hit para a chave: ${cacheKey}`);
       return cached;
     }
-    this.logger.debug(`Cache miss para a chave: ${cacheKey}. Executando query.`);
+    this.logger.debug(`Cache miss para a chave: ${cacheKey}. Executando consulta.`);
     const result = await queryFn();
     await this.cacheManager.set(cacheKey, result, ttl);
     return result;
