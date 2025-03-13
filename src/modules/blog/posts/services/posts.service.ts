@@ -12,7 +12,8 @@ import { PostCreateDto } from '@src/modules/blog/posts/dto/post-create.dto';
 import { PostUpdateDto } from '@src/modules/blog/posts/dto/post-update.dto';
 import { PostContentDto } from '@src/modules/blog/posts/dto/post-content.dto';
 import { PostSummaryDto } from '@src/modules/blog/posts/dto/post-summary.dto';
-import { v4 as uuidv4 } from 'uuid';
+// Removendo a importação do uuid
+// import { v4 as uuidv4 } from 'uuid';
 import {
   GetCommandInput,
   PutCommandInput,
@@ -40,6 +41,7 @@ export class PostsService {
 
   /**
    * Cria um novo post no DynamoDB e atualiza os caches relacionados.
+   * Utiliza um timestamp em milissegundos convertido para base 36 como ID para economizar espaço.
    * @param createPostDto - Dados para criação do post.
    * @returns O post criado como PostContentDto.
    */
@@ -51,7 +53,8 @@ export class PostsService {
     this.logger.debug(`Iniciando criação do post com dados: ${JSON.stringify(createPostDto)}`);
     try {
       const compositeKey = `${createPostDto.categoryId}#${createPostDto.subcategoryId}`;
-      const postId = uuidv4();
+      // Gera um ID único usando o timestamp atual em milissegundos convertido para base 36
+      const postId = new Date().getTime().toString(36);
       const publishDate = new Date().toISOString();
 
       const postItem = {
@@ -85,12 +88,12 @@ export class PostsService {
   }
 
   /**
-     * Retorna uma listagem paginada de posts.
-     * @param page - Número da página.
-     * @param limit - Limite de posts por página.
-     * @param nextKey - Chave para a próxima página (opcional).
-     * @returns Objeto com a lista de posts, o total de posts e uma mensagem se não houver mais posts.
-     */
+   * Retorna uma listagem paginada de posts.
+   * @param page - Número da página.
+   * @param limit - Limite de posts por página.
+   * @param nextKey - Chave para a próxima página (opcional).
+   * @returns Objeto com a lista de posts, o total de posts e uma mensagem se não houver mais posts.
+   */
   @ApiOperation({ summary: 'Retorna uma listagem paginada de posts' })
   @ApiResponse({ status: 200, description: 'Listagem de posts retornada com sucesso.', type: [PostSummaryDto] })
   @ApiResponse({ status: 400, description: 'Falha ao listar posts paginados.' })
@@ -283,12 +286,12 @@ export class PostsService {
   // ────────────────────────── Métodos Auxiliares ──────────────────────────
 
   /**
-     * Executa uma consulta de paginação de posts no DynamoDB.
-     * @param page - Número da página.
-     * @param limit - Limite de posts por página.
-     * @param lastEvaluatedKey - Chave para iniciar a próxima página (opcional).
-     * @returns Objeto contendo os dados paginados, o total de posts (aproximado) e um indicador se há mais posts.
-     */
+   * Executa uma consulta de paginação de posts no DynamoDB.
+   * @param page - Número da página.
+   * @param limit - Limite de posts por página.
+   * @param lastEvaluatedKey - Chave para iniciar a próxima página (opcional).
+   * @returns Objeto contendo os dados paginados, o total de posts (aproximado) e um indicador se há mais posts.
+   */
   private async queryPaginatedPostsFromDb(page: number, limit: number, lastEvaluatedKey?: Record<string, AttributeValue>): Promise<{ data: PostSummaryDto; total: number; message?: string; hasMore: boolean; lastEvaluatedKey?: Record<string, AttributeValue> }> {
     this.logger.debug(`Iniciando consulta paginada: Página ${page}, Limite ${limit}, LastEvaluatedKey: ${JSON.stringify(lastEvaluatedKey)}`);
 
@@ -421,7 +424,7 @@ export class PostsService {
    */
   private buildUpdateExpression(updateData: PostUpdateDto): string {
     const updateFields = Object.keys(updateData).filter(key => key !== 'postId');
-    return `SET ${updateFields.map(field => `#${field} = :${field}`).join(', ')}`;
+    return `SET ${updateFields.map(field => `#${field} = :${field}`).join(', ')}, #modifiedDate = :modifiedDate`;
   }
 
   /**
@@ -430,7 +433,9 @@ export class PostsService {
    * @returns Objeto com os nomes dos atributos.
    */
   private getUpdateExpressionAttributeNames(updateData: PostUpdateDto): any {
-    const attributeNames: any = {};
+    const attributeNames: any = {
+      '#modifiedDate': 'modifiedDate',
+    };
     Object.keys(updateData).filter(key => key !== 'postId').forEach(field => {
       attributeNames[`#${field}`] = field;
     });
@@ -443,7 +448,9 @@ export class PostsService {
    * @returns Objeto com os valores dos atributos.
    */
   private getUpdateExpressionAttributeValues(updateData: PostUpdateDto): any {
-    const attributeValues: any = {};
+    const attributeValues: any = {
+      ':modifiedDate': new Date().toISOString(),
+    };
     Object.keys(updateData).filter(key => key !== 'postId').forEach(field => {
       attributeValues[`:${field}`] = updateData[field];
     });
