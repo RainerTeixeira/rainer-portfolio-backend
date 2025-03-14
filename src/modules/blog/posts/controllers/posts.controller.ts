@@ -109,7 +109,7 @@ export class PostsController {
     @Query('page', ParseIntPipe) page: number = 1,
     @Query('limit', ParseIntPipe) limit: number = 10,
     @Query('nextKey') nextKey?: string,
-  ): Promise<{ data: PostSummaryDto; total: number; message?: string; hasMore: boolean; nextKey?: string }> {
+  ): Promise<{ data: PostSummaryDto[]; total: number; message?: string; hasMore: boolean; nextKey?: string }> {
     this.logger.debug(`Recebida requisição GET para listar posts. Página: ${page}, Limite: ${limit}, NextKey: ${nextKey}`);
     return this.execute(
       () => this.postsService.getPaginatedPosts(page, limit, nextKey),

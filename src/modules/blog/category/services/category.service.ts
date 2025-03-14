@@ -40,7 +40,7 @@ export class CategoryService {
     async findOne(categoryId: string): Promise<CategoryDto> {
         const params = {
             TableName: this.tableName,
-            Key: { categoryId: { S: categoryId } },
+            Key: { categoryId: { S: categoryId } }, // Corrigir o formato do valor
         };
         const result = await this.dynamoDbService.getItem(params);
         if (!result.Item) {
@@ -58,7 +58,7 @@ export class CategoryService {
 
         const params: UpdateCommandInput = { // Use UpdateCommandInput type
             TableName: this.tableName,
-            Key: { categoryId: { S: categoryId } },
+            Key: { categoryId: { S: categoryId } }, // Corrigir o formato do valor
             UpdateExpression: 'SET #name = :name, slug = :slug, seo = :seo', // Use 'SET' e placeholders para atualizar
             ExpressionAttributeNames: { // Mapeamento de nomes de atributos
                 '#name': 'name', // '#name' será substituído por 'name' (evita palavras reservadas)
