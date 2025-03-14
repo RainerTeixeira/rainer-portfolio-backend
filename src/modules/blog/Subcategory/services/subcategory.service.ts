@@ -43,7 +43,7 @@ export class SubcategoryService {
                 '#pk': 'categoryId#subcategoryId', // Placeholder para o nome do atributo da chave de partição
             },
             ExpressionAttributeValues: {
-                ':pk_prefix': categoryIdSubcategoryId, // Placeholder para o valor do prefixo da chave de partição
+                ':pk_prefix': { S: categoryIdSubcategoryId }, // Placeholder para o valor do prefixo da chave de partição
             },
         };
         const result = await this.dynamoDbService.scan(params); // Escaneia a tabela (busca eficiente para este caso)

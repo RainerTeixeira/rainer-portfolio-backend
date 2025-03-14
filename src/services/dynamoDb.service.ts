@@ -26,6 +26,8 @@ import {
   QueryCommandInput,
   BatchWriteCommandInput,
   BatchGetCommandInput,
+  QueryCommandOutput,
+  GetCommandOutput,
 } from '@aws-sdk/lib-dynamodb';
 
 /**
@@ -34,10 +36,15 @@ import {
  */
 @Injectable()
 export class DynamoDbService {
+  private static instance: DynamoDbService;
   private readonly logger = new Logger(DynamoDbService.name);
   private readonly docClient: DynamoDBDocumentClient;
 
   constructor() {
+    if (DynamoDbService.instance) {
+      return DynamoDbService.instance;
+    }
+
     this.logger.log('DynamoDbService constructor iniciado');
     this.logger.log(`AWS Region: ${process.env.AWS_REGION}`);
     this.logger.log(`DynamoDB Endpoint: ${process.env.DYNAMODB_ENDPOINT}`);
@@ -70,7 +77,16 @@ export class DynamoDbService {
       this.logger.error('Erro ao inicializar DynamoDB DocumentClient:', error);
       throw error;
     }
+
+    DynamoDbService.instance = this;
     this.logger.log('DynamoDbService constructor finalizado');
+  }
+
+  static getInstance(): DynamoDbService {
+    if (!DynamoDbService.instance) {
+      DynamoDbService.instance = new DynamoDbService();
+    }
+    return DynamoDbService.instance;
   }
 
   /**
@@ -78,14 +94,16 @@ export class DynamoDbService {
    * @param params - Parâmetros para a operação GetCommand.
    * @returns O item recuperado do DynamoDB.
    */
-  async getItem(params: GetCommandInput): Promise<any> {
+  async getItem(params: GetCommandInput): Promise<GetCommandOutput> {
+    if (!params.Key || Object.keys(params.Key).length === 0) {
+      throw new ValidationException('O elemento-chave fornecido não corresponde ao esquema esperado');
+    }
     try {
-      this.logger.log(`getItem: Iniciando operação getItem com params: ${JSON.stringify(params)}`);
+      // Verifique se as chaves estão sendo passadas corretamente
       if (!params.Key || Object.keys(params.Key).length === 0) {
-        throw new Error('Chave não fornecida para operação getItem');
+        throw new Error('Chave não fornecida para a operação getItem');
       }
       const result = await this.docClient.send(new GetCommand(params));
-      this.logger.log(`getItem: Resposta completa do DynamoDB SDK: ${JSON.stringify(result, null, 2)}`);
       return result;
     } catch (error) {
       this.handleError('getItem', error, 'Erro na operação getItem');
@@ -168,11 +186,14 @@ export class DynamoDbService {
    * @param params - Parâmetros para a operação QueryCommand.
    * @returns O resultado da operação QueryCommand.
    */
-  async query(params: QueryCommandInput): Promise<any> {
+  async query(params: QueryCommandInput): Promise<QueryCommandOutput> {
+    if (!params.ExpressionAttributeValues || Object.keys(params.ExpressionAttributeValues).length === 0) {
+      throw new ValidationException('ExpressionAttributeValues must not be empty');
+    }
     try {
       this.logger.log(`query: Iniciando operação query com params: ${JSON.stringify(params)}`);
-      if (!params.KeyConditionExpression || !params.ExpressionAttributeValues) {
-        throw new Error('KeyConditionExpression ou ExpressionAttributeValues não fornecidos para operação query');
+      if (!params.KeyConditionExpression || !params.ExpressionAttributeValues || Object.keys(params.ExpressionAttributeValues).length === 0) {
+        throw new Error('KeyConditionExpression ou ExpressionAttributeValues não fornecidos ou vazios para operação query');
       }
       const result = await this.docClient.send(new QueryCommand(params));
       this.logger.log(`query: Resposta completa do DynamoDB SDK: ${JSON.stringify(result, null, 2)}`);
@@ -251,6 +272,14 @@ export class DynamoDbService {
       ExpressionAttributeNames,
       ExpressionAttributeValues,
     };
+  }
+
+  /**
+   * Verifica se o DynamoDB DocumentClient está inicializado corretamente.
+   * @returns true se estiver inicializado, false caso contrário.
+   */
+  isInitialized(): boolean {
+    return !!this.docClient;
   }
 
   /**

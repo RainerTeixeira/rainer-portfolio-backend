@@ -8,6 +8,7 @@ import { DynamoDbService } from '@src/services/dynamodb.service'; // Importa o s
 import { CategoriesModule } from '@src/modules/blog/categories/categories.module'; // Importe o módulo correto
 import { AuthorsModule } from '@src/modules/blog/authors/authors.module'; // Importe o módulo correto
 import { CommentsModule } from '@src/modules/blog/comments/comments.module'; // Importe o módulo correto
+import { SubcategoryModule } from '@src/modules/blog/subcategory/subcategory.module'; // Importe o módulo de subcategorias
 
 /**
  * Define o módulo de Posts.
@@ -19,6 +20,7 @@ import { CommentsModule } from '@src/modules/blog/comments/comments.module'; // 
         CategoriesModule,
         AuthorsModule, // Adicione o módulo aqui
         CommentsModule, // Adicione o módulo aqui
+        SubcategoryModule, // Adicione o módulo aqui
     ],
     controllers: [PostsController],
     providers: [PostsService, DynamoDbService], // Adiciona DynamoDbService como provedor

@@ -1,5 +1,5 @@
 import { DynamoDbService } from '@src/services/dynamoDb.service';
-import { Injectable, NotFoundException, Logger, Inject } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger, Inject, BadRequestException } from '@nestjs/common';
 import { UpdateCommandInput } from '@aws-sdk/lib-dynamodb';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
@@ -90,9 +90,7 @@ export class AuthorsService {
         this.logger.log(`Buscando autor com authorId: ${authorId}`);
         const params = {
             TableName: this.tableName,
-            Key: {
-                authorId: authorId, // Corrigir o formato do valor
-            },
+            Key: { authorId: { S: authorId } }, // Corrigir o formato do valor
         };
 
         const result = await this.dynamoDbService.getItem(params);
@@ -195,6 +193,9 @@ export class AuthorsService {
     @ApiResponse({ status: 200, description: 'Autor encontrado.', type: AuthorDetailDto })
     @ApiResponse({ status: 404, description: 'Autor não encontrado.' })
     async getAuthorById(authorId: string): Promise<AuthorDetailDto> {
+        if (!authorId) {
+            throw new BadRequestException('authorId não fornecido');
+        }
         this.logger.log(`Buscando autor com authorId: ${authorId}`);
 
         // Tenta recuperar o autor do cache utilizando uma chave única

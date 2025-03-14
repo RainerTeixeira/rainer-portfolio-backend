@@ -29,7 +29,7 @@ export class CategoriesService {
         const params = {
             TableName: this.tableName,
             Key: {
-                categoryId: categoryId, // Corrigir o formato do valor
+                categoryId: categoryId,
             },
         };
         const result = await this.dynamoDbService.getItem(params);

@@ -30,8 +30,14 @@ export class PostsService {
     private readonly authorsService: AuthorsService,
     private readonly categoriesService: CategoriesService,
     private readonly subcategoryService: SubcategoryService,
-    private readonly commentsService: CommentsService,    
+    private readonly commentsService: CommentsService,
   ) { }
+
+  private ensureDocumentClientInitialized() {
+    if (!this.dynamoDbService || !this.dynamoDbService.isInitialized()) {
+      throw new Error('DynamoDB DocumentClient não está inicializado corretamente.');
+    }
+  }
 
   /**
    * Cria um novo post no DynamoDB e atualiza os caches relacionados.
@@ -84,7 +90,7 @@ export class PostsService {
     page: number,
     limit: number,
     nextKey?: string,
-  ): Promise<{ data: PostSummaryDto; total: number; message?: string; hasMore: boolean; nextKey?: string }> {
+  ): Promise<{ data: PostSummaryDto[]; total: number; message?: string; hasMore: boolean; nextKey?: string }> {
     this.logger.debug(`[getPaginatedPosts] Iniciando consulta paginada: Página ${page}, Limite ${limit}, NextKey: ${nextKey}`);
     try {
       const cacheKey = `${this.paginatedPostsCacheKeyPrefix}page:${page}_limit:${limit}_nextKey:${nextKey}`;
@@ -114,7 +120,7 @@ export class PostsService {
     }
   }
 
-  
+
   /**
      * Retorna um post completo com base no slug, incluindo todas as entidades relacionadas.
    * Utiliza cache para melhorar performance e reduzir chamadas ao DynamoDB.
@@ -138,17 +144,8 @@ export class PostsService {
     status: 404,
     description: 'Post não encontrado.'
   })
-    
-    
-  /**
-    * Retorna um post completo com base no slug
-    * @param slug - Slug do post a ser buscado
-    * @returns PostFullDto com todas as informações relacionadas
-    * @throws NotFoundException se o post não for encontrado
-    * @throws BadRequestException se ocorrer erro ao buscar dados
-    * 
-    */
   async getFullPostBySlug(slug: string): Promise<PostFullDto> {
+    this.ensureDocumentClientInitialized();
     const cacheKey = `full-post:${slug}`;
 
     try {
@@ -159,6 +156,10 @@ export class PostsService {
       // Buscar post principal
       const post = await this.getPostBySlugFromDB(slug);
       if (!post) throw new NotFoundException(`Post com slug '${slug}' não encontrado`);
+
+      if (!post.authorId) {
+        throw new BadRequestException('authorId não fornecido');
+      }
 
       // Buscar dados relacionados em paralelo
       const [author, category, subcategory, comments] = await Promise.all([
@@ -187,34 +188,6 @@ export class PostsService {
     }
   }
 
-
-  /**
-   * Busca o post básico no DynamoDB pelo slug
-   * @param slug - Slug do post
-   * @returns PostContentDto ou null se não encontrado
-   */
-  private async getPostBySlugFromDB(slug: string): Promise<PostContentDto | null> {
-    const params: QueryCommandInput = {
-      TableName: this.tableName,
-      IndexName: 'slug-index', // Certifique-se de que este índice existe no DynamoDB
-      KeyConditionExpression: 'slug = :slug',
-      ExpressionAttributeValues: { ':slug': slug }, // Corrigir o formato do valor
-      Limit: 1,
-      ProjectionExpression: [
-        'postId', 'title', 'contentHTML', 'authorId',
-        'categoryId', 'subcategoryId', 'slug',
-        'featuredImageURL', 'description', 'publishDate',
-        'modifiedDate', 'readingTime', '#views', 'tags',
-        'keywords', 'canonical', '#status'
-      ].join(', '),
-      ExpressionAttributeNames: { '#views': 'views', '#status': 'status' }
-    };
-
-    const result = await this.dynamoDbService.query(params);
-    return result.Items?.length ? this.mapDynamoDBItemToPostContentDto(result.Items[0]) : null;
-  }
-
-
   /**
    * Busca um post pelo seu ID no DynamoDB.
    *
@@ -229,39 +202,39 @@ export class PostsService {
   async getPostById(postId: string): Promise<any> {
     this.logger.debug(`[getPostById] Iniciando busca de post pelo ID: ${postId}`);
     try {
-        const params: QueryCommandInput = {
-            TableName: this.tableName,
-            IndexName: 'postId-index', // Certifique-se de que este índice existe no DynamoDB
-            KeyConditionExpression: 'postId = :postId',
-            ExpressionAttributeValues: { ':postId': postId }, // Corrigir o formato do valor
-            Limit: 1,
-            ProjectionExpression: [
-                'postId', 'title', 'contentHTML', 'authorId',
-                'categoryId', 'subcategoryId', 'slug',
-                'featuredImageURL', 'description', 'publishDate',
-                'modifiedDate', 'readingTime', '#views', 'tags',
-                'keywords', 'canonical', '#status'
-            ].join(', '),
-            ExpressionAttributeNames: { '#views': 'views', '#status': 'status' }
-        };
-        this.logger.debug(`[getPostById] Parâmetros para consulta por ID no DynamoDB: ${JSON.stringify(params)}`);
-        const result = await this.dynamoDbService.query(params);
-        this.logger.debug(`[getPostById] Resultado da consulta por ID no DynamoDB: ${JSON.stringify(result)}`);
-        if (!result.Items || result.Items.length === 0) {
-            this.logger.warn(`[getPostById] Post não encontrado para ID: ${postId}`);
-            throw new NotFoundException('Post não encontrado');
-        }
-        const post = this.mapToDetailDto(result.Items[0]);
-        this.logger.debug(`[getPostById] Post encontrado: ${JSON.stringify(post)}`);
-        return post;
+      const params: QueryCommandInput = {
+        TableName: this.tableName,
+        IndexName: 'postId-index', // Certifique-se de que este índice existe no DynamoDB
+        KeyConditionExpression: 'postId = :postId',
+        ExpressionAttributeValues: { ':postId': { S: postId } }, // Corrigir o formato do valor
+        Limit: 1,
+        ProjectionExpression: [
+          'postId', 'title', 'contentHTML', 'authorId',
+          'categoryId', 'subcategoryId', 'slug',
+          'featuredImageURL', 'description', 'publishDate',
+          'modifiedDate', 'readingTime', '#views', 'tags',
+          'keywords', 'canonical', '#status'
+        ].join(', '),
+        ExpressionAttributeNames: { '#views': 'views', '#status': 'status' }
+      };
+      this.logger.debug(`[getPostById] Parâmetros para consulta por ID no DynamoDB: ${JSON.stringify(params)}`);
+      const result = await this.dynamoDbService.query(params);
+      this.logger.debug(`[getPostById] Resultado da consulta por ID no DynamoDB: ${JSON.stringify(result)}`);
+      if (!result.Items || result.Items.length === 0) {
+        this.logger.warn(`[getPostById] Post não encontrado para ID: ${postId}`);
+        throw new NotFoundException('Post não encontrado');
+      }
+      const post = this.mapToDetailDto(result.Items[0]);
+      this.logger.debug(`[getPostById] Post encontrado: ${JSON.stringify(post)}`);
+      return post;
     } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
-        this.logger.error(`[getPostById] Erro ao buscar post por ID: ${errorMsg}`, error?.stack);
-        throw new NotFoundException(`Post não encontrado: ${errorMsg}`);
+      const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+      this.logger.error(`[getPostById] Erro ao buscar post por ID: ${errorMsg}`, error?.stack);
+      throw new NotFoundException(`Post não encontrado: ${errorMsg}`);
     } finally {
-        this.logger.debug('[getPostById] Finalizando busca de post por ID.');
+      this.logger.debug('[getPostById] Finalizando busca de post por ID.');
     }
-}
+  }
 
   /**
    * Atualiza um post existente no DynamoDB.
@@ -680,5 +653,32 @@ export class PostsService {
       title: item.title?.['S'],
       views: Number(item.views?.['N']),
     } as PostContentDto;
+  }
+    /**
+    * Busca um post pelo seu slug no DynamoDB.
+    * @param slug - O slug do post a ser buscado.
+    * @returns O post encontrado como objeto do DynamoDB.
+    * @throws Error se o post não for encontrado.
+    */
+  async getPostBySlugFromDB(slug: string): Promise<any> {
+    this.ensureDocumentClientInitialized();
+    const params: QueryCommandInput = {
+      TableName: 'Posts',
+      IndexName: 'slug-index',
+      KeyConditionExpression: 'slug = :slug',
+      ExpressionAttributeValues: {
+        ':slug': slug,
+      },
+    };
+
+    try {
+      const result = await this.dynamoDbService.query(params);
+      if (!result.Items || result.Items.length === 0) {
+        throw new Error('Post não encontrado');
+      }
+      return result.Items[0];
+    } catch (error) {
+      throw new Error(`Erro ao buscar post pelo slug: ${error.message}`);
+    }
   }
 }
