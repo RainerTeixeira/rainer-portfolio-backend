@@ -90,7 +90,9 @@ export class AuthorsService {
         this.logger.log(`Buscando autor com authorId: ${authorId}`);
         const params = {
             TableName: this.tableName,
-            Key: { authorId },
+            Key: {
+                authorId: authorId, // Corrigir o formato do valor
+            },
         };
 
         const result = await this.dynamoDbService.getItem(params);
@@ -206,7 +208,7 @@ export class AuthorsService {
         const params = {
             TableName: this.tableName,
             Key: {
-                authorId: { S: authorId } // Tipo de dado correto para chave primária
+                authorId: authorId // Tipo de dado correto para chave primária
             }
         };
 

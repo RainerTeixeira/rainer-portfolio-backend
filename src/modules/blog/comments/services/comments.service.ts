@@ -54,8 +54,8 @@ export class CommentsService {
         const params = {
             TableName: this.tableName,
             Key: {
-                postId: { S: postId },
-                authorId: { S: authorId },
+                postId: postId, // Corrigir o formato do valor
+                authorId: authorId, // Corrigir o formato do valor
             },
         };
         const result = await this.dynamoDbService.getItem(params);
@@ -77,7 +77,7 @@ export class CommentsService {
             TableName: this.tableName,
             IndexName: 'postId-index',
             KeyConditionExpression: 'postId = :postId',
-            ExpressionAttributeValues: { ':postId': { S: postId } },
+            ExpressionAttributeValues: { ':postId': postId },
         };
         const result = await this.dynamoDbService.query(params);
         return (result.Items || []).map(item => this.mapCommentFromDynamoDb(item));

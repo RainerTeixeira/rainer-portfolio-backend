@@ -196,9 +196,9 @@ export class PostsService {
   private async getPostBySlugFromDB(slug: string): Promise<PostContentDto | null> {
     const params: QueryCommandInput = {
       TableName: this.tableName,
-      IndexName: 'slug-index',
+      IndexName: 'slug-index', // Certifique-se de que este índice existe no DynamoDB
       KeyConditionExpression: 'slug = :slug',
-      ExpressionAttributeValues: { ':slug': slug },
+      ExpressionAttributeValues: { ':slug': slug }, // Corrigir o formato do valor
       Limit: 1,
       ProjectionExpression: [
         'postId', 'title', 'contentHTML', 'authorId',
@@ -231,9 +231,9 @@ export class PostsService {
     try {
       const params: QueryCommandInput = {
         TableName: this.tableName,
-        IndexName: 'postId-index',
+        IndexName: 'postId-index', // Certifique-se de que este índice existe no DynamoDB
         KeyConditionExpression: 'postId = :postId',
-        ExpressionAttributeValues: { ':postId': postId, },
+        ExpressionAttributeValues: { ':postId': postId }, // Corrigir o formato do valor
         Limit: 1,
         ProjectionExpression: [
           'postId', 'title', 'contentHTML', 'authorId',
