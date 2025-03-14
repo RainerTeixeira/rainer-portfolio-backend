@@ -28,7 +28,9 @@ import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiParam } from '@nestjs/
 
 /**
  * Guard customizado para permitir somente os métodos HTTP especificados.
- * Isso ajuda a garantir que as rotas sejam usadas da maneira esperada, melhorando a segurança e potencialmente a performance ao evitar processamento desnecessário para métodos não permitidos.
+ * Isso ajuda a garantir que as rotas sejam usadas da maneira esperada,
+ * melhorando a segurança e potencialmente a performance ao evitar processamento 
+ * desnecessário para métodos não permitidos.
  */
 class AllowedMethodGuard implements CanActivate {
   constructor(private allowedMethods: string) { } // O construtor deve esperar um array de strings
