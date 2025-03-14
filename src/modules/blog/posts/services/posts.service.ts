@@ -252,7 +252,7 @@ export class PostsService {
    * Deleta um post do DynamoDB.
    *
    * @param postId - Identificador do post.
-   * @throws BadRequestException se ocorrer um erro durante a deleção do post.
+   * @throws BadRequestException se ocorrer um erro durante a Exclusão do post.
    * @throws NotFoundException se o post não for encontrado.
    */
   @CacheClear(['posts:*', 'post-details:*', 'latest_posts', 'paginated_posts:*'])
@@ -261,7 +261,7 @@ export class PostsService {
   @ApiResponse({ status: 400, description: 'Falha ao remover post.' })
   @ApiResponse({ status: 404, description: 'Post não encontrado.' })
   async deletePost(postId: string): Promise<void> {
-    this.logger.debug(`[deletePost] Iniciando deleção do post ID: ${postId}`);
+    this.logger.debug(`[deletePost] Iniciando Exclusão do post ID: ${postId}`);
     try {
       const post = await this.getPostById(postId);
       const params: DeleteCommandInput = {
@@ -271,17 +271,17 @@ export class PostsService {
           postId: postId,
         },
       };
-      this.logger.debug(`[deletePost] Parâmetros para deleção no DynamoDB: ${JSON.stringify(params)}`);
+      this.logger.debug(`[deletePost] Parâmetros para Exclusão no DynamoDB: ${JSON.stringify(params)}`);
       const result = await this.dynamoDbService.deleteItem(params);
-      this.logger.debug(`[deletePost] Resultado da deleção no DynamoDB: ${JSON.stringify(result)}`);
+      this.logger.debug(`[deletePost] Resultado da Exclusão no DynamoDB: ${JSON.stringify(result)}`);
       await this.refreshRelatedCaches(post['categoryId#subcategoryId'], postId);
       this.logger.verbose(`[deletePost] Post deletado com sucesso, ID: ${postId}`);
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
-      this.logger.error(`[deletePost] Erro na deleção do post: ${errorMsg}`, error?.stack);
+      this.logger.error(`[deletePost] Erro na Exclusão do post: ${errorMsg}`, error?.stack);
       throw new BadRequestException(`Falha ao remover post: ${errorMsg}`);
     } finally {
-      this.logger.debug('[deletePost] Finalizando deleção do post.');
+      this.logger.debug('[deletePost] Finalizando Exclusão do post.');
     }
   }
 
