@@ -6,7 +6,7 @@ import { CategoryDto } from '@src/modules/blog/categories/dto/category.dto';
 import { UpdateCommandInput } from '@aws-sdk/lib-dynamodb';
 
 @Injectable()
-export class CategoriesService {
+export class CategoryService {
     private readonly tableName = 'Categories';
 
     constructor(private readonly dynamoDbService: DynamoDbService) { }
@@ -17,7 +17,7 @@ export class CategoriesService {
             Item: createCategoryDto,
         };
         await this.dynamoDbService.putItem(params);
-        return this.findOne(createCategoryDto.categoryId.toString());
+        return this.findOne(createCategoryDto.categoryId);
     }
 
     async findAll(): Promise<CategoryDto[]> {

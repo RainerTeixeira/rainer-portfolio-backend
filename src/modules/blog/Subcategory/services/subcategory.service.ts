@@ -7,6 +7,12 @@ import { UpdateSubcategoryDto } from '../dto/update-subcategory.dto';
 import { SubcategoryDto } from '../dto/subcategory.dto';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
+/**
+ * @SubcategoryService
+ * Serviço responsável pela lógica de negócio das subcategorias.
+ * Este serviço interage com o DynamoDB para realizar operações CRUD (Create, Read, Update, Delete)
+ * na tabela 'Subcategory'.
+ */
 @ApiTags('Subcategories')
 @Injectable()
 export class SubcategoryService {
@@ -14,6 +20,13 @@ export class SubcategoryService {
 
     constructor(private readonly dynamoDbService: DynamoDbService) { }
 
+    /**
+     * Cria uma nova subcategoria no DynamoDB.
+     * @param categoryIdSubcategoryId Chave composta da categoria.
+     * @param createSubcategoryDto DTO contendo os dados para criar a subcategoria.
+     * @returns SubcategoryDto A subcategoria criada.
+     * @throws BadRequestException Se os dados forem inválidos.
+     */
     @ApiOperation({ summary: 'Criar uma nova subcategoria' })
     @ApiResponse({ status: 201, description: 'Subcategoria criada com sucesso.', type: SubcategoryDto })
     @ApiResponse({ status: 400, description: 'Dados inválidos.' })
@@ -32,6 +45,12 @@ export class SubcategoryService {
         return this.getSubcategoryById(categoryIdSubcategoryId, createSubcategoryDto.subcategoryId); // Retorna a subcategoria recém-criada buscando-a pelo ID
     }
 
+    /**
+     * Busca todas as subcategorias de uma categoria específica.
+     * @param categoryIdSubcategoryId Chave composta da categoria.
+     * @returns SubcategoryDto[] Lista de subcategorias encontradas.
+     * @throws NotFoundException Se a categoria não for encontrada.
+     */
     @ApiOperation({ summary: 'Buscar todas as subcategorias de uma categoria' })
     @ApiResponse({ status: 200, description: 'Lista de subcategorias retornada com sucesso.', type: [SubcategoryDto] })
     @ApiResponse({ status: 404, description: 'Categoria não encontrada.' })
@@ -58,6 +77,13 @@ export class SubcategoryService {
         } as SubcategoryDto)) || []; // Converte o objeto literal para SubcategoryDto
     }
 
+    /**
+     * Busca uma subcategoria pelo ID.
+     * @param categoryIdSubcategoryId Chave composta da categoria.
+     * @param subcategoryId ID da subcategoria.
+     * @returns SubcategoryDto A subcategoria encontrada.
+     * @throws NotFoundException Se a subcategoria não for encontrada.
+     */
     @ApiOperation({ summary: 'Buscar uma subcategoria por ID' })
     @ApiResponse({ status: 200, description: 'Subcategoria retornada com sucesso.', type: SubcategoryDto })
     @ApiResponse({ status: 404, description: 'Subcategoria não encontrada.' })
@@ -81,6 +107,14 @@ export class SubcategoryService {
         } as SubcategoryDto; // Converte o objeto literal para SubcategoryDto
     }
 
+    /**
+     * Atualiza uma subcategoria existente.
+     * @param categoryIdSubcategoryId Chave composta da categoria.
+     * @param subcategoryId ID da subcategoria.
+     * @param updateSubcategoryDto DTO contendo os dados para atualizar a subcategoria.
+     * @returns SubcategoryDto A subcategoria atualizada.
+     * @throws NotFoundException Se a subcategoria não for encontrada.
+     */
     @ApiOperation({ summary: 'Atualizar uma subcategoria existente' })
     @ApiResponse({ status: 200, description: 'Subcategoria atualizada com sucesso.', type: SubcategoryDto })
     @ApiResponse({ status: 404, description: 'Subcategoria não encontrada.' })
@@ -113,6 +147,13 @@ export class SubcategoryService {
         } as SubcategoryDto; // Converte o objeto literal para SubcategoryDto
     }
 
+    /**
+     * Deleta uma subcategoria.
+     * @param categoryIdSubcategoryId Chave composta da categoria.
+     * @param subcategoryId ID da subcategoria.
+     * @returns void
+     * @throws NotFoundException Se a subcategoria não for encontrada.
+     */
     @ApiOperation({ summary: 'Deletar uma subcategoria' })
     @ApiResponse({ status: 200, description: 'Subcategoria deletada com sucesso.' })
     @ApiResponse({ status: 404, description: 'Subcategoria não encontrada.' })
@@ -126,5 +167,37 @@ export class SubcategoryService {
             },
         };
         await this.dynamoDbService.deleteItem(params); // Deleta o item do DynamoDB
+    }
+
+    async getSubcategoryById(categoryId: string, subcategoryId: string): Promise<SubcategoryDto> {
+        const categoryIdSubcategoryId = `${categoryId}#${subcategoryId}`;
+        return this.findOne(categoryIdSubcategoryId, subcategoryId);
+    }
+
+    async findOne(categoryIdSubcategoryId: string, subcategoryId: string): Promise<SubcategoryDto> {
+        const params = {
+            TableName: this.tableName,
+            Key: {
+                'categoryId#subcategoryId': categoryIdSubcategoryId,
+                subcategoryId: subcategoryId,
+            },
+        };
+        const result = await this.dynamoDbService.getItem(params);
+        if (!result.Item) {
+            throw new NotFoundException(`Subcategoria com ID '${subcategoryId}' na categoria '${categoryIdSubcategoryId}' não encontrada`);
+        }
+        return this.mapToDto(result.Item);
+    }
+
+    private mapToDto(item: any): SubcategoryDto {
+        return {
+            categoryIdSubcategoryId: item['categoryId#subcategoryId'],
+            subcategoryId: item.subcategoryId,
+            name: item.name,
+            slug: item.slug,
+            description: item.description,
+            keywords: item.keywords,
+            title: item.title,
+        };
     }
 }

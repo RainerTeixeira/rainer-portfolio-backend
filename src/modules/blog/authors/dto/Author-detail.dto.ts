@@ -33,10 +33,10 @@ export class AuthorDetailDto {
      */
     static fromDynamoDB(item: any): AuthorDetailDto {
         return {
-            authorId: item.authorId?.S || "", // Acessar com `.S` para obter o valor correto
-            name: item.name?.S || "",
-            slug: item.slug?.S || "",
-            socialProof: item.socialProof?.M || {}, // Acessar com `.M` para obter o valor correto
+            authorId: item.authorId || "",
+            name: item.name || "",
+            slug: item.slug || "",
+            socialProof: item.socialProof || {},
         };
     }
 }

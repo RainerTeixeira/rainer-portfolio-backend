@@ -6,8 +6,8 @@ import { ApiProperty } from '@nestjs/swagger';
 export class CreateCommentDto {
     @ApiProperty({ description: 'ID do post' })
     @IsNotEmpty()
-    @IsNumber()
-    postId: number;
+    @IsString()
+    postId: string;
 
     @ApiProperty({ description: 'ID do autor' })
     @IsNotEmpty()
@@ -24,7 +24,7 @@ export class CreateCommentDto {
     @IsString()
     date?: string;
 
-    constructor(postId: number, authorId: string, content: string, date?: string) {
+    constructor(postId: string, authorId: string, content: string, date?: string) {
         this.postId = postId;
         this.authorId = authorId;
         this.content = content;
