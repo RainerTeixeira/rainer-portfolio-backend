@@ -9,6 +9,6 @@ import { BlogModule } from '@src/modules/blog.module'; // <--- IMPORTA BlogModul
     imports: [forwardRef(() => BlogModule)], // Use forwardRef envolvendo BlogModule para resolver dependência circular
     controllers: [SubcategoryController],
     providers: [SubcategoryService],
-    exports: [SubcategoryService],
+    exports: [SubcategoryService], // Certifique-se de exportar o serviço
 })
-export class SubcategoryModule { }
+export class SubcategoryModule {}
