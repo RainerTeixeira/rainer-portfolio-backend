@@ -229,39 +229,39 @@ export class PostsService {
   async getPostById(postId: string): Promise<any> {
     this.logger.debug(`[getPostById] Iniciando busca de post pelo ID: ${postId}`);
     try {
-      const params: QueryCommandInput = {
-        TableName: this.tableName,
-        IndexName: 'postId-index', // Certifique-se de que este índice existe no DynamoDB
-        KeyConditionExpression: 'postId = :postId',
-        ExpressionAttributeValues: { ':postId': postId }, // Corrigir o formato do valor
-        Limit: 1,
-        ProjectionExpression: [
-          'postId', 'title', 'contentHTML', 'authorId',
-          'categoryId', 'subcategoryId', 'slug',
-          'featuredImageURL', 'description', 'publishDate',
-          'modifiedDate', 'readingTime', '#views', 'tags',
-          'keywords', 'canonical', '#status'
-        ].join(', '),
-        ExpressionAttributeNames: { '#views': 'views', '#status': 'status' }
-      };
-      this.logger.debug(`[getPostById] Parâmetros para consulta por ID no DynamoDB: ${JSON.stringify(params)}`);
-      const result = await this.dynamoDbService.query(params);
-      this.logger.debug(`[getPostById] Resultado da consulta por ID no DynamoDB: ${JSON.stringify(result)}`);
-      if (!result.Items || result.Items.length === 0) {
-        this.logger.warn(`[getPostById] Post não encontrado para ID: ${postId}`);
-        throw new NotFoundException('Post não encontrado');
-      }
-      const post = this.mapToDetailDto(result.Items[0]);
-      this.logger.debug(`[getPostById] Post encontrado: ${JSON.stringify(post)}`);
-      return post;
+        const params: QueryCommandInput = {
+            TableName: this.tableName,
+            IndexName: 'postId-index', // Certifique-se de que este índice existe no DynamoDB
+            KeyConditionExpression: 'postId = :postId',
+            ExpressionAttributeValues: { ':postId': postId }, // Corrigir o formato do valor
+            Limit: 1,
+            ProjectionExpression: [
+                'postId', 'title', 'contentHTML', 'authorId',
+                'categoryId', 'subcategoryId', 'slug',
+                'featuredImageURL', 'description', 'publishDate',
+                'modifiedDate', 'readingTime', '#views', 'tags',
+                'keywords', 'canonical', '#status'
+            ].join(', '),
+            ExpressionAttributeNames: { '#views': 'views', '#status': 'status' }
+        };
+        this.logger.debug(`[getPostById] Parâmetros para consulta por ID no DynamoDB: ${JSON.stringify(params)}`);
+        const result = await this.dynamoDbService.query(params);
+        this.logger.debug(`[getPostById] Resultado da consulta por ID no DynamoDB: ${JSON.stringify(result)}`);
+        if (!result.Items || result.Items.length === 0) {
+            this.logger.warn(`[getPostById] Post não encontrado para ID: ${postId}`);
+            throw new NotFoundException('Post não encontrado');
+        }
+        const post = this.mapToDetailDto(result.Items[0]);
+        this.logger.debug(`[getPostById] Post encontrado: ${JSON.stringify(post)}`);
+        return post;
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
-      this.logger.error(`[getPostById] Erro ao buscar post por ID: ${errorMsg}`, error?.stack);
-      throw new NotFoundException(`Post não encontrado: ${errorMsg}`);
+        const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+        this.logger.error(`[getPostById] Erro ao buscar post por ID: ${errorMsg}`, error?.stack);
+        throw new NotFoundException(`Post não encontrado: ${errorMsg}`);
     } finally {
-      this.logger.debug('[getPostById] Finalizando busca de post por ID.');
+        this.logger.debug('[getPostById] Finalizando busca de post por ID.');
     }
-  }
+}
 
   /**
    * Atualiza um post existente no DynamoDB.

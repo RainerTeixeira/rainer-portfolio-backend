@@ -54,8 +54,8 @@ export class CommentsService {
         const params = {
             TableName: this.tableName,
             Key: {
-                postId: postId, // Corrigir o formato do valor
-                authorId: authorId, // Corrigir o formato do valor
+                postId: postId,
+                authorId: authorId,
             },
         };
         const result = await this.dynamoDbService.getItem(params);
@@ -75,9 +75,8 @@ export class CommentsService {
     async getCommentsByPostId(postId: string): Promise<CommentDto[]> {
         const params = {
             TableName: this.tableName,
-            IndexName: 'postId-index',
             KeyConditionExpression: 'postId = :postId',
-            ExpressionAttributeValues: { ':postId': postId },
+            ExpressionAttributeValues: { ':postId': postId }, // Corrigir o formato do valor
         };
         const result = await this.dynamoDbService.query(params);
         return (result.Items || []).map(item => this.mapCommentFromDynamoDb(item));
@@ -100,8 +99,8 @@ export class CommentsService {
         const params: UpdateCommandInput = {
             TableName: this.tableName,
             Key: {
-                postId: { S: postId },
-                authorId: { S: authorId },
+                postId: postId,
+                authorId: authorId,
             },
             UpdateExpression: 'SET content = :content, #status = :status, #date = :date',
             ExpressionAttributeNames: {
@@ -109,9 +108,9 @@ export class CommentsService {
                 '#date': 'date',
             },
             ExpressionAttributeValues: {
-                ':content': { S: updateCommentDto.content },
-                ':status': { S: updateCommentDto.status || 'pending' },
-                ':date': { S: updateCommentDto.date || new Date().toISOString() },
+                ':content': updateCommentDto.content,
+                ':status': updateCommentDto.status || 'pending',
+                ':date': updateCommentDto.date || new Date().toISOString(),
             },
             ReturnValues: 'ALL_NEW',
         };
@@ -135,8 +134,8 @@ export class CommentsService {
         const params = {
             TableName: this.tableName,
             Key: {
-                postId: { S: postId },
-                authorId: { S: authorId },
+                postId: postId,
+                authorId: authorId,
             },
         };
         await this.dynamoDbService.deleteItem(params);
@@ -149,12 +148,12 @@ export class CommentsService {
      */
     private mapCommentFromDynamoDb(item: Record<string, any>): CommentDto {
         return {
-            postId: item.postId?.S,
-            commentId: item.commentId?.S,
-            authorId: item.authorId?.S,
-            content: item.content?.S,
-            date: item.date?.S,
-            status: item.status?.S,
+            postId: item.postId,
+            commentId: item.commentId,
+            authorId: item.authorId,
+            content: item.content,
+            date: item.date,
+            status: item.status,
         } as CommentDto;
     }
 }
