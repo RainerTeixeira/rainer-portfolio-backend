@@ -65,8 +65,8 @@ export class SubcategoryService {
         const params = {
             TableName: this.tableName,
             Key: {
-                'categoryId#subcategoryId': categoryIdSubcategoryId, // Chave primária de partição (PK)
-                subcategoryId: subcategoryId, // Chave primária de ordenação (SK)
+                'categoryId#subcategoryId': categoryIdSubcategoryId, // Corrigir o formato do valor
+                subcategoryId: subcategoryId, // Corrigir o formato do valor
             },
         };
         const result = await this.dynamoDbService.getItem(params); // Busca o item no DynamoDB usando a chave
