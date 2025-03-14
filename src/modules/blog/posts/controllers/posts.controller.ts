@@ -186,6 +186,7 @@ export class PostsController {
     @Body() postUpdateDto: PostUpdateDto,
   ): Promise<PostContentDto> {
     this.logger.debug(`Recebida requisição PATCH para atualizar post ID: ${id}`);
+    this.logger.debug(`Dados recebidos para atualização: ${JSON.stringify(postUpdateDto)}`); // Adicionado log para rastrear dados de entrada
     return this.execute(
       () => this.postsService.updatePost(id, postUpdateDto),
       'Atualização de post',

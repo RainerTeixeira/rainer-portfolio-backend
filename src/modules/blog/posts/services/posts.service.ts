@@ -12,8 +12,6 @@ import { PostCreateDto } from '@src/modules/blog/posts/dto/post-create.dto';
 import { PostUpdateDto } from '@src/modules/blog/posts/dto/post-update.dto';
 import { PostContentDto } from '@src/modules/blog/posts/dto/post-content.dto';
 import { PostSummaryDto } from '@src/modules/blog/posts/dto/post-summary.dto';
-// Removendo a importação do uuid
-// import { v4 as uuidv4 } from 'uuid';
 import {
   GetCommandInput,
   PutCommandInput,
@@ -42,8 +40,10 @@ export class PostsService {
   /**
    * Cria um novo post no DynamoDB e atualiza os caches relacionados.
    * Utiliza um timestamp em milissegundos convertido para base 36 como ID para economizar espaço.
+   * 
    * @param createPostDto - Dados para criação do post.
    * @returns O post criado como PostContentDto.
+   * @throws BadRequestException se ocorrer um erro durante a criação do post.
    */
   @CacheClear(['posts:*', 'post-details:*', 'latest_posts', 'paginated_posts:*'])
   @ApiOperation({ summary: 'Cria um novo post' })
@@ -53,16 +53,14 @@ export class PostsService {
     this.logger.debug(`Iniciando criação do post com dados: ${JSON.stringify(createPostDto)}`);
     try {
       const compositeKey = `${createPostDto.categoryId}#${createPostDto.subcategoryId}`;
-      // Gera um ID único usando o timestamp atual em milissegundos convertido para base 36
       const postId = new Date().getTime().toString(36);
       const publishDate = new Date().toISOString();
 
       const postItem = {
         'categoryId#subcategoryId': compositeKey,
         postId,
-        publishDate: new Date().toISOString(),
+        publishDate,
         modifiedDate: new Date().toISOString(),
-        publishDate: publishDate,
         views: 0,
         status: 'draft',
         ...this.sanitizePostData(createPostDto),
@@ -79,25 +77,29 @@ export class PostsService {
       this.logger.verbose(`Post criado com sucesso, ID: ${postId}`);
       return this.mapToContentDto(postItem);
     } catch (error) {
-      this.logger.error(`Erro na criação do post: ${error?.message}`, error?.stack);
-      throw new BadRequestException({
-        message: 'Falha ao criar post',
-        originalError: error?.message,
-      });
+      const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+      this.logger.error(`Erro na criação do post: ${errorMsg}`, error?.stack);
+      throw new BadRequestException(`Falha ao criar post: ${errorMsg}`);
     }
   }
 
   /**
    * Retorna uma listagem paginada de posts.
-   * @param page - Número da página.
-   * @param limit - Limite de posts por página.
-   * @param nextKey - Chave para a próxima página (opcional).
-   * @returns Objeto com a lista de posts, o total de posts e uma mensagem se não houver mais posts.
+   * 
+   * @param page - Número da página a ser retornada.
+   * @param limit - Número máximo de posts por página.
+   * @param nextKey - Token de paginação opcional fornecido pela resposta anterior.
+   * @returns Objeto contendo a lista de posts, o total de posts, uma mensagem opcional e um indicador se há mais posts.
+   * @throws BadRequestException se ocorrer um erro durante a listagem dos posts.
    */
   @ApiOperation({ summary: 'Retorna uma listagem paginada de posts' })
   @ApiResponse({ status: 200, description: 'Listagem de posts retornada com sucesso.', type: [PostSummaryDto] })
   @ApiResponse({ status: 400, description: 'Falha ao listar posts paginados.' })
-  async getPaginatedPosts(page: number, limit: number, nextKey?: string): Promise<{ data: PostSummaryDto; total: number; message?: string; hasMore: boolean; nextKey?: string }> {
+  async getPaginatedPosts(
+    page: number,
+    limit: number,
+    nextKey?: string,
+  ): Promise<{ data: PostSummaryDto[]; total: number; message?: string; hasMore: boolean; nextKey?: string }> {
     const cacheKey = `${this.paginatedPostsCacheKeyPrefix}page:${page}_limit:${limit}_nextKey:${nextKey}`;
     this.logger.debug(`Iniciando consulta paginada: Página ${page}, Limite ${limit}, NextKey: ${nextKey}`);
 
@@ -113,7 +115,9 @@ export class PostsService {
       data: result.data,
       total: result.total,
       hasMore: result.hasMore,
-      nextKey: result.lastEvaluatedKey ? Buffer.from(JSON.stringify(result.lastEvaluatedKey)).toString('base64') : undefined,
+      nextKey: result.lastEvaluatedKey
+        ? Buffer.from(JSON.stringify(result.lastEvaluatedKey)).toString('base64')
+        : undefined,
       message: undefined,
     };
 
@@ -130,8 +134,10 @@ export class PostsService {
 
   /**
    * Retorna um post completo com base no slug.
+   * 
    * @param slug - Slug do post.
-   * @returns O post completo como PostContentDto.
+   * @returns O post completo como PostContentDto ou null se não encontrado.
+   * @throws BadRequestException se ocorrer um erro durante a busca do post.
    */
   @ApiOperation({ summary: 'Retorna um post completo com base no slug' })
   @ApiResponse({ status: 200, description: 'Post retornado com sucesso.', type: PostContentDto })
@@ -159,19 +165,19 @@ export class PostsService {
         return null;
       }
     } catch (error) {
-      this.logger.error(`Erro ao buscar post por slug '${slug}' no DynamoDB`, error);
-      throw new BadRequestException({
-        message: 'Falha ao buscar post por slug',
-        originalError: error?.message,
-      });
+      const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+      this.logger.error(`Erro ao buscar post por slug '${slug}' no DynamoDB: ${errorMsg}`, error?.stack);
+      throw new BadRequestException(`Falha ao buscar post por slug: ${errorMsg}`);
     }
   }
 
   /**
    * Busca um post pelo seu ID no DynamoDB.
-   * @param postId - Identificador do post.
-   * @returns O post encontrado como objeto de detalhe.
+   * 
+   * @param postId - Identificador único do post.
+   * @returns O post encontrado como PostContentDto.
    * @throws NotFoundException se o post não for encontrado.
+   * @throws BadRequestException se ocorrer um erro ao buscar o post.
    */
   @ApiOperation({ summary: 'Busca um post pelo seu ID' })
   @ApiResponse({ status: 200, description: 'Post retornado com sucesso.', type: PostContentDto })
@@ -181,7 +187,7 @@ export class PostsService {
     try {
       const params: QueryCommandInput = {
         TableName: this.tableName,
-        IndexName: 'postId-index', // Nome do GSI para buscar por postId
+        IndexName: 'postId-index',
         KeyConditionExpression: 'postId = :postId',
         ExpressionAttributeValues: {
           ':postId': postId,
@@ -198,19 +204,20 @@ export class PostsService {
 
       return this.mapToDetailDto(result.Items[0]);
     } catch (error) {
-      this.logger.error(`Erro ao buscar post por ID: ${error?.message}`, error?.stack);
-      throw new NotFoundException({
-        message: 'Post não encontrado',
-        originalError: error?.message,
-      });
+      const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+      this.logger.error(`Erro ao buscar post por ID: ${errorMsg}`, error?.stack);
+      throw new NotFoundException(`Post não encontrado: ${errorMsg}`);
     }
   }
 
   /**
    * Atualiza um post existente no DynamoDB.
+   * 
    * @param postId - Identificador do post.
    * @param updatePostDto - Dados para atualização do post.
    * @returns O post atualizado como PostContentDto.
+   * @throws BadRequestException se ocorrer um erro durante a atualização do post.
+   * @throws NotFoundException se o post não for encontrado.
    */
   @CacheClear(['posts:*', 'post-details:*', 'latest_posts', 'paginated_posts:*'])
   @ApiOperation({ summary: 'Atualiza um post existente' })
@@ -241,17 +248,18 @@ export class PostsService {
       this.logger.verbose(`Post atualizado com sucesso, ID: ${postId}`);
       return this.mapToContentDto(result.Attributes);
     } catch (error) {
-      this.logger.error(`Erro na atualização do post: ${error?.message}`, error?.stack);
-      throw new BadRequestException({
-        message: 'Falha ao atualizar post',
-        originalError: error?.message,
-      });
+      const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+      this.logger.error(`Erro na atualização do post: ${errorMsg}`, error?.stack);
+      throw new BadRequestException(`Falha ao atualizar post: ${errorMsg}`);
     }
   }
 
   /**
    * Deleta um post do DynamoDB.
+   * 
    * @param postId - Identificador do post.
+   * @throws BadRequestException se ocorrer um erro durante a deleção do post.
+   * @throws NotFoundException se o post não for encontrado.
    */
   @CacheClear(['posts:*', 'post-details:*', 'latest_posts', 'paginated_posts:*'])
   @ApiOperation({ summary: 'Deleta um post' })
@@ -275,11 +283,9 @@ export class PostsService {
       await this.refreshRelatedCaches(post['categoryId#subcategoryId'], postId);
       this.logger.verbose(`Post deletado com sucesso, ID: ${postId}`);
     } catch (error) {
-      this.logger.error(`Erro na deleção do post: ${error?.message}`, error?.stack);
-      throw new BadRequestException({
-        message: 'Falha ao remover post',
-        originalError: error?.message,
-      });
+      const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+      this.logger.error(`Erro na deleção do post: ${errorMsg}`, error?.stack);
+      throw new BadRequestException(`Falha ao remover post: ${errorMsg}`);
     }
   }
 
@@ -287,17 +293,22 @@ export class PostsService {
 
   /**
    * Executa uma consulta de paginação de posts no DynamoDB.
+   * 
    * @param page - Número da página.
    * @param limit - Limite de posts por página.
    * @param lastEvaluatedKey - Chave para iniciar a próxima página (opcional).
    * @returns Objeto contendo os dados paginados, o total de posts (aproximado) e um indicador se há mais posts.
    */
-  private async queryPaginatedPostsFromDb(page: number, limit: number, lastEvaluatedKey?: Record<string, AttributeValue>): Promise<{ data: PostSummaryDto; total: number; message?: string; hasMore: boolean; lastEvaluatedKey?: Record<string, AttributeValue> }> {
+  private async queryPaginatedPostsFromDb(
+    page: number,
+    limit: number,
+    lastEvaluatedKey?: Record<string, AttributeValue>,
+  ): Promise<{ data: PostSummaryDto[]; total: number; message?: string; hasMore: boolean; lastEvaluatedKey?: Record<string, AttributeValue> }> {
     this.logger.debug(`Iniciando consulta paginada: Página ${page}, Limite ${limit}, LastEvaluatedKey: ${JSON.stringify(lastEvaluatedKey)}`);
 
     const params: QueryCommandInput = {
       TableName: this.tableName,
-      IndexName: 'postsByPublishDate-index', // Nome do GSI para buscar posts publicados por data
+      IndexName: 'postsByPublishDate-index',
       KeyConditionExpression: '#status = :status',
       ExpressionAttributeNames: {
         '#status': 'status',
@@ -305,9 +316,9 @@ export class PostsService {
       ExpressionAttributeValues: {
         ':status': 'published',
       },
-      ScanIndexForward: false, // Order by publishDate descending (most recent first)
+      ScanIndexForward: false,
       Limit: limit,
-      ExclusiveStartKey: lastEvaluatedKey, // Use a chave para iniciar a próxima página
+      ExclusiveStartKey: lastEvaluatedKey,
     };
 
     const result = await this.dynamoDbService.query(params);
@@ -318,14 +329,15 @@ export class PostsService {
 
     return {
       data,
-      total: -1, // O total pode ser complexo de obter em cada requisição no nível gratuito
-      hasMore: !!result.LastEvaluatedKey, // Indica se há mais resultados
-      lastEvaluatedKey: result.LastEvaluatedKey, // Retorna a chave para a próxima página
+      total: -1,
+      hasMore: !!result.LastEvaluatedKey,
+      lastEvaluatedKey: result.LastEvaluatedKey,
     };
   }
 
   /**
    * Mapeia um item do DynamoDB para o DTO de detalhe do post.
+   * 
    * @param item - Item retornado do banco.
    * @returns Objeto com os detalhes do post.
    */
@@ -352,6 +364,7 @@ export class PostsService {
 
   /**
    * Mapeia um item do DynamoDB para o DTO de conteúdo do post.
+   * 
    * @param item - Item retornado do banco.
    * @returns Objeto do tipo PostContentDto.
    */
@@ -372,6 +385,7 @@ export class PostsService {
 
   /**
    * Mapeia um item do DynamoDB para o DTO de resumo do post.
+   * 
    * @param item - Item retornado do banco.
    * @returns Objeto do tipo PostSummaryDto.
    */
@@ -386,10 +400,9 @@ export class PostsService {
     };
   }
 
-
   /**
    * Converte um item do DynamoDB (AttributeValue) em um objeto do tipo PostContentDto.
-   *
+   * 
    * @param item - Objeto do DynamoDB no formato Record<string, AttributeValue>.
    * @returns Objeto do tipo PostContentDto contendo os dados extraídos do DynamoDB.
    */
@@ -399,36 +412,46 @@ export class PostsService {
       slug: item.slug?.S || (item.slug as string) || '',
       contentHTML: item.contentHTML?.S || (item.contentHTML as string) || '',
       featuredImageURL: item.featuredImageURL?.S || (item.featuredImageURL as string) || '',
-
-      // Verifica se é um Set e converte para array, senão tenta a lógica anterior
-      keywords: item.keywords instanceof Set ? Array.from(item.keywords).map(k => String(k)) :
-        (item.keywords?.SS || (Array.isArray(item.keywords) ? item.keywords.map(k => String(k)) : [])),
-
+      keywords:
+        item.keywords instanceof Set
+          ? Array.from(item.keywords).map((k) => String(k))
+          : item.keywords?.SS ||
+          (Array.isArray(item.keywords)
+            ? item.keywords.map((k) => String(k))
+            : []),
       publishDate: item.publishDate?.S || (item.publishDate as string) || '',
       modifiedDate: item.modifiedDate?.S || (item.modifiedDate as string) || '',
       readingTime: Number(item.readingTime?.N) || 0,
-
-      // Mesma lógica para tags
-      tags: item.tags instanceof Set ? Array.from(item.tags).map(t => String(t)) :
-        (item.tags?.SS || (Array.isArray(item.tags) ? item.tags.map(t => String(t)) : [])),
-
+      tags:
+        item.tags instanceof Set
+          ? Array.from(item.tags).map((t) => String(t))
+          : item.tags?.SS ||
+          (Array.isArray(item.tags) ? item.tags.map((t) => String(t)) : []),
       views: Number(item.views?.N) || 0,
     };
   }
 
-
   /**
    * Constrói a expressão de atualização para o comando de update no DynamoDB.
+   * 
    * @param updateData - Dados para atualização do post.
    * @returns A string com a expressão de atualização.
    */
   private buildUpdateExpression(updateData: PostUpdateDto): string {
-    const updateFields = Object.keys(updateData).filter(key => key !== 'postId');
-    return `SET ${updateFields.map(field => `#${field} = :${field}`).join(', ')}, #modifiedDate = :modifiedDate`;
+    const updateFields = Object.keys(updateData).filter(
+      key => key !== 'postId' && key !== 'modifiedDate',
+    );
+
+    if (updateFields.length > 0) {
+      return `SET ${updateFields.map(field => `#${field} = :${field}`).join(', ')}, #modifiedDate = :modifiedDate`;
+    }
+
+    return 'SET #modifiedDate = :modifiedDate';
   }
 
   /**
    * Gera os ExpressionAttributeNames para a update expression, evitando conflitos com palavras reservadas.
+   * 
    * @param updateData - Dados para atualização do post.
    * @returns Objeto com os nomes dos atributos.
    */
@@ -436,14 +459,18 @@ export class PostsService {
     const attributeNames: any = {
       '#modifiedDate': 'modifiedDate',
     };
-    Object.keys(updateData).filter(key => key !== 'postId').forEach(field => {
-      attributeNames[`#${field}`] = field;
-    });
+    Object.keys(updateData)
+      .filter(key => key !== 'postId' && key !== 'modifiedDate')
+      .forEach(field => {
+        attributeNames[`#${field}`] = field;
+      });
+    // Corrigido: usando o objeto correto para adicionar os campos
     return attributeNames;
   }
 
   /**
    * Gera os ExpressionAttributeValues para a update expression.
+   * 
    * @param updateData - Dados para atualização do post.
    * @returns Objeto com os valores dos atributos.
    */
@@ -451,14 +478,18 @@ export class PostsService {
     const attributeValues: any = {
       ':modifiedDate': new Date().toISOString(),
     };
-    Object.keys(updateData).filter(key => key !== 'postId').forEach(field => {
-      attributeValues[`:${field}`] = updateData[field];
-    });
+    Object.keys(updateData)
+      .filter(key => key !== 'postId' && key !== 'modifiedDate')
+      .forEach(field => {
+        attributeValues[`:${field}`] = updateData[field];
+      });
+    // Corrigido: usando o objeto correto para adicionar os campos
     return attributeValues;
   }
 
   /**
    * Sanitiza os dados do post, removendo campos que não devem ser enviados ao banco.
+   * 
    * @param postData - Dados do post.
    * @returns Objeto com os dados sanitizados.
    */
@@ -471,6 +502,7 @@ export class PostsService {
 
   /**
    * Recupera dados do cache ou executa a consulta e armazena o resultado.
+   * 
    * @param cacheKey - Chave do cache.
    * @param queryFn - Função que executa a consulta.
    * @param ttl - Tempo de vida do cache (em segundos).
@@ -495,6 +527,7 @@ export class PostsService {
 
   /**
    * Atualiza os caches relacionados a um post, removendo chaves antigas.
+   * 
    * @param compositeKey - Chave composta no formato "categoria#subcategoria".
    * @param postId - Identificador do post.
    */
