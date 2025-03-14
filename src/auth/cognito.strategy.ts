@@ -6,6 +6,9 @@ import axios from 'axios';
 import jwkToPem from 'jwk-to-pem';
 import * as jwt from 'jsonwebtoken';
 
+/**
+ * Estratégia de autenticação Cognito utilizando JWT.
+ */
 @Injectable()
 export class CognitoStrategy extends PassportStrategy(Strategy, 'cognito') {
     constructor() {
@@ -43,6 +46,13 @@ export class CognitoStrategy extends PassportStrategy(Strategy, 'cognito') {
         });
     }
 
+    /**
+     * Valida o payload do token JWT.
+     * 
+     * @param payload - Payload do token JWT.
+     * @returns O payload validado.
+     * @throws UnauthorizedException se o payload for inválido.
+     */
     async validate(payload: any) {
         if (!payload) {
             throw new UnauthorizedException();

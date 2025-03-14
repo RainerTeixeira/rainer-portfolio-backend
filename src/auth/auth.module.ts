@@ -4,6 +4,8 @@ import { PassportModule } from '@nestjs/passport';
 import { CognitoStrategy } from './cognito.strategy';
 
 /**
+ * Módulo de autenticação que configura a estratégia de autenticação Cognito.
+ * 
  * @swagger
  * components:
  *   securitySchemes:
