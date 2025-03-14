@@ -170,12 +170,12 @@ export class AuthorsService {
      */
     private mapAuthorFromDynamoDb(item: Record<string, any>): AuthorDetailDto {
         return {
-            authorId: item.authorId?.S,
-            name: item.name?.S,
-            slug: item.slug?.S,
-            expertise: item.expertise?.L?.map((expertiseItem: any) => expertiseItem.S) || [],
-            socialProof: Object.entries(item.socialProof?.M || {}).reduce((obj: { [key: string]: string }, [key, value]: [string, any]) => {
-                obj[key] = value?.S;
+            authorId: item.authorId,
+            name: item.name,
+            slug: item.slug,
+            expertise: item.expertise?.map((expertiseItem: any) => expertiseItem) || [],
+            socialProof: Object.entries(item.socialProof || {}).reduce((obj: { [key: string]: string }, [key, value]: [string, any]) => {
+                obj[key] = value;
                 return obj;
             }, {}) as { [key: string]: string } || {},
         } as AuthorDetailDto;
@@ -208,7 +208,7 @@ export class AuthorsService {
         const params = {
             TableName: this.tableName,
             Key: {
-                authorId: authorId // Tipo de dado correto para chave primária
+                authorId: { S: authorId } // Corrigir o formato do valor
             }
         };
 
@@ -223,7 +223,7 @@ export class AuthorsService {
         const author = this.mapAuthorFromDynamoDb(result.Item);
 
         // Armazena o autor em cache com TTL de 5 minutos (300 segundos)
-        await this.cacheManager.set(cacheKey, author, { ttl: 300 });
+        await this.cacheManager.set(cacheKey, author, 300);
 
         return author;
     }

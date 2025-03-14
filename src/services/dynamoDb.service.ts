@@ -81,6 +81,9 @@ export class DynamoDbService {
   async getItem(params: GetCommandInput): Promise<any> {
     try {
       this.logger.log(`getItem: Iniciando operação getItem com params: ${JSON.stringify(params)}`);
+      if (!params.Key || Object.keys(params.Key).length === 0) {
+        throw new Error('Chave não fornecida para operação getItem');
+      }
       const result = await this.docClient.send(new GetCommand(params));
       this.logger.log(`getItem: Resposta completa do DynamoDB SDK: ${JSON.stringify(result, null, 2)}`);
       return result;
@@ -167,8 +170,13 @@ export class DynamoDbService {
    */
   async query(params: QueryCommandInput): Promise<any> {
     try {
-      const command = new QueryCommand(params);
-      return await this.docClient.send(command);
+      this.logger.log(`query: Iniciando operação query com params: ${JSON.stringify(params)}`);
+      if (!params.KeyConditionExpression || !params.ExpressionAttributeValues) {
+        throw new Error('KeyConditionExpression ou ExpressionAttributeValues não fornecidos para operação query');
+      }
+      const result = await this.docClient.send(new QueryCommand(params));
+      this.logger.log(`query: Resposta completa do DynamoDB SDK: ${JSON.stringify(result, null, 2)}`);
+      return result;
     } catch (error) {
       this.handleError('query', error, 'Erro na operação query');
     }

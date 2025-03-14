@@ -45,12 +45,12 @@ export class CategoriesService {
         const params: UpdateCommandInput = {
             TableName: this.tableName,
             Key: {
-                categoryId: { S: categoryId },
+                categoryId: categoryId,
             },
             UpdateExpression: 'SET name = :name, description = :description',
             ExpressionAttributeValues: {
-                ':name': { S: updateCategoryDto.name },
-                ':description': { S: updateCategoryDto.description || '' },
+                ':name': updateCategoryDto.name,
+                ':description': updateCategoryDto.description || '',
             },
             ReturnValues: 'ALL_NEW',
         };
@@ -65,7 +65,7 @@ export class CategoriesService {
         const params = {
             TableName: this.tableName,
             Key: {
-                categoryId: { S: categoryId },
+                categoryId: categoryId,
             },
         };
         await this.dynamoDbService.deleteItem(params);
@@ -73,13 +73,12 @@ export class CategoriesService {
 
     private mapCategoryFromDynamoDb(item: Record<string, any>): CategoryDto {
         return {
-            categoryId: item.categoryId?.S,
-            name: item.name?.S,
-            description: item.description?.S,
+            categoryId: item.categoryId,
+            name: item.name,
+            description: item.description,
         } as CategoryDto;
     }
 
-    // Adicione o método getCategoryById
     async getCategoryById(categoryId: string): Promise<CategoryDto> {
         return this.findOne(categoryId);
     }
