@@ -4,6 +4,7 @@ import { Module, forwardRef } from '@nestjs/common'; // Importa o decorator Modu
 import { PostsController } from './controllers/posts.controller'; // Importa o controlador de posts
 import { PostsService } from './services/posts.service'; // Importa o serviço de posts
 import { BlogModule } from '@src/modules/blog.module'; // Importa o BlogModule (módulo principal do blog)
+import { DynamoDbService } from '@src/services/dynamodb.service'; // Importa o serviço DynamoDbService
 
 /**
  * Define o módulo de Posts.
@@ -12,7 +13,7 @@ import { BlogModule } from '@src/modules/blog.module'; // Importa o BlogModule (
 @Module({
     imports: [forwardRef(() => BlogModule)], // Usa forwardRef para adiar a resolução do BlogModule e resolver dependência circular
     controllers: [PostsController],
-    providers: [PostsService],
+    providers: [PostsService, DynamoDbService], // Adiciona DynamoDbService como provedor
     exports: [PostsService], // Exporta PostsService para ser usado em outros módulos
 })
 export class PostsModule { }
