@@ -75,6 +75,8 @@ export class DynamoDbService {
 
   /**
    * Recupera um item do DynamoDB com base em sua chave primária.
+   * @param params - Parâmetros para a operação GetCommand.
+   * @returns O item recuperado do DynamoDB.
    */
   async getItem(params: GetCommandInput): Promise<any> {
     try {
@@ -89,6 +91,8 @@ export class DynamoDbService {
 
   /**
    * Cria um novo item ou substitui um item existente no DynamoDB.
+   * @param params - Parâmetros para a operação PutCommand.
+   * @returns O resultado da operação PutCommand.
    */
   async putItem(params: PutCommandInput): Promise<any> {
     try {
@@ -101,6 +105,8 @@ export class DynamoDbService {
 
   /**
    * Atualiza um item existente no DynamoDB.
+   * @param params - Parâmetros para a operação UpdateCommand.
+   * @returns O resultado da operação UpdateCommand.
    */
   async updateItem(params: UpdateCommandInput): Promise<any> {
     try {
@@ -113,6 +119,8 @@ export class DynamoDbService {
 
   /**
    * Deleta um item do DynamoDB com base em sua chave primária.
+   * @param params - Parâmetros para a operação DeleteCommand.
+   * @returns O resultado da operação DeleteCommand.
    */
   async deleteItem(params: DeleteCommandInput): Promise<any> {
     try {
@@ -126,6 +134,8 @@ export class DynamoDbService {
   /**
    * Escaneia uma tabela inteira do DynamoDB.
    * **CUIDADO**: Operação ineficiente para tabelas grandes.
+   * @param params - Parâmetros para a operação ScanCommand.
+   * @returns O resultado da operação ScanCommand.
    */
   async scan(params: ScanCommandInput): Promise<any> {
     try {
@@ -138,6 +148,8 @@ export class DynamoDbService {
 
   /**
    * Consulta itens do DynamoDB utilizando a operação Query.
+   * @param params - Parâmetros para a operação QueryCommand.
+   * @returns O resultado da operação QueryCommand.
    */
   async queryItems(params: QueryCommandInput): Promise<any> {
     try {
@@ -150,6 +162,8 @@ export class DynamoDbService {
 
   /**
    * Consulta itens do DynamoDB utilizando a operação Query.
+   * @param params - Parâmetros para a operação QueryCommand.
+   * @returns O resultado da operação QueryCommand.
    */
   async query(params: QueryCommandInput): Promise<any> {
     try {
@@ -162,6 +176,8 @@ export class DynamoDbService {
 
   /**
    * Realiza operações de escrita em lote no DynamoDB.
+   * @param params - Parâmetros para a operação BatchWriteCommand.
+   * @returns O resultado da operação BatchWriteCommand.
    */
   async batchWrite(params: BatchWriteCommandInput): Promise<any> {
     try {
@@ -174,6 +190,8 @@ export class DynamoDbService {
 
   /**
    * Realiza operações de leitura em lote no DynamoDB.
+   * @param params - Parâmetros para a operação BatchGetCommand.
+   * @returns O resultado da operação BatchGetCommand.
    */
   async batchGet(params: BatchGetCommandInput): Promise<any> {
     try {
@@ -186,6 +204,9 @@ export class DynamoDbService {
 
   /**
    * Método utilitário para construir dinamicamente expressões de atualização para o DynamoDB.
+   * @param input - Objeto contendo os campos e valores a serem atualizados.
+   * @param excludeKeys - Lista de chaves a serem excluídas da expressão de atualização.
+   * @returns Um objeto contendo a expressão de atualização, nomes e valores de atributos.
    */
   buildUpdateExpression(
     input: Record<string, any>,
@@ -226,6 +247,9 @@ export class DynamoDbService {
 
   /**
    * Método privado para tratamento centralizado de erros do DynamoDB.
+   * @param operationName - Nome da operação onde ocorreu o erro.
+   * @param error - Objeto de erro capturado.
+   * @param defaultMessage - Mensagem de erro padrão a ser usada caso o erro não tenha uma mensagem específica.
    */
   private handleError(operationName: string, error: any, defaultMessage?: string): void {
     this.logger.error(`DynamoDB Erro em ${operationName}:`, error);
