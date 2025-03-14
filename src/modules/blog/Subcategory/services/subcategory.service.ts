@@ -5,13 +5,18 @@ import { DynamoDbService } from '@src/services/dynamoDb.service'; // Importa Dyn
 import { CreateSubcategoryDto } from '../dto/create-subcategory.dto';
 import { UpdateSubcategoryDto } from '../dto/update-subcategory.dto';
 import { SubcategoryDto } from '../dto/subcategory.dto';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
+@ApiTags('Subcategories')
 @Injectable()
 export class SubcategoryService {
     private readonly tableName = 'Subcategory'; // Nome da tabela no DynamoDB
 
     constructor(private readonly dynamoDbService: DynamoDbService) { }
 
+    @ApiOperation({ summary: 'Criar uma nova subcategoria' })
+    @ApiResponse({ status: 201, description: 'Subcategoria criada com sucesso.', type: SubcategoryDto })
+    @ApiResponse({ status: 400, description: 'Dados inválidos.' })
     async createSubcategory(categoryIdSubcategoryId: string, createSubcategoryDto: CreateSubcategoryDto): Promise<SubcategoryDto> { // Método para criar uma nova subcategoria
         const compositeKey = `${createSubcategoryDto.categoryId}#${createSubcategoryDto.subcategoryId}`; // Cria chave composta (categoryId#subcategoryId)
 
@@ -27,6 +32,9 @@ export class SubcategoryService {
         return this.getSubcategoryById(categoryIdSubcategoryId, createSubcategoryDto.subcategoryId); // Retorna a subcategoria recém-criada buscando-a pelo ID
     }
 
+    @ApiOperation({ summary: 'Buscar todas as subcategorias de uma categoria' })
+    @ApiResponse({ status: 200, description: 'Lista de subcategorias retornada com sucesso.', type: [SubcategoryDto] })
+    @ApiResponse({ status: 404, description: 'Categoria não encontrada.' })
     async getAllSubcategories(categoryIdSubcategoryId: string): Promise<SubcategoryDto[]> { // Método para buscar todas as subcategorias de uma categoria específica
         const params = {
             TableName: this.tableName,
@@ -50,6 +58,9 @@ export class SubcategoryService {
         } as SubcategoryDto)) || []; // Converte o objeto literal para SubcategoryDto
     }
 
+    @ApiOperation({ summary: 'Buscar uma subcategoria por ID' })
+    @ApiResponse({ status: 200, description: 'Subcategoria retornada com sucesso.', type: SubcategoryDto })
+    @ApiResponse({ status: 404, description: 'Subcategoria não encontrada.' })
     async getSubcategoryById(categoryIdSubcategoryId: string, subcategoryId: string): Promise<SubcategoryDto> { // Método para buscar uma subcategoria por ID
         const params = {
             TableName: this.tableName,
@@ -70,6 +81,9 @@ export class SubcategoryService {
         } as SubcategoryDto; // Converte o objeto literal para SubcategoryDto
     }
 
+    @ApiOperation({ summary: 'Atualizar uma subcategoria existente' })
+    @ApiResponse({ status: 200, description: 'Subcategoria atualizada com sucesso.', type: SubcategoryDto })
+    @ApiResponse({ status: 404, description: 'Subcategoria não encontrada.' })
     async updateSubcategory(categoryIdSubcategoryId: string, subcategoryId: string, updateSubcategoryDto: UpdateSubcategoryDto): Promise<SubcategoryDto> { // Método para atualizar uma subcategoria existente
         await this.getSubcategoryById(categoryIdSubcategoryId, subcategoryId); // Garante que a subcategoria existe antes de tentar atualizar
         const updateExpression = this.dynamoDbService.buildUpdateExpression(updateSubcategoryDto); // Constrói a expressão de atualização dinamicamente
@@ -99,6 +113,9 @@ export class SubcategoryService {
         } as SubcategoryDto; // Converte o objeto literal para SubcategoryDto
     }
 
+    @ApiOperation({ summary: 'Deletar uma subcategoria' })
+    @ApiResponse({ status: 200, description: 'Subcategoria deletada com sucesso.' })
+    @ApiResponse({ status: 404, description: 'Subcategoria não encontrada.' })
     async deleteSubcategory(categoryIdSubcategoryId: string, subcategoryId: string): Promise<void> { // Método para deletar uma subcategoria
         await this.getSubcategoryById(categoryIdSubcategoryId, subcategoryId); // Garante que a subcategoria existe antes de deletar
         const params = {
