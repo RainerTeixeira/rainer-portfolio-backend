@@ -1,20 +1,25 @@
 // src/modules/blog/comments/dto/create-comment.dto.ts
 
 import { IsNotEmpty, IsNumber, IsString, IsOptional } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateCommentDto {
+    @ApiProperty({ description: 'ID do post' })
     @IsNotEmpty()
     @IsNumber()
     postId: number;
 
+    @ApiProperty({ description: 'ID do autor' })
     @IsNotEmpty()
     @IsString()
     authorId: string;
 
+    @ApiProperty({ description: 'Conteúdo do comentário' })
     @IsNotEmpty()
     @IsString()
     content: string;
 
+    @ApiProperty({ description: 'Data do comentário', required: false })
     @IsOptional()
     @IsString()
     date?: string;

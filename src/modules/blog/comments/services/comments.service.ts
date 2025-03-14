@@ -4,13 +4,17 @@ import { CreateCommentDto } from '@src/modules/blog/comments/dto/create-comment.
 import { UpdateCommentDto } from '@src/modules/blog/comments/dto/update-comment.dto';
 import { CommentDto } from '@src/modules/blog/comments/dto/comment.dto';
 import { UpdateCommandInput } from '@aws-sdk/lib-dynamodb';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
+@ApiTags('comments')
 @Injectable()
 export class CommentsService {
     private readonly tableName = 'Comments';
 
     constructor(private readonly dynamoDbService: DynamoDbService) { }
 
+    @ApiOperation({ summary: 'Cria um novo comentário' })
+    @ApiResponse({ status: 201, description: 'Comentário criado com sucesso.', type: CommentDto })
     async create(createCommentDto: CreateCommentDto): Promise<CommentDto> {
         const params = {
             TableName: this.tableName,
@@ -20,11 +24,16 @@ export class CommentsService {
         return this.findOne(createCommentDto.postId.toString(), createCommentDto.authorId); // Converte postId para string
     }
 
+    @ApiOperation({ summary: 'Obtém todos os comentários' })
+    @ApiResponse({ status: 200, description: 'Lista de comentários.', type: [CommentDto] })
     async findAll(): Promise<CommentDto[]> {
         const result = await this.dynamoDbService.scan({ TableName: this.tableName });
         return (result.Items || []).map(item => this.mapCommentFromDynamoDb(item));
     }
 
+    @ApiOperation({ summary: 'Obtém um comentário pelo postId e authorId' })
+    @ApiResponse({ status: 200, description: 'Comentário encontrado.', type: CommentDto })
+    @ApiResponse({ status: 404, description: 'Comentário não encontrado.' })
     async findOne(postId: string, authorId: string): Promise<CommentDto> {
         const params = {
             TableName: this.tableName,
@@ -40,6 +49,9 @@ export class CommentsService {
         return this.mapCommentFromDynamoDb(result.Item);
     }
 
+    @ApiOperation({ summary: 'Atualiza um comentário' })
+    @ApiResponse({ status: 200, description: 'Comentário atualizado com sucesso.', type: CommentDto })
+    @ApiResponse({ status: 404, description: 'Comentário não encontrado.' })
     async update(postId: string, authorId: string, updateCommentDto: UpdateCommentDto): Promise<CommentDto> {
         await this.findOne(postId, authorId);
 
@@ -66,6 +78,9 @@ export class CommentsService {
         return this.mapCommentFromDynamoDb(result.Attributes as Record<string, any>) as CommentDto;
     }
 
+    @ApiOperation({ summary: 'Remove um comentário' })
+    @ApiResponse({ status: 200, description: 'Comentário removido com sucesso.' })
+    @ApiResponse({ status: 404, description: 'Comentário não encontrado.' })
     async remove(postId: string, authorId: string): Promise<void> {
         await this.findOne(postId, authorId);
 
