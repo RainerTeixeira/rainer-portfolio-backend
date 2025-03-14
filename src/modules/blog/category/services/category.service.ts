@@ -8,7 +8,10 @@ import { DynamoDbService } from '@src/services/dynamoDb.service'; // Importa Dyn
 import { UpdateCommandInput } from '@aws-sdk/lib-dynamodb'; // Importe UpdateCommandInput
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger'; // Importe decorators do Swagger
 
-
+/**
+ * @CategoryService
+ * Serviço responsável pela lógica de negócio das categorias.
+ */
 @ApiTags('category') // Adicione tag para Swagger
 @Injectable()
 export class CategoryService {
@@ -16,6 +19,11 @@ export class CategoryService {
 
     constructor(private readonly dynamoDbService: DynamoDbService) { } // Injeta DynamoDbService
 
+    /**
+     * Cria uma nova categoria.
+     * @param createCategoryDto - Dados para criar a categoria.
+     * @returns A categoria criada.
+     */
     @ApiOperation({ summary: 'Criar uma nova categoria' })
     @ApiResponse({ status: 201, description: 'A categoria foi criada com sucesso.', type: CategoryDto })
     async create(createCategoryDto: CreateCategoryDto): Promise<CategoryDto> {
@@ -27,6 +35,10 @@ export class CategoryService {
         return this.findOne(createCategoryDto.categoryId);
     }
 
+    /**
+     * Obtém todas as categorias.
+     * @returns Uma lista de todas as categorias.
+     */
     @ApiOperation({ summary: 'Obter todas as categorias' })
     @ApiResponse({ status: 200, description: 'Retorna todas as categorias.', type: [CategoryDto] })
     async findAll(): Promise<CategoryDto[]> {
@@ -34,13 +46,19 @@ export class CategoryService {
         return (result.Items || []).map(item => this.mapCategoryFromDynamoDb(item)); // Use map e função de mapeamento
     }
 
+    /**
+     * Obtém uma categoria por ID.
+     * @param categoryId - ID da categoria.
+     * @returns A categoria encontrada.
+     * @throws NotFoundException Se a categoria não for encontrada.
+     */
     @ApiOperation({ summary: 'Obter uma categoria por ID' })
     @ApiResponse({ status: 200, description: 'Retorna a categoria.', type: CategoryDto })
     @ApiResponse({ status: 404, description: 'Categoria não encontrada.' })
     async findOne(categoryId: string): Promise<CategoryDto> {
         const params = {
             TableName: this.tableName,
-            Key: { categoryId: { S: categoryId } }, // Corrigir o formato do valor
+            Key: { categoryId: categoryId }, // Usar string diretamente
         };
         const result = await this.dynamoDbService.getItem(params);
         if (!result.Item) {
@@ -49,6 +67,17 @@ export class CategoryService {
         return this.mapCategoryFromDynamoDb(result.Item); // Use função de mapeamento
     }
 
+    async getCategoryById(categoryId: string): Promise<CategoryDto> {
+        return this.findOne(categoryId);
+    }
+
+    /**
+     * Atualiza uma categoria por ID.
+     * @param categoryId - ID da categoria a ser atualizada.
+     * @param updateCategoryDto - Dados para atualizar a categoria.
+     * @returns A categoria atualizada.
+     * @throws NotFoundException Se a categoria não for encontrada.
+     */
     @ApiOperation({ summary: 'Atualizar uma categoria por ID' })
     @ApiResponse({ status: 200, description: 'A categoria foi atualizada com sucesso.', type: CategoryDto })
     @ApiResponse({ status: 404, description: 'Categoria não encontrada.' })
@@ -58,20 +87,18 @@ export class CategoryService {
 
         const params: UpdateCommandInput = { // Use UpdateCommandInput type
             TableName: this.tableName,
-            Key: { categoryId: { S: categoryId } }, // Corrigir o formato do valor
+            Key: { categoryId }, // Corrigir o formato do valor
             UpdateExpression: 'SET #name = :name, slug = :slug, seo = :seo', // Use 'SET' e placeholders para atualizar
             ExpressionAttributeNames: { // Mapeamento de nomes de atributos
                 '#name': 'name', // '#name' será substituído por 'name' (evita palavras reservadas)
             },
             ExpressionAttributeValues: { // Valores para substituir nos placeholders
-                ':name': { S: updateCategoryDto.name }, // Formato correto do valor string para DynamoDB
-                ':slug': { S: updateCategoryDto.slug },
-                ':seo': {
-                    M: { // Formato correto para mapa (objeto) no DynamoDB
-                        canonical: { S: updateCategoryDto.seo?.canonical || null }, // Se for opcional, use || null para evitar undefined
-                        description: { S: updateCategoryDto.seo?.description || null },
-                        keywords: { L: updateCategoryDto.seo?.keywords?.map((keyword: string) => ({ S: keyword })) || [] } // Se for array, mapeie para formato de lista do DynamoDB
-                    }
+                ':name': updateCategoryDto.name, // Formato correto do valor string para DynamoDB
+                ':slug': updateCategoryDto.slug,
+                ':seo': { // Formato correto para mapa (objeto) no DynamoDB
+                    canonical: updateCategoryDto.seo?.canonical || null, // Se for opcional, use || null para evitar undefined
+                    description: updateCategoryDto.seo?.description || null,
+                    keywords: updateCategoryDto.seo?.keywords || [] // Se for array, mapeie para formato de lista do DynamoDB
                 },
             },
             ReturnValues: 'ALL_NEW', // Defina o tipo de retorno esperado
@@ -80,6 +107,11 @@ export class CategoryService {
         return this.mapCategoryFromDynamoDb(result.Attributes as Record<string, any>) as CategoryDto; // Mapeie o Attributes e faça type assertion para CategoryDto
     }
 
+    /**
+     * Remove uma categoria por ID.
+     * @param categoryId - ID da categoria a ser removida.
+     * @throws NotFoundException Se a categoria não for encontrada.
+     */
     @ApiOperation({ summary: 'Deletar uma categoria por ID' })
     @ApiResponse({ status: 204, description: 'A categoria foi deletada com sucesso.' })
     @ApiResponse({ status: 404, description: 'Categoria não encontrada.' })
@@ -89,22 +121,21 @@ export class CategoryService {
 
         const params = {
             TableName: this.tableName,
-            Key: { categoryId: { S: categoryId } },
+            Key: { categoryId },
         };
         await this.dynamoDbService.deleteItem(params);
     }
 
-
-    private mapCategoryFromDynamoDb(item: Record<string, any>): CategoryDto { // Função para mapear
+    private mapCategoryFromDynamoDb(item: Record<string, any>): CategoryDto {
         return {
-            categoryId: item.categoryId?.S, // Acessa propriedades e extrai valor string (S) do DynamoDB
-            name: item.name?.S,
-            slug: item.slug?.S,
-            seo: { // Mapeia objeto aninhado 'seo'
-                canonical: item.seo?.M?.canonical?.S,
-                description: item.seo?.M?.description?.S,
-                keywords: item.seo?.M?.keywords?.L?.map((keywordItem: any) => keywordItem.S) // Mapeia lista de strings
+            categoryId: item.categoryId,
+            name: item.name,
+            slug: item.slug,
+            seo: {
+                canonical: item.seo?.canonical,
+                description: item.seo?.description,
+                keywords: item.seo?.keywords,
             },
-        } as CategoryDto; // 'as CategoryDto' agora é mais seguro, pois você mapeou as propriedades
+        } as CategoryDto;
     }
 }

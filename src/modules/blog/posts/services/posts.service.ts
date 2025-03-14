@@ -12,9 +12,10 @@ import { AttributeValue } from '@aws-sdk/client-dynamodb';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { PostFullDto } from '@src/modules/blog/posts/dto/post-full.dto';
 import { AuthorsService } from '@src/modules/blog/authors/services/authors.service';
-import { CategoriesService } from '@src/modules/blog/categories/services/categories.service';
+import { CategoryService } from '@src/modules/blog/category/services/category.service';
 import { SubcategoryService } from '@src/modules/blog/subcategory/services/subcategory.service';
 import { CommentsService } from '@src/modules/blog/comments/services/comments.service';
+import { CategoryDto } from '@src/modules/blog/categories/dto/category.dto';
 
 @Injectable()
 @ApiTags('Posts')
@@ -28,7 +29,7 @@ export class PostsService {
     private readonly dynamoDbService: DynamoDbService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private readonly authorsService: AuthorsService,
-    private readonly categoriesService: CategoriesService,
+    private readonly categoriesService: CategoryService,
     private readonly subcategoryService: SubcategoryService,
     private readonly commentsService: CommentsService,
   ) { }
@@ -145,7 +146,6 @@ export class PostsService {
     description: 'Post não encontrado.'
   })
   async getFullPostBySlug(slug: string): Promise<PostFullDto> {
-    this.ensureDocumentClientInitialized();
     const cacheKey = `full-post:${slug}`;
 
     try {
@@ -162,12 +162,18 @@ export class PostsService {
       }
 
       // Buscar dados relacionados em paralelo
-      const [author, category, subcategory, comments] = await Promise.all([
-        this.authorsService.getAuthorById(post.authorId),
-        this.categoriesService.getCategoryById(post.categoryId),
-        this.subcategoryService.getSubcategoryById(post.categoryId, post.subcategoryId),
-        this.commentsService.getCommentsByPostId(post.postId)
-      ]);
+      let author, category, subcategory, comments;
+      try {
+        [author, category, subcategory, comments] = await Promise.all([
+          this.authorsService.getAuthorById(post.authorId),
+          this.categoriesService.getCategoryById(post.categoryId),
+          this.subcategoryService.getSubcategoryById(post.categoryId, post.subcategoryId),
+          this.commentsService.getCommentsByPostId(post.postId)
+        ]);
+      } catch (error) {
+        this.logger.error(`Erro ao buscar dados relacionados: ${error.message}`, error.stack);
+        throw new BadRequestException(`Erro ao buscar dados relacionados: ${error.message}`);
+      }
 
       // Montar objeto completo
       const fullPost: PostFullDto = {
@@ -199,14 +205,14 @@ export class PostsService {
   @ApiOperation({ summary: 'Busca um post pelo seu ID' })
   @ApiResponse({ status: 200, description: 'Post retornado com sucesso.', type: PostContentDto })
   @ApiResponse({ status: 404, description: 'Post não encontrado.' })
-  async getPostById(postId: string): Promise<any> {
+  async getPostById(postId: string): Promise<PostContentDto> {
     this.logger.debug(`[getPostById] Iniciando busca de post pelo ID: ${postId}`);
     try {
       const params: QueryCommandInput = {
         TableName: this.tableName,
         IndexName: 'postId-index', // Certifique-se de que este índice existe no DynamoDB
         KeyConditionExpression: 'postId = :postId',
-        ExpressionAttributeValues: { ':postId': { S: postId } }, // Corrigir o formato do valor
+        ExpressionAttributeValues: { ':postId': postId }, // Corrigir o formato do valor
         Limit: 1,
         ProjectionExpression: [
           'postId', 'title', 'contentHTML', 'authorId',
@@ -224,7 +230,7 @@ export class PostsService {
         this.logger.warn(`[getPostById] Post não encontrado para ID: ${postId}`);
         throw new NotFoundException('Post não encontrado');
       }
-      const post = this.mapToDetailDto(result.Items[0]);
+      const post = this.mapToContentDto(result.Items[0]);
       this.logger.debug(`[getPostById] Post encontrado: ${JSON.stringify(post)}`);
       return post;
     } catch (error) {
@@ -422,44 +428,26 @@ export class PostsService {
   private mapToContentDto(item: any): PostContentDto {
     this.logger.debug(`[mapToContentDto] Mapeando item para Content DTO: ${JSON.stringify(item)}`);
     return {
-      categoryIdSubcategoryId: item['categoryId#subcategoryId']?.['S'],
-      postId: item.postId?.['S'],
-      authorId: item.authorId?.['S'],
-      canonical: item.canonical?.['S'],
-      categoryId: item.categoryId?.['S'],
-      contentHTML: item.contentHTML?.['S'],
-      createdAt: item.createdAt?.['S'],
-      description: item.description?.['S'],
-      featuredImageURL: item.featuredImageURL?.['S'],
-      keywords: item.keywords?.['L']?.map((keywordObj: any) => keywordObj['S']),
-      modifiedDate: item.modifiedDate?.['S'],
-      publishDate: item.publishDate?.['S'],
-      readingTime: Number(item.readingTime?.['N']),
-      slug: item.slug?.['S'],
-      status: item.status?.['S'],
-      subcategoryId: item.subcategoryId?.['S'],
-      tags: item.tags?.['L']?.map((tagObj: any) => tagObj['S']),
-      title: item.title?.['S'],
-      views: Number(item.views?.['N']),
-    } as PostContentDto;
-  }
-
-  /**
-   * Mapeia um item do DynamoDB para o DTO de resumo do post.
-   *
-   * @param item - Item retornado do banco.
-   * @returns Objeto do tipo PostSummaryDto.
-   */
-  private mapToSummaryDto(item: any): PostSummaryDto {
-    this.logger.debug(`[mapToSummaryDto] Mapeando item para Summary DTO: ${JSON.stringify(item)}`);
-    return {
+      categoryIdSubcategoryId: item['categoryId#subcategoryId'],
       postId: item.postId,
-      title: item.title,
-      featuredImageURL: item.featuredImageURL,
+      authorId: item.authorId,
+      canonical: item.canonical,
+      categoryId: item.categoryId,
+      contentHTML: item.contentHTML,
+      createdAt: item.createdAt,
       description: item.description,
+      featuredImageURL: item.featuredImageURL,
+      keywords: item.keywords,
+      modifiedDate: item.modifiedDate,
       publishDate: item.publishDate,
       readingTime: item.readingTime,
-    };
+      slug: item.slug,
+      status: item.status,
+      subcategoryId:  item.subcategoryId,
+      tags: item.tags,
+      title: item.title,
+      views: item.views,
+    } as PostContentDto;
   }
 
   /**
@@ -633,25 +621,25 @@ export class PostsService {
   private mapToContentDto(item: any): PostContentDto {
     this.logger.debug(`[mapToContentDto] Mapeando item para Content DTO: ${JSON.stringify(item)}`);
     return {
-      categoryIdSubcategoryId: item['categoryId#subcategoryId']?.['S'],
-      postId: item.postId?.['S'],
-      authorId: item.authorId?.['S'],
-      canonical: item.canonical?.['S'],
-      categoryId: item.categoryId?.['S'],
-      contentHTML: item.contentHTML?.['S'],
-      createdAt: item.createdAt?.['S'],
-      description: item.description?.['S'],
-      featuredImageURL: item.featuredImageURL?.['S'],
-      keywords: item.keywords?.['L']?.map((keywordObj: any) => keywordObj['S']),
-      modifiedDate: item.modifiedDate?.['S'],
-      publishDate: item.publishDate?.['S'],
-      readingTime: Number(item.readingTime?.['N']),
-      slug: item.slug?.['S'],
-      status: item.status?.['S'],
-      subcategoryId: item.subcategoryId?.['S'],
-      tags: item.tags?.['L']?.map((tagObj: any) => tagObj['S']),
-      title: item.title?.['S'],
-      views: Number(item.views?.['N']),
+      categoryIdSubcategoryId: item['categoryId#subcategoryId'],
+      postId: item.postId,
+      authorId: item.authorId,
+      canonical: item.canonical,
+      categoryId: item.categoryId,
+      contentHTML: item.contentHTML,
+      createdAt: item.createdAt,
+      description: item.description,
+      featuredImageURL: item.featuredImageURL,
+      keywords: item.keywords,
+      modifiedDate: item.modifiedDate,
+      publishDate: item.publishDate,
+      readingTime: item.readingTime,
+      slug: item.slug,
+      status: item.status,
+      subcategoryId:  item.subcategoryId,
+      tags: item.tags,
+      title: item.title,
+      views: item.views,
     } as PostContentDto;
   }
     /**

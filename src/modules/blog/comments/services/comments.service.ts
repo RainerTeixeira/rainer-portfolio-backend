@@ -6,6 +6,10 @@ import { CommentDto } from '@src/modules/blog/comments/dto/comment.dto';
 import { UpdateCommandInput } from '@aws-sdk/lib-dynamodb';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
+/**
+ * @CommentsService
+ * Serviço responsável pela lógica de negócio dos comentários.
+ */
 @ApiTags('comments')
 @Injectable()
 export class CommentsService {
@@ -23,10 +27,13 @@ export class CommentsService {
     async create(createCommentDto: CreateCommentDto): Promise<CommentDto> {
         const params = {
             TableName: this.tableName,
-            Item: createCommentDto,
+            Item: {
+                ...createCommentDto,
+                postId: String(createCommentDto.postId), // Converte postId para string
+            },
         };
         await this.dynamoDbService.putItem(params);
-        return this.findOne(createCommentDto.postId.toString(), createCommentDto.authorId); // Converte postId para string
+        return this.findOne(String(createCommentDto.postId), createCommentDto.authorId); // Converte postId para string
     }
 
     /**
@@ -54,8 +61,8 @@ export class CommentsService {
         const params = {
             TableName: this.tableName,
             Key: {
-                postId: { N: postId }, // Corrigir o formato do valor
-                authorId: { S: authorId },
+                postId: postId,
+                authorId: authorId,
             },
         };
         const result = await this.dynamoDbService.getItem(params);
@@ -76,7 +83,7 @@ export class CommentsService {
         const params = {
             TableName: this.tableName,
             KeyConditionExpression: 'postId = :postId',
-            ExpressionAttributeValues: { ':postId': { N: postId } }, // Corrigir o formato do valor
+            ExpressionAttributeValues: { ':postId': postId }, // Usar string diretamente
         };
         const result = await this.dynamoDbService.query(params);
         return (result.Items || []).map(item => this.mapCommentFromDynamoDb(item));

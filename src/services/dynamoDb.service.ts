@@ -30,6 +30,14 @@ import {
   GetCommandOutput,
 } from '@aws-sdk/lib-dynamodb';
 
+// Adicione a definição da classe ValidationException
+class ValidationException extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ValidationException';
+  }
+}
+
 /**
  * Serviço responsável por abstrair e fornecer uma interface para interações com o banco de dados DynamoDB.
  * Utiliza o AWS SDK v3 e o DynamoDB Document Client para facilitar a manipulação de itens.
@@ -103,6 +111,14 @@ export class DynamoDbService {
       if (!params.Key || Object.keys(params.Key).length === 0) {
         throw new Error('Chave não fornecida para a operação getItem');
       }
+
+      // Garante que todos os valores das chaves sejam strings
+      for (const key in params.Key) {
+        if (typeof params.Key[key] !== 'string') {
+          params.Key[key] = String(params.Key[key]);
+        }
+      }
+
       const result = await this.docClient.send(new GetCommand(params));
       return result;
     } catch (error) {

@@ -5,7 +5,7 @@ import { PostsController } from './controllers/posts.controller'; // Importa o c
 import { PostsService } from './services/posts.service'; // Importa o serviço de posts
 import { BlogModule } from '@src/modules/blog.module'; // Importa o BlogModule (módulo principal do blog)
 import { DynamoDbService } from '@src/services/dynamodb.service'; // Importa o serviço DynamoDbService
-import { CategoriesModule } from '@src/modules/blog/categories/categories.module'; // Importe o módulo correto
+import { CategoryModule } from '@src/modules/blog/category/category.module'; // Importe o módulo correto
 import { AuthorsModule } from '@src/modules/blog/authors/authors.module'; // Importe o módulo correto
 import { CommentsModule } from '@src/modules/blog/comments/comments.module'; // Importe o módulo correto
 import { SubcategoryModule } from '@src/modules/blog/subcategory/subcategory.module'; // Importe o módulo de subcategorias
@@ -17,7 +17,7 @@ import { SubcategoryModule } from '@src/modules/blog/subcategory/subcategory.mod
 @Module({
     imports: [
         forwardRef(() => BlogModule),
-        CategoriesModule,
+        CategoryModule,
         AuthorsModule, // Adicione o módulo aqui
         CommentsModule, // Adicione o módulo aqui
         SubcategoryModule, // Adicione o módulo aqui

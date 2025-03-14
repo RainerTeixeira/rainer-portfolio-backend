@@ -9,7 +9,7 @@ import { AuthorDetailDto } from '@src/modules/blog/authors/dto/author-detail.dto
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 /**
- * @Injectable()
+ * @AuthorsService
  * Serviço responsável pela lógica de negócio da entidade Author (Autor).
  * Este serviço interage com o DynamoDB para realizar operações CRUD (Create, Read, Update, Delete)
  * na tabela 'Authors'.
@@ -34,9 +34,9 @@ export class AuthorsService {
 
     /**
      * Cria um novo autor no DynamoDB.
-     *
      * @param createAuthorDto DTO contendo os dados para criar um novo autor.
      * @returns Uma Promise que resolve para um AuthorDetailDto representando o autor criado.
+     * @throws BadRequestException Se os dados forem inválidos.
      */
     @ApiOperation({ summary: 'Cria um novo autor' })
     @ApiResponse({ status: 201, description: 'Autor criado com sucesso.', type: AuthorDetailDto })
@@ -53,7 +53,6 @@ export class AuthorsService {
 
     /**
      * Busca todos os autores no DynamoDB.
-     *
      * @returns Uma Promise que resolve para um array de AuthorDetailDto ou um objeto com mensagem caso não haja autores.
      */
     @ApiOperation({ summary: 'Busca todos os autores' })
@@ -78,7 +77,6 @@ export class AuthorsService {
 
     /**
      * Busca um autor específico pelo seu authorId no DynamoDB.
-     *
      * @param authorId ID do autor a ser buscado.
      * @returns Uma Promise que resolve para um AuthorDetailDto, se o autor for encontrado.
      * @throws NotFoundException Se o autor não for encontrado.
@@ -90,7 +88,7 @@ export class AuthorsService {
         this.logger.log(`Buscando autor com authorId: ${authorId}`);
         const params = {
             TableName: this.tableName,
-            Key: { authorId: { S: authorId } }, // Corrigir o formato do valor
+            Key: { authorId: authorId }, // Usar string diretamente
         };
 
         const result = await this.dynamoDbService.getItem(params);
@@ -105,7 +103,6 @@ export class AuthorsService {
 
     /**
      * Atualiza um autor existente no DynamoDB.
-     *
      * @param authorId ID do autor a ser atualizado.
      * @param updateAuthorDto DTO contendo os dados a serem atualizados do autor.
      * @returns Uma Promise que resolve para um AuthorDetailDto representando o autor atualizado.
@@ -138,7 +135,6 @@ export class AuthorsService {
 
     /**
      * Remove um autor do DynamoDB pelo seu authorId.
-     *
      * @param authorId ID do autor a ser removido.
      * @returns Uma Promise que resolve void (sem retorno), indicando sucesso na remoção.
      * @throws NotFoundException Se o autor não for encontrado.
@@ -161,7 +157,6 @@ export class AuthorsService {
     /**
      * Mapeia um item retornado do DynamoDB para um AuthorDetailDto.
      * Converte o formato de dados do DynamoDB para o formato AuthorDetailDto da aplicação.
-     *
      * @param item Item retornado do DynamoDB.
      * @returns Um AuthorDetailDto preenchido com os dados do item do DynamoDB.
      * @private
@@ -181,10 +176,6 @@ export class AuthorsService {
 
     /**
      * Busca um autor pelo seu ID utilizando cache.
-     *
-     * Se o autor estiver armazenado no cache, retorna o valor armazenado;
-     * caso contrário, consulta o DynamoDB, armazena o resultado em cache e retorna o autor encontrado.
-     *
      * @param authorId - ID do autor a ser buscado.
      * @returns Uma Promise que resolve para um AuthorDetailDto representando o autor encontrado.
      * @throws NotFoundException Se o autor não for encontrado.
@@ -209,7 +200,7 @@ export class AuthorsService {
         const params = {
             TableName: this.tableName,
             Key: {
-                authorId: { S: authorId } // Corrigir o formato do valor
+                authorId: authorId
             }
         };
 
