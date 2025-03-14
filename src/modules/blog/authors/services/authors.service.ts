@@ -59,7 +59,7 @@ export class AuthorsService {
     @ApiOperation({ summary: 'Busca todos os autores' })
     @ApiResponse({ status: 200, description: 'Lista de autores.', type: [AuthorDetailDto] })
     @ApiResponse({ status: 404, description: 'Nenhum autor encontrado.' })
-    async findAll(): Promise<AuthorDetailDto[] | { message: string }> {
+    async findAll(): Promise<AuthorDetailDto[]> {
         this.logger.log('Buscando todos os autores.');
         const params = {
             TableName: this.tableName,
@@ -70,7 +70,7 @@ export class AuthorsService {
         this.logger.debug(`Dados brutos do DynamoDB: ${JSON.stringify(result.Items, null, 2)}`);
 
         if (!result.Items || result.Items.length === 0) {
-            return { message: "Nenhum autor cadastrado." };
+            return [];
         }
 
         return result.Items.map(AuthorDetailDto.fromDynamoDB);
