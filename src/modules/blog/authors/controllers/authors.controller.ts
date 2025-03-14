@@ -3,6 +3,7 @@ import { AuthorsService } from '../services/authors.service'; // Importa Authors
 import { CreateAuthorDto } from '../dto/Create-author.dto'; // Importa DTO para criação de autor
 import { UpdateAuthorDto } from '../dto/Update-author.dto'; // Importa DTO para atualização de autor
 import { AuthorDetailDto } from '../dto/Author-detail.dto'; // Importa DTO para representação de autor
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 /**
  * @Controller('blog/authors')
@@ -10,6 +11,7 @@ import { AuthorDetailDto } from '../dto/Author-detail.dto'; // Importa DTO para 
  * Define os endpoints para operações CRUD (Create, Read, Update, Delete) de autores.
  * A rota base para este controller é '/blog/authors'.
  */
+@ApiTags('Authors')
 @Controller('blog/authors')
 export class AuthorsController {
     private readonly logger = new Logger(AuthorsController.name); // Logger para registrar eventos e erros neste controller
@@ -26,6 +28,9 @@ export class AuthorsController {
      * @param createAuthorDto DTO contendo os dados para criação do autor, recebidos no corpo da requisição.
      * @returns Uma Promise que resolve para um AuthorDetailDto representando o autor criado.
      */
+    @ApiOperation({ summary: 'Cria um novo autor' })
+    @ApiResponse({ status: 201, description: 'Autor criado com sucesso.', type: AuthorDetailDto })
+    @ApiResponse({ status: 400, description: 'Dados inválidos.' })
     @Post()
     async create(@Body() createAuthorDto: CreateAuthorDto): Promise<AuthorDetailDto> {
         this.logger.log('Endpoint POST /blog/authors acionado'); // Log de acesso ao endpoint POST
@@ -37,6 +42,9 @@ export class AuthorsController {
      * Endpoint: GET /blog/authors
      * @returns Uma Promise que resolve para um array de AuthorDetailDto, contendo todos os autores.
      */
+    @ApiOperation({ summary: 'Retorna uma listagem de autores' })
+    @ApiResponse({ status: 200, description: 'Lista de autores.', type: [AuthorDetailDto] })
+    @ApiResponse({ status: 404, description: 'Nenhum autor encontrado.' })
     @Get()
     async findAll(): Promise<AuthorDetailDto[]> {
         this.logger.log('Endpoint GET /blog/authors acionado'); // Log de acesso ao endpoint GET (todos)
@@ -49,6 +57,9 @@ export class AuthorsController {
      * @param authorId ID do autor a ser buscado, extraído dos parâmetros da rota.
      * @returns Uma Promise que resolve para um AuthorDetailDto, se o autor for encontrado.
      */
+    @ApiOperation({ summary: 'Retorna um autor pelo ID' })
+    @ApiResponse({ status: 200, description: 'Autor encontrado.', type: AuthorDetailDto })
+    @ApiResponse({ status: 404, description: 'Autor não encontrado.' })
     @Get(':authorId')
     async findOne(@Param('authorId') authorId: string): Promise<AuthorDetailDto> {
         this.logger.log(`Endpoint GET /blog/authors/${authorId} acionado`); // Log de acesso ao endpoint GET (por ID)
@@ -62,6 +73,9 @@ export class AuthorsController {
      * @param updateAuthorDto DTO contendo os dados para atualização do autor, recebidos no corpo da requisição.
      * @returns Uma Promise que resolve para um AuthorDetailDto representando o autor atualizado.
      */
+    @ApiOperation({ summary: 'Atualiza um autor existente' })
+    @ApiResponse({ status: 200, description: 'Autor atualizado com sucesso.', type: AuthorDetailDto })
+    @ApiResponse({ status: 404, description: 'Autor não encontrado.' })
     @Put(':authorId')
     async update(
         @Param('authorId') authorId: string,
@@ -77,6 +91,9 @@ export class AuthorsController {
      * @param authorId ID do autor a ser removido, extraído dos parâmetros da rota.
      * @returns Uma Promise que resolve void (sem retorno), indicando sucesso na remoção.
      */
+    @ApiOperation({ summary: 'Remove um autor pelo ID' })
+    @ApiResponse({ status: 200, description: 'Autor removido com sucesso.' })
+    @ApiResponse({ status: 404, description: 'Autor não encontrado.' })
     @Delete(':authorId')
     async remove(@Param('authorId') authorId: string): Promise<void> {
         this.logger.log(`Endpoint DELETE /blog/authors/${authorId} acionado`); // Log de acesso ao endpoint DELETE
