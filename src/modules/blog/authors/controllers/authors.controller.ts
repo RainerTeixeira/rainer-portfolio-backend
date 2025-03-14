@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Put, Param, Delete, Logger } from '@nestjs
 import { AuthorsService } from '../services/authors.service'; // Importa AuthorsService
 import { CreateAuthorDto } from '../dto/Create-author.dto'; // Importa DTO para criação de autor
 import { UpdateAuthorDto } from '../dto/Update-author.dto'; // Importa DTO para atualização de autor
-import { AuthorDetailDto } from '../dto/Author-detail.dto'; // Importa DTO para representação de autor
+import { AuthorDetailDto } from '../dto/author-detail.dto'; // Corrigir a capitalização do nome do arquivo
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 /**

@@ -1,5 +1,5 @@
 import { IsString, IsOptional } from 'class-validator';
-import { IsSocialProof } from './Social-proof-validator.dto';
+import { IsSocialProof } from './social-proof-validator.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class AuthorDetailDto {
