@@ -13,6 +13,11 @@ export class CommentsService {
 
     constructor(private readonly dynamoDbService: DynamoDbService) { }
 
+    /**
+     * Cria um novo comentário.
+     * @param createCommentDto - Dados para criar um novo comentário.
+     * @returns O comentário criado.
+     */
     @ApiOperation({ summary: 'Cria um novo comentário' })
     @ApiResponse({ status: 201, description: 'Comentário criado com sucesso.', type: CommentDto })
     async create(createCommentDto: CreateCommentDto): Promise<CommentDto> {
@@ -24,6 +29,10 @@ export class CommentsService {
         return this.findOne(createCommentDto.postId.toString(), createCommentDto.authorId); // Converte postId para string
     }
 
+    /**
+     * Obtém todos os comentários.
+     * @returns Uma lista de todos os comentários.
+     */
     @ApiOperation({ summary: 'Obtém todos os comentários' })
     @ApiResponse({ status: 200, description: 'Lista de comentários.', type: [CommentDto] })
     async findAll(): Promise<CommentDto[]> {
@@ -31,6 +40,13 @@ export class CommentsService {
         return (result.Items || []).map(item => this.mapCommentFromDynamoDb(item));
     }
 
+    /**
+     * Obtém um comentário pelo postId e authorId.
+     * @param postId - ID do post.
+     * @param authorId - ID do autor.
+     * @returns O comentário encontrado.
+     * @throws NotFoundException se o comentário não for encontrado.
+     */
     @ApiOperation({ summary: 'Obtém um comentário pelo postId e authorId' })
     @ApiResponse({ status: 200, description: 'Comentário encontrado.', type: CommentDto })
     @ApiResponse({ status: 404, description: 'Comentário não encontrado.' })
@@ -49,6 +65,32 @@ export class CommentsService {
         return this.mapCommentFromDynamoDb(result.Item);
     }
 
+    /**
+     * Obtém comentários pelo postId.
+     * @param postId - ID do post.
+     * @returns Uma lista de comentários encontrados.
+     */
+    @ApiOperation({ summary: 'Obtém comentários pelo postId' })
+    @ApiResponse({ status: 200, description: 'Comentários encontrados.', type: [CommentDto] })
+    async getCommentsByPostId(postId: string): Promise<CommentDto[]> {
+        const params = {
+            TableName: this.tableName,
+            IndexName: 'postId-index',
+            KeyConditionExpression: 'postId = :postId',
+            ExpressionAttributeValues: { ':postId': { S: postId } },
+        };
+        const result = await this.dynamoDbService.query(params);
+        return (result.Items || []).map(item => this.mapCommentFromDynamoDb(item));
+    }
+
+    /**
+     * Atualiza um comentário.
+     * @param postId - ID do post.
+     * @param authorId - ID do autor.
+     * @param updateCommentDto - Dados para atualizar o comentário.
+     * @returns O comentário atualizado.
+     * @throws NotFoundException se o comentário não for encontrado.
+     */
     @ApiOperation({ summary: 'Atualiza um comentário' })
     @ApiResponse({ status: 200, description: 'Comentário atualizado com sucesso.', type: CommentDto })
     @ApiResponse({ status: 404, description: 'Comentário não encontrado.' })
@@ -78,6 +120,12 @@ export class CommentsService {
         return this.mapCommentFromDynamoDb(result.Attributes as Record<string, any>) as CommentDto;
     }
 
+    /**
+     * Remove um comentário.
+     * @param postId - ID do post.
+     * @param authorId - ID do autor.
+     * @throws NotFoundException se o comentário não for encontrado.
+     */
     @ApiOperation({ summary: 'Remove um comentário' })
     @ApiResponse({ status: 200, description: 'Comentário removido com sucesso.' })
     @ApiResponse({ status: 404, description: 'Comentário não encontrado.' })
@@ -94,6 +142,11 @@ export class CommentsService {
         await this.dynamoDbService.deleteItem(params);
     }
 
+    /**
+     * Mapeia um item do DynamoDB para um CommentDto.
+     * @param item - Item do DynamoDB.
+     * @returns O CommentDto mapeado.
+     */
     private mapCommentFromDynamoDb(item: Record<string, any>): CommentDto {
         return {
             postId: item.postId?.S,

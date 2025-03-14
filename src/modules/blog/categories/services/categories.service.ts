@@ -78,4 +78,9 @@ export class CategoriesService {
             description: item.description?.S,
         } as CategoryDto;
     }
+
+    // Adicione o método getCategoryById
+    async getCategoryById(categoryId: string): Promise<CategoryDto> {
+        return this.findOne(categoryId);
+    }
 }

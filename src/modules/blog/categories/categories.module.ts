@@ -7,6 +7,6 @@ import { BlogModule } from '@src/modules/blog.module';
     imports: [forwardRef(() => BlogModule)],
     controllers: [CategoriesController],
     providers: [CategoriesService],
-    exports: [CategoriesService],
+    exports: [CategoriesService], // Certifique-se de exportar o serviço
 })
-export class CategoriesModule { }
+export class CategoriesModule {}

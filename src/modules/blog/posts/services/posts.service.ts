@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, Logger, Inject, } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger, Inject } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { DynamoDbService } from '@src/services/dynamodb.service';
@@ -6,10 +6,15 @@ import { PostCreateDto } from '@src/modules/blog/posts/dto/post-create.dto';
 import { PostUpdateDto } from '@src/modules/blog/posts/dto/post-update.dto';
 import { PostContentDto } from '@src/modules/blog/posts/dto/post-content.dto';
 import { PostSummaryDto } from '@src/modules/blog/posts/dto/post-summary.dto';
-import { GetCommandInput, PutCommandInput, QueryCommandInput, UpdateCommandInput, DeleteCommandInput, ScanCommandInput, } from '@aws-sdk/lib-dynamodb';
-import { CacheClear } from '@src/common/decorators/cache-clear.decorator.ts';
+import { GetCommandInput, PutCommandInput, QueryCommandInput, UpdateCommandInput, DeleteCommandInput, ScanCommandInput } from '@aws-sdk/lib-dynamodb';
+import { CacheClear } from '@src/common/decorators/cache-clear.decorator';
 import { AttributeValue } from '@aws-sdk/client-dynamodb';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { PostFullDto } from '@src/modules/blog/posts/dto/post-full.dto';
+import { AuthorsService } from '@src/modules/blog/authors/services/authors.service';
+import { CategoriesService } from '@src/modules/blog/categories/services/categories.service';
+import { SubcategoryService } from '@src/modules/blog/subcategory/services/subcategory.service';
+import { CommentsService } from '@src/modules/blog/comments/services/comments.service';
 
 @Injectable()
 @ApiTags('Posts')
@@ -22,6 +27,10 @@ export class PostsService {
   constructor(
     private readonly dynamoDbService: DynamoDbService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    private readonly authorsService: AuthorsService,
+    private readonly categoriesService: CategoriesService,
+    private readonly subcategoryService: SubcategoryService,
+    private readonly commentsService: CommentsService,    
   ) { }
 
   /**
@@ -105,46 +114,106 @@ export class PostsService {
     }
   }
 
+  
   /**
-   * Retorna um post completo com base no slug.
+     * Retorna um post completo com base no slug, incluindo todas as entidades relacionadas.
+   * Utiliza cache para melhorar performance e reduzir chamadas ao DynamoDB.
    *
-   * @param slug - Slug do post.
-   * @returns O post completo como PostContentDto ou null se não encontrado.
-   * @throws BadRequestException se ocorrer um erro durante a busca do post.
+   * @param slug - Slug do post a ser buscado
+   * @returns PostFullDto com todas as informações relacionadas
+   * @throws NotFoundException se o post não for encontrado
+   * @throws BadRequestException se ocorrer erro ao buscar dados
    */
-  @ApiOperation({ summary: 'Retorna um post completo com base no slug' })
-  @ApiResponse({ status: 200, description: 'Post retornado com sucesso.', type: PostContentDto })
-  @ApiResponse({ status: 400, description: 'Falha ao buscar post por slug.' })
-  @ApiResponse({ status: 404, description: 'Post não encontrado.' })
-  async getPostBySlug(slug: string): Promise<PostContentDto | null> {
-    this.logger.debug(`[getPostBySlug] Iniciando busca de post pelo slug: ${slug}`);
+  @CacheClear(['posts:*', 'post-details:*', 'latest_posts', 'paginated_posts:*'])
+  @ApiOperation({
+    summary: 'Retorna um post completo com base no slug',
+    description: 'Retorna o post completo incluindo informações do autor, categoria, subcategoria e comentários associados.'
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Post completo retornado com sucesso.',
+    type: PostFullDto
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Post não encontrado.'
+  })
+    
+    
+  /**
+    * Retorna um post completo com base no slug
+    * @param slug - Slug do post a ser buscado
+    * @returns PostFullDto com todas as informações relacionadas
+    * @throws NotFoundException se o post não for encontrado
+    * @throws BadRequestException se ocorrer erro ao buscar dados
+    * 
+    */
+  async getFullPostBySlug(slug: string): Promise<PostFullDto> {
+    const cacheKey = `full-post:${slug}`;
+
     try {
-      const params: QueryCommandInput = {
-        TableName: this.tableName,
-        IndexName: 'slug-index', // Nome do GSI para buscar por slug
-        KeyConditionExpression: 'slug = :slug',
-        ExpressionAttributeValues: { ':slug': slug, },
-        Limit: 1,
+      // Verificar cache
+      const cached = await this.cacheManager.get<PostFullDto>(cacheKey);
+      if (cached) return cached;
+
+      // Buscar post principal
+      const post = await this.getPostBySlugFromDB(slug);
+      if (!post) throw new NotFoundException(`Post com slug '${slug}' não encontrado`);
+
+      // Buscar dados relacionados em paralelo
+      const [author, category, subcategory, comments] = await Promise.all([
+        this.authorsService.getAuthorById(post.authorId),
+        this.categoriesService.getCategoryById(post.categoryId),
+        this.subcategoryService.getSubcategoryById(post.categoryId, post.subcategoryId),
+        this.commentsService.getCommentsByPostId(post.postId)
+      ]);
+
+      // Montar objeto completo
+      const fullPost: PostFullDto = {
+        post,
+        author,
+        category,
+        subcategory,
+        comments
       };
-      this.logger.debug(`[getPostBySlug] Parâmetros para consulta por slug no DynamoDB: ${JSON.stringify(params)}`);
-      const result = await this.dynamoDbService.query(params);
-      this.logger.debug(`[getPostBySlug] Resultado da consulta por slug no DynamoDB: ${JSON.stringify(result)}`);
-      if (result.Items && result.Items.length > 0) {
-        const post = this.mapDynamoDBItemToPostContentDto(result.Items[0]);
-        this.logger.debug(`[getPostBySlug] Post encontrado: ${JSON.stringify(post)}`);
-        return post;
-      } else {
-        this.logger.log(`[getPostBySlug] Post com slug '${slug}' não encontrado.`);
-        return null;
-      }
+
+      // Armazenar em cache
+      await this.cacheManager.set(cacheKey, fullPost, this.FULL_POST_CACHE_TTL * 1000);
+
+      return fullPost;
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
-      this.logger.error(`[getPostBySlug] Erro ao buscar post por slug '${slug}' no DynamoDB: ${errorMsg}`, error?.stack);
-      throw new BadRequestException(`Falha ao buscar post por slug: ${errorMsg}`);
-    } finally {
-      this.logger.debug('[getPostBySlug] Finalizando busca de post por slug.');
+      this.logger.error(`Erro ao buscar post completo: ${error.message}`, error.stack);
+      throw new BadRequestException('Erro ao buscar post completo');
     }
   }
+
+
+  /**
+   * Busca o post básico no DynamoDB pelo slug
+   * @param slug - Slug do post
+   * @returns PostContentDto ou null se não encontrado
+   */
+  private async getPostBySlugFromDB(slug: string): Promise<PostContentDto | null> {
+    const params: QueryCommandInput = {
+      TableName: this.tableName,
+      IndexName: 'slug-index',
+      KeyConditionExpression: 'slug = :slug',
+      ExpressionAttributeValues: { ':slug': slug },
+      Limit: 1,
+      ProjectionExpression: [
+        'postId', 'title', 'contentHTML', 'authorId',
+        'categoryId', 'subcategoryId', 'slug',
+        'featuredImageURL', 'description', 'publishDate',
+        'modifiedDate', 'readingTime', '#views', 'tags',
+        'keywords', 'canonical', '#status'
+      ].join(', '),
+      ExpressionAttributeNames: { '#views': 'views', '#status': 'status' }
+    };
+
+    const result = await this.dynamoDbService.query(params);
+    return result.Items?.length ? this.mapDynamoDBItemToPostContentDto(result.Items[0]) : null;
+  }
+
 
   /**
    * Busca um post pelo seu ID no DynamoDB.
@@ -166,6 +235,14 @@ export class PostsService {
         KeyConditionExpression: 'postId = :postId',
         ExpressionAttributeValues: { ':postId': postId, },
         Limit: 1,
+        ProjectionExpression: [
+          'postId', 'title', 'contentHTML', 'authorId',
+          'categoryId', 'subcategoryId', 'slug',
+          'featuredImageURL', 'description', 'publishDate',
+          'modifiedDate', 'readingTime', '#views', 'tags',
+          'keywords', 'canonical', '#status'
+        ].join(', '),
+        ExpressionAttributeNames: { '#views': 'views', '#status': 'status' }
       };
       this.logger.debug(`[getPostById] Parâmetros para consulta por ID no DynamoDB: ${JSON.stringify(params)}`);
       const result = await this.dynamoDbService.query(params);
@@ -299,18 +376,25 @@ export class PostsService {
     page: number,
     limit: number,
     lastEvaluatedKey?: Record<string, AttributeValue>,
-  ): Promise<{ data: PostSummaryDto; total: number; message?: string; hasMore: boolean; lastEvaluatedKey?: Record<string, AttributeValue> }> {
+  ): Promise<{ data: PostSummaryDto[]; total: number; message?: string; hasMore: boolean; lastEvaluatedKey?: Record<string, AttributeValue> }> {
     this.logger.debug(`[queryPaginatedPostsFromDb] Iniciando consulta paginada: Página ${page}, Limite ${limit}, LastEvaluatedKey: ${JSON.stringify(lastEvaluatedKey)}`);
     try {
       const params: QueryCommandInput = {
         TableName: this.tableName,
         IndexName: 'postsByPublishDate-index',
         KeyConditionExpression: '#status = :status',
-        ExpressionAttributeNames: { '#status': 'status', },
-        ExpressionAttributeValues: { ':status': 'published', },
+        ExpressionAttributeNames: { '#status': 'status', '#views': 'views' },
+        ExpressionAttributeValues: { ':status': 'published' },
         ScanIndexForward: false,
         Limit: limit,
         ExclusiveStartKey: lastEvaluatedKey,
+        ProjectionExpression: [
+          'postId', 'title', 'contentHTML', 'authorId',
+          'categoryId', 'subcategoryId', 'slug',
+          'featuredImageURL', 'description', 'publishDate',
+          'modifiedDate', 'readingTime', '#views', 'tags',
+          'keywords', 'canonical', '#status'
+        ].join(', ')
       };
       this.logger.debug(`[queryPaginatedPostsFromDb] Parâmetros para consulta paginada no DynamoDB: ${JSON.stringify(params)}`);
       const result = await this.dynamoDbService.query(params);
@@ -424,7 +508,7 @@ export class PostsService {
       readingTime: Number(item.readingTime?.N) || 0,
       tags: item.tags instanceof Set ? Array.from(item.tags).map((t) => String(t)) : item.tags?.SS || (Array.isArray(item.tags) ? item.tags.map((t) => String(t)) : []),
       views: Number(item.views?.N) || 0,
-    };
+    } as PostContentDto;
   }
 
   /**

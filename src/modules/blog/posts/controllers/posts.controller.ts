@@ -23,6 +23,7 @@ import { PostCreateDto } from '@src/modules/blog/posts/dto/post-create.dto';
 import { PostUpdateDto } from '@src/modules/blog/posts/dto/post-update.dto';
 import { PostContentDto } from '@src/modules/blog/posts/dto/post-content.dto';
 import { PostSummaryDto } from '@src/modules/blog/posts/dto/post-summary.dto';
+import { PostFullDto } from '@src/modules/blog/posts/dto/post-full.dto';
 import { ResponseInterceptor } from '../../../../interceptors/response.interceptor';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiParam } from '@nestjs/swagger';
 
@@ -141,32 +142,49 @@ export class PostsController {
   }
 
   /**
-   * Retorna um post completo com base no slug.
-   * Permite apenas requisições GET.
-   * Utiliza o índice secundário global `slug-index` para uma busca eficiente por slug, otimizando a performance e o uso de RCUs.
-   *
-   * @param slug - Slug único do post a ser buscado.
-   * @returns O post completo com todos os seus detalhes no formato DTO. Lança NotFoundException se o post não for encontrado.
-   */
+     * Retorna um post completo com base no slug.
+     * Permite apenas requisições GET.
+     * Utiliza o índice secundário global `slug-index` para uma busca eficiente por slug, otimizando a performance e o uso de RCUs.
+     *
+     * @param slug - Slug único do post a ser buscado.
+     * @returns O post completo com todos os seus detalhes e entidades relacionadas no formato PostFullDto.
+     * @throws NotFoundException se o post não for encontrado.
+     */
   @Get(':slug')
   @UseGuards(new AllowedMethodGuard(['GET']))
-  @ApiOperation({ summary: 'Retorna um post completo com base no slug' })
-  @ApiParam({ name: 'slug', required: true, description: 'Slug único do post a ser buscado' })
-  @ApiResponse({ status: 200, description: 'Post retornado com sucesso.', type: PostContentDto })
-  @ApiResponse({ status: 404, description: 'Post não encontrado.' })
+  @ApiOperation({
+    summary: 'Retorna um post completo com base no slug',
+    description: 'Retorna o post completo incluindo informações do autor, categoria, subcategoria e comentários associados.'
+  })
+  @ApiParam({
+    name: 'slug',
+    required: true,
+    description: 'Slug único do post a ser buscado',
+    example: 'meu-post-exemplo'
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Post completo retornado com sucesso.',
+    type: PostFullDto
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Post não encontrado.'
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Erro interno ao buscar post.'
+  })
   async getPostBySlug(
     @Param('slug') slug: string,
-  ): Promise<PostContentDto> {
+  ): Promise<PostFullDto> {
     this.logger.debug(`Recebida requisição GET para post com slug: ${slug}`);
-    const post = await this.execute(
-      () => this.postsService.getPostBySlug(slug),
-      'Consulta de post por slug',
-      'Erro ao buscar post pelo slug',
+
+    return this.execute(
+      () => this.postsService.getFullPostBySlug(slug),
+      'Consulta completa de post por slug',
+      'Erro ao buscar post completo'
     );
-    if (!post) {
-      throw new NotFoundException(`Post com slug '${slug}' não encontrado`);
-    }
-    return post;
   }
 
   /**
