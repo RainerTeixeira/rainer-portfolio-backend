@@ -3,15 +3,15 @@ import { IsSocialProof } from './Social-proof-validator.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateAuthorDto {
-    @ApiProperty({ description: 'ID do autor', example: { S: '1' } })
+    @ApiProperty({ description: 'ID do autor', example: '1' })
     @IsString()
     authorId: string;
 
-    @ApiProperty({ description: 'Nome do autor', example: { S: 'John Doe' } })
+    @ApiProperty({ description: 'Nome do autor', example: 'John Doe' })
     @IsString()
     name: string;
 
-    @ApiProperty({ description: 'Slug do autor (parte da URL)', example: { S: 'john-doe' } })
+    @ApiProperty({ description: 'Slug do autor (parte da URL)', example: 'john-doe' })
     @IsString()
     slug: string;
 
@@ -19,11 +19,9 @@ export class CreateAuthorDto {
         description: 'Provas sociais do autor, como redes sociais ou referências',
         type: 'object',
         example: {
-            M: {
-                github: { S: 'github.com/john-doe' },
-                medium: { S: 'john-doe.medium.com' },
-                socialProof: { S: 'facebook.com/john-doe' }
-            }
+            github: 'github.com/john-doe',
+            medium: 'john-doe.medium.com',
+            socialProof: 'facebook.com/john-doe'
         }
     })
     @IsOptional()

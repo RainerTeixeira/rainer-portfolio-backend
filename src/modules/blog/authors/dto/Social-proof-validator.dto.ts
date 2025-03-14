@@ -1,5 +1,11 @@
 import { registerDecorator, ValidationOptions, ValidationArguments } from 'class-validator';
 
+/**
+ * Decorator personalizado para validar o campo socialProof.
+ *
+ * @param validationOptions Opções de validação.
+ * @returns Função de validação.
+ */
 export function IsSocialProof(validationOptions?: ValidationOptions) {
     return function (object: Object, propertyName: string) {
         registerDecorator({

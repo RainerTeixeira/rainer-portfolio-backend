@@ -6,6 +6,7 @@ import { Cache } from 'cache-manager';
 import { CreateAuthorDto } from '@src/modules/blog/authors/dto/Create-author.dto';
 import { UpdateAuthorDto } from '@src/modules/blog/authors/dto/Update-author.dto';
 import { AuthorDetailDto } from '@src/modules/blog/authors/dto/author-detail.dto';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 /**
  * @Injectable()
@@ -13,6 +14,7 @@ import { AuthorDetailDto } from '@src/modules/blog/authors/dto/author-detail.dto
  * Este serviço interage com o DynamoDB para realizar operações CRUD (Create, Read, Update, Delete)
  * na tabela 'Authors'.
  */
+@ApiTags('Authors')
 @Injectable()
 export class AuthorsService {
     private readonly tableName = 'Authors'; // Nome da tabela DynamoDB para Autores
@@ -36,6 +38,9 @@ export class AuthorsService {
      * @param createAuthorDto DTO contendo os dados para criar um novo autor.
      * @returns Uma Promise que resolve para um AuthorDetailDto representando o autor criado.
      */
+    @ApiOperation({ summary: 'Cria um novo autor' })
+    @ApiResponse({ status: 201, description: 'Autor criado com sucesso.', type: AuthorDetailDto })
+    @ApiResponse({ status: 400, description: 'Dados inválidos.' })
     async create(createAuthorDto: CreateAuthorDto): Promise<AuthorDetailDto> {
         this.logger.log(`Criando autor com authorId: ${createAuthorDto.authorId}`);
         const params = {
@@ -51,6 +56,9 @@ export class AuthorsService {
      *
      * @returns Uma Promise que resolve para um array de AuthorDetailDto ou um objeto com mensagem caso não haja autores.
      */
+    @ApiOperation({ summary: 'Busca todos os autores' })
+    @ApiResponse({ status: 200, description: 'Lista de autores.', type: [AuthorDetailDto] })
+    @ApiResponse({ status: 404, description: 'Nenhum autor encontrado.' })
     async findAll(): Promise<AuthorDetailDto[] | { message: string }> {
         this.logger.log('Buscando todos os autores.');
         const params = {
@@ -75,6 +83,9 @@ export class AuthorsService {
      * @returns Uma Promise que resolve para um AuthorDetailDto, se o autor for encontrado.
      * @throws NotFoundException Se o autor não for encontrado.
      */
+    @ApiOperation({ summary: 'Busca um autor pelo ID' })
+    @ApiResponse({ status: 200, description: 'Autor encontrado.', type: AuthorDetailDto })
+    @ApiResponse({ status: 404, description: 'Autor não encontrado.' })
     async findOne(authorId: string): Promise<AuthorDetailDto> {
         this.logger.log(`Buscando autor com authorId: ${authorId}`);
         const params = {
@@ -100,6 +111,9 @@ export class AuthorsService {
      * @returns Uma Promise que resolve para um AuthorDetailDto representando o autor atualizado.
      * @throws NotFoundException Se o autor não for encontrado.
      */
+    @ApiOperation({ summary: 'Atualiza um autor pelo ID' })
+    @ApiResponse({ status: 200, description: 'Autor atualizado com sucesso.', type: AuthorDetailDto })
+    @ApiResponse({ status: 404, description: 'Autor não encontrado.' })
     async update(authorId: string, updateAuthorDto: UpdateAuthorDto): Promise<AuthorDetailDto> {
         this.logger.log(`Atualizando autor com authorId: ${authorId}`);
         // Verifica se o autor existe antes de atualizar
@@ -129,6 +143,9 @@ export class AuthorsService {
      * @returns Uma Promise que resolve void (sem retorno), indicando sucesso na remoção.
      * @throws NotFoundException Se o autor não for encontrado.
      */
+    @ApiOperation({ summary: 'Remove um autor pelo ID' })
+    @ApiResponse({ status: 200, description: 'Autor removido com sucesso.' })
+    @ApiResponse({ status: 404, description: 'Autor não encontrado.' })
     async remove(authorId: string): Promise<void> {
         this.logger.log(`Removendo autor com authorId: ${authorId}`);
         // Verifica se o autor existe antes de deletar
@@ -163,15 +180,18 @@ export class AuthorsService {
     }
 
     /**
-   * Busca um autor pelo seu ID utilizando cache.
-   *
-   * Se o autor estiver armazenado no cache, retorna o valor armazenado;
-   * caso contrário, consulta o DynamoDB, armazena o resultado em cache e retorna o autor encontrado.
-   *
-   * @param authorId - ID do autor a ser buscado.
-   * @returns Uma Promise que resolve para um AuthorDetailDto representando o autor encontrado.
-   * @throws NotFoundException Se o autor não for encontrado.
-   */
+     * Busca um autor pelo seu ID utilizando cache.
+     *
+     * Se o autor estiver armazenado no cache, retorna o valor armazenado;
+     * caso contrário, consulta o DynamoDB, armazena o resultado em cache e retorna o autor encontrado.
+     *
+     * @param authorId - ID do autor a ser buscado.
+     * @returns Uma Promise que resolve para um AuthorDetailDto representando o autor encontrado.
+     * @throws NotFoundException Se o autor não for encontrado.
+     */
+    @ApiOperation({ summary: 'Busca um autor pelo ID utilizando cache' })
+    @ApiResponse({ status: 200, description: 'Autor encontrado.', type: AuthorDetailDto })
+    @ApiResponse({ status: 404, description: 'Autor não encontrado.' })
     async getAuthorById(authorId: string): Promise<AuthorDetailDto> {
         this.logger.log(`Buscando autor com authorId: ${authorId}`);
 
@@ -205,8 +225,4 @@ export class AuthorsService {
 
         return author;
     }
-
-
-
-
 }
