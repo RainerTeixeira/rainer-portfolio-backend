@@ -1,9 +1,19 @@
 import { Global, Module } from '@nestjs/common';
 import { CacheModule } from '@nestjs/cache-manager';
-import { APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
 import { DynamoDbService } from '@src/services/dynamoDb.service';
 import { BlogModule } from '@src/modules/blog.module';
 import { ResponseInterceptor } from './interceptors/response.interceptor';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { ConfigModule } from '@nestjs/config';
+
+/**
+ * @module AppModule
+ * @description Módulo principal da aplicação.
+ * Este módulo importa e configura outros módulos,
+ * define providers globais como interceptores e filtros,
+ * e exporta serviços para serem utilizados em outros módulos.
+ */
 
 /**
  * @swagger
@@ -28,6 +38,9 @@ import { ResponseInterceptor } from './interceptors/response.interceptor';
  */
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
     CacheModule.register({
       ttl: 300, // 5 minutos
       max: 100, // Número máximo de itens no cache
@@ -40,6 +53,10 @@ import { ResponseInterceptor } from './interceptors/response.interceptor';
     {
       provide: APP_INTERCEPTOR,
       useClass: ResponseInterceptor,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: HttpExceptionFilter,
     },
   ],
   exports: [DynamoDbService],

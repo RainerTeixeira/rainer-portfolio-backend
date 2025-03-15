@@ -228,8 +228,7 @@ export class PostsController {
   @ApiResponse({ status: 200, description: 'Post deletado com sucesso.' })
   @ApiResponse({ status: 404, description: 'Post não encontrado.' })
   async deletePost(
-    @Param('id') id: string, // Removido ParseUUIDPipe
-  ): Promise<void> {
+  ): Promise<{ message: string }> {
     this.logger.debug(`Recebida requisição DELETE para remover post ID: ${id}`);
     return this.execute(
       () => this.postsService.deletePost(id),
