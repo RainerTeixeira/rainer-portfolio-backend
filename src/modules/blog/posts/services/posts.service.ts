@@ -210,7 +210,7 @@ export class PostsService {
     try {
       const params: QueryCommandInput = {
         TableName: this.tableName,
-        IndexName: 'postId-index', // Certifique-se de que este índice existe no DynamoDB
+        IndexName: 'postId-index', // índice no DynamoDB
         KeyConditionExpression: 'postId = :postId',
         ExpressionAttributeValues: { ':postId': postId }, // Corrigir o formato do valor
         Limit: 1,
@@ -642,6 +642,7 @@ export class PostsService {
       views: item.views,
     } as PostContentDto;
   }
+  
     /**
     * Busca um post pelo seu slug no DynamoDB.
     * @param slug - O slug do post a ser buscado.
