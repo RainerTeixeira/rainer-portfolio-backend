@@ -1,3 +1,4 @@
+// response.interceptor.ts
 import {
     Injectable,
     NestInterceptor,
@@ -8,57 +9,59 @@ import { Observable, throwError } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 
 /**
- * @file Interceptor de resposta para o backend do portfólio de Rainer.
- * 
- * Este interceptor é responsável por modificar a resposta de todas as requisições HTTP
- * feitas ao servidor, adicionando informações adicionais e padronizando o formato da resposta.
+ * @class ResponseInterceptor
+ * @description Interceptor global para padronização de respostas HTTP bem-sucedidas
+ * @implements NestInterceptor
  */
-
 @Injectable()
 export class ResponseInterceptor implements NestInterceptor {
     /**
-     * Intercepta a resposta da requisição e modifica seu formato.
-     * 
-     * @param context - O contexto da execução que contém detalhes sobre a requisição atual.
-     * @param next - O manipulador que continua o fluxo da requisição.
-     * @returns Um Observable que emite a resposta modificada.
+     * Método principal para interceptar e transformar respostas
+     * @param context Contexto de execução da requisição
+     * @param next Próximo manipulador na cadeia de execução
+     * @returns Observable com resposta formatada
      */
     intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
         return next.handle().pipe(
-            map(data => this.formatResponse(data, context)),
-            catchError(error => this.formatErrorResponse(error))
+            map(data => this.formatSuccessResponse(data, context)),
+            catchError(err => this.formatErrorResponse(err))
         );
     }
 
     /**
-     * Formata a resposta de sucesso.
-     * 
-     * @param data - Os dados da resposta original.
-     * @param context - O contexto da execução que contém detalhes sobre a requisição atual.
-     * @returns Um objeto contendo a resposta formatada.
+     * Formata respostas de sucesso
+     * @param payload Dados da resposta
+     * @param context Contexto de execução
+     * @returns Objeto de resposta padronizado
      */
-    private formatResponse(data: any, context: ExecutionContext) {
-        const request = context.switchToHttp().getRequest();
+    private formatSuccessResponse(payload: any, context: ExecutionContext) {
+        const httpContext = context.switchToHttp();
+        const request = httpContext.getRequest<Request>();
+
         return {
             success: true,
-            data,
+            data: payload,
             timestamp: new Date().toISOString(),
             path: request.url,
+            statusCode: httpContext.getResponse().statusCode,
         };
     }
 
     /**
-     * Formata a resposta de erro.
-     * 
-     * @param error - O erro capturado.
-     * @returns Um Observable que emite a resposta de erro formatada.
+     * Formata respostas de erro
+     * @param error Objeto de erro capturado
+     * @returns Observable com erro formatado
      */
     private formatErrorResponse(error: any) {
+        const statusCode = error.status || 500;
+        const message = error.message || 'Erro interno do servidor';
+
         return throwError(() => ({
             success: false,
-            error: error.response?.message || error.message,
-            statusCode: error.status,
+            statusCode,
+            message,
             timestamp: new Date().toISOString(),
+            errorDetails: error.response?.details || undefined,
         }));
     }
 }
