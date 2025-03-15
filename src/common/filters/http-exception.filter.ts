@@ -1,12 +1,5 @@
 // http-exception.filter.ts
-import {
-  ExceptionFilter,
-  Catch,
-  ArgumentsHost,
-  HttpException,
-  Logger,
-  HttpStatus,
-} from '@nestjs/common';
+import { ExceptionFilter, Catch, ArgumentsHost, HttpException, Logger } from '@nestjs/common';
 import { Request, Response } from 'express';
 
 /**
@@ -14,7 +7,7 @@ import { Request, Response } from 'express';
  * @description Filtro global para tratamento de exceções HTTP
  * @implements ExceptionFilter
  */
-@Catch()
+@Catch(HttpException)
 export class HttpExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(HttpExceptionFilter.name);
 
@@ -23,25 +16,19 @@ export class HttpExceptionFilter implements ExceptionFilter {
    * @param exception Exceção capturada
    * @param host Host de argumentos para contexto HTTP
    */
-  catch(exception: unknown, host: ArgumentsHost) {
+  catch(exception: HttpException, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
+    const status = exception.getStatus();
 
-    const status = this.getHttpStatus(exception);
-    const errorDetails = this.getErrorDetails(exception);
-
-    this.logError(request, status, errorDetails);
-
-    response.status(status).json({
-      success: false,
-      statusCode: status,
-      message: errorDetails.message,
-      error: errorDetails.error,
-      timestamp: new Date().toISOString(),
-      path: request.url,
-      ...(process.env.NODE_ENV !== 'production' && { stack: errorDetails.stack }),
-    });
+    response
+      .status(status)
+      .json({
+        statusCode: status,
+        timestamp: new Date().toISOString(),
+        path: request.url,
+      });
   }
 
   /**

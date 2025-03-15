@@ -202,7 +202,7 @@ export class PostsController {
   @ApiResponse({ status: 200, description: 'Post atualizado com sucesso.', type: PostContentDto })
   @ApiResponse({ status: 404, description: 'Post não encontrado.' })
   async updatePost(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @Body() postUpdateDto: PostUpdateDto,
   ): Promise<PostContentDto> {
     this.logger.debug(`Recebida requisição PATCH para atualizar post ID: ${id}`);
@@ -228,6 +228,7 @@ export class PostsController {
   @ApiResponse({ status: 200, description: 'Post deletado com sucesso.' })
   @ApiResponse({ status: 404, description: 'Post não encontrado.' })
   async deletePost(
+    @Param('id') id: string,
   ): Promise<{ message: string }> {
     this.logger.debug(`Recebida requisição DELETE para remover post ID: ${id}`);
     return this.execute(

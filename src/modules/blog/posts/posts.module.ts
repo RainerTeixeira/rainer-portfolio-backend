@@ -9,6 +9,7 @@ import { CategoryModule } from '@src/modules/blog/category/category.module'; // 
 import { AuthorsModule } from '@src/modules/blog/authors/authors.module'; // Importe o módulo correto
 import { CommentsModule } from '@src/modules/blog/comments/comments.module'; // Importe o módulo correto
 import { SubcategoryModule } from '@src/modules/blog/subcategory/subcategory.module'; // Importe o módulo de subcategorias
+import { CacheModule } from '@nestjs/cache-manager'; // Importa o CacheModule
 
 /**
  * Define o módulo de Posts.
@@ -16,14 +17,17 @@ import { SubcategoryModule } from '@src/modules/blog/subcategory/subcategory.mod
  */
 @Module({
     imports: [
+        CacheModule.register({
+            ttl: 300, // seconds
+        }),
         forwardRef(() => BlogModule),
         CategoryModule,
         AuthorsModule, // Adicione o módulo aqui
         CommentsModule, // Adicione o módulo aqui
-        SubcategoryModule, // Adicione o módulo aqui
+        forwardRef(() => SubcategoryModule), // Adicione o forwardRef aqui
     ],
     controllers: [PostsController],
-    providers: [PostsService, DynamoDbService], // Adiciona DynamoDbService como provedor
+    providers: [PostsService, DynamoDbService], // Adiciona DynamoDbService provider
     exports: [PostsService], // Exporta PostsService para ser usado em outros módulos
 })
 export class PostsModule { }

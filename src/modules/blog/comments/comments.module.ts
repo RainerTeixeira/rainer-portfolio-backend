@@ -5,7 +5,6 @@ import { CommentsController } from '@src/modules/blog/comments/controllers/comme
 import { CommentsService } from '@src/modules/blog/comments/services/comments.service'; // Importa CommentsService usando alias @src.
 import { BlogModule } from '@src/modules/blog.module'; // <--- IMPORTA BlogModule AQUI!
 
-
 @Module({
     imports: [forwardRef(() => BlogModule)], // Use forwardRef envolvendo BlogModule para resolver dependência circular
     controllers: [CommentsController],

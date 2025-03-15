@@ -62,15 +62,10 @@ export class DynamoDBError extends Error {
  */
 @Injectable()
 export class DynamoDbService {
-  private static instance: DynamoDbService;
   private readonly logger = new Logger(DynamoDbService.name);
   private readonly docClient: DynamoDBDocumentClient;
 
   constructor() {
-    // if (DynamoDbService.instance) {
-    //   return DynamoDbService.instance;
-    // }
-
     this.logger.log('Iniciando construtor do DynamoDbService');
     this.logger.log(`Região AWS: ${process.env.AWS_REGION}`);
     this.logger.log(`Endpoint DynamoDB: ${process.env.DYNAMODB_ENDPOINT}`);
@@ -102,19 +97,7 @@ export class DynamoDbService {
       throw error;
     }
 
-    // DynamoDbService.instance = this;
     this.logger.log('Construtor do DynamoDbService finalizado');
-  }
-
-  /**
-   * Retorna a instância única do serviço.
-   * @returns Instância do DynamoDbService.
-   */
-  static getInstance(): DynamoDbService {
-    if (!DynamoDbService.instance) {
-      DynamoDbService.instance = new DynamoDbService();
-    }
-    return DynamoDbService.instance;
   }
 
   /**
