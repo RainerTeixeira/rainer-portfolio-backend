@@ -132,7 +132,6 @@ export class SubcategoryService {
                 subcategoryId: subcategoryId, // Chave primária de ordenação (SK)
             },
             ...updateExpression, // Inclui a expressão de atualização e atributos
-            ReturnValues: 'ALL_NEW' as any, // Correção para TS2345: Casting para 'any' - paliativo para problema de tipo
         };
 
         const result = await this.dynamoDbService.updateItem(params); // Atualiza o item no DynamoDB
@@ -144,6 +143,9 @@ export class SubcategoryService {
             subcategoryId: result.Attributes.subcategoryId?.S,
             name: result.Attributes.name?.S,
             slug: result.Attributes.slug?.S,
+            description: result.Attributes.description?.S,
+            keywords: result.Attributes.keywords?.S,
+            title: result.Attributes.title?.S,
         } as SubcategoryDto; // Converte o objeto literal para SubcategoryDto
     }
 

@@ -265,14 +265,14 @@ export class DynamoDbService {
 
     const UpdateExpression = `SET ${updateKeys
       .map((key, index) => `#field${index} = :value${index}`)
-      .join(', ')}`;
+      .join(', ')}, #modifiedDate = :modifiedDate`;
 
     const ExpressionAttributeNames = updateKeys.reduce(
       (acc, key, index) => ({
         ...acc,
         [`#field${index}`]: key,
       }),
-      {}
+      { '#modifiedDate': 'modifiedDate' }
     );
 
     const ExpressionAttributeValues = updateKeys.reduce(
@@ -280,7 +280,7 @@ export class DynamoDbService {
         ...acc,
         [`:value${index}`]: input[key],
       }),
-      {}
+      { ':modifiedDate': new Date().toISOString() }
     );
 
     return {
