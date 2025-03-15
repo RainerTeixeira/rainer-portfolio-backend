@@ -39,10 +39,19 @@ function logError(error: unknown): void {
  * @swagger
  * /:
  *   get:
- *     summary: Retorna a página inicial
+ *     summary: Retorna a página inicial da API
+ *     description: Retorna uma mensagem de boas-vindas para verificar se a API está funcionando.
  *     responses:
  *       200:
- *         description: Página inicial
+ *         description: Página inicial exibida com sucesso.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Bem-vindo à API do Portfólio do Rainer!"
  */
 async function bootstrapServer(): Promise<any> {
   // Verifica se já existe uma instância cached do servidor.
@@ -143,10 +152,19 @@ export const handler = async (
  * @swagger
  * /local:
  *   get:
- *     summary: Inicializa o servidor local
+ *     summary: Inicializa o servidor local para desenvolvimento
+ *     description: Endpoint utilizado para iniciar o servidor localmente, fora do ambiente AWS Lambda.
  *     responses:
  *       200:
- *         description: Servidor local inicializado
+ *         description: Servidor local inicializado com sucesso.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Servidor local iniciado em http://localhost:3000"
  */
 if (!process.env.AWS_LAMBDA_FUNCTION_NAME) {
   async function bootstrapLocal() {

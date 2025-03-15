@@ -9,51 +9,52 @@ import { ConfigModule } from '@nestjs/config';
 
 /**
  * @module AppModule
- * @description Módulo principal da aplicação.
- * Este módulo importa e configura outros módulos,
- * define providers globais como interceptores e filtros,
- * e exporta serviços para serem utilizados em outros módulos.
- */
-
-/**
+ * @description Módulo raiz da aplicação NestJS. Configuração global de:
+ * - Variáveis de ambiente
+ * - Cache
+ * - Interceptores
+ * - Filtros de exceção
+ * - Serviços compartilhados
+ * 
  * @swagger
- * components:
- *   schemas:
- *     Blog:
- *       type: object
- *       properties:
- *         id:
- *           type: string
- *           description: ID do blog
- *         title:
- *           type: string
- *           description: Título do blog
- *         content:
- *           type: string
- *           description: Conteúdo do blog
- *       required:
- *         - id
- *         - title
- *         - content
+ * tags:
+ *   - name: Blog
+ *     description: Operações relacionadas a posts de blog
  */
+@Global()
 @Module({
   imports: [
+    // Configuração de ambiente
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: `.env.${process.env.NODE_ENV || 'development'}`,
+      validationOptions: {
+        allowUnknown: false,
+        abortEarly: true,
+      },
     }),
+
+    // Configuração de cache
     CacheModule.register({
-      ttl: 300, // 5 minutos
-      max: 100, // Número máximo de itens no cache
-      isGlobal: true, // Torna o cache disponível globalmente
+      ttl: 300, // 5 minutos (em segundos)
+      max: 100, // Máximo de itens armazenados
+      isGlobal: true,
     }),
+
+    // Módulos de funcionalidades
     BlogModule,
   ],
   providers: [
+    // Serviço compartilhado
     DynamoDbService,
+
+    // Interceptor global
     {
       provide: APP_INTERCEPTOR,
       useClass: ResponseInterceptor,
     },
+
+    // Filtro de exceção global
     {
       provide: APP_FILTER,
       useClass: HttpExceptionFilter,
@@ -61,4 +62,4 @@ import { ConfigModule } from '@nestjs/config';
   ],
   exports: [DynamoDbService],
 })
-export class AppModule {}
+export class AppModule { }
