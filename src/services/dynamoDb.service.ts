@@ -1,12 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
-import * as dotenv from 'dotenv'; // Importa dotenv para carregar variáveis do .env
+import * as dotenv from 'dotenv';
+dotenv.config();
 
-dotenv.config(); // Carrega as variáveis de ambiente do .env para o process.env
+import {
+  DynamoDBClient,
+  DynamoDBClientConfig,
+} from '@aws-sdk/client-dynamodb';
 
-// Importa o DynamoDBClient e sua configuração do pacote correto
-import { DynamoDBClient, DynamoDBClientConfig } from '@aws-sdk/client-dynamodb';
-
-// Importa o DynamoDBDocumentClient, os comandos e os tipos do Document Client
 import {
   DynamoDBDocumentClient,
   TranslateConfig,
@@ -30,7 +30,9 @@ import {
   GetCommandOutput,
 } from '@aws-sdk/lib-dynamodb';
 
-// Adicione a definição da classe ValidationException
+/**
+ * Exceção personalizada para validação.
+ */
 class ValidationException extends Error {
   constructor(message: string) {
     super(message);
@@ -39,7 +41,23 @@ class ValidationException extends Error {
 }
 
 /**
- * Serviço responsável por abstrair e fornecer uma interface para interações com o banco de dados DynamoDB.
+ * Classe de erro personalizada para operações no DynamoDB.
+ */
+export class DynamoDBError extends Error {
+  public readonly originalError: any;
+
+  constructor(message: string, originalError: any) {
+    super(message);
+    this.name = 'DynamoDBError';
+    this.originalError = originalError;
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, DynamoDBError);
+    }
+  }
+}
+
+/**
+ * Serviço responsável por abstrair e fornecer uma interface para interações com o DynamoDB.
  * Utiliza o AWS SDK v3 e o DynamoDB Document Client para facilitar a manipulação de itens.
  */
 @Injectable()
@@ -49,23 +67,21 @@ export class DynamoDbService {
   private readonly docClient: DynamoDBDocumentClient;
 
   constructor() {
-    if (DynamoDbService.instance) {
-      return DynamoDbService.instance;
-    }
+    // if (DynamoDbService.instance) {
+    //   return DynamoDbService.instance;
+    // }
 
-    this.logger.log('DynamoDbService constructor iniciado');
-    this.logger.log(`AWS Region: ${process.env.AWS_REGION}`);
-    this.logger.log(`DynamoDB Endpoint: ${process.env.DYNAMODB_ENDPOINT}`);
+    this.logger.log('Iniciando construtor do DynamoDbService');
+    this.logger.log(`Região AWS: ${process.env.AWS_REGION}`);
+    this.logger.log(`Endpoint DynamoDB: ${process.env.DYNAMODB_ENDPOINT}`);
 
     // Configuração base do cliente DynamoDB (AWS SDK v3)
     const clientConfig: DynamoDBClientConfig = {
       region: process.env.AWS_REGION || 'us-east-1',
-      ...(process.env.LOCAL_DYNAMO_ENDPOINT && {
-        endpoint: process.env.LOCAL_DYNAMO_ENDPOINT,
-      }),
+      ...(process.env.LOCAL_DYNAMO_ENDPOINT && { endpoint: process.env.LOCAL_DYNAMO_ENDPOINT }),
     };
 
-    // Configuração de tradução para o Document Client.
+    // Configuração para tradução de dados no Document Client
     const translateConfig: TranslateConfig = {
       marshallOptions: {
         removeUndefinedValues: true,
@@ -78,18 +94,22 @@ export class DynamoDbService {
     };
 
     try {
-      // Cria e inicializa o DynamoDB Document Client com o cliente base e as opções de tradução
+      // Inicializa o DynamoDB Document Client
       this.docClient = DynamoDBDocumentClient.from(new DynamoDBClient(clientConfig), translateConfig);
       this.logger.log('DynamoDB DocumentClient inicializado com sucesso');
     } catch (error) {
-      this.logger.error('Erro ao inicializar DynamoDB DocumentClient:', error);
+      this.logger.error('Erro ao inicializar o DynamoDB DocumentClient:', error);
       throw error;
     }
 
-    DynamoDbService.instance = this;
-    this.logger.log('DynamoDbService constructor finalizado');
+    // DynamoDbService.instance = this;
+    this.logger.log('Construtor do DynamoDbService finalizado');
   }
 
+  /**
+   * Retorna a instância única do serviço.
+   * @returns Instância do DynamoDbService.
+   */
   static getInstance(): DynamoDbService {
     if (!DynamoDbService.instance) {
       DynamoDbService.instance = new DynamoDbService();
@@ -99,26 +119,22 @@ export class DynamoDbService {
 
   /**
    * Recupera um item do DynamoDB com base em sua chave primária.
+   * Garante que os valores das chaves sejam convertidos para string.
    * @param params - Parâmetros para a operação GetCommand.
    * @returns O item recuperado do DynamoDB.
+   * @throws ValidationException caso a chave esteja vazia.
    */
   async getItem(params: GetCommandInput): Promise<GetCommandOutput> {
     if (!params.Key || Object.keys(params.Key).length === 0) {
-      throw new ValidationException('O elemento-chave fornecido não corresponde ao esquema esperado');
+      throw new ValidationException('Chave fornecida não corresponde ao esquema esperado');
     }
     try {
-      // Verifique se as chaves estão sendo passadas corretamente
-      if (!params.Key || Object.keys(params.Key).length === 0) {
-        throw new Error('Chave não fornecida para a operação getItem');
-      }
-
-      // Garante que todos os valores das chaves sejam strings
+      // Converte os valores das chaves para string
       for (const key in params.Key) {
         if (typeof params.Key[key] !== 'string') {
           params.Key[key] = String(params.Key[key]);
         }
       }
-
       const result = await this.docClient.send(new GetCommand(params));
       return result;
     } catch (error) {
@@ -142,10 +158,50 @@ export class DynamoDbService {
 
   /**
    * Atualiza um item existente no DynamoDB.
-   * @param params - Parâmetros para a operação UpdateCommand.
-   * @returns O resultado da operação UpdateCommand.
+   * Integra a construção da expressão de atualização com base nos dados fornecidos.
+   * @param tableName - Nome da tabela.
+   * @param key - Chave primária do item a ser atualizado.
+   * @param updateData - Dados a serem atualizados.
+   * @returns O item atualizado (ALL_NEW) ou erro na operação.
+   * @throws ValidationException caso não haja dados para atualização.
    */
-  async updateItem(params: UpdateCommandInput): Promise<any> {
+  async updateItem(
+    tableName: string,
+    key: Record<string, any>,
+    updateData: Record<string, any>
+  ): Promise<any> {
+    if (!updateData || Object.keys(updateData).length === 0) {
+      throw new ValidationException('Nenhum dado fornecido para atualização.');
+    }
+
+    // Construção da expressão de atualização
+    const updateExpressions: string[] = [];
+    const expressionAttributeNames: Record<string, string> = {};
+    const expressionAttributeValues: Record<string, any> = {};
+
+    let index = 0;
+    for (const attribute in updateData) {
+      if (updateData[attribute] !== undefined) {
+        const namePlaceholder = `#attr${index}`;
+        const valuePlaceholder = `:val${index}`;
+        updateExpressions.push(`${namePlaceholder} = ${valuePlaceholder}`);
+        expressionAttributeNames[namePlaceholder] = attribute;
+        expressionAttributeValues[valuePlaceholder] = updateData[attribute];
+        index++;
+      }
+    }
+
+    const updateExpression = `SET ${updateExpressions.join(', ')}`;
+
+    const params: UpdateCommandInput = {
+      TableName: tableName,
+      Key: key,
+      UpdateExpression: updateExpression,
+      ExpressionAttributeNames: expressionAttributeNames,
+      ExpressionAttributeValues: expressionAttributeValues,
+      ReturnValues: 'ALL_NEW',
+    };
+
     try {
       const command = new UpdateCommand(params);
       return await this.docClient.send(command);
@@ -156,13 +212,25 @@ export class DynamoDbService {
 
   /**
    * Deleta um item do DynamoDB com base em sua chave primária.
+   * Valida a presença de chave composta, se aplicável.
    * @param params - Parâmetros para a operação DeleteCommand.
    * @returns O resultado da operação DeleteCommand.
+   * @throws ValidationException caso a chave esteja ausente ou incompleta.
    */
   async deleteItem(params: DeleteCommandInput): Promise<any> {
     try {
+      this.logger.log(`deleteItem: Iniciando operação com params: ${JSON.stringify(params)}`);
+      if (!params.Key || Object.keys(params.Key).length === 0) {
+        throw new ValidationException('Chave não fornecida para a operação deleteItem');
+      }
+      // Exemplo de verificação para chave composta
+      if (!params.Key['categoryId#subcategoryId'] || !params.Key['postId']) {
+        throw new ValidationException('Chave composta não fornecida para a operação deleteItem');
+      }
       const command = new DeleteCommand(params);
-      return await this.docClient.send(command);
+      const result = await this.docClient.send(command);
+      this.logger.log(`deleteItem: Operação concluída com sucesso: ${JSON.stringify(result)}`);
+      return result;
     } catch (error) {
       this.handleError('deleteItem', error, 'Erro na operação deleteItem');
     }
@@ -170,7 +238,7 @@ export class DynamoDbService {
 
   /**
    * Escaneia uma tabela inteira do DynamoDB.
-   * **CUIDADO**: Operação ineficiente para tabelas grandes.
+   * **CUIDADO**: Esta operação pode ser ineficiente para tabelas grandes.
    * @param params - Parâmetros para a operação ScanCommand.
    * @returns O resultado da operação ScanCommand.
    */
@@ -184,35 +252,24 @@ export class DynamoDbService {
   }
 
   /**
-   * Consulta itens do DynamoDB utilizando a operação Query.
+   * Executa uma consulta (query) no DynamoDB.
+   * Verifica se os parâmetros obrigatórios estão presentes antes de executar a operação.
    * @param params - Parâmetros para a operação QueryCommand.
    * @returns O resultado da operação QueryCommand.
-   */
-  async queryItems(params: QueryCommandInput): Promise<any> {
-    try {
-      const command = new QueryCommand(params);
-      return await this.docClient.send(command);
-    } catch (error) {
-      this.handleError('queryItems', error, 'Erro na operação queryItems');
-    }
-  }
-
-  /**
-   * Consulta itens do DynamoDB utilizando a operação Query.
-   * @param params - Parâmetros para a operação QueryCommand.
-   * @returns O resultado da operação QueryCommand.
+   * @throws ValidationException caso os parâmetros obrigatórios estejam ausentes.
    */
   async query(params: QueryCommandInput): Promise<QueryCommandOutput> {
-    if (!params.ExpressionAttributeValues || Object.keys(params.ExpressionAttributeValues).length === 0) {
-      throw new ValidationException('ExpressionAttributeValues must not be empty');
+    if (
+      !params.KeyConditionExpression ||
+      !params.ExpressionAttributeValues ||
+      Object.keys(params.ExpressionAttributeValues).length === 0
+    ) {
+      throw new ValidationException('KeyConditionExpression ou ExpressionAttributeValues não fornecidos ou vazios');
     }
     try {
-      this.logger.log(`query: Iniciando operação query com params: ${JSON.stringify(params)}`);
-      if (!params.KeyConditionExpression || !params.ExpressionAttributeValues || Object.keys(params.ExpressionAttributeValues).length === 0) {
-        throw new Error('KeyConditionExpression ou ExpressionAttributeValues não fornecidos ou vazios para operação query');
-      }
+      this.logger.log(`query: Iniciando operação com params: ${JSON.stringify(params)}`);
       const result = await this.docClient.send(new QueryCommand(params));
-      this.logger.log(`query: Resposta completa do DynamoDB SDK: ${JSON.stringify(result, null, 2)}`);
+      this.logger.log(`query: Resposta completa do DynamoDB: ${JSON.stringify(result, null, 2)}`);
       return result;
     } catch (error) {
       this.handleError('query', error, 'Erro na operação query');
@@ -220,7 +277,7 @@ export class DynamoDbService {
   }
 
   /**
-   * Realiza operações de escrita em lote no DynamoDB.
+   * Executa operações de escrita em lote no DynamoDB.
    * @param params - Parâmetros para a operação BatchWriteCommand.
    * @returns O resultado da operação BatchWriteCommand.
    */
@@ -234,7 +291,7 @@ export class DynamoDbService {
   }
 
   /**
-   * Realiza operações de leitura em lote no DynamoDB.
+   * Executa operações de leitura em lote no DynamoDB.
    * @param params - Parâmetros para a operação BatchGetCommand.
    * @returns O resultado da operação BatchGetCommand.
    */
@@ -248,49 +305,6 @@ export class DynamoDbService {
   }
 
   /**
-   * Método utilitário para construir dinamicamente expressões de atualização para o DynamoDB.
-   * @param input - Objeto contendo os campos e valores a serem atualizados.
-   * @param excludeKeys - Lista de chaves a serem excluídas da expressão de atualização.
-   * @returns Um objeto contendo a expressão de atualização, nomes e valores de atributos.
-   */
-  buildUpdateExpression(
-    input: Record<string, any>,
-    excludeKeys: string[] = []
-  ) {
-    const updateKeys = Object.keys(input)
-      .filter((key) => !excludeKeys.includes(key))
-      .filter((key) => input[key] !== undefined);
-
-    if (updateKeys.length === 0) return null;
-
-    const UpdateExpression = `SET ${updateKeys
-      .map((key, index) => `#field${index} = :value${index}`)
-      .join(', ')}, #modifiedDate = :modifiedDate`;
-
-    const ExpressionAttributeNames = updateKeys.reduce(
-      (acc, key, index) => ({
-        ...acc,
-        [`#field${index}`]: key,
-      }),
-      { '#modifiedDate': 'modifiedDate' }
-    );
-
-    const ExpressionAttributeValues = updateKeys.reduce(
-      (acc, key, index) => ({
-        ...acc,
-        [`:value${index}`]: input[key],
-      }),
-      { ':modifiedDate': new Date().toISOString() }
-    );
-
-    return {
-      UpdateExpression,
-      ExpressionAttributeNames,
-      ExpressionAttributeValues,
-    };
-  }
-
-  /**
    * Verifica se o DynamoDB DocumentClient está inicializado corretamente.
    * @returns true se estiver inicializado, false caso contrário.
    */
@@ -300,32 +314,15 @@ export class DynamoDbService {
 
   /**
    * Método privado para tratamento centralizado de erros do DynamoDB.
+   * Registra o erro e lança uma exceção personalizada.
    * @param operationName - Nome da operação onde ocorreu o erro.
    * @param error - Objeto de erro capturado.
-   * @param defaultMessage - Mensagem de erro padrão a ser usada caso o erro não tenha uma mensagem específica.
+   * @param defaultMessage - Mensagem de erro padrão.
+   * @throws DynamoDBError encapsulando o erro original.
    */
   private handleError(operationName: string, error: any, defaultMessage?: string): void {
-    this.logger.error(`DynamoDB Erro em ${operationName}:`, error);
-
-    const errorMessage =
-      error instanceof Error && error.message
-        ? error.message
-        : defaultMessage || 'Erro desconhecido do DynamoDB';
-
+    this.logger.error(`Erro em ${operationName}:`, error);
+    const errorMessage = error instanceof Error && error.message ? error.message : defaultMessage || 'Erro desconhecido no DynamoDB';
     throw new DynamoDBError(`Erro na operação ${operationName}: ${errorMessage}`, error);
-  }
-}
-
-// Classe de Erro Personalizada para DynamoDB
-export class DynamoDBError extends Error {
-  public readonly originalError: any;
-
-  constructor(message: string, originalError: any) {
-    super(message);
-    this.name = 'DynamoDBError';
-    this.originalError = originalError;
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, DynamoDBError);
-    }
   }
 }

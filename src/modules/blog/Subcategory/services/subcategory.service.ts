@@ -42,7 +42,7 @@ export class SubcategoryService {
             },
         };
         await this.dynamoDbService.putItem(params); // Salva o novo item no DynamoDB
-        return this.getSubcategoryById(categoryIdSubcategoryId, createSubcategoryDto.subcategoryId); // Retorna a subcategoria recém-criada buscando-a pelo ID
+        return this.getSubcategoryById(createSubcategoryDto.categoryId, createSubcategoryDto.subcategoryId); // Retorna a subcategoria recém-criada buscando-a pelo ID
     }
 
     /**
