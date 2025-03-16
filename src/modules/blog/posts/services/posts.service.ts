@@ -522,11 +522,9 @@ export class PostsService {
       },
       category: {
         name: category.name,
-        slug: category.slug,
       },
       subcategory: {
         name: subcategory.name,
-        slug: subcategory.slug,
       },
       comments: comments.map(comment => ({
         content: comment.content,

@@ -26,6 +26,7 @@ import { PostSummaryDto } from '@src/modules/blog/posts/dto/post-summary.dto';
 import { PostFullDto } from '@src/modules/blog/posts/dto/post-full.dto';
 import { ResponseInterceptor } from '../../../../interceptors/response.interceptor';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiParam } from '@nestjs/swagger';
+import { CognitoAuthGuard } from '@src/auth/cognito-auth.guard';
 
 /**
  * Guard customizado para permitir somente os métodos HTTP especificados.
@@ -125,6 +126,7 @@ export class PostsController {
    * @param postCreateDto - Dados para criação do post no formato DTO.
    * @returns O post criado com todos os seus detalhes no formato DTO.
    */
+  @UseGuards(CognitoAuthGuard)
   @Post()
   @UseGuards(new AllowedMethodGuard(['POST']))
   @ApiOperation({ summary: 'Cria um novo post' })
@@ -142,14 +144,14 @@ export class PostsController {
   }
 
   /**
-     * Retorna um post completo com base no slug.
-     * Permite apenas requisições GET.
-     * Utiliza o índice secundário global `slug-index` para uma busca eficiente por slug, otimizando a performance e o uso de RCUs.
-     *
-     * @param slug - Slug único do post a ser buscado.
-     * @returns O post completo com todos os seus detalhes e entidades relacionadas no formato PostFullDto.
-     * @throws NotFoundException se o post não for encontrado.
-     */
+   * Retorna um post completo com base no slug.
+   * Permite apenas requisições GET.
+   * Utiliza o índice secundário global `slug-index` para uma busca eficiente por slug, otimizando a performance e o uso de RCUs.
+   *
+   * @param slug - Slug único do post a ser buscado.
+   * @returns O post completo com todos os seus detalhes e entidades relacionadas no formato PostFullDto.
+   * @throws NotFoundException se o post não for encontrado.
+   */
   @Get(':slug')
   @UseGuards(new AllowedMethodGuard(['GET']))
   @ApiOperation({
@@ -179,7 +181,6 @@ export class PostsController {
     @Param('slug') slug: string,
   ): Promise<PostFullDto> {
     this.logger.debug(`Recebida requisição GET para post com slug: ${slug}`);
-
     return this.execute(
       () => this.postsService.getFullPostBySlug(slug),
       'Consulta completa de post por slug',
@@ -195,6 +196,7 @@ export class PostsController {
    * @param postUpdateDto - Dados para atualização do post no formato DTO.
    * @returns O post atualizado com todos os seus detalhes no formato DTO. Lança NotFoundException se o post não for encontrado.
    */
+  @UseGuards(CognitoAuthGuard)
   @Patch(':id')
   @UseGuards(new AllowedMethodGuard(['PATCH']))
   @ApiOperation({ summary: 'Atualiza um post existente' })
@@ -221,6 +223,7 @@ export class PostsController {
    * @param id - Identificador único do post (UUID) a ser deletado.
    * @returns Uma Promise que resolve quando o post é deletado com sucesso. Lança NotFoundException se o post não for encontrado.
    */
+  @UseGuards(CognitoAuthGuard)
   @Delete(':id')
   @UseGuards(new AllowedMethodGuard(['DELETE']))
   @ApiOperation({ summary: 'Deleta um post' })

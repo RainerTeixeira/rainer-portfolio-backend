@@ -1,9 +1,10 @@
-import { Controller, Get, Post, Body, Put, Param, Delete, Logger } from '@nestjs/common'; // Importa decorators e Logger do NestJS
+import { Controller, Get, Post, Body, Put, Param, Delete, Logger, UseGuards } from '@nestjs/common'; // Importa decorators e Logger do NestJS
 import { AuthorsService } from '../services/authors.service'; // Importa AuthorsService
 import { CreateAuthorDto } from '../dto/Create-author.dto'; // Importa DTO para criação de autor
 import { UpdateAuthorDto } from '../dto/Update-author.dto'; // Importa DTO para atualização de autor
 import { AuthorDetailDto } from '../dto/author-detail.dto'; // Corrigir a capitalização do nome do arquivo
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { CognitoAuthGuard } from '@src/auth/cognito-auth.guard';
 
 /**
  * @Controller('blog/authors')
@@ -31,6 +32,7 @@ export class AuthorsController {
     @ApiOperation({ summary: 'Cria um novo autor' })
     @ApiResponse({ status: 201, description: 'Autor criado com sucesso.', type: AuthorDetailDto })
     @ApiResponse({ status: 400, description: 'Dados inválidos.' })
+    @UseGuards(CognitoAuthGuard)
     @Post()
     async create(@Body() createAuthorDto: CreateAuthorDto): Promise<AuthorDetailDto> {
         this.logger.log('Endpoint POST /blog/authors acionado'); // Log de acesso ao endpoint POST
@@ -76,6 +78,7 @@ export class AuthorsController {
     @ApiOperation({ summary: 'Atualiza um autor existente' })
     @ApiResponse({ status: 200, description: 'Autor atualizado com sucesso.', type: AuthorDetailDto })
     @ApiResponse({ status: 404, description: 'Autor não encontrado.' })
+    @UseGuards(CognitoAuthGuard)
     @Put(':authorId')
     async update(
         @Param('authorId') authorId: string,
@@ -94,6 +97,7 @@ export class AuthorsController {
     @ApiOperation({ summary: 'Remove um autor pelo ID' })
     @ApiResponse({ status: 200, description: 'Autor removido com sucesso.' })
     @ApiResponse({ status: 404, description: 'Autor não encontrado.' })
+    @UseGuards(CognitoAuthGuard)
     @Delete(':authorId')
     async remove(@Param('authorId') authorId: string): Promise<void> {
         this.logger.log(`Endpoint DELETE /blog/authors/${authorId} acionado`); // Log de acesso ao endpoint DELETE

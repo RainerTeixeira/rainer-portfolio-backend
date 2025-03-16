@@ -25,10 +25,12 @@ export class CommentsService {
     @ApiOperation({ summary: 'Cria um novo comentário' })
     @ApiResponse({ status: 201, description: 'Comentário criado com sucesso.', type: CommentDto })
     async create(createCommentDto: CreateCommentDto): Promise<CommentDto> {
+        const commentId = Date.now().toString(36); // Gerar um ID único para o comentário
         const params = {
             TableName: this.tableName,
             Item: {
                 ...createCommentDto,
+                commentId, // Adicionar commentId ao item
                 postId: String(createCommentDto.postId), // Converte postId para string
             },
         };
