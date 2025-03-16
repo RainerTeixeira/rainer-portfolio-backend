@@ -127,24 +127,7 @@ export const handler = async (
     // Retorna a resposta formatada para o API Gateway.
     return response;
   } catch (error: unknown) {
-    // Em caso de erro não capturado durante o processamento da requisição:
     logError(error); // Loga o erro detalhadamente.
-
-    // Retorna uma resposta de erro HTTP 500 (Internal Server Error) para o cliente.
-    return {
-      statusCode: 500, // Código de status HTTP 500.
-      headers: {
-        'Content-Type': 'application/json', // Define o tipo de conteúdo da resposta como JSON.
-      },
-      body: JSON.stringify({ // Converte o corpo da resposta para JSON.
-        message: 'Erro interno do servidor', // Mensagem de erro genérica para o cliente.
-        details: process.env.NODE_ENV === 'development' // Inclui detalhes do erro (stacktrace) apenas em ambiente de desenvolvimento para não expor informações sensíveis em produção.
-          ? getErrorMessage(error) // Em desenvolvimento, retorna a mensagem de erro detalhada.
-          : 'Contate o suporte técnico', // Em produção, retorna uma mensagem amigável e genérica.
-        timestamp: new Date().toISOString(), // Adiciona um timestamp para rastreamento do erro.
-        requestId: context.awsRequestId, // Inclui o ID da requisição da AWS para facilitar o rastreamento nos logs da AWS.
-      }),
-    };
   }
 };
 
