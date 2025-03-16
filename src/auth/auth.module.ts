@@ -2,6 +2,7 @@
 import { Module } from '@nestjs/common';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
+import { ConfigModule } from '@nestjs/config';
 import { CognitoStrategy } from './cognito.strategy';
 import { CognitoAuthGuard } from './cognito-auth.guard';
 
@@ -27,8 +28,9 @@ import { CognitoAuthGuard } from './cognito-auth.guard';
             secret: process.env.JWT_SECRET,
             signOptions: { expiresIn: '60s' },
         }),
+        ConfigModule,
     ],
     providers: [CognitoStrategy, CognitoAuthGuard],
-    exports: [PassportModule, CognitoStrategy, CognitoAuthGuard], // Adicione CognitoStrategy aqui
+    exports: [PassportModule, CognitoStrategy, CognitoAuthGuard],
 })
 export class AuthModule { }
