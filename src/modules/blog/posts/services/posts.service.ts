@@ -251,12 +251,6 @@ export class PostsService {
       this.logger.debug(`[updatePost] Chave composta do post a ser atualizado: ${compositeKey}`);
       this.logger.debug(`[updatePost] Dados para atualização (updatePostDto): ${JSON.stringify(updatePostDto)}`);
       this.logger.debug(`[updatePost] Construindo expressão de atualização para o post ID: ${postId}`);
-      
-      const updateExpression = this.dynamoDbService.buildUpdateExpression(updatePostDto);
-      if (!updateExpression) {
-        this.logger.warn(`[updatePost] Nenhum campo para atualizar fornecido para post ID: ${postId}. Retornando post existente.`);
-        return this.mapToContentDto(existingPost);
-      }
 
       const params: UpdateCommandInput = {
         TableName: this.tableName,
@@ -264,22 +258,27 @@ export class PostsService {
           'categoryId#subcategoryId': compositeKey,
           postId: postId,
         },
-        UpdateExpression: updateExpression.UpdateExpression,
-        ExpressionAttributeNames: updateExpression.ExpressionAttributeNames,
-        ExpressionAttributeValues: updateExpression.ExpressionAttributeValues,
         ReturnValues: 'ALL_NEW',
       };
 
-      this.logger.debug(`[updatePost] Parâmetros para atualização no DynamoDB: ${JSON.stringify(params)}`);
-      this.logger.debug(`[updatePost] Enviando solicitação de atualização para o DynamoDB para o post ID: ${postId}`);
-      this.logger.debug(`[updatePost] Parâmetros para dynamoDbService.updateItem: ${JSON.stringify(params)}`);
-      const result = await this.dynamoDbService.updateItem(params);
-      this.logger.debug(`[updatePost] Resultado da atualização no DynamoDB: ${JSON.stringify(result)}`);
-      this.logger.debug(`[updatePost] Atributos retornados após a atualização: ${JSON.stringify(result.Attributes)}`);
-      this.logger.debug(`[updatePost] Atualizando caches relacionados ao post ID: ${postId}`);
-      await this.refreshRelatedCaches(compositeKey, postId);
-      this.logger.verbose(`[updatePost] Post atualizado com sucesso, ID: ${postId}`);
-      return this.mapToContentDto(result.Attributes);
+      try {
+        this.logger.debug(`[updatePost] Parâmetros para atualização no DynamoDB: ${JSON.stringify(params)}`);
+        this.logger.debug(`[updatePost] Enviando solicitação de atualização para o DynamoDB para o post ID: ${postId}`);
+        this.logger.debug(`[updatePost] Parâmetros para dynamoDbService.updateItem: ${JSON.stringify(params)}`);
+        const result = await this.dynamoDbService.updateItem(this.tableName, { 'categoryId#subcategoryId': compositeKey, postId: postId }, updatePostDto);
+        this.logger.debug(`[updatePost] Resultado da atualização no DynamoDB: ${JSON.stringify(result)}`);
+        this.logger.debug(`[updatePost] Atributos retornados após a atualização: ${JSON.stringify(result.Attributes)}`);
+        this.logger.debug(`[updatePost] Atualizando caches relacionados ao post ID: ${postId}`);
+        await this.refreshRelatedCaches(compositeKey, postId);
+        this.logger.verbose(`[updatePost] Post atualizado com sucesso, ID: ${postId}`);
+        return this.mapToContentDto(result.Attributes);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+        this.logger.error(`[updatePost] Erro na atualização do post ID: ${postId}: ${errorMessage}`, error?.stack);
+        throw new BadRequestException(`Falha ao atualizar post: ${errorMessage}`);
+      } finally {
+        this.logger.debug('[updatePost] Finalizando atualização do post.');
+      }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
       this.logger.error(`[updatePost] Erro na atualização do post ID: ${postId}: ${errorMessage}`, error?.stack);
