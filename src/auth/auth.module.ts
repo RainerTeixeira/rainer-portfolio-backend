@@ -1,36 +1,19 @@
-// src/auth/auth.module.ts
 import { Module } from '@nestjs/common';
-import { PassportModule } from '@nestjs/passport';
-import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule } from '@nestjs/config';
-import { CognitoStrategy } from './cognito.strategy';
 import { CognitoAuthGuard } from './cognito-auth.guard';
+import { ConfigModule } from '@nestjs/config';
 
 /**
- * Módulo de autenticação que configura a estratégia de autenticação Cognito.
+ * Módulo responsável por fornecer as configurações e o guard de autenticação via Cognito.
  * 
- * @swagger
- * components:
- *   securitySchemes:
- *     cognitoAuth:
- *       type: http
- *       scheme: bearer
- *       bearerFormat: JWT
- *       description: JWT Authorization header using the Bearer scheme.
+ * @module AuthModule
  * 
- * security:
- *   - cognitoAuth: []
+ * Este módulo importa o ConfigModule para acesso às variáveis de ambiente e disponibiliza o
+ * CognitoAuthGuard para ser utilizado em outros módulos, garantindo que endpoints protegidos
+ * possam validar os tokens JWT emitidos pelo Cognito.
  */
 @Module({
-    imports: [
-        PassportModule.register({ defaultStrategy: 'cognito' }),
-        JwtModule.register({
-            secret: process.env.JWT_SECRET,
-            signOptions: { expiresIn: '60s' },
-        }),
-        ConfigModule,
-    ],
-    providers: [CognitoStrategy, CognitoAuthGuard],
-    exports: [PassportModule, CognitoStrategy, CognitoAuthGuard],
+    imports: [ConfigModule],
+    providers: [CognitoAuthGuard],
+    exports: [CognitoAuthGuard],
 })
 export class AuthModule { }

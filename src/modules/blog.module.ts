@@ -10,9 +10,16 @@ import { PostsModule } from '@src/modules/blog/posts/posts.module'; // Importa o
 import { SubcategoryModule } from '@src/modules/blog/subcategory/subcategory.module'; // Importa o módulo de subcategorias utilizando alias @src
 
 /**
+ * @module BlogModule
+ * @description
  * Módulo principal do Blog.
  * Agrupa os submódulos do blog e provê o serviço DynamoDbService.
  * Exporta todos os submódulos e o DynamoDbService para que possam ser utilizados por outros módulos.
+ * 
+ * @class BlogModule
+ * @imports AuthorsModule, CategoryModule, CommentsModule, PostsModule, SubcategoryModule
+ * @providers DynamoDbService
+ * @exports AuthorsModule, CategoryModule, CommentsModule, PostsModule, SubcategoryModule, DynamoDbService
  */
 @Module({
   imports: [

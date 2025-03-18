@@ -6,6 +6,7 @@ import { BlogModule } from '@src/modules/blog.module';
 import { ResponseInterceptor } from './interceptors/response.interceptor';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { ConfigModule } from '@nestjs/config';
+import { AuthModule } from './auth/auth.module';
 // import { ServeStaticModule } from '@nestjs/serve-static';
 // import { join } from 'path';
 
@@ -45,6 +46,7 @@ import { ConfigModule } from '@nestjs/config';
 
     // Módulos de funcionalidades
     BlogModule,
+    AuthModule,
   ],
   providers: [
     // Serviço compartilhado

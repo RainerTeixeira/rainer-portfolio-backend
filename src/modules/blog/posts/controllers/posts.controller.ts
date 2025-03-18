@@ -8,7 +8,6 @@ import {
   Delete,
   Query,
   ParseIntPipe,
-  ParseUUIDPipe,
   Logger,
   HttpException,
   HttpStatus,
@@ -30,12 +29,28 @@ import { CognitoAuthGuard } from '@src/auth/cognito-auth.guard';
 
 /**
  * Guard customizado para permitir somente os métodos HTTP especificados.
- * Isso ajuda a garantir que as rotas sejam usadas da maneira esperada,
- * melhorando a segurança e potencialmente a performance ao evitar processamento 
- * desnecessário para métodos não permitidos.
+ * 
+ * Esse guard verifica se o método HTTP da requisição é um dos permitidos e, caso não seja, lança
+ * uma exceção com status METHOD_NOT_ALLOWED.
+ *
+ * @class AllowedMethodGuard
+ * @implements {CanActivate}
  */
 class AllowedMethodGuard implements CanActivate {
-  constructor(private allowedMethods: string) { } // O construtor deve esperar um array de strings
+  /**
+   * Cria uma instância do guard com os métodos HTTP permitidos.
+   * 
+   * @param allowedMethods - String com os métodos HTTP permitidos (ex: 'GET', 'POST').
+   */
+  constructor(private allowedMethods: string[]) { }
+
+  /**
+   * Verifica se o método HTTP da requisição está entre os permitidos.
+   *
+   * @param context - Contexto de execução da requisição.
+   * @returns {boolean} Retorna true se o método for permitido; caso contrário, lança uma exceção.
+   * @throws {HttpException} Se o método HTTP não for permitido.
+   */
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
     if (!this.allowedMethods.includes(request.method)) {
@@ -45,22 +60,37 @@ class AllowedMethodGuard implements CanActivate {
   }
 }
 
+/**
+ * Controller responsável pelo gerenciamento de posts.
+ * 
+ * Utiliza o interceptor ResponseInterceptor para padronizar as respostas e os decorators do
+ * Swagger para documentar os endpoints e seus comportamentos. Alguns endpoints estão protegidos pelo
+ * CognitoAuthGuard, garantindo que somente requisições autenticadas possam executar operações
+ * sensíveis.
+ */
 @Controller('blog/posts')
 @UseInterceptors(ResponseInterceptor)
 @ApiTags('Posts')
 export class PostsController {
   private readonly logger = new Logger(PostsController.name);
 
+  /**
+   * Injeta o serviço de posts para realizar as operações de CRUD.
+   * 
+   * @param postsService - Serviço responsável pelas operações de posts.
+   */
   constructor(private readonly postsService: PostsService) { }
 
   /**
    * Executa uma operação e lida com erros de forma centralizada, registrando informações detalhadas nos logs.
    * Garante que erros específicos (como NotFoundException) resultem nos códigos de status HTTP corretos.
    *
-   * @param operation - Função assíncrona que realiza a operação a ser executada (ex: chamar um método do service).
-   * @param operationDescription - Descrição da operação (usada em logs de sucesso).
-   * @param errorMessage - Mensagem de erro genérica a ser exibida ao cliente em caso de falha inesperada.
-   * @returns Uma Promise com o resultado da operação. Se ocorrer um erro, lança uma HttpException.
+   * @template T
+   * @param operation - Função assíncrona que realiza a operação (ex.: chamada de um método do service).
+   * @param operationDescription - Descrição da operação para logs.
+   * @param errorMessage - Mensagem de erro a ser exibida ao cliente em caso de falha.
+   * @returns {Promise<T>} Resultado da operação.
+   * @throws {HttpException} Em caso de erro na operação.
    */
   private async execute<T>(
     operation: () => Promise<T>,
@@ -90,13 +120,13 @@ export class PostsController {
 
   /**
    * Retorna uma listagem paginada de posts.
-   * Permite apenas requisições GET.
-   * A paginação é otimizada para o DynamoDB utilizando o `nextKey` para consultas eficientes, o que é mais performático e adequado para o free tier, pois evita Scans completos.
+   * 
+   * A paginação é otimizada para DynamoDB utilizando o `nextKey` para consultas eficientes.
    *
-   * @param page - Número da página desejada (padrão é 1). Usado para calcular o `offset` inicial, mas a paginação real é baseada no `nextKey`.
-   * @param limit - Número máximo de posts por página (padrão é 10). Controla a quantidade de dados retornados por consulta.
-   * @param nextKey - Token de paginação opcional fornecido pela resposta anterior. Permite buscar a próxima página de resultados de forma eficiente.
-   * @returns Objeto contendo a lista de posts resumidos, o total aproximado de posts, uma flag indicando se há mais posts (`hasMore`), o token para a próxima página (`nextKey`) e uma mensagem informativa.
+   * @param page - Número da página desejada (padrão é 1).
+   * @param limit - Número máximo de posts por página (padrão é 10).
+   * @param nextKey - Token de paginação opcional da consulta anterior.
+   * @returns {Promise<Object>} Objeto contendo os posts resumidos, total aproximado, flag hasMore e token para a próxima página.
    */
   @Get()
   @UseGuards(new AllowedMethodGuard(['GET']))
@@ -121,10 +151,11 @@ export class PostsController {
 
   /**
    * Cria um novo post.
-   * Permite apenas requisições POST.
    *
-   * @param postCreateDto - Dados para criação do post no formato DTO.
-   * @returns O post criado com todos os seus detalhes no formato DTO.
+   * Endpoint protegido pelo CognitoAuthGuard, permitindo apenas requisições autenticadas.
+   *
+   * @param postCreateDto - Dados para criação do post (DTO).
+   * @returns {Promise<PostContentDto>} Post criado com seus detalhes.
    */
   @UseGuards(CognitoAuthGuard)
   @Post()
@@ -145,12 +176,12 @@ export class PostsController {
 
   /**
    * Retorna um post completo com base no slug.
-   * Permite apenas requisições GET.
-   * Utiliza o índice secundário global `slug-index` para uma busca eficiente por slug, otimizando a performance e o uso de RCUs.
+   * 
+   * Utiliza o índice secundário global `slug-index` para uma busca otimizada.
    *
    * @param slug - Slug único do post a ser buscado.
-   * @returns O post completo com todos os seus detalhes e entidades relacionadas no formato PostFullDto.
-   * @throws NotFoundException se o post não for encontrado.
+   * @returns {Promise<PostFullDto>} Post completo com detalhes e entidades relacionadas.
+   * @throws {NotFoundException} Se o post não for encontrado.
    */
   @Get(':slug')
   @UseGuards(new AllowedMethodGuard(['GET']))
@@ -190,11 +221,13 @@ export class PostsController {
 
   /**
    * Atualiza um post existente com base no ID.
-   * Permite apenas requisições PATCH.
+   *
+   * Endpoint protegido pelo CognitoAuthGuard, permitindo apenas requisições autenticadas.
    *
    * @param id - Identificador único do post (UUID) a ser atualizado.
-   * @param postUpdateDto - Dados para atualização do post no formato DTO.
-   * @returns O post atualizado com todos os seus detalhes no formato DTO. Lança NotFoundException se o post não for encontrado.
+   * @param postUpdateDto - Dados para atualização do post (DTO).
+   * @returns {Promise<PostContentDto>} Post atualizado com seus detalhes.
+   * @throws {NotFoundException} Se o post não for encontrado.
    */
   @UseGuards(CognitoAuthGuard)
   @Patch(':id')
@@ -208,7 +241,7 @@ export class PostsController {
     @Body() postUpdateDto: PostUpdateDto,
   ): Promise<PostContentDto> {
     this.logger.debug(`Recebida requisição PATCH para atualizar post ID: ${id}`);
-    this.logger.debug(`Dados recebidos para atualização: ${JSON.stringify(postUpdateDto)}`); // Adicionado log para rastrear dados de entrada
+    this.logger.debug(`Dados recebidos para atualização: ${JSON.stringify(postUpdateDto)}`);
     return this.execute(
       () => this.postsService.updatePost(id, postUpdateDto),
       'Atualização de post',
@@ -218,10 +251,12 @@ export class PostsController {
 
   /**
    * Deleta um post com base no ID.
-   * Permite apenas requisições DELETE.
+   *
+   * Endpoint protegido pelo CognitoAuthGuard, permitindo apenas requisições autenticadas.
    *
    * @param id - Identificador único do post (UUID) a ser deletado.
-   * @returns Uma Promise que resolve quando o post é deletado com sucesso. Lança NotFoundException se o post não for encontrado.
+   * @returns {Promise<Object>} Objeto contendo uma mensagem de sucesso.
+   * @throws {NotFoundException} Se o post não for encontrado.
    */
   @UseGuards(CognitoAuthGuard)
   @Delete(':id')

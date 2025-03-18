@@ -106,7 +106,7 @@ async function bootstrapServer(): Promise<any> {
  * @param context Objeto de contexto do AWS Lambda, com informações sobre o ambiente de execução.
  * @returns Promise<any> Promise que resolve com a resposta HTTP formatada para o API Gateway.
  */
-export const handler = async (
+export const mainLambda = async (
   event: APIGatewayProxyEvent, // Evento do API Gateway.
   context: Context // Contexto do Lambda.
 ) => {
