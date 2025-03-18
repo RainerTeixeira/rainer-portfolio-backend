@@ -309,20 +309,20 @@ export class PostsService {
         throw new NotFoundException(`Post com ID ${id} não encontrado`);
       }
       // Construir a chave completa para a operação deleteItem
-      const key = {
-        'categoryId#subcategoryId': `${post.categoryId}#${post.subcategoryId}`,
-        postId: id,
+      const params: DeleteCommandInput = {
+        TableName: this.tableName,
+        Key: {
+          'categoryId#subcategoryId': `${post.categoryId}#${post.subcategoryId}`,
+          postId: id,
+        },
       };
       this.logger.log(
         `[DynamoDbService] deleteItem: Iniciando operação deleteItem com params: ${JSON.stringify(
-          key,
+          params,
         )}`,
       );
       // Excluir o post usando a chave completa
-      await this.dynamoDbService.deleteItem({
-        TableName: this.tableName,
-        Key: key,
-      });
+      await this.dynamoDbService.deleteItem(params);
       this.logger.debug(`[deletePost] Post ID: ${id} excluído com sucesso.`);
     } catch (error) {
       this.logger.error(`Erro ao excluir post ID: ${id}`, error);

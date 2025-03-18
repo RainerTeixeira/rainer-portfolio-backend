@@ -29,7 +29,7 @@ provider:
 
 functions:
   posts:
-    handler: src/controller/blog/posts/posts.controller.handler
+    main.lambda: src/controller/blog/posts/posts.controller.main.lambda
     events:
       - http: 
           path: posts
