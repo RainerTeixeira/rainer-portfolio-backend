@@ -16,7 +16,6 @@ import { PostContentDto } from '@src/modules/blog/posts/dto/post-content.dto';
 import { PostSummaryDto } from '@src/modules/blog/posts/dto/post-summary.dto';
 import { PostFullDto } from '@src/modules/blog/posts/dto/post-full.dto';
 import { CognitoAuthGuard } from '@src/auth/cognito-auth.guard';
-import { CacheTTL } from '@nestjs/cache-manager';
 
 @Controller('blog/posts')
 @UseInterceptors(ResponseInterceptor)
@@ -26,7 +25,6 @@ export class PostsController {
   constructor(private readonly postsService: PostsService) { }
 
   @Get()
-  @CacheTTL(30) // Cache de 30 segundos
   @ApiOperation({
     summary: 'Lista paginada de posts',
     description: 'Retorna posts paginados usando cursor-based pagination'
@@ -42,7 +40,6 @@ export class PostsController {
   }
 
   @Get(':slug')
-  @CacheTTL(60)
   @ApiOperation({ summary: 'Busca post completo por slug' })
   @ApiParam({ name: 'slug', type: String })
   @ApiOkResponse({ type: PostFullDto })

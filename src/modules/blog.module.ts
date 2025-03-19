@@ -23,11 +23,10 @@ import { SubcategoryModule } from '@src/modules/blog/subcategory/subcategory.mod
  */
 @Module({
   imports: [
-    // Remove CacheModule from imports array here
     AuthorsModule,
     CategoryModule,
     CommentsModule,
-    PostsModule,
+    PostsModule, // Certifique-se de que o PostsModule está importado
     SubcategoryModule,
   ],
   providers: [DynamoDbService],

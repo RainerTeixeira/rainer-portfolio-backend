@@ -1,6 +1,4 @@
 import { Injectable, Logger, BadRequestException, NotFoundException, Inject, CACHE_MANAGER } from '@nestjs/common';
-import { CACHE_MANAGER } from '@nestjs/cache-manager'; // Importe aqui
-import { Injectable, Logger, BadRequestException, NotFoundException, Inject } from '@nestjs/common';
 import { Cache } from 'cache-manager';
 import { QueryCommandInput } from '@aws-sdk/lib-dynamodb';
 import { ConfigService } from '@nestjs/config';
@@ -25,7 +23,7 @@ export class PostsService {
   constructor(
     private readonly dynamoDb: DynamoDbService,
     private readonly config: ConfigService,
-    @Inject(CACHE_MANAGER) private cache: Cache, // CacheManager injetado corretamente
+    @Inject(CACHE_MANAGER) private readonly cache: Cache, // Certifique-se de que está correto
     private readonly authorsService: AuthorsService,
     private readonly categoriesService: CategoryService,
     private readonly subcategoryService: SubcategoryService,
