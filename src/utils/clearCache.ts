@@ -18,20 +18,28 @@ import { Cache } from 'cache-manager';
  *   .catch(err => console.error('Erro ao limpar o cache:', err));
  */
 export const clearCache = async (cache: Cache, patterns: string[]): Promise<void> => {
-    // Inicializa a variável keys como um array vazio de strings.
-    let keys: string[] = [];
+  if (!cache || !patterns || patterns.length === 0) {
+    return;
+  }
 
-    // Verifica se o objeto cache.store existe e se a função keys está disponível.
-    if (cache.store && typeof cache.store.keys === 'function') {
-        // Chama cache.store.keys() para obter todas as chaves armazenadas no cache.
-        keys = await cache.store.keys() as string[];
+  const keys: string[] = await cache.store.keys();
+  const keysToDelete: string[] = [];
+
+  for (const pattern of patterns) {
+    const regex = new RegExp(pattern.replace(/\*/g, '.*'));
+    for (const key of keys) {
+      if (regex.test(key)) {
+        keysToDelete.push(key);
+      }
     }
+  }
 
-    // Filtra as chaves que correspondem a qualquer um dos padrões fornecidos.
-    const matches = keys.filter(key =>
-        patterns.some(pattern => key.includes(pattern)) // Verifica se a chave contém algum dos padrões.
-    );
-
-    // Para cada chave que corresponde aos padrões, deleta a chave do cache.
-    await Promise.all(matches.map(key => cache.del(key)));
+  for (const key of keysToDelete) {
+    try {
+      await cache.del(key);
+      console.log(`Cache key "${key}" deleted.`);
+    } catch (error) {
+      console.error(`Error deleting cache key "${key}":`, error);
+    }
+  }
 };
