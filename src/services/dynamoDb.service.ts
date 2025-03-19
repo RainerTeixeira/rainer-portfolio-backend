@@ -68,12 +68,12 @@ export class DynamoDbService {
   constructor() {
     this.logger.log('Iniciando construtor do DynamoDbService');
     this.logger.log(`Região AWS: ${process.env.AWS_REGION}`);
-    this.logger.log(`Endpoint DynamoDB: ${process.env.DYNAMODB_ENDPOINT}`);
+    this.logger.log(`Endpoint DynamoDB: ${process.env.DYNAMODB_ENDPOINT || 'default (AWS online)'}`);
 
     // Configuração base do cliente DynamoDB (AWS SDK v3)
     const clientConfig: DynamoDBClientConfig = {
       region: process.env.AWS_REGION || 'us-east-1',
-      ...(process.env.LOCAL_DYNAMO_ENDPOINT && { endpoint: process.env.LOCAL_DYNAMO_ENDPOINT }),
+      ...(process.env.DYNAMODB_ENDPOINT && { endpoint: process.env.DYNAMODB_ENDPOINT }), // Usa o endpoint apenas se definido
     };
 
     // Configuração para tradução de dados no Document Client
