@@ -1,19 +1,23 @@
 import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
-import axios from 'axios';
-import * as jwt from 'jsonwebtoken';
 import { ConfigService } from '@nestjs/config';
+import * as jwt from 'jsonwebtoken';
 import { JwksClient } from 'jwks-rsa';
 
 /**
- * Guard para autenticação via Cognito utilizando JWT e JWKS.
+ * Guard de autenticação JWT integrado com AWS Cognito.
  * 
- * Este guard intercepta as requisições HTTP, extrai o token do cabeçalho de autorização,
- * valida-o utilizando as chaves públicas (JWKS) do Cognito e, caso seja válido, anexa
- * os dados do usuário decodificado à requisição.
+ * Realiza a validação de tokens JWT utilizando o protocolo OpenID Connect (JWKS)
+ * e as ch públicas do Cognito. Ideal para APIs Serverless com AWS Lambda.
  * 
- * Exemplo de documentação Swagger:
- * - Utilize o decorator `@ApiBearerAuth()` no controller para indicar que o endpoint exige um token Bearer.
- * - Utilize `@ApiUnauthorizedResponse()` para documentar a resposta em caso de token inválido.
+ * @example
+ * @Controller('posts')
+ * @ApiBearerAuth()
+ * @ApiUnauthorizedResponse({ description: 'Token JWT inválido ou ausente' })
+ * export class PostsController {
+ *   @UseGuards(CognitoAuthGuard)
+ *   @Post()
+ *   createPost() { ... }
+ * }
  */
 @Injectable()
 export class CognitoAuthGuard implements CanActivate {
@@ -21,80 +25,98 @@ export class CognitoAuthGuard implements CanActivate {
   private issuer: string;
 
   /**
-   * Construtor que inicializa as configurações para validação do token.
-   *
-   * @param configService Serviço de configuração para acesso às variáveis de ambiente.
+   * Inicializa o client JWKS e configurações do Cognito
+   * @param configService Serviço para acesso às variáveis de ambiente
    */
   constructor(private configService: ConfigService) {
-    this.issuer = `https://cognito-idp.${configService.get('AWS_REGION')}.amazonaws.com/${configService.get('COGNITO_USER_POOL_ID')}`;
+    // Configura o endpoint JWKS dinamicamente com base nas variáveis de ambiente
+    this.issuer = `https://cognito-idp.${this.configService.get('AWS_REGION')}.amazonaws.com/${this.configService.get('COGNITO_USER_POOL_ID')}`;
 
+    /**
+     * Cria uma instância do JWKS Client com cache ativado para melhor performance
+     * @see https://auth0.github.io/node-jwks-rsa/
+     */
     this.jwksClient = new JwksClient({
-      jwksUri: configService.get('COGNITO_JWKS_URL'),
-      cache: true,
-      rateLimit: true,
+      jwksUri: this.configService.get('COGNITO_JWKS_URL'),
+      cache: true,       // Habilita cache de chaves
+      rateLimit: true,   // Previne DDoS
+      jwksRequestsPerMinute: 10 // Limite de requisições ao JWKS
     });
   }
 
   /**
-   * Método que intercepta a requisição e realiza a validação do token JWT.
-   * Se o token for válido, o objeto decodificado é anexado à requisição em `request.user`.
-   *
-   * @param context Contexto de execução da requisição.
-   * @returns Promise que indica se a requisição está autorizada.
-   * @throws UnauthorizedException se o token não for válido ou não estiver presente.
+   * Método principal do guard que implementa a lógica de autenticação
+   * @param context Contexto de execução do NestJS
+   * @returns Promise<boolean> true se autenticado
+   * @throws UnauthorizedException em caso de falha na autenticação
    */
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-    const token = this.extractToken(request);
 
     try {
+      // Etapas do processo de autenticação
+      const token = this.extractToken(request);
       const decoded = await this.validateToken(token);
-      request.user = decoded;
+      request.user = decoded; // Anexa dados do usuário à requisição
       return true;
     } catch (error) {
-      throw new UnauthorizedException('Invalid token');
+      // Log detalhado para ambiente de desenvolvimento
+      if (this.configService.get('NODE_ENV') === 'development') {
+        console.error('Falha na autenticação:', error.message);
+      }
+      throw new UnauthorizedException('Credenciais inválidas');
     }
   }
 
   /**
-   * Extrai o token JWT do cabeçalho de autorização da requisição.
-   *
-   * @param request Requisição HTTP.
-   * @returns O token JWT extraído.
-   * @throws UnauthorizedException se o cabeçalho de autorização estiver ausente ou mal formatado.
+   * Extrai o token JWT do header Authorization
+   * @param request Objeto de requisição do Express
+   * @returns Token JWT
+   * @throws UnauthorizedException Se o header estiver ausente ou mal formatado
    */
   private extractToken(request: any): string {
     const authHeader = request.headers.authorization;
+
+    // Verifica formato do header: Bearer <token>
     if (!authHeader?.startsWith('Bearer ')) {
-      throw new UnauthorizedException('Invalid authorization header');
+      throw new UnauthorizedException('Formato de autorização inválido. Use: Bearer <token>');
     }
+
     return authHeader.split(' ')[1];
   }
 
   /**
-   * Valida o token JWT utilizando as chaves públicas obtidas do JWKS do Cognito.
-   *
-   * @param token Token JWT a ser validado.
-   * @returns Promise contendo o token decodificado se a validação for bem-sucedida.
-   * @throws Erro caso o token seja inválido ou a validação falhe.
+   * Valida o token JWT usando as chaves públicas do Cognito
+   * @param token Token JWT
+   * @returns Payload decodificado
+   * @throws Error Se a validação falhar
    */
   private async validateToken(token: string): Promise<any> {
-    const getKey = (header: any, callback: any) => {
+    // Função de callback para obtenção dinâmica da chave
+    const getKey = (header: jwt.JwtHeader, callback: jwt.SigningKeyCallback) => {
       this.jwksClient.getSigningKey(header.kid, (err, key) => {
         callback(err, key?.getPublicKey());
       });
     };
 
+    // Configurações de validação do token
+    const verifyOptions: jwt.VerifyOptions = {
+      algorithms: ['RS256'],         // Algoritmo exigido pelo Cognito
+      issuer: this.issuer,           // URL do User Pool
+      ignoreExpiration: false,       // Rejeita tokens expirados
+      clockTolerance: 5,             // Margem de 5s para sincronia de relógio
+    };
+
+    // Validação assíncrona do token
     return new Promise((resolve, reject) => {
       jwt.verify(
         token,
         getKey,
-        {
-          algorithms: ['RS256'],
-          issuer: this.issuer,
-        },
+        verifyOptions,
         (err, decoded) => {
-          if (err) return reject(err);
+          if (err || !decoded) {
+            return reject(err || new Error('Token inválido'));
+          }
           resolve(decoded);
         }
       );
