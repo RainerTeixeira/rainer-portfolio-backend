@@ -200,7 +200,9 @@ export class PostsService {
       throw new BadRequestException('Erro ao excluir post');
     }
   }
-
+  
+  //------------------- funções auxiliares ---------------------//
+  
   /**
    * Enriquecer os dados do post com informações de autor, categoria, subcategoria e comentários.
    * @param post Dados brutos do post obtidos no banco.
