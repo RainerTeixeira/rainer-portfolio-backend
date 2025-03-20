@@ -4,11 +4,12 @@ import { Module, forwardRef } from '@nestjs/common'; // Importa o decorator Modu
 import { AuthorsController } from '@src/modules/blog/authors/controllers/authors.controller'; // Importa AuthorsController usando @src.
 import { AuthorsService } from '@src/modules/blog/authors/services/authors.service'; // Importa AuthorsService usando @src.
 import { BlogModule } from '@src/modules/blog.module'; // <--- IMPORTA BlogModule AQUI!
+import { DynamoDbService } from '@src/services/dynamoDb.service';
 
 @Module({
     imports: [forwardRef(() => BlogModule)], // Use forwardRef envolvendo BlogModule para resolver dependência circular
     controllers: [AuthorsController],
-    providers: [AuthorsService],
+    providers: [AuthorsService, DynamoDbService],
     exports: [AuthorsService],
 })
 export class AuthorsModule { }

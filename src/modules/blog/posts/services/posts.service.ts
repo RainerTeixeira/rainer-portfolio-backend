@@ -9,16 +9,19 @@ import {
 import { Cache } from 'cache-manager';
 import { QueryCommandInput } from '@aws-sdk/lib-dynamodb';
 import { ConfigService } from '@nestjs/config';
+import { DynamoDbService } from '@src/services/dynamoDb.service'; // Corrigir a importação do DynamoDbService
+
 import { PostCreateDto } from '@src/modules/blog/posts/dto/post-create.dto';
 import { PostUpdateDto } from '@src/modules/blog/posts/dto/post-update.dto';
 import { PostContentDto } from '@src/modules/blog/posts/dto/post-content.dto';
 import { PostSummaryDto } from '@src/modules/blog/posts/dto/post-summary.dto';
 import { PostFullDto } from '@src/modules/blog/posts/dto/post-full.dto';
-import { DynamoDbService } from '@src/services/dynamodb.service';
+
 import { AuthorsService } from '@src/modules/blog/authors/services/authors.service';
 import { CategoryService } from '@src/modules/blog/category/services/category.service';
 import { SubcategoryService } from '@src/modules/blog/subcategory/services/subcategory.service';
 import { CommentsService } from '@src/modules/blog/comments/services/comments.service';
+
 import { generatePostId } from '@src/common/generateUUID/generatePostId';
 import { clearCache } from '@src/common/cache/clearCache';
 

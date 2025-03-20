@@ -1,5 +1,4 @@
 import { Global, Module } from '@nestjs/common';
-import { CacheModule } from '@nestjs/cache-manager';
 import { APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 
@@ -8,6 +7,12 @@ import { BlogModule } from '@src/modules/blog.module';
 import { AuthModule } from '@src/auth/auth.module';
 import { ResponseInterceptor } from '@src/common/interceptors/response.interceptor';
 import { HttpExceptionFilter } from '@src/common/filters/http-exception.filter';
+
+import { PostsModule } from './modules/blog/posts/posts.module';
+import { AuthorsModule } from './modules/blog/authors/authors.module';
+import { CategoryModule } from './modules/blog/category/category.module';
+import { SubcategoryModule } from './modules/blog/subcategory/subcategory.module';
+import { CommentsModule } from './modules/blog/comments/comments.module';
 
 @Global()
 @Module({
@@ -22,16 +27,14 @@ import { HttpExceptionFilter } from '@src/common/filters/http-exception.filter';
       },
     }),
 
-    // Configuração de cache
-    CacheModule.register({
-      isGlobal: true,
-      ttl: 300,
-      max: 100,
-    }),
-
     // Módulos de funcionalidades
     BlogModule,
     AuthModule,
+    PostsModule,
+    AuthorsModule,
+    CategoryModule,
+    SubcategoryModule,
+    CommentsModule,
   ],
   providers: [
     DynamoDbService,
