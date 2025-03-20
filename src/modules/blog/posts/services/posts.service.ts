@@ -19,8 +19,8 @@ import { AuthorsService } from '@src/modules/blog/authors/services/authors.servi
 import { CategoryService } from '@src/modules/blog/category/services/category.service';
 import { SubcategoryService } from '@src/modules/blog/subcategory/services/subcategory.service';
 import { CommentsService } from '@src/modules/blog/comments/services/comments.service';
-import { generatePostId } from '@src/utils/generatePostId';
-import { clearCache } from '@src/utils/clearCache';
+import { generatePostId } from '@src/common/generateUUID/generatePostId';
+import { clearCache } from '@src/common/cache/clearCache';
 
 @Injectable()
 export class PostsService {

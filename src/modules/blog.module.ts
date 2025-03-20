@@ -2,7 +2,6 @@
 
 import { Module } from '@nestjs/common';
 import { DynamoDbService } from '@src/services/dynamoDb.service'; // Importa o DynamoDbService para acesso ao DynamoDB
-// Remove CacheModule import from here as it's globally imported in AppModule
 import { AuthorsModule } from '@src/modules/blog/authors/authors.module'; // Importa o módulo de autores utilizando alias @src
 import { CategoryModule } from '@src/modules/blog/category/category.module'; // Importa o módulo de categorias utilizando alias @src
 import { CommentsModule } from '@src/modules/blog/comments/comments.module'; // Importa o módulo de comentários utilizando alias @src
@@ -26,17 +25,16 @@ import { SubcategoryModule } from '@src/modules/blog/subcategory/subcategory.mod
     AuthorsModule,
     CategoryModule,
     CommentsModule,
-    PostsModule, // Certifique-se de que o PostsModule está importado
+    PostsModule,
     SubcategoryModule,
   ],
-  providers: [DynamoDbService],
+  providers: [], // Remova DynamoDbService aqui
   exports: [
     AuthorsModule,
     CategoryModule,
     CommentsModule,
     PostsModule,
     SubcategoryModule,
-    DynamoDbService, // Exporta o DynamoDbService para que outros módulos possam utilizá-lo
   ],
 })
 export class BlogModule { }
