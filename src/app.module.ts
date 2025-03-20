@@ -1,12 +1,13 @@
 import { Global, Module } from '@nestjs/common';
 import { CacheModule } from '@nestjs/cache-manager';
 import { APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
+import { ConfigModule } from '@nestjs/config';
+
 import { DynamoDbService } from '@src/services/dynamoDb.service';
 import { BlogModule } from '@src/modules/blog.module';
+import { AuthModule } from './auth/auth.module';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
-import { ConfigModule } from '@nestjs/config';
-import { AuthModule } from './auth/auth.module';
 
 @Global()
 @Module({

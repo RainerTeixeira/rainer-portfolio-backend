@@ -1,7 +1,8 @@
-// src/modules/blog/posts/posts.module.ts
 import { Module } from '@nestjs/common';
+
 import { PostsService } from './services/posts.service';
 import { PostsController } from './controllers/posts.controller';
+
 import { AuthorsModule } from '@src/modules/blog/authors/authors.module';
 import { CategoryModule } from '@src/modules/blog/category/category.module';
 import { SubcategoryModule } from '@src/modules/blog/subcategory/subcategory.module';
