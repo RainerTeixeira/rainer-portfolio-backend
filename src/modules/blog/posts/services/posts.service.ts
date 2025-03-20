@@ -9,7 +9,7 @@ import {
 import { Cache } from 'cache-manager';
 import { QueryCommandInput } from '@aws-sdk/lib-dynamodb';
 import { ConfigService } from '@nestjs/config';
-import { DynamoDbService } from '@src/services/dynamoDb.service'; // Corrigir a importação do DynamoDbService
+import { DynamoDbService } from '@src/services/dynamoDb.service';
 
 import { PostCreateDto } from '@src/modules/blog/posts/dto/post-create.dto';
 import { PostUpdateDto } from '@src/modules/blog/posts/dto/post-update.dto';

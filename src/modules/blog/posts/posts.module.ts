@@ -1,5 +1,6 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { CacheModule } from '@nestjs/cache-manager';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import { PostsService } from '@src/modules/blog/posts/services/posts.service';
 import { PostsController } from '@src/modules/blog/posts/controllers/posts.controller';
@@ -15,7 +16,6 @@ import { CategoryModule } from '@src/modules/blog/category/category.module';
 import { SubcategoryModule } from '@src/modules/blog/subcategory/subcategory.module';
 
 import { CommentsModule } from '@src/modules/blog/comments/comments.module';
-import { ConfigModule } from '@nestjs/config';
 import { memoryStore } from 'cache-manager';
 
 /**
@@ -28,10 +28,10 @@ import { memoryStore } from 'cache-manager';
     forwardRef(() => SubcategoryModule),
     forwardRef(() => CommentsModule),
     ConfigModule,
-    CacheModule.register({ // Configuração do CacheModule
-      isGlobal: true, // Adicione esta linha para torná-lo global
-      store: memoryStore, // Use cache em memória
-      ttl: 60 * 1000, // Tempo de vida padrão de 1 minuto (opcional)
+    CacheModule.register({
+      isGlobal: true,
+      store: memoryStore,
+      ttl: 60 * 1000,
     }),
   ],
   controllers: [PostsController],
@@ -42,6 +42,7 @@ import { memoryStore } from 'cache-manager';
     CategoryService,
     SubcategoryService,
     CommentsService,
+    ConfigService,
   ],
 })
 export class PostsModule { }

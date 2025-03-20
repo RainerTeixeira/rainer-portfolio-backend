@@ -5,6 +5,7 @@ import { CategoryModule } from '@src/modules/blog/category/category.module';
 import { CommentsModule } from '@src/modules/blog/comments/comments.module';
 import { PostsModule } from '@src/modules/blog/posts/posts.module';
 import { SubcategoryModule } from '@src/modules/blog/subcategory/subcategory.module';
+import { DynamoDbService } from '@src/services/dynamoDb.service';
 
 /**
  * @module BlogModule
@@ -25,12 +26,14 @@ import { SubcategoryModule } from '@src/modules/blog/subcategory/subcategory.mod
     forwardRef(() => PostsModule),
     forwardRef(() => SubcategoryModule),
   ],
+  providers: [DynamoDbService],
   exports: [
-    AuthorsModule,
-    CategoryModule,
-    CommentsModule,
-    PostsModule,
-    SubcategoryModule,
+    forwardRef(() => AuthorsModule),
+    forwardRef(() => CategoryModule),
+    forwardRef(() => CommentsModule),
+    forwardRef(() => PostsModule),
+    forwardRef(() => SubcategoryModule),
+    DynamoDbService,
   ],
 })
 export class BlogModule { }

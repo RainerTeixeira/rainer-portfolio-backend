@@ -4,9 +4,9 @@ import { CategoryService } from '@src/modules/blog/categories/services/categorie
 import { BlogModule } from '@src/modules/blog.module';
 
 @Module({
-    imports: [forwardRef(() => BlogModule)],
-    controllers: [CategoriesController],
-    providers: [CategoryService],
-    exports: [CategoryService], // Certifique-se de exportar o serviço
+  imports: [forwardRef(() => BlogModule)],
+  controllers: [CategoriesController],
+  providers: [CategoryService],
+  exports: [CategoryService],
 })
 export class CategoryModule {}
