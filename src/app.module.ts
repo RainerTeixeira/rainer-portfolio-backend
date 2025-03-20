@@ -1,4 +1,4 @@
-import { Global, Module } from '@nestjs/common';
+import { Global, Module, forwardRef } from '@nestjs/common';
 import { APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 
@@ -28,7 +28,7 @@ import { CommentsModule } from './modules/blog/comments/comments.module';
     }),
 
     // Módulos de funcionalidades
-    BlogModule,
+    forwardRef(() => BlogModule),
     AuthModule,
     PostsModule,
     AuthorsModule,
@@ -37,7 +37,10 @@ import { CommentsModule } from './modules/blog/comments/comments.module';
     CommentsModule,
   ],
   providers: [
-    DynamoDbService,
+    {
+      provide: DynamoDbService,
+      useFactory: () => DynamoDbService.getInstance(),
+    },
     {
       provide: APP_INTERCEPTOR,
       useClass: ResponseInterceptor,

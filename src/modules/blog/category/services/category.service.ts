@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { CreateCategoryDto } from '@src/modules/blog/category/dto/create-category.dto';
 import { UpdateCategoryDto } from '@src/modules/blog/category/dto/update-category.dto';
 import { CategoryDto } from '@src/modules/blog/category/dto/category.dto';
@@ -83,24 +83,18 @@ export class CategoryService {
         // Verifica se a categoria existe antes de atualizar
         await this.findOne(categoryId);
 
+        const updateExpression = this.dynamoDbService.buildUpdateExpression(updateCategoryDto);
+        if (!updateExpression) {
+            throw new BadRequestException('Nenhum dado fornecido para atualização');
+        }
+
         const params: UpdateCommandInput = {
             TableName: this.tableName,
             Key: { categoryId },
-            UpdateExpression: 'SET #name = :name, slug = :slug, seo = :seo',
-            ExpressionAttributeNames: {
-                '#name': 'name',
-            },
-            ExpressionAttributeValues: {
-                ':name': updateCategoryDto.name,
-                ':slug': updateCategoryDto.slug,
-                ':seo': {
-                    canonical: updateCategoryDto.seo?.canonical || null,
-                    description: updateCategoryDto.seo?.description || null,
-                    keywords: updateCategoryDto.seo?.keywords || []
-                },
-            },
+            ...updateExpression,
             ReturnValues: 'ALL_NEW',
         };
+
         const result = await this.dynamoDbService.updateItem(params);
         return this.mapCategoryFromDynamoDb(result.Attributes as Record<string, unknown>);
     }
