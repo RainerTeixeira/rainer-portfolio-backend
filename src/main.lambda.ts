@@ -1,24 +1,13 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { Context, APIGatewayProxyEvent } from 'aws-lambda';
+import { Context as LambdaContext, APIGatewayProxyEvent as LambdaEvent } from 'aws-lambda';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import serverless from 'serverless-http';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger'; // Importe os módulos do Swagger UI
 
 // Variável para armazenar em cache a instância do servidor NestJS para otimizar cold starts.
 // 'cachedServer' mantém a instância do servidor entre invocações da Lambda, evitando reinicializações desnecessárias.
-let cachedServer: any;
-
-/**
- * Função auxiliar para obter a mensagem de erro de forma segura.
- * Garante que sempre retornemos uma string, mesmo que o erro não seja uma instância de Error.
- * @param error Objeto de erro desconhecido.
- * @returns string Mensagem de erro tratada.
- */
-function getErrorMessage(error: unknown): string {
-  if (error instanceof Error) return error.message; // Se for um objeto Error, retorna a mensagem padrão.
-  return String(error); // Caso contrário, converte o erro para string (segurança contra tipos inesperados).
-}
+let cachedServer: ReturnType<typeof serverless> | null = null;
 
 /**
  * Função auxiliar para logar erros de forma detalhada no console.
@@ -51,22 +40,22 @@ async function setupSwagger(app: NestFastifyApplication) {
 /**
  * @swagger
  * /:
- * get:
- * summary: Retorna a página inicial da API
- * description: Retorna uma mensagem de boas-vindas para verificar se a API está funcionando.
- * responses:
- * 200:
- * description: Página inicial exibida com sucesso.
- * content:
- * application/json:
- * schema:
- * type: object
- * properties:
- * message:
- * type: string
- * example: "Bem-vindo à API do Portfólio do Rainer!"
+ *   get:
+ *     summary: Retorna a página inicial da API
+ *     description: Retorna uma mensagem de boas-vindas para verificar se a API está funcionando.
+ *     responses:
+ *       200:
+ *         description: Página inicial exibida com sucesso.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Bem-vindo à API do Portfólio do Rainer!"
  */
-async function bootstrapServer(): Promise<any> {
+async function bootstrapServer(): Promise<ReturnType<typeof serverless>> {
   // Verifica se já existe uma instância cached do servidor.
   if (!cachedServer) {
     console.log('⚡ Inicializando o servidor NestJS...'); // Loga o início da inicialização.
@@ -88,7 +77,7 @@ async function bootstrapServer(): Promise<any> {
 
     // Cria um servidor "serverless" a partir da instância do Fastify, utilizando a biblioteca 'serverless-http'.
     // Esse servidor serverless é compatível com o formato de eventos do AWS Lambda e API Gateway.
-    cachedServer = serverless(app.getHttpAdapter().getInstance() as any);
+    cachedServer = serverless(app.getHttpAdapter().getInstance());
     console.log('✅ Servidor inicializado e pronto para requisições!'); // Loga o sucesso na inicialização.
   }
 
@@ -103,7 +92,7 @@ async function bootstrapServer(): Promise<any> {
  * @param context Objeto de contexto do AWS Lambda, com informações sobre o ambiente de execução.
  * @returns Promise<any> Promise que resolve com a resposta HTTP formatada para o Lambda Function URL.
  */
-export const handler = async (event: any, context: any) => {
+export const handler = async (event: LambdaEvent, context: LambdaContext) => {
   const server = await bootstrapServer();
   return server(event, context);
 };
@@ -111,20 +100,20 @@ export const handler = async (event: any, context: any) => {
 /**
  * @swagger
  * /local:
- * get:
- * summary: Inicializa o servidor local para desenvolvimento
- * description: Endpoint utilizado para iniciar o servidor localmente, fora do ambiente AWS Lambda.
- * responses:
- * 200:
- * description: Servidor local inicializado com sucesso.
- * content:
- * application/json:
- * schema:
- * type: object
- * properties:
- * message:
- * type: string
- * example: "Servidor local iniciado em http://localhost:3000"
+ *   get:
+ *     summary: Inicializa o servidor local para desenvolvimento
+ *     description: Endpoint utilizado para iniciar o servidor localmente, fora do ambiente AWS Lambda.
+ *     responses:
+ *       200:
+ *         description: Servidor local inicializado com sucesso.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Servidor local iniciado em http://localhost:3000"
  */
 if (!process.env.AWS_LAMBDA_FUNCTION_NAME) {
   async function bootstrapLocal() {

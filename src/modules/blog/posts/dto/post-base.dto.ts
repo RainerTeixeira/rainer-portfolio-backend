@@ -6,8 +6,7 @@ import {
     IsOptional,
     IsNumber,
     IsArray,
-    IsUrl,
-    IsISO8601,
+    IsUrl
 } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 

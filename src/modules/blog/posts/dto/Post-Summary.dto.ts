@@ -1,7 +1,7 @@
 /**
  * DTO para resumo de um post.
  */
-import { IsString, IsUrl, IsArray, IsOptional } from 'class-validator';
+import { IsString, IsUrl } from 'class-validator'; // Removidos IsArray e IsOptional
 import { ApiProperty } from '@nestjs/swagger';
 
 export class PostSummaryDto {

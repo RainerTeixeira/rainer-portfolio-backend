@@ -1,4 +1,4 @@
-// http-exception.filter.ts
+// src/common/filters/http-exception.filter.ts
 import {
   ExceptionFilter,
   Catch,
@@ -8,31 +8,38 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { FastifyReply } from 'fastify';
+import { Request } from 'express'; // Importe o tipo Request do express para melhor tipagem
 
 /**
  * @class HttpExceptionFilter
- * @description Filtro global para tratamento de exceções HTTP
- * @implements ExceptionFilter
+ * @description Filtro global para tratamento de exceções HTTP.
+ * Captura exceções do tipo HttpException e formata a resposta HTTP para incluir detalhes do erro,
+ * como código de status, mensagem, timestamp e o caminho da requisição.
+ * Também registra os erros usando o Logger do NestJS.
+ * @implements {ExceptionFilter<HttpException>}
  */
 @Catch(HttpException)
-export class HttpExceptionFilter implements ExceptionFilter {
+export class HttpExceptionFilter implements ExceptionFilter<HttpException> {
   private readonly logger = new Logger(HttpExceptionFilter.name);
 
   /**
-   * Método principal para tratamento de exceções
-   * @param exception Exceção capturada
-   * @param host Host de argumentos para contexto HTTP
+   * @param exception A exceção HttpException capturada.
+   * @param host Host de argumentos para o contexto HTTP. Permite acessar o objeto de requisição e resposta.
+   * @returns void
    */
-  catch(exception: HttpException, host: ArgumentsHost) {
+  catch(exception: HttpException, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<FastifyReply>();
+    const request = ctx.getRequest<Request>(); // Use o tipo Request importado
     const status = exception.getStatus();
-    const exceptionResponse: any = exception.getResponse();
+    const exceptionResponse = exception.getResponse();
+    let error: { message: string | string; statusCode?: number } = { message: 'Erro desconhecido' };
 
-    const error =
-      typeof exceptionResponse === 'string'
-        ? { message: exceptionResponse }
-        : (exceptionResponse as object);
+    if (typeof exceptionResponse === 'string') {
+      error = { message: exceptionResponse };
+    } else if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
+      error = exceptionResponse as { message: string | string; statusCode?: number };
+    }
 
     this.logger.error(
       `Exceção HTTP: Status ${status}, Erro: ${JSON.stringify(error)}`,
@@ -43,14 +50,14 @@ export class HttpExceptionFilter implements ExceptionFilter {
       ...error,
       statusCode: status,
       timestamp: new Date().toISOString(),
-      path: ctx.getRequest().url,
+      path: request.url,
     });
   }
 
   /**
-   * Extrai detalhes do erro de forma segura
-   * @param exception Exceção capturada
-   * @returns Objeto com detalhes do erro
+   * @private
+   * @param exception Exceção capturada (pode ser HttpException ou Error).
+   * @returns Um objeto contendo a mensagem, o tipo do erro e, opcionalmente, o stack trace.
    */
   private getErrorDetails(exception: unknown): {
     message: string;
@@ -60,7 +67,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
     if (exception instanceof HttpException) {
       const response = exception.getResponse();
       return {
-        message: typeof response === 'object' ? (response as any).message : response.toString(),
+        message:
+          typeof response === 'object' && response !== null && 'message' in response
+            ? (response as { message: string }).message
+            : response.toString(),
         error: HttpStatus[exception.getStatus()],
         stack: exception.stack,
       };
@@ -81,9 +91,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
   }
 
   /**
-   * Determina o status HTTP adequado para a exceção
-   * @param exception Exceção capturada
-   * @returns Código de status HTTP
+   * @private
+   * @param exception Exceção capturada (pode ser HttpException ou outro tipo).
+   * @returns O código de status HTTP correspondente à exceção.
    */
   private getHttpStatus(exception: unknown): number {
     return exception instanceof HttpException
@@ -92,20 +102,23 @@ export class HttpExceptionFilter implements ExceptionFilter {
   }
 
   /**
-   * Registra erros de forma padronizada
-   * @param request Objeto de requisição
-   * @param status Código de status HTTP
-   * @param errorDetails Detalhes do erro
+   * @private
+   * @param request Objeto de requisição HTTP.
+   * @param status Código de status HTTP do erro.
+   * @param errorDetails Objeto contendo detalhes da mensagem e tipo do erro.
+   * @returns void
    */
   private logError(
     request: Request,
     status: number,
     errorDetails: { message: string; error: string },
-  ) {
+  ): void {
     const logMessage = `${request.method} ${request.url} [${status}] ${errorDetails.error}: ${errorDetails.message}`;
 
-    status >= 500
-      ? this.logger.error(logMessage)
-      : this.logger.warn(logMessage);
+    if (status >= 500) {
+      this.logger.error(logMessage);
+    } else {
+      this.logger.warn(logMessage);
+    }
   }
 }

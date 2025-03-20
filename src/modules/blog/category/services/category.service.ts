@@ -1,23 +1,21 @@
-// src/modules/blog/category/services/categories.service.ts
-
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateCategoryDto } from '@src/modules/blog/category/dto/create-category.dto';
 import { UpdateCategoryDto } from '@src/modules/blog/category/dto/update-category.dto';
 import { CategoryDto } from '@src/modules/blog/category/dto/category.dto';
-import { DynamoDbService } from '@src/services/dynamoDb.service'; // Importa DynamoDbService usando alias @src.
-import { UpdateCommandInput } from '@aws-sdk/lib-dynamodb'; // Importe UpdateCommandInput
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger'; // Importe decorators do Swagger
+import { DynamoDbService } from '@src/services/dynamoDb.service';
+import { UpdateCommandInput } from '@aws-sdk/lib-dynamodb';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 /**
  * @CategoryService
  * Serviço responsável pela lógica de negócio das categorias.
  */
-@ApiTags('category') // Adicione tag para Swagger
+@ApiTags('category')
 @Injectable()
 export class CategoryService {
-    private readonly tableName = 'Category'; // Nome da tabela DynamoDB para Category
+    private readonly tableName = 'Category';
 
-    constructor(private readonly dynamoDbService: DynamoDbService) { } // Injeta DynamoDbService
+    constructor(private readonly dynamoDbService: DynamoDbService) { }
 
     /**
      * Cria uma nova categoria.
@@ -43,7 +41,7 @@ export class CategoryService {
     @ApiResponse({ status: 200, description: 'Retorna todas as categorias.', type: [CategoryDto] })
     async findAll(): Promise<CategoryDto[]> {
         const result = await this.dynamoDbService.scan({ TableName: this.tableName });
-        return (result.Items || []).map(item => this.mapCategoryFromDynamoDb(item)); // Use map e função de mapeamento
+        return (result.Items || []).map(item => this.mapCategoryFromDynamoDb(item));
     }
 
     /**
@@ -58,13 +56,13 @@ export class CategoryService {
     async findOne(categoryId: string): Promise<CategoryDto> {
         const params = {
             TableName: this.tableName,
-            Key: { categoryId: categoryId }, // Usar string diretamente
+            Key: { categoryId: categoryId },
         };
         const result = await this.dynamoDbService.getItem(params);
         if (!result.Item) {
             throw new NotFoundException(`Category com ID '${categoryId}' não encontrada`);
         }
-        return this.mapCategoryFromDynamoDb(result.Item); // Use função de mapeamento
+        return this.mapCategoryFromDynamoDb(result.Item);
     }
 
     async getCategoryById(categoryId: string): Promise<CategoryDto> {
@@ -85,26 +83,26 @@ export class CategoryService {
         // Verifica se a categoria existe antes de atualizar
         await this.findOne(categoryId);
 
-        const params: UpdateCommandInput = { // Use UpdateCommandInput type
+        const params: UpdateCommandInput = {
             TableName: this.tableName,
-            Key: { categoryId }, // Corrigir o formato do valor
-            UpdateExpression: 'SET #name = :name, slug = :slug, seo = :seo', // Use 'SET' e placeholders para atualizar
-            ExpressionAttributeNames: { // Mapeamento de nomes de atributos
-                '#name': 'name', // '#name' será substituído por 'name' (evita palavras reservadas)
+            Key: { categoryId },
+            UpdateExpression: 'SET #name = :name, slug = :slug, seo = :seo',
+            ExpressionAttributeNames: {
+                '#name': 'name',
             },
-            ExpressionAttributeValues: { // Valores para substituir nos placeholders
-                ':name': updateCategoryDto.name, // Formato correto do valor string para DynamoDB
+            ExpressionAttributeValues: {
+                ':name': updateCategoryDto.name,
                 ':slug': updateCategoryDto.slug,
-                ':seo': { // Formato correto para mapa (objeto) no DynamoDB
-                    canonical: updateCategoryDto.seo?.canonical || null, // Se for opcional, use || null para evitar undefined
+                ':seo': {
+                    canonical: updateCategoryDto.seo?.canonical || null,
                     description: updateCategoryDto.seo?.description || null,
-                    keywords: updateCategoryDto.seo?.keywords || [] // Se for array, mapeie para formato de lista do DynamoDB
+                    keywords: updateCategoryDto.seo?.keywords || []
                 },
             },
-            ReturnValues: 'ALL_NEW', // Defina o tipo de retorno esperado
+            ReturnValues: 'ALL_NEW',
         };
         const result = await this.dynamoDbService.updateItem(params);
-        return this.mapCategoryFromDynamoDb(result.Attributes as Record<string, any>) as CategoryDto; // Mapeie o Attributes e faça type assertion para CategoryDto
+        return this.mapCategoryFromDynamoDb(result.Attributes as Record<string, unknown>);
     }
 
     /**
@@ -126,15 +124,23 @@ export class CategoryService {
         await this.dynamoDbService.deleteItem(params);
     }
 
-    private mapCategoryFromDynamoDb(item: Record<string, any>): CategoryDto {
+    /**
+     * Mapeia um item retornado do DynamoDB para um CategoryDto.
+     * Converte o formato de dados do DynamoDB para o formato CategoryDto da aplicação.
+     * @param item Item retornado do DynamoDB.
+     * @returns Um CategoryDto preenchido com os dados do item.
+     * @private
+     */
+    private mapCategoryFromDynamoDb(item: Record<string, unknown>): CategoryDto {
+        const seo = (item.seo as Record<string, unknown>) || {};
         return {
-            categoryId: item.categoryId,
-            name: item.name,
-            slug: item.slug,
+            categoryId: item.categoryId as string,
+            name: item.name as string,
+            slug: item.slug as string,
             seo: {
-                canonical: item.seo?.canonical,
-                description: item.seo?.description,
-                keywords: item.seo?.keywords,
+                canonical: seo.canonical as string | undefined,
+                description: seo.description as string | undefined,
+                keywords: (seo.keywords as unknown as string[]) || [],
             },
         } as CategoryDto;
     }

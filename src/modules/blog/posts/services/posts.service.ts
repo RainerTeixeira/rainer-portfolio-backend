@@ -29,11 +29,11 @@ export class PostsService {
 
   /**
    * Construtor da classe PostsService.
-   * @param dynamoDb Instância do serviço para acesso ao DynamoDB.
    * @param config Instância do ConfigService para acesso às variáveis de ambiente.
-   * @param cache Instância do cache (injetado via CACHE_MANAGER).
+   * @param dynamoDbService Instância do serviço para acesso ao DynamoDB.
+   * @param cacheManager Instância do cache (injetado via CACHE_MANAGER).
    * @param authorsService Serviço para manipulação de dados dos autores.
-   * @param categoriesService Serviço para manipulação de dados das categorias.
+   * @param categoryService Serviço para manipulação de dados das categorias.
    * @param subcategoryService Serviço para manipulação de dados das subcategorias.
    * @param commentsService Serviço para manipulação de dados dos comentários.
    */
@@ -173,7 +173,7 @@ export class PostsService {
 
       // Limpa o cache após a atualização do post
       await clearCache(this.cacheManager, [`post:${id}`, 'posts:*']);
-      return this.mapToContentDto(updated.Attributes);
+      return this.mapToContentDto(updated.Attributes as Record<string, unknown>);
     } catch (error) {
       this.logError('updatePost', error);
       throw new BadRequestException('Erro ao atualizar post');
@@ -200,20 +200,20 @@ export class PostsService {
       throw new BadRequestException('Erro ao excluir post');
     }
   }
-  
+
   //------------------- funções auxiliares ---------------------//
-  
+
   /**
    * Enriquecer os dados do post com informações de autor, categoria, subcategoria e comentários.
    * @param post Dados brutos do post obtidos no banco.
    * @returns DTO completo com os dados enriquecidos.
    */
-  private async enrichPostData(post: any): Promise<PostFullDto> {
+  private async enrichPostData(post: Record<string, unknown>): Promise<PostFullDto> {
     const [author, category, subcategory, comments] = await Promise.all([
-      this.authorsService.findOne(post.authorId),
-      this.categoryService.findOne(post.categoryId),
-      this.subcategoryService.findOne(post.categoryId, post.subcategoryId),
-      this.commentsService.findAllByPostId(post.postId),
+      this.authorsService.findOne(post.authorId as string),
+      this.categoryService.findOne(post.categoryId as string),
+      this.subcategoryService.findOne(post.categoryId as string, post.subcategoryId as string),
+      this.commentsService.findAllByPostId(post.postId as string),
     ]);
 
     return {
@@ -238,7 +238,7 @@ export class PostsService {
       ExpressionAttributeValues: { ':slug': slug },
     };
     const result = await this.dynamoDbService.query(params);
-    return result.Items?.[0];
+    return result.Items?.[0] as Record<string, unknown> | undefined;
   }
 
   /**
@@ -255,15 +255,15 @@ export class PostsService {
    * @param item Objeto contendo os dados do post.
    * @returns DTO com os dados mapeados.
    */
-  private mapToContentDto(item: any): PostContentDto {
+  private mapToContentDto(item: Record<string, unknown>): PostContentDto {
     return {
-      postId: item.postId,
-      title: item.title,
-      content: item.content,
-      status: item.status,
-      publishDate: item.publishDate,
-      modifiedDate: item.modifiedDate,
-      views: item.views || 0,
+      postId: item.postId as string,
+      title: item.title as string,
+      content: item.content as string,
+      status: item.status as string,
+      publishDate: item.publishDate as string,
+      modifiedDate: item.modifiedDate as string,
+      views: (item.views as number) || 0,
     };
   }
 
@@ -272,13 +272,13 @@ export class PostsService {
    * @param item Objeto contendo os dados do post.
    * @returns DTO com os dados resumidos.
    */
-  private mapToSummaryDto(item: any): PostSummaryDto {
+  private mapToSummaryDto(item: Record<string, unknown>): PostSummaryDto {
     return {
-      postId: item.postId,
-      title: item.title,
-      description: item.description,
-      publishDate: item.publishDate,
-      slug: item.slug,
+      postId: item.postId as string,
+      title: item.title as string,
+      description: item.description as string,
+      publishDate: item.publishDate as string,
+      slug: item.slug as string,
     };
   }
 }

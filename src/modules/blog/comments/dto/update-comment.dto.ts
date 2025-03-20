@@ -1,7 +1,6 @@
 // src/modules/blog/comments/dto/update-comment.dto.ts
 
-import { CommentDto } from '@src/modules/blog/comments/dto/comment.dto'; // Import CommentDto usando alias @src.
-import { IsOptional, IsString, IsNumber } from 'class-validator'; // Import decorators de validação
+import { IsOptional, IsString } from 'class-validator'; // Removido CommentDto e IsNumber
 import { ApiProperty } from '@nestjs/swagger';
 
 export class UpdateCommentDto {
