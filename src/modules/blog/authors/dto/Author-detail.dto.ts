@@ -2,6 +2,13 @@ import { IsString, IsOptional } from 'class-validator';
 import { IsSocialProof } from './social-proof-validator.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
+interface DynamoDBAuthorItem {
+    authorId?: string;
+    name?: string;
+    slug?: string;
+    socialProof?: Record<string, string>;
+}
+
 export class AuthorDetailDto {
     @ApiProperty({ description: 'ID do autor', example: '1' })
     @IsString()
@@ -31,7 +38,7 @@ export class AuthorDetailDto {
     /**
      * Método estático para converter um item do DynamoDB para AuthorDetailDto
      */
-    static fromDynamoDB(item: any): AuthorDetailDto {
+    static fromDynamoDB(item: DynamoDBAuthorItem): AuthorDetailDto {
         return {
             authorId: item.authorId || "",
             name: item.name || "",

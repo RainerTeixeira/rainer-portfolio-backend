@@ -2,7 +2,7 @@
  * DTO para criação de um novo post.
  * Extende a classe PostBaseDto para reutilizar propriedades comuns.
  */
-import { IsString, IsNotEmpty, IsISO8601, MinLength } from 'class-validator';
+import { IsString, IsNotEmpty } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { PostBaseDto } from './post-base.dto';
 

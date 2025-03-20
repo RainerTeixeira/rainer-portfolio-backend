@@ -28,6 +28,12 @@ import {
   BatchGetCommandInput,
   QueryCommandOutput,
   GetCommandOutput,
+  PutCommandOutput,
+  UpdateCommandOutput,
+  DeleteCommandOutput,
+  ScanCommandOutput,
+  BatchWriteCommandOutput,
+  BatchGetCommandOutput,
 } from '@aws-sdk/lib-dynamodb';
 
 /**
@@ -44,9 +50,9 @@ class ValidationException extends Error {
  * Classe de erro personalizada para operações no DynamoDB.
  */
 export class DynamoDBError extends Error {
-  public readonly originalError: any;
+  public readonly originalError: unknown;
 
-  constructor(message: string, originalError: any) {
+  constructor(message: string, originalError: unknown) {
     super(message);
     this.name = 'DynamoDBError';
     this.originalError = originalError;
@@ -130,7 +136,7 @@ export class DynamoDbService {
    * @param params - Parâmetros para a operação PutCommand.
    * @returns O resultado da operação PutCommand.
    */
-  async putItem(params: PutCommandInput): Promise<any> {
+  async putItem(params: PutCommandInput): Promise<PutCommandOutput> {
     try {
       const command = new PutCommand(params);
       return await this.docClient.send(command);
@@ -150,9 +156,9 @@ export class DynamoDbService {
    */
   async updateItem(
     tableName: string,
-    key: Record<string, any>,
-    updateData: Record<string, any>
-  ): Promise<any> {
+    key: Record<string, string | number>,
+    updateData: Record<string, unknown>
+  ): Promise<UpdateCommandOutput> {
     if (!updateData || Object.keys(updateData).length === 0) {
       throw new ValidationException('Nenhum dado fornecido para atualização.');
     }
@@ -160,7 +166,7 @@ export class DynamoDbService {
     // Construção da expressão de atualização
     const updateExpressions: string[] = [];
     const expressionAttributeNames: Record<string, string> = {};
-    const expressionAttributeValues: Record<string, any> = {};
+    const expressionAttributeValues: Record<string, unknown> = {};
 
     let index = 0;
     for (const attribute in updateData) {
@@ -200,7 +206,7 @@ export class DynamoDbService {
    * @returns O resultado da operação DeleteCommand.
    * @throws ValidationException caso a chave esteja ausente ou incompleta.
    */
-  async deleteItem(params: DeleteCommandInput): Promise<any> {
+  async deleteItem(params: DeleteCommandInput): Promise<DeleteCommandOutput> {
     try {
       this.logger.log(`deleteItem: Iniciando operação com params: ${JSON.stringify(params)}`);
       if (!params.Key || Object.keys(params.Key).length === 0) {
@@ -225,7 +231,7 @@ export class DynamoDbService {
    * @param params - Parâmetros para a operação ScanCommand.
    * @returns O resultado da operação ScanCommand.
    */
-  async scan(params: ScanCommandInput): Promise<any> {
+  async scan(params: ScanCommandInput): Promise<ScanCommandOutput> {
     try {
       const command = new ScanCommand(params);
       return await this.docClient.send(command);
@@ -264,7 +270,7 @@ export class DynamoDbService {
    * @param params - Parâmetros para a operação BatchWriteCommand.
    * @returns O resultado da operação BatchWriteCommand.
    */
-  async batchWrite(params: BatchWriteCommandInput): Promise<any> {
+  async batchWrite(params: BatchWriteCommandInput): Promise<BatchWriteCommandOutput> {
     try {
       const command = new BatchWriteCommand(params);
       return await this.docClient.send(command);
@@ -278,7 +284,7 @@ export class DynamoDbService {
    * @param params - Parâmetros para a operação BatchGetCommand.
    * @returns O resultado da operação BatchGetCommand.
    */
-  async batchGet(params: BatchGetCommandInput): Promise<any> {
+  async batchGet(params: BatchGetCommandInput): Promise<BatchGetCommandOutput> {
     try {
       const command = new BatchGetCommand(params);
       return await this.docClient.send(command);
@@ -303,7 +309,7 @@ export class DynamoDbService {
    * @param defaultMessage - Mensagem de erro padrão.
    * @throws DynamoDBError encapsulando o erro original.
    */
-  private handleError(operationName: string, error: any, defaultMessage?: string): void {
+  private handleError(operationName: string, error: unknown, defaultMessage?: string): void {
     this.logger.error(`Erro em ${operationName}:`, error);
     const errorMessage = error instanceof Error && error.message ? error.message : defaultMessage || 'Erro desconhecido no DynamoDB';
     throw new DynamoDBError(`Erro na operação ${operationName}: ${errorMessage}`, error);

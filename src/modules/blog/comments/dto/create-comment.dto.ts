@@ -1,6 +1,6 @@
 // src/modules/blog/comments/dto/create-comment.dto.ts
 
-import { IsNotEmpty, IsNumber, IsString, IsOptional } from 'class-validator';
+import { IsNotEmpty, IsString, IsOptional } from 'class-validator'; // Removido IsNumber
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateCommentDto {

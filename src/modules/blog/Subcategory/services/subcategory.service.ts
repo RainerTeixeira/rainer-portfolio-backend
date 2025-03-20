@@ -7,6 +7,16 @@ import { UpdateSubcategoryDto } from '../dto/update-subcategory.dto';
 import { SubcategoryDto } from '../dto/subcategory.dto';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
+interface DynamoDBSubcategoryItem {
+    'categoryId#subcategoryId'?: { S?: string };
+    subcategoryId?: { S?: string };
+    name?: { S?: string };
+    slug?: { S?: string };
+    description?: { S?: string };
+    keywords?: { S?: string };
+    title?: { S?: string };
+}
+
 /**
  * @SubcategoryService
  * Serviço responsável pela lógica de negócio das subcategorias.
@@ -48,13 +58,13 @@ export class SubcategoryService {
     /**
      * Busca todas as subcategorias de uma categoria específica.
      * @param categoryIdSubcategoryId Chave composta da categoria.
-     * @returns SubcategoryDto[] Lista de subcategorias encontradas.
+     * @returns SubcategoryDtoLista de subcategorias encontradas.
      * @throws NotFoundException Se a categoria não for encontrada.
      */
     @ApiOperation({ summary: 'Buscar todas as subcategorias de uma categoria' })
     @ApiResponse({ status: 200, description: 'Lista de subcategorias retornada com sucesso.', type: [SubcategoryDto] })
     @ApiResponse({ status: 404, description: 'Categoria não encontrada.' })
-    async getAllSubcategories(categoryIdSubcategoryId: string): Promise<SubcategoryDto[]> { // Método para buscar todas as subcategorias de uma categoria específica
+    async getAllSubcategories(categoryIdSubcategoryId: string): Promise<SubcategoryDto> { // Método para buscar todas as subcategorias de uma categoria específica
         const params = {
             TableName: this.tableName,
             FilterExpression: 'begins_with(#pk, :pk_prefix)', // FilterExpression para buscar por prefixo da chave de partição (PK)
@@ -67,14 +77,14 @@ export class SubcategoryService {
         };
         const result = await this.dynamoDbService.scan(params); // Escaneia a tabela (busca eficiente para este caso)
         if (!result.Items) {
-            return []; // Retorna array vazio se não encontrar itens
+            return; // Retorna array vazio se não encontrar itens
         }
-        return result.Items.map((item: any) => ({ // Mapeia cada item retornado para um SubcategoryDto
-            categoryIdSubcategoryId: categoryIdSubcategoryId as string, // **Correção Crucial: Nome da propriedade corrigido para categoryIdSubcategoryId**
+        return result.Items.map((item: Record<string, any>) => ({ // Mapeia cada item retornado para um SubcategoryDto
+            categoryIdSubcategoryId: categoryIdSubcategoryId as string,
             subcategoryId: item.subcategoryId?.S,
             name: item.name?.S,
             slug: item.slug?.S,
-        } as SubcategoryDto)) || []; // Converte o objeto literal para SubcategoryDto
+        } as SubcategoryDto)) ||; // Converte o objeto literal para SubcategoryDto
     }
 
     /**
@@ -87,24 +97,9 @@ export class SubcategoryService {
     @ApiOperation({ summary: 'Buscar uma subcategoria por ID' })
     @ApiResponse({ status: 200, description: 'Subcategoria retornada com sucesso.', type: SubcategoryDto })
     @ApiResponse({ status: 404, description: 'Subcategoria não encontrada.' })
-    async getSubcategoryById(categoryIdSubcategoryId: string, subcategoryId: string): Promise<SubcategoryDto> { // Método para buscar uma subcategoria por ID
-        const params = {
-            TableName: this.tableName,
-            Key: {
-                'categoryId#subcategoryId': categoryIdSubcategoryId, // Corrigir o formato do valor
-                subcategoryId: subcategoryId, // Corrigir o formato do valor
-            },
-        };
-        const result = await this.dynamoDbService.getItem(params); // Busca o item no DynamoDB usando a chave
-        if (!result.Item) {
-            throw new NotFoundException(`Subcategoria com ID '${subcategoryId}' na categoria '${categoryIdSubcategoryId}' não encontrada`); // Lança exceção se não encontrar
-        }
-        return { // Mapeamento do item do DynamoDB para SubcategoryDto
-            categoryIdSubcategoryId: categoryIdSubcategoryId as string, // **Correção Crucial: Nome da propriedade corrigido para categoryIdSubcategoryId**
-            subcategoryId: result.Item.subcategoryId?.S,
-            name: result.Item.name?.S,
-            slug: result.Item.slug?.S,
-        } as SubcategoryDto; // Converte o objeto literal para SubcategoryDto
+    async getSubcategoryById(categoryId: string, subcategoryId: string): Promise<SubcategoryDto> {
+        const categoryIdSubcategoryId = `${categoryId}#${subcategoryId}`;
+        return this.findOne(categoryIdSubcategoryId, subcategoryId);
     }
 
     /**
@@ -119,10 +114,10 @@ export class SubcategoryService {
     @ApiResponse({ status: 200, description: 'Subcategoria atualizada com sucesso.', type: SubcategoryDto })
     @ApiResponse({ status: 404, description: 'Subcategoria não encontrada.' })
     async updateSubcategory(categoryIdSubcategoryId: string, subcategoryId: string, updateSubcategoryDto: UpdateSubcategoryDto): Promise<SubcategoryDto> { // Método para atualizar uma subcategoria existente
-        await this.getSubcategoryById(categoryIdSubcategoryId, subcategoryId); // Garante que a subcategoria existe antes de tentar atualizar
+        await this.findOne(categoryIdSubcategoryId, subcategoryId); // Garante que a subcategoria existe antes de tentar atualizar
         const updateExpression = this.dynamoDbService.buildUpdateExpression(updateSubcategoryDto); // Constrói a expressão de atualização dinamicamente
         if (!updateExpression) {
-            return this.getSubcategoryById(categoryIdSubcategoryId, subcategoryId); // Se não houver campos para atualizar, retorna a subcategoria existente
+            return this.findOne(categoryIdSubcategoryId, subcategoryId); // Se não houver campos para atualizar, retorna a subcategoria existente
         }
 
         const params = {
@@ -138,15 +133,7 @@ export class SubcategoryService {
         if (!result.Attributes) {
             throw new NotFoundException(`Subcategoria com ID '${subcategoryId}' na categoria '${categoryIdSubcategoryId}' não encontrada após atualização.`); // Lança exceção se não encontrar atributos após atualização
         }
-        return {  // Mapeamento dos atributos retornados para SubcategoryDto
-            categoryIdSubcategoryId: categoryIdSubcategoryId as string, // **Correção Crucial: Nome da propriedade corrigido para categoryIdSubcategoryId**
-            subcategoryId: result.Attributes.subcategoryId?.S,
-            name: result.Attributes.name?.S,
-            slug: result.Attributes.slug?.S,
-            description: result.Attributes.description?.S,
-            keywords: result.Attributes.keywords?.S,
-            title: result.Attributes.title?.S,
-        } as SubcategoryDto; // Converte o objeto literal para SubcategoryDto
+        return this.mapToDto(result.Attributes);
     }
 
     /**
@@ -160,7 +147,7 @@ export class SubcategoryService {
     @ApiResponse({ status: 200, description: 'Subcategoria deletada com sucesso.' })
     @ApiResponse({ status: 404, description: 'Subcategoria não encontrada.' })
     async deleteSubcategory(categoryIdSubcategoryId: string, subcategoryId: string): Promise<void> { // Método para deletar uma subcategoria
-        await this.getSubcategoryById(categoryIdSubcategoryId, subcategoryId); // Garante que a subcategoria existe antes de deletar
+        await this.findOne(categoryIdSubcategoryId, subcategoryId); // Garante que a subcategoria existe antes de deletar
         const params = {
             TableName: this.tableName,
             Key: {
@@ -169,11 +156,6 @@ export class SubcategoryService {
             },
         };
         await this.dynamoDbService.deleteItem(params); // Deleta o item do DynamoDB
-    }
-
-    async getSubcategoryById(categoryId: string, subcategoryId: string): Promise<SubcategoryDto> {
-        const categoryIdSubcategoryId = `${categoryId}#${subcategoryId}`;
-        return this.findOne(categoryIdSubcategoryId, subcategoryId);
     }
 
     async findOne(categoryIdSubcategoryId: string, subcategoryId: string): Promise<SubcategoryDto> {
@@ -191,15 +173,15 @@ export class SubcategoryService {
         return this.mapToDto(result.Item);
     }
 
-    private mapToDto(item: any): SubcategoryDto {
+    private mapToDto(item: Record<string, any>): SubcategoryDto {
         return {
-            categoryIdSubcategoryId: item['categoryId#subcategoryId'],
-            subcategoryId: item.subcategoryId,
-            name: item.name,
-            slug: item.slug,
-            description: item.description,
-            keywords: item.keywords,
-            title: item.title,
-        };
+            categoryIdSubcategoryId: item['categoryId#subcategoryId']?.S,
+            subcategoryId: item.subcategoryId?.S,
+            name: item.name?.S,
+            slug: item.slug?.S,
+            description: item.description?.S,
+            keywords: item.keywords?.S,
+            title: item.title?.S,
+        } as SubcategoryDto;
     }
 }

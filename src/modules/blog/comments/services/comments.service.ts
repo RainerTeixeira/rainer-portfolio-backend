@@ -35,7 +35,7 @@ export class CommentsService {
             },
         };
         await this.dynamoDbService.putItem(params);
-        return this.findOne(String(createCommentDto.postId), createCommentDto.authorId); // Converte postId para string
+        return this.findOne(String(createCommentDto.postId), createCommentDto.authorId);
     }
 
     /**
@@ -85,7 +85,7 @@ export class CommentsService {
         const params = {
             TableName: this.tableName,
             KeyConditionExpression: 'postId = :postId',
-            ExpressionAttributeValues: { ':postId': postId }, // Usar string diretamente
+            ExpressionAttributeValues: { ':postId': postId },
         };
         const result = await this.dynamoDbService.query(params);
         return (result.Items || []).map(item => this.mapCommentFromDynamoDb(item));
@@ -125,7 +125,7 @@ export class CommentsService {
         };
 
         const result = await this.dynamoDbService.updateItem(params);
-        return this.mapCommentFromDynamoDb(result.Attributes as Record<string, any>) as CommentDto;
+        return this.mapCommentFromDynamoDb(result.Attributes as Record<string, unknown>);
     }
 
     /**
@@ -155,14 +155,14 @@ export class CommentsService {
      * @param item - Item do DynamoDB.
      * @returns O CommentDto mapeado.
      */
-    private mapCommentFromDynamoDb(item: Record<string, any>): CommentDto {
+    private mapCommentFromDynamoDb(item: Record<string, unknown>): CommentDto {
         return {
-            postId: item.postId,
-            commentId: item.commentId,
-            authorId: item.authorId,
-            content: item.content,
-            date: item.date,
-            status: item.status,
+            postId: item.postId as string,
+            commentId: item.commentId as string,
+            authorId: item.authorId as string,
+            content: item.content as string,
+            date: item.date as string,
+            status: item.status as string,
         } as CommentDto;
     }
 }

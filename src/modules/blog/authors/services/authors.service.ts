@@ -88,7 +88,7 @@ export class AuthorsService {
         this.logger.log(`Buscando autor com authorId: ${authorId}`);
         const params = {
             TableName: this.tableName,
-            Key: { authorId: authorId }, // Usar string diretamente
+            Key: { authorId: authorId },
         };
 
         const result = await this.dynamoDbService.getItem(params);
@@ -130,7 +130,7 @@ export class AuthorsService {
         };
 
         const result = await this.dynamoDbService.updateItem(params);
-        return this.mapAuthorFromDynamoDb(result.Attributes as Record<string, any>);
+        return this.mapAuthorFromDynamoDb(result.Attributes as Record<string, unknown>);
     }
 
     /**
@@ -161,16 +161,18 @@ export class AuthorsService {
      * @returns Um AuthorDetailDto preenchido com os dados do item do DynamoDB.
      * @private
      */
-    private mapAuthorFromDynamoDb(item: Record<string, any>): AuthorDetailDto {
+    private mapAuthorFromDynamoDb(item: Record<string, unknown>): AuthorDetailDto {
         return {
-            authorId: item.authorId,
-            name: item.name,
-            slug: item.slug,
-            expertise: item.expertise?.map((expertiseItem: any) => expertiseItem) || [],
-            socialProof: Object.entries(item.socialProof || {}).reduce((obj: { [key: string]: string }, [key, value]: [string, any]) => {
-                obj[key] = value;
+            authorId: item.authorId as string,
+            name: item.name as string,
+            slug: item.slug as string,
+            expertise: Array.isArray(item.expertise)
+                ? (item.expertise as unknown[]).map((expertiseItem) => String(expertiseItem))
+                : [],
+            socialProof: Object.entries(item.socialProof || {}).reduce((obj: { [key: string]: string }, [key, value]: [string, unknown]) => {
+                obj[key] = String(value);
                 return obj;
-            }, {}) as { [key: string]: string } || {},
+            }, {} as { [key: string]: string }),
         } as AuthorDetailDto;
     }
 
@@ -200,8 +202,8 @@ export class AuthorsService {
         const params = {
             TableName: this.tableName,
             Key: {
-                authorId: authorId
-            }
+                authorId: authorId,
+            },
         };
 
         // Consulta o DynamoDB pelo autor

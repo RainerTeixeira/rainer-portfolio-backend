@@ -1,35 +1,28 @@
-// @ts-check
-import eslint from '@eslint/js';
-import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
-import globals from 'globals';
-import tseslint from 'typescript-eslint';
+import globals from "globals";
+import pluginJs from "@eslint/js";
+import tseslint from "typescript-eslint";
+import eslintPluginImport from "eslint-plugin-import";
 
-export default tseslint.config(
+/** @type {import('eslint').Linter.Config} */
+export default [
   {
-    ignores: ['eslint.config.mjs'],
+    files: ["**/*.{js,mjs,cjs,ts}"],
+    ignores: [ // Adicione esta seção
+      "dist/",
+      "node_modules/",
+    ],
   },
-  eslint.configs.recommended,
-  ...tseslint.configs.recommendedTypeChecked,
-  eslintPluginPrettierRecommended,
   {
-    languageOptions: {
-      globals: {
-        ...globals.node,
-        ...globals.jest,
-      },
-      ecmaVersion: 5,
-      sourceType: 'module',
-      parserOptions: {
-        projectService: true,
-        tsconfigRootDir: import.meta.dirname,
-      },
+    languageOptions: { globals: globals.browser },
+  },
+  pluginJs.configs.recommended,
+  ...tseslint.configs.recommended,
+  {
+    plugins: {
+      import: eslintPluginImport, // A referência para o plugin
     },
-  },
-  {
     rules: {
-      '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-floating-promises': 'warn',
-      '@typescript-eslint/no-unsafe-argument': 'warn',
+      "import/no-cycle": ["error", { maxDepth: 1 }],
     },
   },
-);
+];

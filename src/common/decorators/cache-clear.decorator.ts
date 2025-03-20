@@ -1,10 +1,8 @@
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
 
 /**
  * Decorador que limpa o cache para as chaves especificadas após a execução do método.
  *
- * @param {string[]} keys - Lista de chaves de cache a serem limpas. Suporta caracteres curinga '*' (ex: 'user:*').
+ * @param {string} keys - Lista de chaves de cache a serem limpas. Suporta caracteres curinga '*' (ex: 'user:*').
  *
  * @returns {MethodDecorator} - O decorador de método.
  *
@@ -12,7 +10,7 @@ import { Cache } from 'cache-manager';
  * ```typescript
  * @CacheClear(['user:*', 'settings'])
  * async updateUserSettings(userId: string, settings: any) {
- *     // lógica para atualizar configurações do usuário
+ * // lógica para atualizar configurações do usuário
  * }
  * ```
  *
@@ -25,24 +23,24 @@ import { Cache } from 'cache-manager';
  * 3. Verifica se o objeto "store" do cacheManager possui o método "keys". Se não estiver disponível, emite um aviso e pula a limpeza.
  * 4. Se o método "keys" estiver disponível, ele é utilizado para obter todas as chaves armazenadas no cache.
  * 5. Para cada padrão especificado:
- *    - Se o padrão contém o caractere curinga '*', converte-o em prefixo e filtra as chaves que iniciam com esse prefixo.
- *    - Caso contrário, utiliza a chave exata para remoção.
+ * - Se o padrão contém o caractere curinga '*', converte-o em prefixo e filtra as chaves que iniciam com esse prefixo.
+ * - Caso contrário, utiliza a chave exata para remoção.
  * 6. Remove todas as chaves identificadas por meio do método "del".
  * 7. Registra mensagens de log via console para depuração.
  */
-export function CacheClear(keys: string[]) {
+export function CacheClear(keys: string): MethodDecorator {
     return (
-        target: any,
-        propertyKey: string,
+        target: object,
+        propertyKey: string | symbol,
         descriptor: PropertyDescriptor,
-    ) => {
+    ): PropertyDescriptor => {
         const originalMethod = descriptor.value;
-        descriptor.value = async function (...args: any[]) {
+        descriptor.value = async function (...args: unknown) {
             // Executa o método original e armazena o resultado
             const result = await originalMethod.apply(this, args);
 
             // Recupera a instância do cacheManager, que deve estar injetada na instância do serviço
-            const cache = this.cacheManager;
+            const cache = this['cacheManager'];
 
             // Verifica se o cacheManager está definido
             if (!cache) {
@@ -58,7 +56,7 @@ export function CacheClear(keys: string[]) {
 
             try {
                 // Obtém todas as chaves do cache (suporta funções síncronas ou assíncronas)
-                const allKeys = await Promise.resolve(cache.store.keys());
+                const allKeys: string = await Promise.resolve(cache.store.keys());
 
                 // Para cada padrão especificado, filtra e remove as chaves correspondentes
                 await Promise.all(
