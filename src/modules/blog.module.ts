@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 
 import { AuthorsModule } from '@src/modules/blog/authors/authors.module';
 import { CategoryModule } from '@src/modules/blog/category/category.module';
@@ -19,11 +19,11 @@ import { SubcategoryModule } from '@src/modules/blog/subcategory/subcategory.mod
  */
 @Module({
   imports: [
-    AuthorsModule,
-    CategoryModule,
-    CommentsModule,
-    PostsModule,
-    SubcategoryModule,
+    forwardRef(() => AuthorsModule),
+    forwardRef(() => CategoryModule),
+    forwardRef(() => CommentsModule),
+    forwardRef(() => PostsModule),
+    forwardRef(() => SubcategoryModule),
   ],
   exports: [
     AuthorsModule,
