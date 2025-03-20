@@ -21,7 +21,7 @@ import { AuthModule } from './auth/auth.module';
       },
     }),
 
-    // Configuração de cache (CORREÇÃO AQUI)
+    // Configuração de cache
     CacheModule.register({
       isGlobal: true,
       ttl: 300,
