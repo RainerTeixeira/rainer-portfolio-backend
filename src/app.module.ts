@@ -25,6 +25,7 @@ import { CommentsModule } from './modules/blog/comments/comments.module';
         allowUnknown: false,
         abortEarly: true,
       },
+      load: [() => ({ PORT: 4000 })], // Adicione esta linha
     }),
 
     // Módulos de funcionalidades

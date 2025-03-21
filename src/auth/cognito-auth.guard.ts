@@ -78,6 +78,11 @@ export class CognitoAuthGuard implements CanActivate {
   private extractToken(request: Request): string {
     const authHeader = request.headers.authorization;
 
+    // Log detalhado para verificar o valor do cabeçalho de autorização
+    if (this.configService.get('NODE_ENV') === 'development') {
+      console.log('Authorization Header:', authHeader);
+    }
+
     // Verifica formato do header: Bearer <token>
     if (!authHeader?.startsWith('Bearer ')) {
       throw new UnauthorizedException('Formato de autorização inválido. Use: Bearer <token>');
