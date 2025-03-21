@@ -1,5 +1,5 @@
 import { DynamoDbService } from '@src/services/dynamoDb.service';
-import { Injectable, NotFoundException, Logger, Inject, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger, Inject, BadRequestException, UseGuards } from '@nestjs/common';
 import { UpdateCommandInput } from '@aws-sdk/lib-dynamodb';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
@@ -7,6 +7,7 @@ import { CreateAuthorDto } from '@src/modules/blog/authors/dto/Create-author.dto
 import { UpdateAuthorDto } from '@src/modules/blog/authors/dto/Update-author.dto';
 import { AuthorDetailDto } from '@src/modules/blog/authors/dto/author-detail.dto';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { CognitoAuthGuard } from '@src/auth/cognito-auth.guard';
 
 /**
  * @AuthorsService
@@ -55,6 +56,7 @@ export class AuthorsService {
      * Busca todos os autores no DynamoDB.
      * @returns Uma Promise que resolve para um array de AuthorDetailDto ou um objeto com mensagem caso não haja autores.
      */
+    @UseGuards(CognitoAuthGuard)
     @ApiOperation({ summary: 'Busca todos os autores' })
     @ApiResponse({ status: 200, description: 'Lista de autores.', type: [AuthorDetailDto] })
     @ApiResponse({ status: 404, description: 'Nenhum autor encontrado.' })

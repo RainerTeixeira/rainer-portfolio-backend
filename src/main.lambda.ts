@@ -3,141 +3,192 @@ import { AppModule } from './app.module';
 import { Context as LambdaContext, APIGatewayProxyEvent as LambdaEvent } from 'aws-lambda';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import serverless from 'serverless-http';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger'; // Importe os módulos do Swagger UI
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { ConfigService } from '@nestjs/config';
+import { ValidationPipe } from '@nestjs/common';
+import { FastifyInstance } from 'fastify';
 
-// Variável para armazenar em cache a instância do servidor NestJS para otimizar cold starts.
-// 'cachedServer' mantém a instância do servidor entre invocações da Lambda, evitando reinicializações desnecessárias.
+/**
+ * Instância do servidor empacotado para Lambda, armazenada em cache para otimização.
+ * @type {ReturnType<typeof serverless> | null}
+ */
 let cachedServer: ReturnType<typeof serverless> | null = null;
 
 /**
- * Função auxiliar para logar erros de forma detalhada no console.
- * Ajuda no debugging, especialmente em ambiente Lambda, onde logs são cruciais.
- * @param error Objeto de erro desconhecido.
+ * Registra erros no console, diferenciando entre erros do tipo `Error` e outros tipos.
+ * @param {unknown} error - O erro a ser registrado.
  */
 function logError(error: unknown): void {
   if (error instanceof Error) {
-    // Se for um objeto Error, loga a mensagem e o stacktrace (se disponível).
-    console.error('Erro:', error.stack || error.message);
+    console.error('[ERRO CRÍTICO]', error.stack || error.message);
   } else {
-    // Se for um erro desconhecido, loga uma mensagem genérica.
-    console.error('Erro desconhecido:', error);
+    console.error('[ERRO DESCONHECIDO]', error);
   }
-}
-
-async function setupSwagger(app: NestFastifyApplication) {
-  const config = new DocumentBuilder()
-    .setTitle('API do Rainer Portfolio') // Título da documentação no Swagger UI
-    .setDescription('API Backend para o Portfólio do Rainer Teixeira') // Descrição da API
-    .setVersion('1.0') // Versão da API
-    .addTag('portfolio') // Tag para agrupar as rotas (opcional)
-    .build(); // Finaliza a configuração do DocumentBuilder
-
-  const document = SwaggerModule.createDocument(app, config); // Cria o documento de especificação OpenAPI (Swagger)
-  SwaggerModule.setup('api', app, document); // Configura o Swagger UI para ser servido na rota /api
-  // Agora você pode acessar a documentação em http://localhost:3000/api no seu navegador
 }
 
 /**
- * @swagger
- * /:
- *   get:
- *     summary: Retorna a página inicial da API
- *     description: Retorna uma mensagem de boas-vindas para verificar se a API está funcionando.
- *     responses:
- *       200:
- *         description: Página inicial exibida com sucesso.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Bem-vindo à API do Portfólio do Rainer!"
+ * Configura o Swagger para documentação da API.
+ * @async
+ * @param {NestFastifyApplication} app - A instância da aplicação NestJS.
+ */
+async function setupSwagger(app: NestFastifyApplication) {
+  const configService = app.get(ConfigService);
+
+  const config = new DocumentBuilder()
+    .setTitle('API Portfolio Rainer Teixeira')
+    .setDescription('API profissional para gerenciamento de conteúdo do portfólio')
+    .setVersion('1.0')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        description: 'Insira o token JWT do Cognito',
+      },
+      'cognito-auth',
+    )
+    .addServer(configService.get('API_BASE_URL', 'http://localhost:4000'))
+    .build();
+
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api', app, document, {
+    swaggerOptions: {
+      persistAuthorization: true,
+      oauth2RedirectUrl: `${configService.get('COGNITO_DOMAIN')}/oauth2/authorize`,
+    },
+  });
+}
+
+/**
+ * Configura e inicializa a aplicação NestJS para execução em Lambda.
+ * @async
+ * @returns {Promise<ReturnType<typeof serverless>>} - Uma promessa que resolve com o servidor empacotado.
  */
 async function bootstrapServer(): Promise<ReturnType<typeof serverless>> {
-  // Verifica se já existe uma instância cached do servidor.
   if (!cachedServer) {
-    console.log('⚡ Inicializando o servidor NestJS...'); // Loga o início da inicialização.
-    // Cria a aplicação NestJS usando Fastify como adaptador HTTP para alta performance.
+    // Cria a aplicação utilizando o adaptador Fastify
     const app = await NestFactory.create<NestFastifyApplication>(
-      AppModule, // Módulo raiz da aplicação NestJS.
-      new FastifyAdapter({ logger: true }), // Usa o adaptador Fastify com logging ativado (útil em desenvolvimento).
+      AppModule,
+      new FastifyAdapter({
+        logger: process.env.NODE_ENV === 'development',
+        trustProxy: true,
+      }),
     );
-    // Habilita CORS para permitir requisições de diferentes origens (configurado para permitir todas as origens neste exemplo - ajuste conforme necessário em produção).
-    app.enableCors({
-      origin: '*', // Permite requisições de qualquer origem.
-      methods: 'GET,HEAD,PUT,PATCH,POST,DELETE', // Métodos HTTP permitidos.
-    });
-    // Inicializa a aplicação NestJS.
-    await app.init();
 
-    // Configuração do Swagger UI
+    const configService = app.get(ConfigService);
+
+    // Validação de configuração crítica: Verifica se o Cognito está configurado
+    if (!configService.get('COGNITO_USER_POOL_ID')) {
+      throw new Error('Configuração do Cognito não encontrada!');
+    }
+
+    // Configuração de CORS para ambiente Lambda
+    // Nota: Quando 'credentials' é true, é recomendado especificar explicitamente os domínios.
+    app.enableCors({
+      origin: configService.get('CORS_ORIGIN', '*'),
+      methods: ['GET', 'POST', 'PATCH', 'DELETE'],
+      allowedHeaders: ['Content-Type', 'Authorization'],
+      credentials: true,
+    });
+
+    // Validação global de DTOs (Data Transfer Objects)
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+      }),
+    );
+
+    // Configuração do Swagger para documentação da API
     await setupSwagger(app);
 
-    // Cria um servidor "serverless" a partir da instância do Fastify, utilizando a biblioteca 'serverless-http'.
-    // Esse servidor serverless é compatível com o formato de eventos do AWS Lambda e API Gateway.
-    cachedServer = serverless(app.getHttpAdapter().getInstance());
-    console.log('✅ Servidor inicializado e pronto para requisições!'); // Loga o sucesso na inicialização.
+    // Inicializa a aplicação de forma segura
+    await app.init();
+
+    // Log de configurações importantes
+    console.log('🔐 Configuração Cognito:');
+    console.log(`- User Pool ID: ${configService.get('COGNITO_USER_POOL_ID')}`);
+    console.log(`- Região AWS: ${configService.get('AWS_REGION')}`);
+
+    // Cria a instância do serverless para uso com AWS Lambda
+    cachedServer = serverless(app.getHttpAdapter().getInstance() as unknown as FastifyInstance, {
+      binary: ['image/*', 'application/pdf'],
+    });
   }
 
-  // Retorna a instância cached do servidor (seja a nova ou a existente).
   return cachedServer;
 }
 
 /**
- * Handler principal para AWS Lambda. Recebe eventos do Lambda Function URL e contexto de execução do Lambda.
- * É o ponto de entrada da função Lambda na AWS.
- * @param event Objeto de evento do Lambda Function URL, contendo detalhes da requisição HTTP.
- * @param context Objeto de contexto do AWS Lambda, com informações sobre o ambiente de execução.
- * @returns Promise<any> Promise que resolve com a resposta HTTP formatada para o Lambda Function URL.
+ * Handler principal para eventos do AWS Lambda.
+ * @async
+ * @param {LambdaEvent} event - O evento do Lambda.
+ * @param {LambdaContext} context - O contexto do Lambda.
+ * @returns {Promise<any>} - Uma promessa que resolve com a resposta do servidor.
  */
 export const handler = async (event: LambdaEvent, context: LambdaContext) => {
-  const server = await bootstrapServer();
-  return server(event, context);
+  try {
+    const server = await bootstrapServer();
+    return await server(event, context);
+  } catch (error) {
+    logError(error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ message: 'Erro interno do servidor' }),
+    };
+  }
 };
 
-/**
- * @swagger
- * /local:
- *   get:
- *     summary: Inicializa o servidor local para desenvolvimento
- *     description: Endpoint utilizado para iniciar o servidor localmente, fora do ambiente AWS Lambda.
- *     responses:
- *       200:
- *         description: Servidor local inicializado com sucesso.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Servidor local iniciado em http://localhost:3000"
- */
+// Se não estiver rodando em ambiente AWS Lambda, executa a aplicação localmente.
 if (!process.env.AWS_LAMBDA_FUNCTION_NAME) {
+  /**
+   * Configura e inicializa a aplicação NestJS para execução local.
+   * @async
+   */
   async function bootstrapLocal() {
-    console.log('🚀 Iniciando servidor local...'); // Loga o início do servidor local.
-    // Cria a aplicação NestJS usando Fastify como adaptador HTTP (sem logging detalhado para ambiente local - pode ser ajustado).
+    // Cria a aplicação utilizando o adaptador Fastify
     const app = await NestFactory.create<NestFastifyApplication>(
-      AppModule, // Módulo raiz da aplicação.
-      new FastifyAdapter(), // Usa o adaptador Fastify para servidor local também.
+      AppModule,
+      new FastifyAdapter({
+        logger: true,
+        https:
+          process.env.NODE_ENV === 'production'
+            ? {
+              key: process.env.SSL_KEY,
+              cert: process.env.SSL_CERT,
+            }
+            : undefined,
+      }),
     );
 
-    // Configuração do Swagger UI
+    const configService = app.get(ConfigService);
+
+    // Aviso de segurança: Verifica se o Client ID do Cognito está configurado para ambiente local
+    if (!configService.get('COGNITO_CLIENT_ID')) {
+      console.warn('⚠️ Aviso: Client ID do Cognito não configurado!');
+    }
+
+    // Configuração de CORS para ambiente local
+    app.enableCors({
+      origin: configService.get('CORS_ORIGIN', '*'),
+      methods: ['GET', 'POST', 'PATCH', 'DELETE'],
+      allowedHeaders: ['Content-Type', 'Authorization'],
+      credentials: true,
+    });
+
+    // Configuração do Swagger para documentação da API
     await setupSwagger(app);
 
-    // Inicia o servidor local na porta 3000 e no endereço 0.0.0.0 (acessível externamente).
-    await app.listen(3000, '0.0.0.0', () => {
-      console.log(`🔌 Servidor ouvindo em http://localhost:3000`); // Loga o endereço do servidor local.
-      console.log(`📚 Documentação Swagger em http://localhost:3000/api`); // Loga o endereço da documentação Swagger (se configurada).
+    // Inicia a aplicação localmente na porta definida (ou 4000 por padrão)
+    await app.listen(configService.get('PORT', 4000), '0.0.0.0', async () => {
+      console.log(`🚀 Servidor local em ${await app.getUrl()}`);
+      console.log(`📚 Swagger: ${await app.getUrl()}/api`);
     });
   }
 
-  // Inicializa o servidor local e trata possíveis erros durante a inicialização.
-  bootstrapLocal().catch(error => {
-    console.log('🚀 Erro ao iniciar o servidor local:'); // LOG PASSO ERRO - CATCH
-    logError(error); // Loga qualquer erro que ocorra durante a inicialização do servidor local.
-    process.exit(1); // Encerra o processo Node.js em caso de falha na inicialização.
+  // Inicializa o ambiente local e trata possíveis erros
+  bootstrapLocal().catch((error) => {
+    logError(error);
+    process.exit(1);
   });
 }

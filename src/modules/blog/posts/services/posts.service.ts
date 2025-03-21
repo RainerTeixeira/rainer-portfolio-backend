@@ -3,10 +3,10 @@ import {
   Logger,
   BadRequestException,
   NotFoundException,
-  Inject,
-  CACHE_MANAGER,
+  // Inject,
+  // CACHE_MANAGER,
 } from '@nestjs/common';
-import { Cache } from 'cache-manager';
+// import { Cache } from 'cache-manager';
 import { QueryCommandInput } from '@aws-sdk/lib-dynamodb';
 import { ConfigService } from '@nestjs/config';
 import { DynamoDbService } from '@src/services/dynamoDb.service';

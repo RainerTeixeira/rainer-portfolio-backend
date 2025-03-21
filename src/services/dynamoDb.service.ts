@@ -15,6 +15,9 @@ import {
   GetCommandOutput,
   PutCommandOutput,
   UpdateCommandOutput,
+  QueryCommand,
+  QueryCommandInput,
+  QueryCommandOutput,
 } from '@aws-sdk/lib-dynamodb';
 
 dotenv.config();
@@ -160,6 +163,17 @@ export class DynamoDbService {
       }));
     } catch (error) {
       this.handleError('updateItem', error, 'Erro na operação updateItem');
+    }
+  }
+
+  /**
+   * Executa uma operação de consulta (query) no DynamoDB.
+   */
+  async query(params: QueryCommandInput): Promise<QueryCommandOutput> {
+    try {
+      return await this.docClient.send(new QueryCommand(params));
+    } catch (error) {
+      this.handleError('query', error, 'Erro na operação query');
     }
   }
 

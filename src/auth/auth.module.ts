@@ -1,6 +1,10 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config'; // Adicionar importação do ConfigModule
+import { AuthService } from './auth.service'; // Certifique-se de que este caminho está correto
+import { AuthController } from './auth.controller'; // Certifique-se de que este caminho está correto
+import { PassportModule } from '@nestjs/passport';
+import { LocalAuthGuard } from './guards/local-auth.guard';
 import { CognitoAuthGuard } from './cognito-auth.guard';
-import { ConfigModule } from '@nestjs/config';
 
 /**
  * Módulo responsável por fornecer as configurações e o guard de autenticação via Cognito.
@@ -12,8 +16,14 @@ import { ConfigModule } from '@nestjs/config';
  * possam validar os tokens JWT emitidos pelo Cognito.
  */
 @Module({
-    imports: [ConfigModule],
-    providers: [CognitoAuthGuard],
-    exports: [CognitoAuthGuard],
+  imports: [
+    ConfigModule.forRoot(), // Adicionar ConfigModule para carregar variáveis de ambiente
+    PassportModule.register({ defaultStrategy: 'jwt' }),
+
+  ],
+  controllers: [AuthController], // Certifique-se de que o AuthController está listado aqui
+  providers: [AuthService, LocalAuthGuard, CognitoAuthGuard],
+  exports: [AuthService],
 })
-export class AuthModule { }
+export class AuthModule {
+}
