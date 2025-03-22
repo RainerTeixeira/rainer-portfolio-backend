@@ -1,12 +1,8 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { CacheModule } from '@nestjs/cache-manager';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-
 import { PostsService } from '@src/modules/blog/posts/services/posts.service';
 import { PostsController } from '@src/modules/blog/posts/controllers/posts.controller';
-
 import { DynamoDbService } from '@src/services/dynamoDb.service';
-
 import { AuthorsService } from '@src/modules/blog/authors/services/authors.service';
 import { CategoryService } from '@src/modules/blog/category/services/category.service';
 import { SubcategoryService } from '@src/modules/blog/subcategory/services/subcategory.service';
@@ -14,8 +10,8 @@ import { CommentsService } from '@src/modules/blog/comments/services/comments.se
 import { AuthorsModule } from '@src/modules/blog/authors/authors.module';
 import { CategoryModule } from '@src/modules/blog/category/category.module';
 import { SubcategoryModule } from '@src/modules/blog/subcategory/subcategory.module';
-
 import { CommentsModule } from '@src/modules/blog/comments/comments.module';
+import { ConfigModule } from '@nestjs/config';
 import { memoryStore } from 'cache-manager';
 
 /**
@@ -23,15 +19,14 @@ import { memoryStore } from 'cache-manager';
  */
 @Module({
   imports: [
-    forwardRef(() => AuthorsModule),
-    forwardRef(() => CategoryModule),
-    forwardRef(() => SubcategoryModule),
-    forwardRef(() => CommentsModule),
+    AuthorsModule,
+    CategoryModule,
+    SubcategoryModule,
+    CommentsModule,
     ConfigModule,
-    CacheModule.register({
-      isGlobal: true,
-      store: memoryStore,
-      ttl: 60 * 1000,
+    CacheModule.register({ // Configuração do CacheModule
+      store: memoryStore, // Use cache em memória
+      ttl: 60 * 1000, // Tempo de vida padrão de 1 minuto (opcional)
     }),
   ],
   controllers: [PostsController],
@@ -42,7 +37,6 @@ import { memoryStore } from 'cache-manager';
     CategoryService,
     SubcategoryService,
     CommentsService,
-    ConfigService,
   ],
 })
 export class PostsModule { }

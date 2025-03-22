@@ -1,8 +1,8 @@
-  // posts.controller.ts
+// posts.controller.ts
   import {
     Controller, Get, Post, Patch, Delete,
     Query, Param, Body, UseInterceptors, UseGuards,
-    DefaultValuePipe, ParseIntPipe // IMPORTE OS PIPES FALTANTES
+    DefaultValuePipe, ParseIntPipe, ParseUUIDPipe, ValidationPipe // IMPORTE OS PIPES FALTANTES
   } from '@nestjs/common';
   import {
     ApiTags, ApiOperation, ApiResponse, ApiQuery,
@@ -21,7 +21,7 @@
    * PostsController - Controlador responsável pelas operações de manipulação de posts do blog.
    * Este controlador lida com a criação, atualização, exclusão e listagem de posts.
    */
-  @Controller('blog/posts')
+  @Controller('posts')
   @UseInterceptors(ResponseInterceptor)
   @ApiTags('Blog Posts')
   @ApiBearerAuth()

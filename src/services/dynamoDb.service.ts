@@ -49,7 +49,9 @@ export class DynamoDBError extends Error {
 }
 
 /**
- * Serviço responsável por interações com o DynamoDB.
+ * @Service - DynamoDbService
+ *
+ * Esta classe fornece os métodos para interagir com o DynamoDB.
  */
 @Injectable()
 export class DynamoDbService {
@@ -95,7 +97,9 @@ export class DynamoDbService {
   }
 
   /**
-   * Recupera um item do DynamoDB.
+   * Obtém um item do DynamoDB.
+   * @param params - Os parâmetros para a operação de obtenção.
+   * @returns Uma Promise que resolve para o item obtido.
    */
   async getItem(params: GetCommandInput): Promise<GetCommandOutput> {
     if (!params.Key || Object.keys(params.Key).length === 0) {
