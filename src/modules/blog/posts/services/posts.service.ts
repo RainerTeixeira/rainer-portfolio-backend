@@ -129,28 +129,24 @@ export class PostsService {
    * @throws NotFoundException Se o post não for encontrado.
    * @throws BadRequestException Se ocorrer um erro na consulta.
    */
-  async getFullPostBySlug(slug: string): Promise<PostFullDto> {
+  private async getPostBySlugFromDB(slug: string) {
     try {
       this.logger.log(`Buscando post com slug: ${slug}`);
-      const cacheKey = `post:${slug}`;
-      const cached = await this.cacheManager.get(cacheKey);
-      if (cached) {
-        this.logger.log(`Post encontrado no cache: ${slug}`);
-        return cached as PostFullDto;
-      }
+      const params: QueryCommandInput = {
+        TableName: this.tableName,
+        IndexName: 'slug-index',
+        KeyConditionExpression: 'slug = :slug',
+        ExpressionAttributeValues: { ':slug': slug },
+      };
+      this.logger.debug('Parâmetros da query:', JSON.stringify(params, null, 2)); // 👈 Log adicional
 
-      const post = await this.getPostBySlugFromDB(slug);
-      if (!post) {
-        this.logger.warn(`Post não encontrado no banco de dados: ${slug}`);
-        throw new NotFoundException('Post não encontrado');
-      }
+      const result = await this.dynamoDbService.query(params);
+      this.logger.log(`Resultado da query: ${JSON.stringify(result, null, 2)}`); // 👈 Log adicional
 
-      const fullPost = await this.enrichPostData(post);
-      await this.cacheManager.set(cacheKey, fullPost, 60_000);
-      return fullPost;
+      return result.Items?.[0] as Record<string, unknown> | undefined;
     } catch (error) {
-      this.logError('getFullPostBySlug', error);
-      throw new BadRequestException('Erro ao buscar post');
+      this.logError('getPostBySlugFromDB', error);
+      throw error;
     }
   }
 
@@ -232,35 +228,6 @@ export class PostsService {
       subcategory,
       comments,
     };
-  }
-
-  /**
-   * Busca um post pelo slug diretamente no DynamoDB.
-   * 
-   * @param slug Slug do post.
-   * @returns O primeiro post encontrado ou undefined.
-   */
-  private async getPostBySlugFromDB(slug: string) {
-    try {
-      this.logger.log(`Executando query no DynamoDB para slug: ${slug}`);
-      const params: QueryCommandInput = {
-        TableName: this.tableName,
-        IndexName: 'slug-index',
-        KeyConditionExpression: 'slug = :slug',
-        ExpressionAttributeValues: { ':slug': slug },
-      };
-      const result = await this.dynamoDbService.query(params);
-      this.logger.log(`Query executada com sucesso para slug: ${slug}`);
-      if (result.Items?.length) {
-        this.logger.log(`Post encontrado no DynamoDB: ${JSON.stringify(result.Items[0])}`);
-      } else {
-        this.logger.warn(`Nenhum post encontrado para o slug: ${slug}`);
-      }
-      return result.Items?.[0] as Record<string, unknown> | undefined;
-    } catch (error) {
-      this.logError('getPostBySlugFromDB', error);
-      throw error;
-    }
   }
 
   /**
