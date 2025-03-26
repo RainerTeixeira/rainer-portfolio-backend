@@ -60,16 +60,18 @@ export class CommentsService {
     @ApiResponse({ status: 200, description: 'Comentário encontrado.', type: CommentDto })
     @ApiResponse({ status: 404, description: 'Comentário não encontrado.' })
     async findOne(postId: string, authorId: string): Promise<CommentDto> {
+        this.logger.log(`Buscando comentário com postId: ${postId} e authorId: ${authorId}`);
         const params = {
             TableName: this.tableName,
             Key: {
-                postId: postId,
-                authorId: authorId,
+                postId: { S: postId }, // Ajustar o formato da chave
+                authorId: { S: authorId }, // Ajustar o formato da chave
             },
         };
+
         const result = await this.dynamoDbService.getItem(params);
         if (!result.Item) {
-            throw new NotFoundException(`Comment com postId '${postId}' e authorId '${authorId}' não encontrado`);
+            throw new NotFoundException(`Comentário com postId '${postId}' e authorId '${authorId}' não encontrado`);
         }
         return this.mapCommentFromDynamoDb(result.Item);
     }

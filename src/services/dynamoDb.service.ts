@@ -77,12 +77,15 @@ export class DynamoDbService {
     this.logger.log(`Executando getItem na tabela: ${params.TableName}`);
     this.logger.log(`Parâmetros: ${JSON.stringify(params)}`);
     try {
-      const command = new GetCommand(params);
-      const result = await this.client.send(command);
-      return result;
+        if (!params.Key || Object.keys(params.Key).length === 0) {
+            throw new ValidationException('A chave primária não foi fornecida ou está vazia.');
+        }
+        const command = new GetCommand(params);
+        const result = await this.client.send(command);
+        return result;
     } catch (error) {
-      this.logger.error('Erro em getItem:', error);
-      throw error;
+        this.logger.error('Erro em getItem:', error);
+        throw error;
     }
   }
 
