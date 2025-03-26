@@ -26,4 +26,7 @@ export class PostFullDto {
 
     @ApiProperty({ type: [CommentDto] })
     comments: CommentDto[];
+
+    @ApiProperty({ description: 'Slug do post', example: 'guia-definitivo-apis-nestjs' })
+    slug: string; // Adicionado o campo slug
 }

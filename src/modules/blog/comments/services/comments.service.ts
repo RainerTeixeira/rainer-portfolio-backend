@@ -92,6 +92,21 @@ export class CommentsService {
     }
 
     /**
+     * Obtém todos os comentários de um post pelo postId.
+     * @param postId - ID do post.
+     * @returns Uma lista de comentários encontrados.
+     */
+    async findAllByPostId(postId: string): Promise<CommentDto[]> {
+        const params = {
+            TableName: this.tableName,
+            KeyConditionExpression: 'postId = :postId',
+            ExpressionAttributeValues: { ':postId': postId },
+        };
+        const result = await this.dynamoDbService.query(params);
+        return (result.Items || []).map(item => this.mapCommentFromDynamoDb(item));
+    }
+
+    /**
      * Atualiza um comentário.
      * @param postId - ID do post.
      * @param authorId - ID do autor.

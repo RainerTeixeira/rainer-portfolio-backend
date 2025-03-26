@@ -7,14 +7,13 @@ provider:
   region: us-east-1
   stage: dev
   environment:
-    NODE_ENV: dev
+    NODE_ENV: ${self:provider.stage}
     AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
-    AWS_REGION: us-east-1
     DYNAMO_TABLE_NAME_POSTS: Posts
-    COGNITO_USER_POOL_ID: us-east-1_wryiyhbWC
-    COGNITO_CLIENT_ID: 3ueos5ofu499je6ebc5u98n35h
-    COGNITO_JWKS_URL: https://cognito-idp.us-east-1.amazonaws.com/us-east-1_wryiyhbWC/.well-known/jwks.json
-
+    DYNAMO_TABLE_NAME_AUTHORS: Authors
+    DYNAMO_TABLE_NAME_CATEGORIES: Categories
+    DYNAMO_TABLE_NAME_COMMENTS: Comments
+    DYNAMO_TABLE_NAME_SUBCATEGORY: Subcategory
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -25,39 +24,37 @@ provider:
         - dynamodb:UpdateItem
         - dynamodb:DeleteItem
       Resource:
-        - arn:aws:dynamodb:us-east-1:*:table/Posts
+        - arn:aws:dynamodb:${self:provider.region}:*:table/*
 
 functions:
   posts:
-    main.lambda: src/controller/blog/posts/posts.controller.main.lambda
+    handler: src/controller/blog/posts/posts.controller.main.lambda
+    memorySize: 128          # Ajuste conforme a necessidade real
+    timeout: 10              # Defina um timeout que garanta a execução sem desperdício
     events:
-      - http: 
+      - http:
           path: posts
           method: post
-          cors: true  # Ativando CORS para permitir chamadas de outros domínios
+          cors: true
       - http:
           path: posts
           method: get
           cors: true
-
-    # URL da Lambda Function - opcional se você deseja usar uma URL HTTP diretamente
     url:
       cors: true
 
 plugins:
-  - serverless-offline  # Plugin para rodar localmente
+  - serverless-offline
+  - serverless-esbuild    # Certifique-se de ter este plugin instalado para otimizações
 
 custom:
   esbuild:
     bundle: true
-    minify: false
+    minify: !Sub "${opt:stage, 'dev'} != 'dev'"
     sourcemap: true
     target: node20
     platform: node
-    exclude: [aws-sdk]  # Excluindo aws-sdk, pois o SDK já está disponível no Lambda
-  minifyEnabled:
-    prod: true
-    dev: false
+    exclude: [aws-sdk]
   dynamodb:
     start:
       port: 8000
@@ -68,16 +65,103 @@ custom:
 
 resources:
   Resources:
+    AuthorsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: Authors
+        AttributeDefinitions:
+          - AttributeName: authorId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: authorId
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+
+    CategoriesTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: Categories
+        AttributeDefinitions:
+          - AttributeName: categoryId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: categoryId
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+
+    CommentsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: Comments
+        AttributeDefinitions:
+          - AttributeName: postId
+            AttributeType: S
+          - AttributeName: authorId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: postId
+            KeyType: HASH
+          - AttributeName: authorId
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+
     PostsTable:
       Type: AWS::DynamoDB::Table
       Properties:
         TableName: Posts
         AttributeDefinitions:
+          - AttributeName: categoryId#subcategoryId
+            AttributeType: S
           - AttributeName: postId
-            AttributeType: N
+            AttributeType: S
+          - AttributeName: status
+            AttributeType: S
+          - AttributeName: publishDate
+            AttributeType: S
+          - AttributeName: slug
+            AttributeType: S
         KeySchema:
-          - AttributeName: postId
+          - AttributeName: categoryId#subcategoryId
             KeyType: HASH
+          - AttributeName: postId
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+        GlobalSecondaryIndexes:
+          - IndexName: postsByPublishDate-index
+            KeySchema:
+              - AttributeName: status
+                KeyType: HASH
+              - AttributeName: publishDate
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+          - IndexName: postId-index
+            KeySchema:
+              - AttributeName: postId
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+          - IndexName: slug-index
+            KeySchema:
+              - AttributeName: slug
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+
+    SubcategoryTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: Subcategory
+        AttributeDefinitions:
+          - AttributeName: categoryId#subcategoryId
+            AttributeType: S
+          - AttributeName: subcategoryId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: categoryId#subcategoryId
+            KeyType: HASH
+          - AttributeName: subcategoryId
+            KeyType: RANGE
         BillingMode: PAY_PER_REQUEST
 
   Outputs:
