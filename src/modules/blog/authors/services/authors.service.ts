@@ -18,7 +18,7 @@ import { CognitoAuthGuard } from '@src/auth/cognito-auth.guard';
 @ApiTags('Authors')
 @Injectable()
 export class AuthorsService {
-    private readonly tableName = 'Authors'; // Nome da tabela DynamoDB para Autores
+    private readonly tableName = 'Authors'; // Certifique-se de que o nome da tabela está correto
     private readonly logger = new Logger(AuthorsService.name); // Logger para registrar eventos e erros neste serviço
 
     /**

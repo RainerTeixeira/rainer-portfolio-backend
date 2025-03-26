@@ -18,6 +18,9 @@ import {
   QueryCommand,
   QueryCommandInput,
   QueryCommandOutput,
+  ScanCommand,
+  ScanCommandInput,
+  ScanCommandOutput,
 } from '@aws-sdk/lib-dynamodb';
 
 dotenv.config();
@@ -56,64 +59,30 @@ export class DynamoDBError extends Error {
 @Injectable()
 export class DynamoDbService {
   private readonly logger = new Logger(DynamoDbService.name);
-  private readonly docClient: DynamoDBDocumentClient;
-  private static instance: DynamoDbService;
+  private readonly client: DynamoDBClient;
 
-  private constructor() {
+  constructor() {
     this.logger.log('Iniciando construtor do DynamoDbService');
-    this.logger.log(`Região AWS: ${process.env.AWS_REGION}`);
-    this.logger.log(`Endpoint DynamoDB: ${process.env.DYNAMODB_ENDPOINT || 'default (AWS online)'}`);
+    const region = process.env.AWS_REGION || 'us-east-1';
+    this.logger.log(`Região AWS: ${region}`);
 
-    const clientConfig: DynamoDBClientConfig = {
-      region: process.env.AWS_REGION || 'us-east-1',
-      ...(process.env.DYNAMODB_ENDPOINT && { endpoint: process.env.DYNAMODB_ENDPOINT }),
-    };
+    this.client = new DynamoDBClient({
+      region,
+      endpoint: process.env.DYNAMO_ENDPOINT || undefined, // Use endpoint customizado se definido
+    });
+    this.logger.log('DynamoDB Client inicializado com sucesso');
+  }
 
-    const translateConfig: TranslateConfig = {
-      marshallOptions: {
-        removeUndefinedValues: true,
-        convertClassInstanceToMap: true,
-        convertEmptyValues: false,
-      },
-      unmarshallOptions: {
-        wrapNumbers: false,
-      },
-    };
-
+  async getItem(params: { TableName: string; Key: Record<string, unknown> }) {
+    this.logger.log(`Executando getItem na tabela: ${params.TableName}`);
+    this.logger.log(`Parâmetros: ${JSON.stringify(params)}`);
     try {
-      this.docClient = DynamoDBDocumentClient.from(new DynamoDBClient(clientConfig), translateConfig);
-      this.logger.log('DynamoDB DocumentClient inicializado com sucesso');
+      const command = new GetCommand(params);
+      const result = await this.client.send(command);
+      return result;
     } catch (error) {
-      this.logger.error('Erro ao inicializar o DynamoDB DocumentClient:', error);
+      this.logger.error('Erro em getItem:', error);
       throw error;
-    }
-  }
-
-  public static getInstance(): DynamoDbService {
-    if (!DynamoDbService.instance) {
-      DynamoDbService.instance = new DynamoDbService();
-    }
-    return DynamoDbService.instance;
-  }
-
-  /**
-   * Obtém um item do DynamoDB.
-   * @param params - Os parâmetros para a operação de obtenção.
-   * @returns Uma Promise que resolve para o item obtido.
-   */
-  async getItem(params: GetCommandInput): Promise<GetCommandOutput> {
-    if (!params.Key || Object.keys(params.Key).length === 0) {
-      throw new ValidationException('Chave fornecida não corresponde ao esquema esperado');
-    }
-    try {
-      for (const key in params.Key) {
-        if (typeof params.Key[key] !== 'string') {
-          params.Key[key] = String(params.Key[key]);
-        }
-      }
-      return await this.docClient.send(new GetCommand(params));
-    } catch (error) {
-      this.handleError('getItem', error, 'Erro na operação getItem');
     }
   }
 
@@ -122,7 +91,7 @@ export class DynamoDbService {
    */
   async putItem(params: PutCommandInput): Promise<PutCommandOutput> {
     try {
-      return await this.docClient.send(new PutCommand(params));
+      return await this.client.send(new PutCommand(params));
     } catch (error) {
       this.handleError('putItem', error, 'Erro na operação putItem');
     }
@@ -157,7 +126,7 @@ export class DynamoDbService {
     }
 
     try {
-      return await this.docClient.send(new UpdateCommand({
+      return await this.client.send(new UpdateCommand({
         TableName: tableName,
         Key: key,
         UpdateExpression: `SET ${updateExpressions.join(', ')}`,
@@ -175,9 +144,22 @@ export class DynamoDbService {
    */
   async query(params: QueryCommandInput): Promise<QueryCommandOutput> {
     try {
-      return await this.docClient.send(new QueryCommand(params));
+      return await this.client.send(new QueryCommand(params));
     } catch (error) {
       this.handleError('query', error, 'Erro na operação query');
+    }
+  }
+
+  /**
+   * Executa uma operação de scan no DynamoDB.
+   */
+  async scan(params: ScanCommandInput): Promise<ScanCommandOutput> {
+    this.logger.log(`Executando scan na tabela: ${params.TableName}`);
+    try {
+      const command = new ScanCommand(params);
+      return await this.client.send(command);
+    } catch (error) {
+      this.handleError('scan', error, 'Erro na operação scan');
     }
   }
 

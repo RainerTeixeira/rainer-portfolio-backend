@@ -64,7 +64,7 @@ export class PostsController {
   @ApiParam({ name: 'slug', type: String })
   @ApiOkResponse({ type: PostFullDto })
   async getPostBySlug(@Param('slug') slug: string) {
-    const post = await this.postsService.getPostBySlugFromDB(slug);
+    const post = await this.postsService.getPostBySlug(slug);
     if (!post) {
       throw new NotFoundException(`Post com slug "${slug}" não encontrado`);
     }

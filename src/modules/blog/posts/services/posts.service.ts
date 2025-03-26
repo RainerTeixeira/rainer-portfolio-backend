@@ -122,31 +122,48 @@ export class PostsService {
   }
 
   /**
-   * Busca um post completo pelo slug.
-   * 
-   * @param slug Slug do post.
-   * @returns Dados completos do post, incluindo autor, categoria, subcategoria e comentários.
-   * @throws NotFoundException Se o post não for encontrado.
-   * @throws BadRequestException Se ocorrer um erro na consulta.
-   */
-  private async getPostBySlugFromDB(slug: string) {
+ * Busca um post pelo slug e retorna os dados completos, já enriquecidos com informações de autor, categoria, subcategoria e comentários.
+ * 
+ * @param slug Slug do post.
+ * @returns Dados completos do post.
+ * @throws NotFoundException Se o post não for encontrado.
+ * @throws BadRequestException Se ocorrer um erro na consulta.
+ */
+  async getPostBySlug(slug: string): Promise<PostFullDto> {
+    if (!slug) {
+      throw new BadRequestException('O slug não pode estar vazio.');
+    }
     try {
       this.logger.log(`Buscando post com slug: ${slug}`);
+
       const params: QueryCommandInput = {
         TableName: this.tableName,
         IndexName: 'slug-index',
         KeyConditionExpression: 'slug = :slug',
         ExpressionAttributeValues: { ':slug': slug },
       };
-      this.logger.debug('Parâmetros da query:', JSON.stringify(params, null, 2)); // 👈 Log adicional
+      this.logger.debug('Parâmetros da query:', JSON.stringify(params, null, 2));
 
       const result = await this.dynamoDbService.query(params);
-      this.logger.log(`Resultado da query: ${JSON.stringify(result, null, 2)}`); // 👈 Log adicional
+      this.logger.log(`Resultado da query: ${JSON.stringify(result, null, 2)}`);
 
-      return result.Items?.[0] as Record<string, unknown> | undefined;
+      const post = result.Items?.[0] as Record<string, unknown> | undefined;
+      if (!post) {
+        throw new NotFoundException(`Post com slug "${slug}" não encontrado.`);
+      }
+
+      // Inclui o campo contentHTML no enriquecimento dos dados
+      const enrichedPost = await this.enrichPostData(post);
+      return {
+        ...enrichedPost,
+        post: {
+          ...enrichedPost.post,
+          contentHTML: post.contentHTML as string, // Adiciona o campo contentHTML
+        },
+      };
     } catch (error) {
-      this.logError('getPostBySlugFromDB', error);
-      throw error;
+      this.logError('getPostBySlug', error);
+      throw new BadRequestException('Erro ao buscar post completo pelo slug');
     }
   }
 
@@ -218,7 +235,10 @@ export class PostsService {
     const [author, category, subcategory, comments] = await Promise.all([
       this.authorsService.findOne(post.authorId as string),
       this.categoryService.findOne(post.categoryId as string),
-      this.subcategoryService.findOne(post.categoryId as string, post.subcategoryId as string),
+      this.subcategoryService.findOne(
+        post.categoryId as string,
+        post.subcategoryId as string,
+      ), // Corrigir para usar a chave composta
       this.commentsService.findAllByPostId(post.postId as string),
     ]);
     return {
