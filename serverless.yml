@@ -45,7 +45,8 @@ functions:
 
 plugins:
   - serverless-offline
-  - serverless-esbuild    # Certifique-se de ter este plugin instalado para otimizações
+  # Remover o plugin serverless-esbuild
+  # - serverless-esbuild    # Remova essa linha
 
 custom:
   esbuild:
