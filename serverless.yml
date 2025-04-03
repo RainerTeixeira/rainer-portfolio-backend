@@ -29,8 +29,8 @@ provider:
 functions:
   posts:
     handler: src/controller/blog/posts/posts.controller.main.lambda
-    memorySize: 128          # Ajuste conforme a necessidade real
-    timeout: 10              # Defina um timeout que garanta a execução sem desperdício
+    memorySize: 128           # O limite do Free Tier é 128 MB, ajuste conforme necessário
+    timeout: 10               # Mantém o timeout baixo para evitar longos tempos de execução
     events:
       - http:
           path: posts
@@ -45,17 +45,17 @@ functions:
 
 plugins:
   - serverless-offline
-  # Remover o plugin serverless-esbuild
-  # - serverless-esbuild    # Remova essa linha
+  # O plugin serverless-esbuild não é mais necessário com a funcionalidade embutida no Serverless
 
 custom:
   esbuild:
     bundle: true
-    minify: !Sub "${opt:stage, 'dev'} != 'dev'"
+    minify: ${opt:stage, 'dev'} != 'dev'    # Minifica em produção
     sourcemap: true
     target: node20
     platform: node
-    exclude: [aws-sdk]
+    exclude: [aws-sdk]                      # Exclui aws-sdk do bundle, já que ele é nativo na Lambda
+
   dynamodb:
     start:
       port: 8000
@@ -76,7 +76,7 @@ resources:
         KeySchema:
           - AttributeName: authorId
             KeyType: HASH
-        BillingMode: PAY_PER_REQUEST
+        BillingMode: PAY_PER_REQUEST  # Use o modo On-Demand para estar dentro do Free Tier
 
     CategoriesTable:
       Type: AWS::DynamoDB::Table
@@ -126,7 +126,7 @@ resources:
             KeyType: HASH
           - AttributeName: postId
             KeyType: RANGE
-        BillingMode: PAY_PER_REQUEST
+        BillingMode: PAY_PER_REQUEST  # Modo On-Demand, dentro do Free Tier
         GlobalSecondaryIndexes:
           - IndexName: postsByPublishDate-index
             KeySchema:
