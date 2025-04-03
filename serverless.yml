@@ -1,5 +1,5 @@
 service: rp-dynamo-api
-frameworkVersion: "4.0.38"
+frameworkVersion: "4"
 
 provider:
   name: aws
@@ -8,7 +8,6 @@ provider:
   stage: dev
   environment:
     NODE_ENV: ${self:provider.stage}
-    AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
     DYNAMO_TABLE_NAME_POSTS: Posts
     DYNAMO_TABLE_NAME_AUTHORS: Authors
     DYNAMO_TABLE_NAME_CATEGORIES: Categories
@@ -23,150 +22,46 @@ provider:
         - dynamodb:PutItem
         - dynamodb:UpdateItem
         - dynamodb:DeleteItem
-      Resource:
-        - arn:aws:dynamodb:${self:provider.region}:*:table/*
+      Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/*"
 
 functions:
-  posts:
-    handler: src/controller/blog/posts/posts.controller.main.lambda
-    memorySize: 128           # O limite do Free Tier é 128 MB, ajuste conforme necessário
-    timeout: 10               # Mantém o timeout baixo para evitar longos tempos de execução
-    events:
-      - http:
-          path: posts
-          method: post
-          cors: true
-      - http:
-          path: posts
-          method: get
-          cors: true
-    url:
-      cors: true
+  dynamoHandler:
+    handler: src/main.lambdaHandler
+    memorySize: 128  # Reduzido para Free Tier
+    timeout: 3  # Máximo recomendado para Free Tier
+    url:  # Habilita Lambda Function URL
+      cors:
+        allowedOrigins: "*"
+        allowedHeaders:
+          - Content-Type
+          - Authorization
 
 plugins:
   - serverless-offline
-  # O plugin serverless-esbuild não é mais necessário com a funcionalidade embutida no Serverless
 
 custom:
   esbuild:
     bundle: true
-    minify: ${opt:stage, 'dev'} != 'dev'    # Minifica em produção
-    sourcemap: true
+    minify: true
+    sourcemap: false
     target: node20
     platform: node
-    exclude: [aws-sdk]                      # Exclui aws-sdk do bundle, já que ele é nativo na Lambda
-
-  dynamodb:
-    start:
-      port: 8000
-      migrate: true
-      inMemory: true
-    stages:
-      - dev
-
-resources:
-  Resources:
-    AuthorsTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: Authors
-        AttributeDefinitions:
-          - AttributeName: authorId
-            AttributeType: S
-        KeySchema:
-          - AttributeName: authorId
-            KeyType: HASH
-        BillingMode: PAY_PER_REQUEST  # Use o modo On-Demand para estar dentro do Free Tier
-
-    CategoriesTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: Categories
-        AttributeDefinitions:
-          - AttributeName: categoryId
-            AttributeType: S
-        KeySchema:
-          - AttributeName: categoryId
-            KeyType: HASH
-        BillingMode: PAY_PER_REQUEST
-
-    CommentsTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: Comments
-        AttributeDefinitions:
-          - AttributeName: postId
-            AttributeType: S
-          - AttributeName: authorId
-            AttributeType: S
-        KeySchema:
-          - AttributeName: postId
-            KeyType: HASH
-          - AttributeName: authorId
-            KeyType: RANGE
-        BillingMode: PAY_PER_REQUEST
-
-    PostsTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: Posts
-        AttributeDefinitions:
-          - AttributeName: categoryId#subcategoryId
-            AttributeType: S
-          - AttributeName: postId
-            AttributeType: S
-          - AttributeName: status
-            AttributeType: S
-          - AttributeName: publishDate
-            AttributeType: S
-          - AttributeName: slug
-            AttributeType: S
-        KeySchema:
-          - AttributeName: categoryId#subcategoryId
-            KeyType: HASH
-          - AttributeName: postId
-            KeyType: RANGE
-        BillingMode: PAY_PER_REQUEST  # Modo On-Demand, dentro do Free Tier
-        GlobalSecondaryIndexes:
-          - IndexName: postsByPublishDate-index
-            KeySchema:
-              - AttributeName: status
-                KeyType: HASH
-              - AttributeName: publishDate
-                KeyType: RANGE
-            Projection:
-              ProjectionType: ALL
-          - IndexName: postId-index
-            KeySchema:
-              - AttributeName: postId
-                KeyType: HASH
-            Projection:
-              ProjectionType: ALL
-          - IndexName: slug-index
-            KeySchema:
-              - AttributeName: slug
-                KeyType: HASH
-            Projection:
-              ProjectionType: ALL
-
-    SubcategoryTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: Subcategory
-        AttributeDefinitions:
-          - AttributeName: categoryId#subcategoryId
-            AttributeType: S
-          - AttributeName: subcategoryId
-            AttributeType: S
-        KeySchema:
-          - AttributeName: categoryId#subcategoryId
-            KeyType: HASH
-          - AttributeName: subcategoryId
-            KeyType: RANGE
-        BillingMode: PAY_PER_REQUEST
-
-  Outputs:
-    FunctionUrl:
-      Description: Endpoint HTTP direto da Lambda
-      Value:
-        Fn::GetAtt: [PostsLambdaFunctionUrl, FunctionUrl]
+    exclude: 
+      - aws-sdk
+      - '@nestjs/microservices'
+      - '@nestjs/platform-express'
+      - '@nestjs/websockets/socket-module'
+      - '@nestjs/microservices/microservices-module'
+      - 'class-transformer/storage'
+      - '@nestjs/platform-socket.io'
+      - '@grpc/grpc-js'
+      - '@grpc/proto-loader'
+      - 'kafkajs'
+      - 'mqtt'
+      - 'ioredis'
+      - 'amqplib'
+      - 'nats'
+      - 'amqp-connection-manager'
+      - 'class-transformer'
+      - 'rxjs'
+      - 'punycode'
