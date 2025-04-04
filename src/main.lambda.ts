@@ -1,16 +1,16 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { APIGatewayProxyEvent, Context } from 'aws-lambda';
+import { Context, LambdaFunctionURLEvent } from 'aws-lambda'; // Correção aqui: LambdaFunctionUrlEvent (com 'l' minúsculo)
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { ValidationPipe } from '@nestjs/common';
-import { FastifyInstance, fastify, HTTPMethods } from 'fastify';
+import { FastifyInstance, fastify } from 'fastify';
 
 // Define um tipo customizado para a resposta do inject
 interface InjectResponse {
   statusCode: number;
-  headers: Record<string, any>;
+  headers: Record<string, string | string[]>;
   body: string;
 }
 
@@ -55,21 +55,21 @@ async function bootstrapFastify(): Promise<FastifyInstance> {
   return cachedFastify;
 }
 
-export const handler = async (event: APIGatewayProxyEvent, context: Context) => {
+export const lambdaHandler = async (event: LambdaFunctionURLEvent) => {
   const fastifyInstance = await bootstrapFastify();
 
   // Definindo os métodos válidos como array "const"
   const validMethods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'] as const;
   type ValidMethod = typeof validMethods[number];
 
-  // Converte para maiúsculas e, se o método não estiver na lista, usa 'GET'
-  const method = (event.httpMethod ?? 'GET').toUpperCase();
+  // Usa o método HTTP do requestContext
+  const method = (event.requestContext?.http?.method ?? 'GET').toUpperCase();
   const safeMethod: ValidMethod = validMethods.includes(method as ValidMethod) ? method as ValidMethod : 'GET';
 
   // Forçamos a tipagem do retorno para o tipo customizado
   const response = (await fastifyInstance.inject({
     method: safeMethod,
-    url: event.path,
+    url: event.rawPath,
     headers: event.headers || {},
     payload: event.body || undefined,
   })) as unknown as InjectResponse;

@@ -283,20 +283,40 @@ export class DynamoDbService {
    * @throws {DynamoDBOperationError} - Se ocorrer um erro durante a operação.
    */
   async query(params: QueryCommandInput): Promise<QueryCommandOutput> {
-    const operation = 'query';
-    this.logOperationStart(operation, params.TableName, params);
     try {
-      const command = new QueryCommand(params);
-      const result = await this.docClient.send(command);
-      this.logOperationSuccess(
-        operation,
-        params.TableName,
-        `Itens encontrados: ${result.Items?.length ?? 0}`,
-      );
+      // Ajusta os valores de ExpressionAttributeValues
+      if (params.ExpressionAttributeValues) {
+        params.ExpressionAttributeValues = this.adjustExpressionAttributeValues(params.ExpressionAttributeValues);
+      }
+
+      const result = await this.docClient.send(new QueryCommand(params));
       return result;
     } catch (error) {
-      this.handleError(operation, params.TableName, error, params);
+      this.handleError('query', params.TableName, error);
+      throw error;
     }
+  }
+
+  /**
+   * Ajusta os valores de ExpressionAttributeValues para o formato esperado pelo DynamoDB.
+   * @param values - Os valores a serem ajustados.
+   * @returns Os valores ajustados.
+   */
+  private adjustExpressionAttributeValues(values: Record<string, any>): Record<string, any> {
+    const adjustedValues: Record<string, any> = {};
+    for (const key in values) {
+      const value = values[key];
+      if (typeof value === 'string') {
+        adjustedValues[key] = { S: value }; // Converte strings para o formato esperado
+      } else if (typeof value === 'number') {
+        adjustedValues[key] = { N: value.toString() }; // Converte números para strings
+      } else if (Array.isArray(value)) {
+        adjustedValues[key] = { L: value.map((v) => ({ S: String(v) })) }; // Exemplo para listas de strings
+      } else {
+        adjustedValues[key] = value; // Mantém outros tipos como estão
+      }
+    }
+    return adjustedValues;
   }
 
   /**
