@@ -26,9 +26,9 @@ provider:
 
 functions:
   dynamoHandler:
-    handler: src/main.lambdaHandler
+    handler: src/main.lambdaHandler # Certifique-se que o nome da função exportada em src/main.lambda.ts é lambdaHandler
     memorySize: 128  # Reduzido para Free Tier
-    timeout: 3  # Máximo recomendado para Free Tier
+    timeout: 15     # Aumentando o timeout para 30 segundos (exemplo - ajuste conforme necessário)
     url:  # Habilita Lambda Function URL
       cors:
         allowedOrigins: "*"
@@ -46,7 +46,7 @@ custom:
     sourcemap: false
     target: node20
     platform: node
-    exclude: 
+    exclude:
       - aws-sdk
       - '@nestjs/microservices'
       - '@nestjs/platform-express'
