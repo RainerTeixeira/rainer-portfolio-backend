@@ -24,7 +24,10 @@ export class SubcategoryDto {
   @ApiProperty({ description: 'Título da subcategoria', required: false })
   title?: string;
 
-  constructor(categoryIdSubcategoryId: string, subcategoryId: string, name: string, slug: string, description?: string, keywords?: string, title?: string) {
+  @ApiProperty({ description: 'SEO da subcategoria', required: false })
+  seo?: Record<string, unknown>;
+
+  constructor(categoryIdSubcategoryId: string, subcategoryId: string, name: string, slug: string, description?: string, keywords?: string, title?: string, seo?: Record<string, unknown>) {
     this.categoryIdSubcategoryId = categoryIdSubcategoryId;
     this.subcategoryId = subcategoryId;
     this.name = name;
@@ -32,5 +35,6 @@ export class SubcategoryDto {
     this.description = description;
     this.keywords = keywords;
     this.title = title;
+    this.seo = seo;
   }
 }

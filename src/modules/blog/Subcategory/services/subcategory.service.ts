@@ -18,6 +18,7 @@ interface DynamoDBSubcategoryItem {
     description?: { S?: string };
     keywords?: { S?: string };
     title?: { S?: string };
+    seo?: { M?: Record<string, unknown> }; // Adicionado para corrigir o erro TS2339
 }
 
 /**
@@ -88,11 +89,11 @@ export class SubcategoryService {
      * @description Busca todas as subcategorias pertencentes a uma categoria específica no DynamoDB.
      * Utiliza a operação de `scan` com um filtro para buscar subcategorias pelo `categoryId`.
      * @param {string} categoryId - ID da categoria para buscar as subcategorias.
-     * @returns {Promise<SubcategoryDto>} Uma Promise que resolve para um array de DTOs de subcategorias encontradas.
+     * @returns {Promise<SubcategoryDto[]>} Uma Promise que resolve para um array de DTOs de subcategorias encontradas.
      */
     @ApiOperation({ summary: 'Buscar todas as subcategorias de uma categoria' })
     @ApiResponse({ status: 200, description: 'Lista de subcategorias retornada com sucesso.', type: [SubcategoryDto] })
-    async getAllSubcategories(categoryId: string): Promise<SubcategoryDto> {
+    async getAllSubcategories(categoryId: string): Promise<SubcategoryDto[]> {
         const params = {
             TableName: this.tableName,
             FilterExpression: 'begins_with(#pk, :pk_prefix)',
@@ -106,7 +107,7 @@ export class SubcategoryService {
 
         const result = await this.dynamoDbService.scan(params);
         if (!result.Items) {
-            return;
+            return []; // Retornar array vazio em vez de undefined
         }
 
         return result.Items.map((item: DynamoDBSubcategoryItem) => this.mapToDto(item));
@@ -148,6 +149,9 @@ export class SubcategoryService {
         updateSubcategoryDto: UpdateSubcategoryDto
     ): Promise<SubcategoryDto> {
         const categoryIdSubcategoryId = `${categoryId}#${subcategoryId}`;
+        if (!this.tableName) {
+            throw new Error('O nome da tabela não foi definido.');
+        }
         await this.findOne(categoryId, subcategoryId);
 
         const updateExpression = this.dynamoDbService.buildUpdateExpression(updateSubcategoryDto);
@@ -164,7 +168,13 @@ export class SubcategoryService {
             ...updateExpression,
         };
 
-        const result = await this.dynamoDbService.updateItem(params);
+        const result = await this.dynamoDbService.updateItem(
+            this.tableName,
+            params.Key as Record<string, any>, // Corrigido para garantir que Key seja do tipo correto
+            updateSubcategoryDto,
+            'ALL_NEW'
+        );
+
         if (!result.Attributes) {
             throw new NotFoundException(`Subcategoria '${subcategoryId}' na categoria '${categoryId}' não encontrada após atualização.`);
         }
@@ -254,6 +264,7 @@ export class SubcategoryService {
             description: item.description?.S,
             keywords: item.keywords?.S,
             title: item.title?.S,
+            seo: item.seo?.M ? (item.seo.M as Record<string, unknown>) : undefined, // Corrigido para verificar se `seo` existe
         };
     }
 

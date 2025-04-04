@@ -21,7 +21,8 @@ export class SubcategoryController {
     @Param('categoryIdSubcategoryId') categoryIdSubcategoryId: string,
     @Body() createSubcategoryDto: CreateSubcategoryDto
   ): Promise<SubcategoryDto> {
-    return this.subcategoryService.create(createSubcategoryDto);
+    createSubcategoryDto.categoryId = categoryIdSubcategoryId;
+    return this.subcategoryService.createSubcategory(createSubcategoryDto);
   }
 
   @ApiOperation({ summary: 'Buscar todas as subcategorias de uma categoria' })
@@ -29,7 +30,7 @@ export class SubcategoryController {
   @ApiResponse({ status: 404, description: 'Categoria não encontrada.' })
   @Get()
   async findAll(@Param('categoryIdSubcategoryId') categoryIdSubcategoryId: string): Promise<SubcategoryDto[]> {
-    return this.subcategoryService.findAll(categoryIdSubcategoryId);
+    return this.subcategoryService.getAllSubcategories(categoryIdSubcategoryId);
   }
 
   @ApiOperation({ summary: 'Buscar uma subcategoria por ID' })
@@ -40,7 +41,7 @@ export class SubcategoryController {
     @Param('categoryIdSubcategoryId') categoryIdSubcategoryId: string,
     @Param('subcategoryId') subcategoryId: string
   ): Promise<SubcategoryDto> {
-    return this.subcategoryService.findOne(categoryIdSubcategoryId, subcategoryId);
+    return this.subcategoryService.getSubcategoryById(categoryIdSubcategoryId, subcategoryId);
   }
 
   @ApiOperation({ summary: 'Atualizar uma subcategoria existente' })
@@ -53,7 +54,7 @@ export class SubcategoryController {
     @Param('subcategoryId') subcategoryId: string,
     @Body() updateSubcategoryDto: UpdateSubcategoryDto
   ): Promise<SubcategoryDto> {
-    return this.subcategoryService.update(categoryIdSubcategoryId, subcategoryId, updateSubcategoryDto);
+    return this.subcategoryService.updateSubcategory(categoryIdSubcategoryId, subcategoryId, updateSubcategoryDto);
   }
 
   @ApiOperation({ summary: 'Deletar uma subcategoria' })
@@ -65,6 +66,6 @@ export class SubcategoryController {
     @Param('categoryIdSubcategoryId') categoryIdSubcategoryId: string,
     @Param('subcategoryId') subcategoryId: string
   ): Promise<void> {
-    return this.subcategoryService.remove(categoryIdSubcategoryId, subcategoryId);
+    return this.subcategoryService.deleteSubcategory(categoryIdSubcategoryId, subcategoryId);
   }
 }
