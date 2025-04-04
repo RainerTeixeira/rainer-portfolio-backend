@@ -1,5 +1,5 @@
 import { DynamoDbService } from '@src/services/dynamoDb.service';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { CreateCommentDto } from '@src/modules/blog/comments/dto/create-comment.dto';
 import { UpdateCommentDto } from '@src/modules/blog/comments/dto/update-comment.dto';
 import { CommentDto } from '@src/modules/blog/comments/dto/comment.dto';
@@ -14,6 +14,7 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 @Injectable()
 export class CommentsService {
     private readonly tableName = 'Comments';
+    private readonly logger = new Logger(CommentsService.name); // Adicionando o logger
 
     constructor(private readonly dynamoDbService: DynamoDbService) { }
 
@@ -120,29 +121,28 @@ export class CommentsService {
     @ApiResponse({ status: 200, description: 'Comentário atualizado com sucesso.', type: CommentDto })
     @ApiResponse({ status: 404, description: 'Comentário não encontrado.' })
     async update(postId: string, authorId: string, updateCommentDto: UpdateCommentDto): Promise<CommentDto> {
+        this.logger.log(`Atualizando comentário com postId: ${postId} e authorId: ${authorId}`);
         await this.findOne(postId, authorId);
 
-        const params: UpdateCommandInput = {
+        const params = {
             TableName: this.tableName,
-            Key: {
-                postId: postId,
-                authorId: authorId,
-            },
-            UpdateExpression: 'SET content = :content, #status = :status, #date = :date',
-            ExpressionAttributeNames: {
-                '#status': 'status',
-                '#date': 'date',
-            },
-            ExpressionAttributeValues: {
-                ':content': updateCommentDto.content,
-                ':status': updateCommentDto.status || 'pending',
-                ':date': updateCommentDto.date || new Date().toISOString(),
-            },
+            Key: { postId, authorId }, // Adicionando a chave primária
+            UpdateExpression: 'set #content = :content',
+            ExpressionAttributeNames: { '#content': 'content' },
+            ExpressionAttributeValues: { ':content': updateCommentDto.content },
             ReturnValues: 'ALL_NEW',
         };
 
-        const result = await this.dynamoDbService.updateItem(params);
-        return this.mapCommentFromDynamoDb(result.Attributes as Record<string, unknown>);
+        const result = await this.dynamoDbService.updateItem(
+            params.TableName,
+            params.Key,
+            {
+                content: updateCommentDto.content,
+            },
+            params.ReturnValues,
+        ); // Ajustando a chamada para passar os argumentos corretos
+
+        return this.findOne(postId, authorId);
     }
 
     /**
