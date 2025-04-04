@@ -4,16 +4,16 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class SubcategoryDto {
   @ApiProperty({ description: 'Chave de Partição composta (categoryId#subcategoryId)' })
-  categoryIdSubcategoryId: string;
+  categoryIdSubcategoryId!: string;
 
   @ApiProperty({ description: 'Chave de Classificação (subcategoryId)' })
-  subcategoryId: string;
+  subcategoryId!: string;
 
   @ApiProperty({ description: 'Nome da subcategoria' })
-  name: string;
+  name!: string;
 
   @ApiProperty({ description: 'Slug da subcategoria' })
-  slug: string;
+  slug!: string;
 
   @ApiProperty({ description: 'Descrição da subcategoria', required: false })
   description?: string;

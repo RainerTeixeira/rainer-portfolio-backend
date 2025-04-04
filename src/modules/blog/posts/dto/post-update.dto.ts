@@ -33,4 +33,12 @@ export class PostUpdateDto extends PostBaseDto {
     @IsNumber()
     @IsOptional()
     readingTime?: number;
+
+    /**
+     * Conteúdo do post.
+     * @example 'Este é o conteúdo do post.'
+     */
+    @ApiPropertyOptional({ description: 'Conteúdo do post', example: 'Este é o conteúdo do post.' })
+    @IsOptional()
+    content?: string; // Adicionada a propriedade 'content'
 }

@@ -68,4 +68,16 @@ export class PostContentDto {
     @IsArray()
     @IsString({ each: true })
     seoKeywords?: string[];
+
+    @ApiProperty({ description: 'ID do post' })
+    @IsString()
+    postId: string; // Adicionado
+
+    @ApiProperty({ description: 'Conteúdo do post' })
+    @IsString()
+    content: string; // Adicionada a propriedade 'content'
+
+    @ApiProperty({ description: 'Status do post' })
+    @IsString()
+    status: string;
 }

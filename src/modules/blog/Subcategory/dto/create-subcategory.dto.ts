@@ -24,6 +24,11 @@ export class CreateSubcategoryDto {
   @IsString()
   slug: string;
 
+  @ApiProperty({ description: 'ID da categoria' })
+  @IsNotEmpty()
+  @IsString()
+  categoryId: string;
+
   @ApiProperty({ description: 'Descrição da subcategoria', required: false })
   @IsOptional()
   @IsString()
@@ -39,11 +44,21 @@ export class CreateSubcategoryDto {
   @IsString()
   title?: string;
 
-  constructor(categoryIdSubcategoryId: string, subcategoryId: string, name: string, slug: string, description?: string, keywords?: string, title?: string) {
+  constructor(
+    categoryIdSubcategoryId: string,
+    subcategoryId: string,
+    name: string,
+    slug: string,
+    categoryId: string,
+    description?: string,
+    keywords?: string,
+    title?: string
+  ) {
     this.categoryIdSubcategoryId = categoryIdSubcategoryId;
     this.subcategoryId = subcategoryId;
     this.name = name;
     this.slug = slug;
+    this.categoryId = categoryId;
     this.description = description;
     this.keywords = keywords;
     this.title = title;

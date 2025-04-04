@@ -12,7 +12,6 @@ import { CategoryModule } from '@src/modules/blog/category/category.module';
 import { SubcategoryModule } from '@src/modules/blog/subcategory/subcategory.module';
 import { CommentsModule } from '@src/modules/blog/comments/comments.module';
 import { ConfigModule } from '@nestjs/config';
-import { memoryStore } from 'cache-manager';
 
 /**
  * Módulo para gerenciamento de posts.
@@ -25,7 +24,7 @@ import { memoryStore } from 'cache-manager';
     CommentsModule,
     ConfigModule,
     CacheModule.register({ // Configuração do CacheModule
-      store: memoryStore, // Use cache em memória
+      store: 'memory', // Use a string 'memory' aqui
       ttl: 60 * 1000, // Tempo de vida padrão de 1 minuto (opcional)
     }),
   ],

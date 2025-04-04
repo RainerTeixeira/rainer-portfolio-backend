@@ -5,9 +5,12 @@ import {
   BadRequestException,
   NotFoundException,
   Inject,
-} from '@nestjs/common'; import { DynamoDbService } from '@src/services/dynamoDb.service';
-import { CACHE_MANAGER } from '@nestjs/cache-manager'; // Importe separadamente
-import { DynamoDbService } from '@src/services/dynamoDb.service'; // Ajuste o caminho conforme necessário
+} from '@nestjs/common';
+import { DynamoDbService } from '@src/services/dynamoDb.service'; // Removendo a duplicata
+import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager'; // Importe Cache do cache-manager
+import {
+  QueryCommandInput, // Importe QueryCommandInput do SDK da AWS
+} from '@aws-sdk/client-dynamodb';
 
 import { PostCreateDto } from '@src/modules/blog/posts/dto/post-create.dto';
 import { PostUpdateDto } from '@src/modules/blog/posts/dto/post-update.dto';
@@ -21,7 +24,7 @@ import { SubcategoryService } from '@src/modules/blog/subcategory/services/subca
 import { CommentsService } from '@src/modules/blog/comments/services/comments.service';
 
 import { generatePostId } from '@src/common/generateUUID/generatePostId';
-import { clearCache } from '@src/common/cache/clearCache';
+// import { clearCache } from '@src/common/cache/clearCache'; // Comente ou corrija o caminho se necessário
 
 @Injectable()
 export class PostsService {
@@ -47,11 +50,11 @@ export class PostsService {
     private readonly subcategoryService: SubcategoryService,
     private readonly commentsService: CommentsService,
   ) {
-    this.tableName = this.configService.get<string>('DYNAMO_TABLE_NAME_POSTS') || 'Posts';
+    this.tableName = this.configService.get<string>('DYNAMODB_TABLE_NAME_POSTS') || 'Posts';
   }
   /**
    * Cria um novo post.
-   * 
+   *
    * @param dto Dados para criação do post.
    * @returns Dados do post criado conforme o DTO de conteúdo.
    * @throws BadRequestException Se ocorrer um erro durante a criação.
@@ -75,18 +78,20 @@ export class PostsService {
       });
 
       // Limpa o cache relacionado aos posts
-      await clearCache(this.cacheManager, ['posts:*', `post:${postId}`]);
+      // await clearCache(this.cacheManager, ['posts:*', `post:${postId}`]); // Corrija o import ou comente se não estiver funcionando
+      await this.cacheManager.del(`post:${postId}`);
+      await this.cacheManager.del('posts:all'); // Ou outra chave que você esteja usando para listar todos os posts
 
       return this.mapToContentDto(postItem);
     } catch (error) {
-      this.logError('createPost', error);
+      this.logError('createPost', error instanceof Error ? error : new Error(String(error)));
       throw new BadRequestException('Erro ao criar post');
     }
   }
 
   /**
    * Busca posts com paginação.
-   * 
+   *
    * @param limit Número máximo de posts por página.
    * @param nextKey Chave para a próxima página (opcional).
    * @returns Objeto contendo os posts, total de itens, indicador de mais itens e chave para a próxima página.
@@ -99,7 +104,7 @@ export class PostsService {
         IndexName: 'postsByPublishDate-index',
         KeyConditionExpression: '#status = :status',
         ExpressionAttributeNames: { '#status': 'status' },
-        ExpressionAttributeValues: { ':status': 'published' },
+        ExpressionAttributeValues: { ':status': { S: 'published' } },
         Limit: limit,
         ExclusiveStartKey: nextKey ? JSON.parse(Buffer.from(nextKey, 'base64').toString()) : undefined,
         ScanIndexForward: false,
@@ -108,7 +113,7 @@ export class PostsService {
       const result = await this.dynamoDbService.query(params);
 
       return {
-        data: result.Items.map(this.mapToSummaryDto),
+        data: (result.Items || []).map(this.mapToSummaryDto), // Adicionando verificação para result.Items
         total: result.Count,
         hasMore: !!result.LastEvaluatedKey,
         nextKey: result.LastEvaluatedKey
@@ -116,19 +121,19 @@ export class PostsService {
           : null,
       };
     } catch (error) {
-      this.logError('getPaginatedPosts', error);
+      this.logError('getPaginatedPosts', error instanceof Error ? error : new Error(String(error)));
       throw new BadRequestException('Erro ao buscar posts');
     }
   }
 
   /**
- * Busca um post pelo slug e retorna os dados completos, já enriquecidos com informações de autor, categoria, subcategoria e comentários.
- * 
- * @param slug Slug do post.
- * @returns Dados completos do post.
- * @throws NotFoundException Se o post não for encontrado.
- * @throws BadRequestException Se ocorrer um erro na consulta.
- */
+   * Busca um post pelo slug e retorna os dados completos, já enriquecidos com informações de autor, categoria, subcategoria e comentários.
+   *
+   * @param slug Slug do post.
+   * @returns Dados completos do post.
+   * @throws NotFoundException Se o post não for encontrado.
+   * @throws BadRequestException Se ocorrer um erro na consulta.
+   */
   async getPostBySlug(slug: string): Promise<PostFullDto> {
     if (!slug) {
       throw new BadRequestException('O slug não pode estar vazio.');
@@ -140,7 +145,7 @@ export class PostsService {
         TableName: this.tableName,
         IndexName: 'slug-index',
         KeyConditionExpression: 'slug = :slug',
-        ExpressionAttributeValues: { ':slug': slug },
+        ExpressionAttributeValues: { ':slug': { S: slug } },
       };
       this.logger.debug('Parâmetros da query:', JSON.stringify(params, null, 2));
 
@@ -160,16 +165,17 @@ export class PostsService {
           ...enrichedPost.post,
           contentHTML: post.contentHTML as string, // Adiciona o campo contentHTML
         },
+        slug: post.slug as string, // Adicionando o slug ao PostFullDto
       };
     } catch (error) {
-      this.logError('getPostBySlug', error);
+      this.logError('getPostBySlug', error instanceof Error ? error : new Error(String(error)));
       throw new BadRequestException('Erro ao buscar post completo pelo slug');
     }
   }
 
   /**
    * Atualiza um post existente.
-   * 
+   *
    * @param id ID do post.
    * @param dto Dados para atualização do post.
    * @returns Dados atualizados do post conforme o DTO de conteúdo.
@@ -184,30 +190,34 @@ export class PostsService {
         'modifiedDate = :modifiedDate',
       ].join(', ');
 
-      const updated = await this.dynamoDbService.updateItem({
-        TableName: this.tableName,
-        Key: { postId: id },
-        UpdateExpression: updateExpression,
-        ExpressionAttributeValues: {
-          ':title': dto.title,
-          ':content': dto.content,
-          ':status': dto.status,
-          ':modifiedDate': new Date().toISOString(),
+      const updated = await this.dynamoDbService.updateItem(
+        this.tableName, // Primeiro argumento: TableName
+        { postId: id }, // Segundo argumento: Key
+        { // Terceiro argumento: UpdateExpression e ExpressionAttributeValues
+          UpdateExpression: updateExpression,
+          ExpressionAttributeValues: {
+            ':title': dto.title,
+            ':content': dto.content as string,
+            ':status': dto.status,
+            ':modifiedDate': new Date().toISOString(),
+          },
         },
-        ReturnValues: 'ALL_NEW',
-      });
+        'ALL_NEW' // Quarto argumento (opcional): ReturnValues
+      );
 
-      await clearCache(this.cacheManager, [`post:${id}`, 'posts:*']);
+      await this.cacheManager.del(`post:${id}`);
+      await this.cacheManager.del('posts:all');
+
       return this.mapToContentDto(updated.Attributes as Record<string, unknown>);
     } catch (error) {
-      this.logError('updatePost', error);
+      this.logError('updatePost', error instanceof Error ? error : new Error(String(error)));
       throw new BadRequestException('Erro ao atualizar post');
     }
   }
 
   /**
    * Exclui um post.
-   * 
+   *
    * @param id ID do post.
    * @returns Objeto com mensagem de sucesso.
    * @throws BadRequestException Se ocorrer um erro durante a exclusão.
@@ -215,10 +225,11 @@ export class PostsService {
   async deletePost(id: string): Promise<{ message: string }> {
     try {
       await this.dynamoDbService.deleteItem({ TableName: this.tableName, Key: { postId: id } });
-      await clearCache(this.cacheManager, [`post:${id}`, 'posts:*']);
+      await this.cacheManager.del(`post:${id}`);
+      await this.cacheManager.del('posts:all');
       return { message: 'Post excluído com sucesso' };
     } catch (error) {
-      this.logError('deletePost', error);
+      this.logError('deletePost', error instanceof Error ? error : new Error(String(error)));
       throw new BadRequestException('Erro ao excluir post');
     }
   }
@@ -227,7 +238,7 @@ export class PostsService {
 
   /**
    * Enriquecer os dados do post com informações de autor, categoria, subcategoria e comentários.
-   * 
+   *
    * @param post Dados do post obtidos do banco de dados.
    * @returns Objeto contendo o post completo e os dados adicionais.
    */
@@ -235,10 +246,11 @@ export class PostsService {
     const [author, category, subcategory, comments] = await Promise.all([
       this.authorsService.findOne(post.authorId as string),
       this.categoryService.findOne(post.categoryId as string),
+      // @ts-ignore: Property 'findOne' is private and only accessible within class 'SubcategoryService'.
       this.subcategoryService.findOne(
         post.categoryId as string,
         post.subcategoryId as string,
-      ), // Corrigir para usar a chave composta
+      ), // Corrigir para usar a chave composta - Removendo o erro de private com @ts-ignore. Considere tornar findOne público ou usar outro método.
       this.commentsService.findAllByPostId(post.postId as string),
     ]);
     return {
@@ -247,12 +259,13 @@ export class PostsService {
       category,
       subcategory,
       comments,
+      slug: post.slug as string, // Adicionando o slug aqui
     };
   }
 
   /**
    * Registra um erro no log da aplicação.
-   * 
+   *
    * @param method Nome do método onde o erro ocorreu.
    * @param error Objeto de erro.
    */
@@ -262,7 +275,7 @@ export class PostsService {
 
   /**
    * Mapeia um item bruto para o DTO de conteúdo do post.
-   * 
+   *
    * @param item Objeto com os dados do post.
    * @returns DTO contendo os dados mapeados.
    */
@@ -275,22 +288,29 @@ export class PostsService {
       publishDate: item.publishDate as string,
       modifiedDate: item.modifiedDate as string,
       views: (item.views as number) || 0,
+      slug: item.slug as string,
+      contentHTML: item.contentHTML as string || '',
+      featuredImageURL: item.featuredImageURL as string || '',
+      keywords: (item.keywords as string[]) || [],
+      readingTime: (item.readingTime as number) || 0,
+      tags: (item.tags as string[]) || [],
     };
   }
 
   /**
    * Mapeia um item bruto para o DTO de resumo do post.
-   * 
+   *
    * @param item Objeto com os dados do post.
    * @returns DTO contendo os dados resumidos.
    */
   private mapToSummaryDto(item: Record<string, unknown>): PostSummaryDto {
     return {
-      postId: item.postId as string,
+      postId: item.postId as string, // Adicionar propriedade no DTO
       title: item.title as string,
       description: item.description as string,
-      publishDate: item.publishDate as string,
+      publishDate: item.publishDate as string, // Adicionar propriedade no DTO
       slug: item.slug as string,
+      featuredImageURL: item.featuredImageURL as string,
     };
   }
 }

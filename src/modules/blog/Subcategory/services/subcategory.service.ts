@@ -76,7 +76,10 @@ export class SubcategoryService {
         };
 
         await this.dynamoDbService.putItem(params);
-        return this.getSubcategoryById(createSubcategoryDto.categoryId, createSubcategoryDto.subcategoryId);
+        return this.getSubcategoryById(
+            createSubcategoryDto.categoryId,
+            createSubcategoryDto.subcategoryId
+        );
     }
 
     /**
@@ -244,10 +247,10 @@ export class SubcategoryService {
      */
     private mapToDto(item: DynamoDBSubcategoryItem): SubcategoryDto {
         return {
-            categoryIdSubcategoryId: item['categoryId#subcategoryId']?.S,
-            subcategoryId: item.subcategoryId?.S,
-            name: item.name?.S,
-            slug: item.slug?.S,
+            categoryIdSubcategoryId: item['categoryId#subcategoryId']?.S || '',
+            subcategoryId: item.subcategoryId?.S || '',
+            name: item.name?.S || '',
+            slug: item.slug?.S || '',
             description: item.description?.S,
             keywords: item.keywords?.S,
             title: item.title?.S,
