@@ -5,28 +5,30 @@ import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { ValidationPipe } from '@nestjs/common';
-import { FastifyInstance, fastify } from 'fastify';
+import { FastifyInstance, fastify, HTTPMethods } from 'fastify';
 
-// Cache para a instância do Fastify
+// Define um tipo customizado para a resposta do inject
+interface InjectResponse {
+  statusCode: number;
+  headers: Record<string, any>;
+  body: string;
+}
+
 let cachedFastify: FastifyInstance | null = null;
 
 async function bootstrapFastify(): Promise<FastifyInstance> {
   if (!cachedFastify) {
-    // 1. Cria instância do Fastify
     const instance = fastify({
       logger: process.env.NODE_ENV === 'development',
       trustProxy: true,
     });
 
-    // 2. Configura o NestJS
     const app = await NestFactory.create<NestFastifyApplication>(
       AppModule,
       new FastifyAdapter(instance),
     );
 
-    // 3. Configurações gerais
     const configService = app.get(ConfigService);
-
     app.enableCors({
       origin: configService.get('CORS_ORIGIN', '*'),
       methods: ['GET', 'POST', 'PUT', 'DELETE'],
@@ -37,50 +39,51 @@ async function bootstrapFastify(): Promise<FastifyInstance> {
       new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true })
     );
 
-    // 4. Swagger apenas para ambiente local
     if (!process.env.AWS_LAMBDA_FUNCTION_NAME) {
-      const config = new DocumentBuilder()
+      const swaggerConfig = new DocumentBuilder()
         .setTitle('API Portfolio')
         .setDescription('Documentação da API')
         .setVersion('1.0')
         .build();
-
-      const document = SwaggerModule.createDocument(app, config);
+      const document = SwaggerModule.createDocument(app, swaggerConfig);
       SwaggerModule.setup('api', app, document);
     }
 
     await app.init();
     cachedFastify = instance;
   }
-
   return cachedFastify;
 }
 
-// Handler otimizado para Lambda
 export const handler = async (event: APIGatewayProxyEvent, context: Context) => {
   const fastifyInstance = await bootstrapFastify();
 
-  // Converte o evento Lambda para requisição HTTP
-  const response = await fastifyInstance.inject({
-    method: event.httpMethod,
+  // Definindo os métodos válidos como array "const"
+  const validMethods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'] as const;
+  type ValidMethod = typeof validMethods[number];
+
+  // Converte para maiúsculas e, se o método não estiver na lista, usa 'GET'
+  const method = (event.httpMethod ?? 'GET').toUpperCase();
+  const safeMethod: ValidMethod = validMethods.includes(method as ValidMethod) ? method as ValidMethod : 'GET';
+
+  // Forçamos a tipagem do retorno para o tipo customizado
+  const response = (await fastifyInstance.inject({
+    method: safeMethod,
     url: event.path,
     headers: event.headers || {},
-    payload: event.body,
-  });
+    payload: event.body || undefined,
+  })) as unknown as InjectResponse;
 
-  // Formata a resposta para o formato Lambda
   return {
-    statusCode: response.statusCode,
+    statusCode: response.statusCode || 500,
     headers: response.headers,
-    body: response.body,
+    body: response.body || '',
   };
 };
 
-// Código para execução local
 if (!process.env.AWS_LAMBDA_FUNCTION_NAME) {
   (async () => {
     const fastifyInstance = await bootstrapFastify();
-
     fastifyInstance.listen(
       { port: 4000, host: '0.0.0.0' },
       (err, address) => {
