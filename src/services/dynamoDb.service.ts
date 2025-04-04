@@ -299,6 +299,31 @@ export class DynamoDbService {
     }
   }
 
+  /**
+   * Constrói dinamicamente a UpdateExpression e os valores de atributos para o DynamoDB.
+   * @param updateData - Dados a serem atualizados.
+   * @returns Um objeto contendo a UpdateExpression e ExpressionAttributeValues.
+   */
+  buildUpdateExpression(updateData: Record<string, any>): {
+    UpdateExpression: string;
+    ExpressionAttributeValues: Record<string, any>;
+  } {
+    const updateExpressionParts: string[] = [];
+    const expressionAttributeValues: Record<string, any> = {};
+
+    Object.entries(updateData).forEach(([key, value]) => {
+      if (value !== undefined) {
+        updateExpressionParts.push(`${key} = :${key}`);
+        expressionAttributeValues[`:${key}`] = value;
+      }
+    });
+
+    return {
+      UpdateExpression: `SET ${updateExpressionParts.join(', ')}`,
+      ExpressionAttributeValues: expressionAttributeValues,
+    };
+  }
+
   // --- Métodos auxiliares ---
 
   /**

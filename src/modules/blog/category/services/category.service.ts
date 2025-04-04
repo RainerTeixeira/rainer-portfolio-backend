@@ -83,19 +83,16 @@ export class CategoryService {
         // Verifica se a categoria existe antes de atualizar
         await this.findOne(categoryId);
 
-        const updateExpression = this.dynamoDbService.buildUpdateExpression(updateCategoryDto);
-        if (!updateExpression) {
-            throw new BadRequestException('Nenhum dado fornecido para atualização');
-        }
+        const { UpdateExpression, ExpressionAttributeValues } =
+            this.dynamoDbService.buildUpdateExpression(updateCategoryDto);
 
-        const params: UpdateCommandInput = {
-            TableName: this.tableName,
-            Key: { categoryId },
-            ...updateExpression,
-            ReturnValues: 'ALL_NEW',
-        };
+        const result = await this.dynamoDbService.updateItem(
+            this.tableName,
+            { categoryId: categoryId }, // Ajuste a chave primária
+            updateCategoryDto,
+            'ALL_NEW'
+        );
 
-        const result = await this.dynamoDbService.updateItem(params);
         return this.mapCategoryFromDynamoDb(result.Attributes as Record<string, unknown>);
     }
 

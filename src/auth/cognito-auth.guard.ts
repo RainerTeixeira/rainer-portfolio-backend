@@ -38,7 +38,7 @@ export class CognitoAuthGuard implements CanActivate {
      * @see https://auth0.github.io/node-jwks-rsa/
      */
     this.jwksClient = new JwksClient({
-      jwksUri: this.configService.get('COGNITO_JWKS_URL'),
+      jwksUri: this.configService.get<string>('COGNITO_JWKS_URL') || '',
       cache: true,       // Habilita cache de chaves
       rateLimit: true,   // Previne DDoS
       jwksRequestsPerMinute: 10 // Limite de requisições ao JWKS
@@ -115,15 +115,15 @@ export class CognitoAuthGuard implements CanActivate {
 
     // Validação assíncrona do token
     return new Promise((resolve, reject) => {
-      jwt.verify<Record<string, unknown>>(
+      jwt.verify(
         token,
         getKey,
-        verifyOptions,
+        { algorithms: ['RS256'] },
         (err, decoded) => {
-          if (err || !decoded) {
-            return reject(err || new Error('Token inválido'));
+          if (err) {
+            throw new UnauthorizedException('Token inválido.');
           }
-          resolve(decoded);
+          resolve(decoded as Record<string, unknown>);
         }
       );
     });
