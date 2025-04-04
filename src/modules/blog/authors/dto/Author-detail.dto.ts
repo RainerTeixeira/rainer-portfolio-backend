@@ -96,3 +96,5 @@ export class AuthorDetailDto {
         return dto;
     }
 }
+
+export { AuthorDetailDto as AuthorDto };
