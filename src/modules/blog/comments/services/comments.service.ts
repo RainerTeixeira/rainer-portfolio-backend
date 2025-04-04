@@ -3,8 +3,8 @@ import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { CreateCommentDto } from '@src/modules/blog/comments/dto/create-comment.dto';
 import { UpdateCommentDto } from '@src/modules/blog/comments/dto/update-comment.dto';
 import { CommentDto } from '@src/modules/blog/comments/dto/comment.dto';
-import { UpdateCommandInput } from '@aws-sdk/lib-dynamodb';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ReturnValue } from '@aws-sdk/client-dynamodb'; // Importe o tipo ReturnValue
 
 /**
  * @CommentsService
@@ -65,8 +65,8 @@ export class CommentsService {
         const params = {
             TableName: this.tableName,
             Key: {
-                postId: { S: postId }, // Ajustar o formato da chave
-                authorId: { S: authorId }, // Ajustar o formato da chave
+                postId: postId, // Ajustar o formato da chave
+                authorId: authorId, // Ajustar o formato da chave
             },
         };
 
@@ -133,13 +133,13 @@ export class CommentsService {
             ReturnValues: 'ALL_NEW',
         };
 
-        const result = await this.dynamoDbService.updateItem(
+        await this.dynamoDbService.updateItem(
             params.TableName,
             params.Key,
             {
                 content: updateCommentDto.content,
             },
-            params.ReturnValues,
+            params.ReturnValues as ReturnValue | undefined,
         ); // Ajustando a chamada para passar os argumentos corretos
 
         return this.findOne(postId, authorId);

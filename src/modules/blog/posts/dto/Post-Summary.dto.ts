@@ -28,4 +28,28 @@ export class PostSummaryDto {
     @ApiProperty({ description: 'Descrição breve do post', example: 'Descubra como utilizar NestJS para desenvolver APIs escaláveis...' })
     @IsString()
     description: string;
+
+    /**
+     * Data de publicação do post.
+     * @example '2023-08-15'
+     */
+    @ApiProperty({ description: 'Data de publicação do post', example: '2023-08-15' })
+    @IsString()
+    publishDate: string; // Adicionado
+
+    /**
+     * ID do post.
+     * @example '12345'
+     */
+    @ApiProperty({ description: 'ID do post', example: '12345' })
+    @IsString()
+    postId: string; // Adicionada a propriedade 'postId'
+
+    /**
+     * Slug do post.
+     * @example 'minha-url-amigavel'
+     */
+    @ApiProperty({ description: 'Slug do post', example: 'minha-url-amigavel' })
+    @IsString()
+    slug: string;
 }
