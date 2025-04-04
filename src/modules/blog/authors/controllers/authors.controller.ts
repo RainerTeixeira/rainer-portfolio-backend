@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Put, Param, Delete, Logger, UseGuards } from '@nestjs/common'; // Importa decorators e Logger do NestJS
 import { AuthorsService } from '../services/authors.service'; // Importa AuthorsService
-import { CreateAuthorDto } from '../dto/Create-author.dto'; // Importa DTO para criação de autor
-import { UpdateAuthorDto } from '../dto/Update-author.dto'; // Importa DTO para atualização de autor
+import { CreateAuthorDto } from '../dto/create-author.dto'; // Importa DTO para criação de autor
+import { UpdateAuthorDto } from '../dto/update-author.dto'; // Importa DTO para atualização de autor
 import { AuthorDetailDto } from '../dto/author-detail.dto'; // Corrigir a capitalização do nome do arquivo
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CognitoAuthGuard } from '@src/auth/cognito-auth.guard';

@@ -1,6 +1,6 @@
 // src/modules/blog/authors/dto/update-author.dto.ts
 import { IsString, IsOptional } from 'class-validator';
-import { IsSocialProof } from './Social-proof-validator.dto';
+import { IsSocialProof } from './social-proof-validator.dto';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class UpdateAuthorDto {
@@ -21,7 +21,8 @@ export class UpdateAuthorDto {
             github: 'github.com/john-doe',
             medium: 'john-doe.medium.com',
             socialProof: 'facebook.com/john-doe'
-        }
+        },
+        additionalProperties: { type: 'string' }
     })
     @IsOptional()
     @IsSocialProof({ message: 'socialProof deve ser um objeto contendo chaves e valores do tipo string.' })
