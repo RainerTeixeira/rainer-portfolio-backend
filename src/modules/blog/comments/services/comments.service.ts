@@ -13,7 +13,7 @@ import { ReturnValue } from '@aws-sdk/client-dynamodb'; // Importe o tipo Return
 @ApiTags('comments')
 @Injectable()
 export class CommentsService {
-    private readonly tableName = 'Comments';
+    private readonly tableName = process.env.DYNAMO_TABLE_NAME_COMMENTS || 'Comments';
     private readonly logger = new Logger(CommentsService.name); // Adicionando o logger
 
     constructor(private readonly dynamoDbService: DynamoDbService) { }

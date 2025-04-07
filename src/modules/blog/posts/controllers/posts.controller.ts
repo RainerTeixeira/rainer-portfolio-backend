@@ -1,8 +1,7 @@
-// posts.controller.ts
 import {
   Controller, Get, Post, Patch, Delete,
   Query, Param, Body, UseInterceptors, UseGuards,
-  DefaultValuePipe, ParseIntPipe, ParseUUIDPipe, ValidationPipe, NotFoundException // IMPORTE OS PIPES FALTANTES
+  DefaultValuePipe, ParseIntPipe, NotFoundException, BadRequestException
 } from '@nestjs/common';
 import {
   ApiTags, ApiOperation, ApiResponse, ApiQuery,
@@ -31,32 +30,44 @@ export class PostsController {
   /**
    * Retorna uma lista paginada de posts.
    * Utiliza paginação baseada em cursor, permitindo que os posts sejam carregados em partes.
-   * 
+   *
    * @param limit Número máximo de posts a serem retornados por vez (padrão: 10).
    * @param nextKey Chave para a próxima página de resultados (opcional).
-   * 
+   *
    * @returns Lista de posts com resumo.
    */
   @Get()
   @ApiOperation({
     summary: 'Lista paginada de posts',
-    description: 'Retorna posts paginados usando cursor-based pagination'
+    description: 'Retorna posts paginados independentemente da categoria e subcategoria'
   })
   @ApiQuery({ name: 'limit', type: Number, required: false, example: 10 })
   @ApiQuery({ name: 'nextKey', type: String, required: false })
+  @ApiResponse({ status: 200, description: 'Lista de posts retornada com sucesso.' })
+  @ApiResponse({ status: 400, description: 'Parâmetros inválidos.' })
   @ApiOkResponse({ type: [PostSummaryDto] })
-  async getPosts(
+  async getPaginatedPosts(
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
-    @Query('nextKey') nextKey?: string
-  ) {
-    return this.postsService.getPaginatedPosts(limit, nextKey);
+    @Query('nextKey') nextKey?: string,
+  ): Promise<any> {
+    const response = await this.postsService.getPaginatedPosts(limit, nextKey);
+
+    // Retorna os dados conforme o formato esperado
+    return {
+      success: true,
+      data: response.data,
+      nextKey: response.nextKey,
+      timestamp: new Date().toISOString(),
+      path: `/blog/posts?limit=${limit}`,
+      statusCode: 200,
+    };
   }
 
   /**
    * Retorna os detalhes completos de um post, identificado pelo seu slug.
-   * 
+   *
    * @param slug Identificador único do post (slug).
-   * 
+   *
    * @returns Detalhes completos de um post.
    */
   @Get(':slug')
@@ -74,9 +85,9 @@ export class PostsController {
   /**
    * Cria um novo post.
    * Requer autenticação via Cognito para validar o usuário.
-   * 
+   *
    * @param postCreateDto Dados necessários para criar o novo post.
-   * 
+   *
    * @returns O post criado com os dados completos.
    */
   @Post()
@@ -90,10 +101,10 @@ export class PostsController {
   /**
    * Atualiza um post existente.
    * Requer autenticação via Cognito para validar o usuário.
-   * 
+   *
    * @param id Identificador único do post a ser atualizado.
    * @param postUpdateDto Dados para atualização do post.
-   * 
+   *
    * @returns O post atualizado com os dados completos.
    */
   @Patch(':id')
@@ -111,9 +122,9 @@ export class PostsController {
   /**
    * Exclui um post permanentemente.
    * Requer autenticação via Cognito para validar o usuário.
-   * 
+   *
    * @param id Identificador único do post a ser excluído.
-   * 
+   *
    * @returns Mensagem indicando o sucesso da exclusão.
    */
   @Delete(':id')

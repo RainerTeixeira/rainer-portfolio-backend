@@ -38,7 +38,7 @@ import { CognitoAuthGuard } from '@src/auth/cognito-auth.guard';
 @Injectable()
 export class AuthorsService {
     // Nome da tabela DynamoDB para autores. Mova para config se preferir.
-    private readonly tableName = process.env.DYNAMODB_TABLE_AUTHORS || 'Authors';
+    private readonly tableName = process.env.DYNAMO_TABLE_NAME_AUTHORS || 'Authors';
     private readonly logger = new Logger(AuthorsService.name);
     // TTL (Time To Live) padrão para itens no cache (em segundos)
     private readonly cacheTtl = 300; // 5 minutos

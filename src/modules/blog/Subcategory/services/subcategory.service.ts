@@ -4,6 +4,7 @@ import { CreateSubcategoryDto } from '../dto/create-subcategory.dto';
 import { UpdateSubcategoryDto } from '../dto/update-subcategory.dto';
 import { SubcategoryDto } from '../dto/subcategory.dto';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { AttributeValue } from '@aws-sdk/client-dynamodb'; // Adicionado para corrigir o erro TS2304
 
 /**
  * @interface DynamoDBSubcategoryItem
@@ -36,7 +37,7 @@ export class SubcategoryService {
      * @property {string} tableName - Nome da tabela de subcategorias no DynamoDB.
      * Obtido através da variável de ambiente DYNAMO_TABLE_NAME_SUBCATEGORIES_POSTS.
      */
-    private readonly tableName = process.env.DYNAMO_TABLE_NAME_SUBCATEGORIES_POSTS;
+    private readonly tableName = process.env.DYNAMO_TABLE_NAME_SUBCATEGORIES_POSTS || 'Subcategories';
     private readonly logger = new Logger(SubcategoryService.name); // Adicionado logger
 
     /**
@@ -132,6 +133,18 @@ export class SubcategoryService {
 
     /**
      * @async
+     * @method getSubcategory
+     * @description Alias para getSubcategoryById para compatibilidade.
+     * @param {string} categoryId - ID da categoria.
+     * @param {string} subcategoryId - ID da subcategoria.
+     * @returns {Promise<SubcategoryDto>} Uma Promise que resolve para o DTO da subcategoria encontrada.
+     */
+    async getSubcategory(categoryId: string, subcategoryId: string): Promise<SubcategoryDto> {
+        return this.getSubcategoryById(categoryId, subcategoryId);
+    }
+
+    /**
+     * @async
      * @method updateSubcategory
      * @description Atualiza os dados de uma subcategoria existente no DynamoDB.
      * @param {string} categoryId - ID da categoria da subcategoria a ser atualizada.
@@ -222,7 +235,7 @@ export class SubcategoryService {
 
     /**
      * @async
-     * @private
+     * @public
      * @method findOne
      * @description Busca uma subcategoria específica no DynamoDB usando a chave composta e o ID da subcategoria.
      * @param {string} categoryId - ID da categoria.
@@ -230,13 +243,12 @@ export class SubcategoryService {
      * @returns {Promise<SubcategoryDto>} Uma Promise que resolve para o DTO da subcategoria encontrada.
      * @throws {NotFoundException} Se a subcategoria com os IDs especificados não for encontrada.
      */
-    private async findOne(categoryId: string, subcategoryId: string): Promise<SubcategoryDto> {
+    public async findOne(categoryId: string, subcategoryId: string): Promise<SubcategoryDto> {
         const compositeKey = `${categoryId}#${subcategoryId}`; // Concatenar a chave composta
         const params = {
-            TableName: 'Subcategory',
+            TableName: 'Subcategories',
             Key: {
-                'categoryId#subcategoryId': compositeKey, // Usar a chave composta
-                subcategoryId: subcategoryId,
+                'categoryId#subcategoryId': { S: compositeKey }, // Usar a chave composta
             },
         };
 
@@ -246,6 +258,26 @@ export class SubcategoryService {
         }
 
         return this.mapSubcategoryFromDynamoDb(result.Item);
+    }
+
+    /**
+     * @async
+     * @method getAllCategoryIdSubcategoryId
+     * @description Retorna todas as combinações de `categoryId#subcategoryId` existentes na tabela.
+     * @returns {Promise<string[]>} Uma lista de strings no formato `categoryId#subcategoryId`.
+     */
+    async getAllCategoryIdSubcategoryId(): Promise<string[]> {
+        const params = {
+            TableName: this.tableName,
+            ProjectionExpression: 'categoryId#subcategoryId', // Retorna apenas o atributo necessário
+        };
+
+        const result = await this.dynamoDbService.scan(params);
+
+        // Mapeia os itens para extrair apenas o valor de `categoryId#subcategoryId`
+        return (result.Items || [])
+            .map(item => item['categoryId#subcategoryId']?.S)
+            .filter(Boolean); // Remove valores nulos ou indefinidos
     }
 
     /**
@@ -261,7 +293,7 @@ export class SubcategoryService {
             subcategoryId: item.subcategoryId?.S || '',
             name: item.name?.S || '',
             slug: item.slug?.S || '',
-            description: item.description?.S,
+            description: item.description?.S || '', // Adicionado para suportar o campo description
             keywords: item.keywords?.S,
             title: item.title?.S,
             seo: item.seo?.M ? (item.seo.M as Record<string, unknown>) : undefined, // Corrigido para verificar se `seo` existe
@@ -290,15 +322,22 @@ export class SubcategoryService {
      * @param item - Item do DynamoDB.
      * @returns O SubcategoryDto mapeado.
      */
-    private mapSubcategoryFromDynamoDb(item: Record<string, unknown>): SubcategoryDto {
+    private mapSubcategoryFromDynamoDb(item: Record<string, AttributeValue>): SubcategoryDto {
+        const seo = item.seo?.M ? {
+            canonical: item.seo.M.canonical?.S || '',
+            description: item.seo.M.description?.S || '',
+            keywords: item.seo.M.keywords?.SS || [],
+            metaTitle: item.seo.M.metaTitle?.S || '',
+            priority: item.seo.M.priority?.S || '',
+        } : {};
+
         return {
-            categoryIdSubcategoryId: item['categoryId#subcategoryId'] as string,
-            subcategoryId: item['subcategoryId'] as string,
-            name: item['name'] as string,
-            slug: item['slug'] as string,
-            description: item['description'] as string,
-            keywords: item['keywords'] as string,
-            title: item['title'] as string,
-        } as SubcategoryDto;
+            categoryIdSubcategoryId: item['categoryId#subcategoryId']?.S || '',
+            subcategoryId: item.subcategoryId?.S || '',
+            name: item.name?.S || '',
+            slug: item.slug?.S || '',
+            description: item.description?.S || '', // Adicionado para suportar o campo description
+            seo,
+        };
     }
 }

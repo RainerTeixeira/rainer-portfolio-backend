@@ -1,83 +1,33 @@
-import {
-    IsString,
-    IsOptional,
-    IsNumber,
-    IsArray,
-    IsUrl,
-    IsISO8601,
-} from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+// src/modules/blog/posts/dto/post-content.dto.ts
+import { IsString, IsNumber } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { PostBaseDto } from './post-base.dto';
 
-export class PostContentDto {
-    @ApiProperty({ description: 'Título do post' })
+export class PostContentDto extends PostBaseDto {
+    @ApiProperty({ description: 'ID do post' })
     @IsString()
-    title: string;
+    postId: string;
 
-    @ApiProperty({ description: 'Slug do post' })
-    @IsString()
-    slug: string;
-
-    @ApiProperty({ description: 'Conteúdo HTML do post' })
-    @IsString()
-    contentHTML: string;
-
-    @ApiProperty({ description: 'URL da imagem de destaque' })
-    @IsUrl()
-    featuredImageURL: string;
-
-    @ApiProperty({ description: 'Palavras-chave para SEO', type: [String] })
-    @IsArray()
-    @IsString({ each: true })
-    keywords: string[];
-
-    @ApiProperty({ description: 'Data de publicação do post', example: '2025-03-10T00:00:00Z' })
-    @IsISO8601()
-    publishDate: string;
-
-    @ApiPropertyOptional({ description: 'Data de modificação do post', example: '2025-03-15T00:00:00Z' })
-    @IsOptional()
-    @IsISO8601()
-    modifiedDate?: string;
-
-    @ApiProperty({ description: 'Tempo de leitura estimado (em minutos)' })
-    @IsNumber()
-    readingTime: number;
-
-    @ApiProperty({ description: 'Tags associadas ao post', type: [String] })
-    @IsArray()
-    @IsString({ each: true })
-    tags: string[];
+    // Removido 'content: string;' pois parece redundante com 'contentHTML'
+    // Se 'content' for um campo separado (ex: texto puro), adicione-o ao DynamoDB e DTO.
 
     @ApiProperty({ description: 'Número de visualizações do post' })
     @IsNumber()
     views: number;
 
-    // Campos adicionais para SEO
-    @ApiPropertyOptional({ description: 'Meta título para SEO' })
-    @IsOptional()
+    @ApiProperty({ description: 'ID da categoria' })
     @IsString()
-    seoTitle?: string;
+    categoryId: string;
 
-    @ApiPropertyOptional({ description: 'Meta descrição para SEO' })
-    @IsOptional()
+    @ApiProperty({ description: 'ID da subcategoria' })
     @IsString()
-    seoDescription?: string;
+    subcategoryId: string;
 
-    @ApiPropertyOptional({ description: 'Meta keywords para SEO', type: [String] })
-    @IsOptional()
-    @IsArray()
-    @IsString({ each: true })
-    seoKeywords?: string[];
-
-    @ApiProperty({ description: 'ID do post' })
+    @ApiProperty({ description: 'ID do autor do post' })
     @IsString()
-    postId: string; // Adicionado
+    authorId: string;
 
-    @ApiProperty({ description: 'Conteúdo do post' })
-    @IsString()
-    content: string; // Adicionada a propriedade 'content'
-
-    @ApiProperty({ description: 'Status do post' })
-    @IsString()
-    status: string;
+    @ApiProperty({ description: 'Data de modificação do post (ISO 8601)' })
+    @IsString() // Ou IsISO8601
+    modifiedDate: string;
 }
