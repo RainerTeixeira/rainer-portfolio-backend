@@ -186,7 +186,7 @@ export class DynamoDbService {
     // Constrói a expressão de atualização dinamicamente
     const updateExpressionParts: string[] = [];
     const expressionAttributeNames: Record<string, string> = {};
-    const expressionAttributeValues: Record<string, any> = {};
+    const expressionAttributeValues: Record<string, DynamoDB.AttributeValue> = {};
     let nameIndex = 0;
     let valueIndex = 0;
 
@@ -264,6 +264,26 @@ export class DynamoDbService {
     const operation = 'scan';
     this.logOperationStart(operation, params.TableName, params);
     try {
+      // Verifica se a ProjectionExpression inclui 'status' e, se sim, usa ExpressionAttributeNames
+      if (params.ProjectionExpression?.includes('status')) {
+        params.ExpressionAttributeNames = {
+          ...params.ExpressionAttributeNames,
+          '#st': 'status', // Alias para o atributo 'status'
+        };
+        // Substitui 'status' por '#st' na ProjectionExpression
+        params.ProjectionExpression = params.ProjectionExpression.replace(/status/g, '#st');
+      }
+
+      // Verifica se a ProjectionExpression inclui 'views' e, se sim, usa ExpressionAttributeNames
+      if (params.ProjectionExpression?.includes('views')) {
+        params.ExpressionAttributeNames = {
+          ...params.ExpressionAttributeNames,
+          '#vi': 'views', // Alias para o atributo 'views'
+        };
+        // Substitui 'views' por '#vi' na ProjectionExpression
+        params.ProjectionExpression = params.ProjectionExpression.replace(/views/g, '#vi');
+      }
+
       const command = new ScanCommand(params);
       const result = await this.docClient.send(command);
       this.logOperationSuccess(
