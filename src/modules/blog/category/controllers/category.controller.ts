@@ -30,7 +30,6 @@ export class CategoryController {
 
     @ApiOperation({ summary: 'Obter uma categoria por ID' })
     @ApiResponse({ status: 200, description: 'Retorna a categoria.', type: CategoryDto })
-    @ApiResponse({ status: 404, description: 'Categoria não encontrada.' })
     @Get(':categoryId')
     async findOne(@Param('categoryId') categoryId: string): Promise<CategoryDto> {
         return this.categoryService.findOne(categoryId);

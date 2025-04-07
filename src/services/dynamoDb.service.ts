@@ -67,6 +67,7 @@ export class DynamoDbService {
   private readonly logger = new Logger(DynamoDbService.name);
   private readonly client: DynamoDBClient;
   private readonly docClient: DynamoDBDocumentClient;
+  private readonly documentClient: DynamoDBDocumentClient;
 
   constructor() {
     this.logger.log('Inicializando DynamoDbService...');
@@ -98,6 +99,7 @@ export class DynamoDbService {
     };
 
     this.docClient = DynamoDBDocumentClient.from(this.client, translateConfig);
+    this.documentClient = DynamoDBDocumentClient.from(this.client, translateConfig);
     this.logger.log(
       `DynamoDB Client e DocumentClient inicializados para a região: ${region}`,
     );
@@ -283,17 +285,40 @@ export class DynamoDbService {
    * @throws {DynamoDBOperationError} - Se ocorrer um erro durante a operação.
    */
   async query(params: QueryCommandInput): Promise<QueryCommandOutput> {
-    try {
-      // Ajusta os valores de ExpressionAttributeValues
-      if (params.ExpressionAttributeValues) {
-        params.ExpressionAttributeValues = this.adjustExpressionAttributeValues(params.ExpressionAttributeValues);
-      }
+    const operation = 'query';
+    this.logOperationStart(operation, params.TableName, params);
 
-      const result = await this.docClient.send(new QueryCommand(params));
+    // Validação adicional para ExpressionAttributeValues
+    if (params.ExpressionAttributeValues) {
+      for (const [key, value] of Object.entries(params.ExpressionAttributeValues)) {
+        if (value === undefined || Object.keys(value).length === 0) {
+          throw new DynamoDBOperationError(
+            operation,
+            `O valor para ${key} em ExpressionAttributeValues está vazio ou indefinido.`,
+            null,
+          );
+        }
+      }
+    }
+
+    if (
+      !params.ExpressionAttributeValues ||
+      !params.ExpressionAttributeValues[':categoryIdSubcategoryId']
+    ) {
+      throw new Error("O valor de ':categoryIdSubcategoryId' não pode ser vazio.");
+    }
+
+    try {
+      const command = new QueryCommand(params);
+      const result = await this.docClient.send(command);
+      this.logOperationSuccess(
+        operation,
+        params.TableName,
+        `Itens encontrados: ${result.Items?.length ?? 0}`,
+      );
       return result;
     } catch (error) {
-      this.handleError('query', params.TableName, error);
-      throw error;
+      this.handleError(operation, params.TableName, error, params);
     }
   }
 

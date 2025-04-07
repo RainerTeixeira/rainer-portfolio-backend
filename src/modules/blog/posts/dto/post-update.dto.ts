@@ -2,7 +2,7 @@
  * DTO para atualização de um post.
  * Extende a classe PostBaseDto para reutilizar propriedades comuns.
  */
-import { IsNumber, IsOptional, IsISO8601 } from 'class-validator';
+import { IsNumber, IsOptional, IsISO8601, IsString } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { PostBaseDto } from './post-base.dto';
 
@@ -41,4 +41,21 @@ export class PostUpdateDto extends PostBaseDto {
     @ApiPropertyOptional({ description: 'Conteúdo do post', example: 'Este é o conteúdo do post.' })
     @IsOptional()
     content?: string; // Adicionada a propriedade 'content'
+
+    /**
+     * URL canônica do post.
+     * @example 'https://meusite.com/blog/guia-definitivo-apis-nestjs'
+     */
+    @ApiPropertyOptional({ description: 'URL canônica do post', example: 'https://meusite.com/blog/guia-definitivo-apis-nestjs' })
+    @IsString()
+    @IsOptional()
+    canonical?: string;
+
+    /**
+     * Conteúdo HTML do post.
+     */
+    @ApiPropertyOptional({ description: 'Conteúdo HTML do post' })
+    @IsString()
+    @IsOptional()
+    contentHTML?: string;
 }

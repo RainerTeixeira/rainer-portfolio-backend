@@ -29,4 +29,16 @@ export class PostFullDto {
 
     @ApiProperty({ description: 'Slug do post', example: 'guia-definitivo-apis-nestjs' })
     slug: string; // Adicionado o campo slug
+
+    @ApiProperty({ description: 'URL canônica do post', example: 'https://meusite.com/blog/guia-definitivo-apis-nestjs' })
+    canonical: string;
+
+    @ApiProperty({ description: 'ID da categoria', example: '1' })
+    categoryId: string;
+
+    @ApiProperty({ description: 'ID da subcategoria', example: '2' })
+    subcategoryId: string;
+
+    @ApiProperty({ description: 'ID do autor do post', example: '1' })
+    authorId: string;
 }

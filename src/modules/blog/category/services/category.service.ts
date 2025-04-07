@@ -13,7 +13,7 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 @ApiTags('category')
 @Injectable()
 export class CategoryService {
-    private readonly tableName = 'Category';
+    private readonly tableName = process.env.DYNAMO_TABLE_NAME_CATEGORIES || 'Category';
 
     constructor(private readonly dynamoDbService: DynamoDbService) { }
 
@@ -123,16 +123,26 @@ export class CategoryService {
      * @private
      */
     private mapCategoryFromDynamoDb(item: Record<string, unknown>): CategoryDto {
-        const seo = (item.seo as Record<string, unknown>) || {};
+        interface Seo {
+            metaTitle?: string;
+            priority?: string;
+            // ...outras propriedades existentes...
+        }
+
+        const seo: Seo = {
+            metaTitle: typeof item.seo === 'object' && item.seo?.['metaTitle'] && typeof item.seo['metaTitle'] === 'string'
+                ? item.seo['metaTitle']
+                : undefined,
+            priority: typeof item.seo === 'object' && item.seo?.['priority'] && typeof item.seo['priority'] === 'string'
+                ? item.seo['priority']
+                : undefined,
+        };
+
         return {
-            categoryId: item.categoryId as string,
-            name: item.name as string,
-            slug: item.slug as string,
-            seo: {
-                canonical: seo.canonical as string | undefined,
-                description: seo.description as string | undefined,
-                keywords: (seo.keywords as unknown as string[]) || [],
-            },
-        } as CategoryDto;
+            categoryId: item.categoryId && typeof item.categoryId === 'string' ? item.categoryId : '',
+            name: item.name && typeof item.name === 'string' ? item.name : '',
+            slug: item.slug && typeof item.slug === 'string' ? item.slug : '',
+            seo: seo,
+        };
     }
 }
