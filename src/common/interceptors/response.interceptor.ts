@@ -32,13 +32,19 @@ interface ApiResponseMetadata {
  * @interface ApiSuccessResponse
  * @description Estrutura padrão para respostas de sucesso da API.
  */
-interface ApiSuccessResponse<T> {
+export interface ApiSuccessResponse<T> {
     /** Sempre `true` para indicar sucesso. */
     readonly success: true;
     /** Metadados da resposta. */
     readonly metadata: ApiResponseMetadata;
     /** Os dados retornados pela operação. Pode ser qualquer tipo. */
     readonly data: T;
+}
+
+export class ApiSuccessResponseClass<T> implements ApiSuccessResponse<T> {
+    success: true;
+    metadata: ApiResponseMetadata;
+    data: T;
 }
 
 /**
@@ -100,9 +106,13 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, ApiSuccessResp
      * @returns Objeto `ApiSuccessResponse<T>` formatado.
      */
     private formatSuccessResponse(payload: T, request: Request, response: any, timestamp: string, requestId: string): ApiSuccessResponse<T> {
-        const statusCode = response.statusCode || HttpStatus.OK; // Garante um status code
+        const statusCode = response.statusCode || HttpStatus.OK;
 
-        // Monta a estrutura de sucesso padrão, envolvendo o payload original em 'data'
+        // Evita encapsular novamente se a resposta já estiver no formato ApiSuccessResponse
+        if ((payload as any)?.success === true && (payload as any)?.metadata) {
+            return payload as ApiSuccessResponse<T>;
+        }
+
         return {
             success: true,
             metadata: {
@@ -111,7 +121,7 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, ApiSuccessResp
                 statusCode,
                 requestId,
             },
-            data: payload, // O payload original do controller/service fica aqui
+            data: payload,
         };
     }
 
@@ -163,7 +173,7 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, ApiSuccessResp
             },
             message,
             ...(errorCode && { errorCode }), // Adiciona se existir
-            ...(errorDetails && { errorDetails }), // Adiciona se existir
+            ...(errorDetails && typeof errorDetails === 'object' && errorDetails !== null ? { errorDetails } : {}), // Adiciona se existir
         };
 
         // Relança como HttpException contendo o corpo formatado.

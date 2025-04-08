@@ -1,307 +1,397 @@
 // src/modules/blog/posts/services/posts.service.ts
 
-import { ConfigService } from '@nestjs/config';
 import {
-  Injectable, Logger, BadRequestException, NotFoundException,
-  Inject, InternalServerErrorException // Usar InternalServerErrorException para erros inesperados
+  Injectable,
+  Logger,
+  BadRequestException,
+  NotFoundException,
+  Inject,
+  InternalServerErrorException,
+  HttpException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
 import { DynamoDbService } from '@src/services/dynamoDb.service';
-import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager'; // Para Cache
-import { QueryCommandInput, AttributeValue, ScanCommandInput, UpdateItemCommandInput } from '@aws-sdk/client-dynamodb';
-import { PostCreateDto } from '@src/modules/blog/posts/dto/post-create.dto';
-import { PostUpdateDto } from '@src/modules/blog/posts/dto/post-update.dto';
-import { PostContentDto } from '@src/modules/blog/posts/dto/post-content.dto';
-import { PostSummaryDto } from '@src/modules/blog/posts/dto/post-summary.dto';
-import { PostFullDto } from '@src/modules/blog/posts/dto/post-full.dto';
+import {
+  AttributeValue,
+  DeleteItemCommandInput,
+  QueryCommandInput,
+  ScanCommandInput,
+  UpdateItemCommandInput,
+} from '@aws-sdk/client-dynamodb';
+import { generatePostId } from '@src/common/generateUUID/generatePostId';
 import { AuthorsService } from '@src/modules/blog/authors/services/authors.service';
 import { CategoryService } from '@src/modules/blog/category/services/category.service';
 import { SubcategoryService } from '@src/modules/blog/subcategory/services/subcategory.service';
 import { CommentsService } from '@src/modules/blog/comments/services/comments.service';
-import { generatePostId } from '@src/common/generateUUID/generatePostId';
+import { PostCreateDto } from '@src/modules/blog/posts/dto/post-create.dto';
+import { PostUpdateDto } from '@src/modules/blog/posts/dto/post-update.dto';
+import { PostContentDto } from '@src/modules/blog/posts/dto/post-content.dto';
+import { PostFullDto } from '@src/modules/blog/posts/dto/post-full.dto';
+import { PostSummaryDto } from '@src/modules/blog/posts/dto/post-summary.dto';
 
-/**
- * @interface PaginatedPostsResult
- * @description Define a estrutura de retorno para posts paginados.
- */
-interface PaginatedPostsResult {
-  /** Lista de resumos de posts da página atual. */
+export interface PaginatedPostsResult {
   items: PostSummaryDto[];
-  /** Chave para buscar a próxima página (null se não houver mais páginas). */
   nextKey: string | null;
 }
 
-/**
- * @interface SimpleSuccessMessage
- * @description Estrutura simples para mensagens de sucesso (ex: exclusão).
- */
-interface SimpleSuccessMessage {
+export interface SimpleSuccessMessage {
   message: string;
 }
 
-
-/**
- * @service PostsService
- * @description Responsável pela lógica de negócio e acesso a dados dos posts do blog.
- * Interage com DynamoDB, gerencia cache e coordena com outros serviços (Authors, Categories, etc.).
- *
- * @strategies
- * - **Performance:** Cache (leitura), Projeções (DynamoDB), Paginação por Cursor, Consultas Paralelas (enriquecimento).
- * - **Consistência:** Invalidação de cache em operações de escrita (CUD).
- * - **Clareza:** Retorna DTOs de negócio ou dados brutos, deixando a formatação final da API para o interceptor.
- */
 @Injectable()
 export class PostsService {
   private readonly logger = new Logger(PostsService.name);
   private readonly tableName: string;
-  // Tempo de vida do cache em segundos (ex: 5 minutos)
-  private readonly CACHE_TTL_POST = 300;
-  // Prefixo para chaves de cache de posts
+  private readonly CACHE_TTL_POST = 300; // 5 minutos
   private readonly CACHE_KEY_PREFIX_POST = 'post:';
-  // Chave para listas paginadas (pode precisar de mais granularidade)
-  private readonly CACHE_KEY_PAGINATED = 'posts:paginated';
-
+  private readonly CACHE_KEY_PAGINATED_PREFIX = 'posts:paginated:';
 
   constructor(
     private readonly configService: ConfigService,
     private readonly dynamoDbService: DynamoDbService,
-    @Inject(CACHE_MANAGER) private cacheManager: Cache,
-    // Injeção dos outros serviços necessários para enriquecimento
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     private readonly authorsService: AuthorsService,
     private readonly categoryService: CategoryService,
     private readonly subcategoryService: SubcategoryService,
     private readonly commentsService: CommentsService,
   ) {
     this.tableName = this.configService.get<string>('DYNAMO_TABLE_NAME_POSTS') || 'Posts';
-    this.logger.log(`PostsService inicializado. Tabela DynamoDB: ${this.tableName}`);
   }
 
   /**
    * @method createPost
-   * @description Cria um novo post no DynamoDB.
-   * @param dto DTO com os dados do post a ser criado.
-   * @returns O DTO `PostContentDto` do post recém-criado.
-   * @throws BadRequestException Se ocorrer um erro durante a criação.
+   * @description Cria um novo post no sistema
+   * @param dto Dados para criação do post
+   * @returns PostContentDto com dados do post criado
    */
   async createPost(dto: PostCreateDto): Promise<PostContentDto> {
     const postId = generatePostId();
     const now = new Date().toISOString();
-    this.logger.log(`Tentando criar post com ID: ${postId}`);
-
-    // Validações adicionais podem ser feitas aqui (ex: slug único, se necessário)
-
-    const postItem = this.buildPostItem(postId, now, dto);
 
     try {
+      const postItem = this.buildPostItem(postId, now, dto);
       await this.dynamoDbService.putItem({
         TableName: this.tableName,
         Item: postItem,
-        // ConditionExpression: 'attribute_not_exists(postId)' // Opcional: Garante que o ID não exista
       });
 
-      this.logger.log(`Post ${postId} criado com sucesso.`);
-      // Invalida cache de listas após criação
       await this.clearPaginatedCache();
-
-      // Retorna o DTO do post criado, mapeado do item salvo
       return this.mapToContentDto(postItem);
-
     } catch (error: any) {
-      this.logDynamoError('createPost', error);
-      // Verifica se foi erro de condição (ex: ID já existe)
-      if (error.name === 'ConditionalCheckFailedException') {
-        throw new BadRequestException(`Post com ID ${postId} já existe.`);
-      }
-      throw new InternalServerErrorException('Erro ao salvar post no banco de dados.');
+      this.logger.error(`Falha ao criar post: ${(error as Error).message}`);
+      throw new InternalServerErrorException('Erro ao criar post');
     }
   }
 
   /**
    * @method getPaginatedPosts
-   * @description Busca posts de forma paginada, otimizada para leitura.
-   * Utiliza Scan com Projections e cursor (ExclusiveStartKey).
-   * @param limit Quantidade de itens por página.
-   * @param nextKey Cursor (string base64) para buscar a próxima página.
-   * @returns Objeto `PaginatedPostsResult` contendo os itens e a chave da próxima página.
-   * @throws InternalServerErrorException Em caso de erro na busca.
+   * @description Busca posts paginados com cache
+   * @param limit Número máximo de itens por página
+   * @param nextKey Chave para paginação (opcional)
+   * @returns Resultado paginado de posts
    */
   async getPaginatedPosts(limit: number, nextKey?: string): Promise<PaginatedPostsResult> {
-    this.logger.log(`Buscando posts paginados. Limite: ${limit}, NextKey: ${nextKey ? 'presente' : 'ausente'}`);
+    const cacheKey = `${this.CACHE_KEY_PAGINATED_PREFIX}${limit}:${nextKey || 'first'}`;
 
-    const cacheKey = `${this.CACHE_KEY_PAGINATED}:${limit}:${nextKey || 'first'}`;
     try {
-      // 1. Tenta buscar do Cache
-      const cachedResult = await this.cacheManager.get<PaginatedPostsResult>(cacheKey);
-      if (cachedResult) {
-        this.logger.log(`Resultado paginado encontrado no cache para key: ${cacheKey}`);
-        return cachedResult;
-      }
+      const cached = await this.cacheManager.get<PaginatedPostsResult>(cacheKey);
+      if (cached) return cached;
 
-      // 2. Se não está no cache, busca no DynamoDB
-      this.logger.log(`Cache miss para ${cacheKey}. Buscando no DynamoDB...`);
       const params: ScanCommandInput = {
         TableName: this.tableName,
         Limit: limit,
-        // Projeta apenas os campos necessários para o PostSummaryDto
-        ProjectionExpression: 'postId, title, description, publishDate, slug, featuredImageURL, #st, views', // Use alias para 'status'
-        ExpressionAttributeNames: { '#st': 'status' }, // Alias para a palavra reservada 'status'
-        // Adiciona a chave de início se fornecida
-        ...(nextKey && { ExclusiveStartKey: this.decodeNextKey(nextKey) }),
-        // Adicionar filtro? Ex: FilterExpression: "#st = :publishedStatus", ExpressionAttributeValues: {":publishedStatus": {S: "published"}}
+        ExclusiveStartKey: nextKey ? this.decodeNextKey(nextKey) : undefined,
+        ProjectionExpression: 'postId, title, description, publishDate, slug, featuredImageURL, #st, views',
+        ExpressionAttributeNames: { '#st': 'status' },
       };
 
       const result = await this.dynamoDbService.scan(params);
-      const posts = result.Items?.map(item => this.mapToSummaryDto(item)) || [];
-      const lastEvaluatedKey = result.LastEvaluatedKey;
-      const encodedNextKey = lastEvaluatedKey ? this.encodeNextKey(lastEvaluatedKey) : null;
+      const items = result.Items?.map(item => this.mapToSummaryDto(item)) || [];
+      const newNextKey = result.LastEvaluatedKey ? this.encodeNextKey(result.LastEvaluatedKey) : null;
 
-      const paginatedResult: PaginatedPostsResult = {
-        items: posts,
-        nextKey: encodedNextKey,
+      return { items, nextKey: newNextKey }; // Retorna os dados brutos
+    } catch (error: any) {
+      this.logger.error(`Falha na busca paginada: ${(error as Error).message}`);
+      throw new InternalServerErrorException('Erro ao buscar posts');
+    }
+  }
+
+  /**
+   * @method getPostBySlug
+   * @description Busca um post completo pelo slug com cache
+   * @param slug Slug único do post
+   * @returns PostFullDto com dados completos enriquecidos
+   */
+  async getPostBySlug(slug: string): Promise<PostFullDto> {
+    const cacheKey = `${this.CACHE_KEY_PREFIX_POST}slug:${slug}`;
+
+    try {
+      const cached = await this.cacheManager.get<PostFullDto>(cacheKey);
+      if (cached) return cached;
+
+      const params: QueryCommandInput = {
+        TableName: this.tableName,
+        IndexName: 'slug-index',
+        KeyConditionExpression: 'slug = :slug',
+        ExpressionAttributeValues: { ':slug': { S: slug } },
+        Limit: 1,
       };
 
-      // 3. Salva no Cache antes de retornar
-      await this.cacheManager.set(cacheKey, paginatedResult, this.CACHE_TTL_POST / 2); // Cache de lista pode ter TTL menor
-      this.logger.log(`Resultado paginado salvo no cache para key: ${cacheKey}`);
+      const result = await this.dynamoDbService.query(params);
+      const postItem = result.Items?.[0];
+      if (!postItem) throw new NotFoundException(`Post com slug "${slug}" não encontrado`);
 
-      return paginatedResult;
+      const enriched = await this.enrichPostData(postItem);
+      await this.cacheManager.set(cacheKey, enriched, this.CACHE_TTL_POST);
 
-    } catch (error) = {
-      // Cache pode ser apenas ignorado
+      return enriched;
+    } catch (error: any) {
+      if (error instanceof HttpException) throw error;
+      this.logger.error(`Falha ao buscar post por slug: ${(error as Error).message}`);
+      throw new InternalServerErrorException('Erro ao buscar post');
     }
   }
 
   /**
-   * @method decodeNextKey
-   * @description Decodifica a chave de paginação de Base64 para objeto DynamoDB.
-   * @param nextKey Chave codificada em Base64.
-   * @returns Objeto `LastEvaluatedKey` do DynamoDB.
-   * @throws BadRequestException Se a chave for inválida.
+   * @method updatePost
+   * @description Atualiza um post existente
+   * @param id ID do post a ser atualizado
+   * @param dto Dados para atualização
+   * @returns PostContentDto atualizado
    */
-  private decodeNextKey(nextKey: string): Record<string, AttributeValue> {
+  async updatePost(id: string, dto: PostUpdateDto): Promise<PostContentDto> {
     try {
-      return JSON.parse(Buffer.from(nextKey, 'base64').toString('utf8'));
-    } catch (e) {
-      this.logger.warn(`Falha ao decodificar nextKey: ${nextKey}`, e);
-      throw new BadRequestException('Chave de paginação inválida.');
+      const now = new Date().toISOString();
+      const updateParams = this.buildUpdateParams(id, dto, now);
+
+      const result = await this.dynamoDbService.updateItem(
+        this.tableName,
+        { postId: { S: id } }, // Key
+        updateParams, // Update data
+        'ALL_NEW' // Return values
+      );
+      if (!result.Attributes) throw new InternalServerErrorException('Falha na atualização');
+
+      await this.clearPostCache(id);
+      await this.clearPaginatedCache();
+
+      return this.mapToContentDto(result.Attributes);
+    } catch (error) {
+      this.handleUpdateError(error, id);
     }
   }
 
   /**
-   * @method encodeNextKey
-   * @description Codifica a `LastEvaluatedKey` do DynamoDB para string Base64.
-   * @param lastKey Objeto `LastEvaluatedKey` retornado pelo DynamoDB.
-   * @returns String Base64 representando a chave.
+   * @method deletePost
+   * @description Exclui permanentemente um post
+   * @param id ID do post a ser excluído
+   * @returns Mensagem de sucesso
    */
-  private encodeNextKey(lastKey: Record<string, AttributeValue>): string {
-    return Buffer.from(JSON.stringify(lastKey)).toString('base64');
+  async deletePost(id: string): Promise<SimpleSuccessMessage> {
+    try {
+      const params: DeleteItemCommandInput = {
+        TableName: this.tableName,
+        Key: { postId: { S: id } },
+        ConditionExpression: 'attribute_exists(postId)',
+      };
+
+      await this.dynamoDbService.deleteItem(params);
+      await this.clearPostCache(id);
+      await this.clearPaginatedCache();
+
+      return { message: 'Post excluído com sucesso' };
+    } catch (error) {
+      this.handleDeleteError(error, id);
+    }
   }
 
-  // --- Mapeadores Auxiliares ---
+  // Métodos auxiliares privados
 
-  /**
-   * @method buildPostItem
-   * @description Constrói o objeto de item do DynamoDB a partir do DTO e metadados.
-   * @param postId ID gerado para o post.
-   * @param isoDate String ISO da data atual.
-   * @param dto DTO com dados de criação ou atualização.
-   * @returns Objeto formatado para o DynamoDB.
-   */
-  private buildPostItem(postId: string, isoDate: string, dto: PostCreateDto | PostUpdateDto): Record<string, AttributeValue> {
-    // Comum a create e update (parcialmente)
-    const item: Record<string, AttributeValue> = {
+  private buildPostItem(
+    postId: string,
+    isoDate: string,
+    dto: PostCreateDto | PostUpdateDto
+  ): Record<string, AttributeValue> {
+    return {
       postId: { S: postId },
-      modifiedDate: { S: isoDate }, // Sempre atualiza a data de modificação
-      // Adiciona 'views' apenas na criação, ou se vier no DTO de update
-      ...(!(dto instanceof PostUpdateDto) && { views: { N: '0' } }),
-      // Adiciona 'publishDate' e 'status' inicial apenas na criação
-      ...(!(dto instanceof PostUpdateDto) && {
-        publishDate: { S: isoDate },
-        status: { S: 'draft' },
-      }),
-      // Campos do DTO (presentes em ambos ou opcionais)
-      ...(dto.title !== undefined && { title: { S: dto.title } }), // Permite string vazia
-      ...(dto.slug && { slug: { S: dto.slug } }),
-      ...(dto.contentHTML !== undefined && { contentHTML: { S: dto.contentHTML } }),
-      ...(dto.featuredImageURL && { featuredImageURL: { S: dto.featuredImageURL } }),
-      ...(dto.keywords && dto.keywords.length > 0 && { keywords: { SS: dto.keywords } }),
-      ...(dto.readingTime !== undefined && { readingTime: { N: dto.readingTime.toString() } }),
-      ...(dto.tags && dto.tags.length > 0 && { tags: { SS: dto.tags } }),
-      ...(dto.categoryId && dto.subcategoryId && {
-        'categoryId#subcategoryId': { S: `${dto.categoryId}#${dto.subcategoryId}` }, // Chave composta para GSI, se houver
-        categoryId: { S: dto.categoryId },
-        subcategoryId: { S: dto.subcategoryId },
-      }),
-      ...(dto.authorId && { authorId: { S: dto.authorId } }),
-      ...(dto.canonical && { canonical: { S: dto.canonical } }),
-      ...(dto.description !== undefined && { description: { S: dto.description } }), // Inclui description se existir no DTO
-      // Status só é atualizado se vier explicitamente no DTO de Update
-      ...(dto instanceof PostUpdateDto && dto.status && { status: { S: dto.status } }),
+      publishDate: { S: isoDate },
+      modifiedDate: { S: isoDate },
+      status: { S: 'draft' },
+      views: { N: '0' },
+      ...this.mapDtoToDynamoAttributes(dto),
     };
-    // Remove chaves com valor 'undefined' (não suportado pelo DynamoDB SDK v3 diretamente)
-    Object.keys(item).forEach(key => item[key] === undefined && delete item[key]);
-    return item;
   }
 
+  private mapDtoToDynamoAttributes(dto: PostCreateDto | PostUpdateDto): Record<string, AttributeValue> {
+    return {
+      ...(dto.title && { title: { S: dto.title } }),
+      ...(dto.slug && { slug: { S: dto.slug } }),
+      ...(dto.contentHTML && { contentHTML: { S: dto.contentHTML } }),
+      ...(dto.description && { description: { S: dto.description } }),
+      ...(dto.featuredImageURL && { featuredImageURL: { S: dto.featuredImageURL } }),
+      ...(dto.keywords?.length && { keywords: { SS: dto.keywords } }),
+      ...(dto.readingTime && { readingTime: { N: dto.readingTime.toString() } }),
+      ...(dto.tags?.length && { tags: { SS: dto.tags } }),
+      ...(dto.status && { '#status': { S: dto.status } }),
+      ...('categoryId' in dto && { categoryId: { S: dto.categoryId } }),
+      ...('subcategoryId' in dto && { subcategoryId: { S: dto.subcategoryId } }),
+      ...('authorId' in dto && { authorId: { S: dto.authorId } }),
+      ...(dto.canonical && { canonical: { S: dto.canonical } }),
+    };
+  }
 
-  /**
-   * @method mapToContentDto
-   * @description Mapeia um item do DynamoDB para o DTO `PostContentDto`.
-   * @param item Item retornado do DynamoDB.
-   * @returns Objeto `PostContentDto`.
-   */
+  private async enrichPostData(item: Record<string, AttributeValue>): Promise<PostFullDto> {
+    const postId = item.postId?.S;
+    if (!postId) throw new InternalServerErrorException('Post inválido');
+
+    try {
+      const [author, category, subcategory, comments] = await Promise.all([
+        this.authorsService.findOne(item.authorId?.S ?? ''),
+        this.categoryService.findOne(item.categoryId?.S ?? ''),
+        this.subcategoryService.getSubcategoryById(item.categoryId?.S ?? '', item.subcategoryId?.S ?? ''),
+        this.commentsService.findAllByPostId(postId),
+      ]);
+
+      return {
+        post: this.mapToContentDto(item),
+        author: author || undefined,
+        category: category || undefined,
+        subcategory: subcategory || undefined,
+        comments: comments || [],
+        slug: item.slug?.S ?? '',
+        canonical: item.canonical?.S ?? '',
+        categoryId: item.categoryId?.S ?? '',
+        subcategoryId: item.subcategoryId?.S ?? '',
+        authorId: item.authorId?.S ?? '',
+      };
+    } catch (error: any) {
+      this.logger.error(`Falha no enriquecimento de dados: ${(error as Error).message}`);
+      throw new InternalServerErrorException('Erro ao processar post');
+    }
+  }
+
   private mapToContentDto(item: Record<string, AttributeValue>): PostContentDto {
     return {
-      postId: item.postId?.S ?? '', // Use ?? para fallback
-      title: item.title?.S ?? '',
-      status: item.status?.S ?? 'draft',
-      publishDate: item.publishDate?.S ?? '',
-      modifiedDate: item.modifiedDate?.S ?? '',
-      views: Number(item.views?.N ?? 0),
-      slug: item.slug?.S ?? '',
-      contentHTML: item.contentHTML?.S ?? '',
-      description: item.description?.S ?? '', // Mapeia description
-      featuredImageURL: item.featuredImageURL?.S ?? '',
-      keywords: item.keywords?.SS ?? [],
-      readingTime: Number(item.readingTime?.N ?? 0),
-      tags: item.tags?.SS ?? [],
+      postId: item.postId?.S ?? '',
+      title: item.title?.S,
+      contentHTML: item.contentHTML?.S,
+      description: item.description?.S,
+      canonical: item.canonical?.S,
+      featuredImageURL: item.featuredImageURL?.S,
+      keywords: item.keywords?.SS,
+      readingTime: Number(item.readingTime?.N),
+      tags: item.tags?.SS,
+      status: item.status?.S ?? '',
+      views: Number(item.views?.N),
       categoryId: item.categoryId?.S ?? '',
       subcategoryId: item.subcategoryId?.S ?? '',
       authorId: item.authorId?.S ?? '',
-      canonical: item.canonical?.S, // Pode ser undefined
+      modifiedDate: item.modifiedDate?.S ?? '',
+      publishDate: item.publishDate?.S,
     };
   }
 
-  /**
-   * @method mapToSummaryDto
-   * @description Mapeia um item do DynamoDB para o DTO `PostSummaryDto`.
-   * @param item Item retornado do DynamoDB (geralmente com projeção).
-   * @returns Objeto `PostSummaryDto`.
-   */
   private mapToSummaryDto(item: Record<string, AttributeValue>): PostSummaryDto {
     return {
       postId: item.postId?.S ?? '',
       title: item.title?.S ?? '',
-      description: item.description?.S ?? '', // Usa description se projetado
+      description: item.description?.S,
       publishDate: item.publishDate?.S ?? '',
       slug: item.slug?.S ?? '',
-      featuredImageURL: item.featuredImageURL?.S ?? '',
-      status: item.status?.S ?? '', // Mapeia o alias 'status' corretamente
-      views: Number(item.views?.N ?? 0),
+      featuredImageURL: item.featuredImageURL?.S,
+      status: item.status?.S ?? '',
+      views: Number(item.views?.N),
     };
   }
 
-  // --- Logging ---
+  private buildUpdateParams(
+    postId: string,
+    dto: PostUpdateDto,
+    isoDate: string
+  ): {
+    UpdateExpression: string;
+    ExpressionAttributeNames: Record<string, string>;
+    ExpressionAttributeValues: Record<string, AttributeValue>;
+  } {
+    const updateExpressionParts: string[] = [];
+    const expressionAttributeNames: Record<string, string> = {};
+    const expressionAttributeValues: Record<string, AttributeValue> = {};
+    let index = 0;
 
-  /**
-   * @method logDynamoError
-   * @description Padroniza o log de erros do DynamoDB.
-   * @param method Nome do método onde ocorreu o erro.
-   * @param error Erro capturado.
-   */
-  private logDynamoError(method: string, error: any): void {
-    this.logger.error(
-      `[${method}] Erro ao interagir com DynamoDB. Nome: ${error.name}, Mensagem: ${error.message}`,
-      error.$metadata ? JSON.stringify(error.$metadata) : error.stack // Inclui metadados da requisição AWS se disponível
+    const attributes = this.mapDtoToDynamoAttributes(dto);
+
+    for (const key in attributes) {
+      if (key === '#status') {
+        updateExpressionParts.push(`${key} = :${key.substring(1)}`);
+        expressionAttributeNames[key] = 'status';
+        expressionAttributeValues[`:${key.substring(1)}`] = attributes[key];
+      } else {
+        updateExpressionParts.push(`${key} = :${key}`);
+        expressionAttributeValues[`:${key}`] = attributes[key];
+      }
+    }
+
+    updateExpressionParts.push(`modifiedDate = :modifiedDate`);
+    expressionAttributeValues[`:modifiedDate`] = { S: isoDate };
+
+    const updateExpression = `SET ${updateExpressionParts.join(', ')}`;
+
+    return {
+      UpdateExpression: updateExpression,
+      ExpressionAttributeNames: expressionAttributeNames,
+      ExpressionAttributeValues: expressionAttributeValues,
+    };
+  }
+
+  // Métodos de cache
+  private async clearPostCache(postId: string): Promise<void> {
+    const store = (this.cacheManager as any).store;
+    const keys = await store.keys();
+    await Promise.all(
+      keys
+        .filter(key => key.startsWith(this.CACHE_KEY_PREFIX_POST))
+        .map(key => this.cacheManager.del(key))
     );
+  }
+
+  private async clearPaginatedCache(): Promise<void> {
+    const store = (this.cacheManager as any).store;
+    const keys = await store.keys();
+    await Promise.all(
+      keys
+        .filter(key => key.startsWith(this.CACHE_KEY_PAGINATED_PREFIX))
+        .map(key => this.cacheManager.del(key))
+    );
+  }
+
+  // Métodos de paginação
+  private encodeNextKey(key: Record<string, AttributeValue>): string {
+    return Buffer.from(JSON.stringify(key)).toString('base64');
+  }
+
+  private decodeNextKey(encoded: string): Record<string, AttributeValue> {
+    try {
+      return JSON.parse(Buffer.from(encoded, 'base64').toString('utf8'));
+    } catch (error) {
+      throw new BadRequestException('Chave de paginação inválida');
+    }
+  }
+
+  // Tratamento de erros
+  private handleUpdateError(error: any, postId: string): never {
+    if (error.name === 'ConditionalCheckFailedException') {
+      throw new NotFoundException(`Post ${postId} não encontrado`);
+    }
+    this.logger.error(`Erro na atualização: ${(error as Error).message}`);
+    throw new InternalServerErrorException('Falha na atualização do post');
+  }
+
+  private handleDeleteError(error: any, postId: string): never {
+    if (error.name === 'ConditionalCheckFailedException') {
+      throw new NotFoundException(`Post ${postId} não encontrado`);
+    }
+    this.logger.error(`Erro na exclusão: ${(error as Error).message}`);
+    throw new InternalServerErrorException('Falha na exclusão do post');
   }
 }

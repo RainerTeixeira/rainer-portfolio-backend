@@ -47,10 +47,12 @@ export class HttpExceptionFilter implements ExceptionFilter<HttpException> {
     );
 
     response.status(status).send({
-      ...error,
+      success: false, // Adiciona o campo success para consistência
       statusCode: status,
       timestamp: new Date().toISOString(),
       path: request.url,
+      message: error.message,
+      ...(error.statusCode && { statusCode: error.statusCode }),
     });
   }
 
