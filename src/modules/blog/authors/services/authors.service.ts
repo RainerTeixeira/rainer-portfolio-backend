@@ -331,33 +331,22 @@ export class AuthorsService {
         try {
             // 1. Tenta buscar no cache
             const cachedAuthor = await this.cacheManager.get<AuthorDetailDto>(cacheKey);
-            if (cachedAuthor !== null && cachedAuthor !== undefined) {
+            if (cachedAuthor) {
                 this.logger.log(`Autor ${authorId} encontrado no cache.`);
-                // É importante retornar uma cópia para evitar mutações acidentais no objeto em cache
-                // Verifica se cachedAuthor é null antes de tentar usar
-                if (!cachedAuthor) {
-                    this.logger.warn(`Autor com ID '${authorId}' não encontrado no cache.`);
-                    throw new NotFoundException(`Autor com ID '${authorId}' não encontrado no cache.`);
-                }
-                const authorFromCache = AuthorDetailDto.fromDynamoDB(cachedAuthor as AuthorDetailDto);
-                if (!authorFromCache) {
-                    this.logger.error(`Falha ao mapear autor do cache para AuthorDetailDto (ID: ${authorId}).`);
-                    throw new InternalServerErrorException(`Falha ao obter os dados do autor do cache.`);
-                }
-                return authorFromCache;
+                return cachedAuthor;
             }
 
             this.logger.log(`Autor ${authorId} não encontrado no cache. Buscando no DynamoDB...`);
 
-            // 2. Se não está no cache, busca no DynamoDB
+            // 2. Busca no DynamoDB usando apenas a chave de partição
             const params = {
                 TableName: this.tableName,
-                Key: { authorId: { S: authorId } },
+                Key: { authorId: { S: authorId } }, // Apenas a chave de partição
             };
             const result = await this.dynamoDbService.getItem(params);
 
             // 3. Verifica se o item foi encontrado no DB
-            const item = result.data.Item; // Acesse `data` antes de `Item`
+            const item = result.data.Item;
             if (!item) {
                 this.logger.warn(`Autor com ID '${authorId}' não encontrado no DynamoDB.`);
                 throw new NotFoundException(`Autor com ID '${authorId}' não encontrado.`);
@@ -365,7 +354,6 @@ export class AuthorsService {
 
             // 4. Mapeia o item do DB para o DTO
             const author = AuthorDetailDto.fromDynamoDB(item as Record<string, AttributeValue>);
-
             if (!author) {
                 throw new NotFoundException(`Autor com ID '${authorId}' não encontrado no banco de dados.`);
             }
@@ -377,10 +365,7 @@ export class AuthorsService {
             return author;
 
         } catch (error) {
-            if (error instanceof NotFoundException) {
-                throw error;
-            }
-            this.logger.error(`Erro ao buscar autor ${authorId} (via getAuthorById): ${error instanceof Error ? error.message : 'Erro desconhecido'}`, error instanceof Error ? error.stack : undefined);
+            this.logger.error(`Erro ao buscar autor ${authorId} (via getAuthorById): ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
             throw new InternalServerErrorException(`Falha ao buscar o autor ${authorId}.`);
         }
     }
