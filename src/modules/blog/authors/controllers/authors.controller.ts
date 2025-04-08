@@ -36,7 +36,8 @@ export class AuthorsController {
     @Post()
     async create(@Body() createAuthorDto: CreateAuthorDto): Promise<AuthorDetailDto> {
         this.logger.log('Endpoint POST /blog/authors acionado'); // Log de acesso ao endpoint POST
-        return this.authorsService.create(createAuthorDto); // Chama o serviço para criar o autor
+        const result = await this.authorsService.create(createAuthorDto);
+        return result.data; // Extrai o campo `data` do retorno do serviço
     }
 
     /**
@@ -50,7 +51,8 @@ export class AuthorsController {
     @Get()
     async findAll(): Promise<AuthorDetailDto[]> {
         this.logger.log('Endpoint GET /blog/authors acionado'); // Log de acesso ao endpoint GET (todos)
-        return this.authorsService.findAll(); // Chama o serviço para buscar todos os autores
+        const result = await this.authorsService.findAll();
+        return result.data; // Extrai o campo `data` do retorno do serviço
     }
 
     /**

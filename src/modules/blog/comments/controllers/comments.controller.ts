@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query } from '@nestjs/common';
 import { CommentsService } from '@src/modules/blog/comments/services/comments.service';
 import { CreateCommentDto } from '@src/modules/blog/comments/dto/create-comment.dto';
 import { UpdateCommentDto } from '@src/modules/blog/comments/dto/update-comment.dto';
@@ -14,14 +14,16 @@ export class CommentsController {
     @ApiResponse({ status: 201, description: 'Comentário criado com sucesso.', type: CommentDto })
     @Post()
     async create(@Body() createCommentDto: CreateCommentDto): Promise<CommentDto> {
-        return this.commentsService.create(createCommentDto);
+        const result = await this.commentsService.create(createCommentDto);
+        return result.data; // Extrai o campo `data` do retorno do serviço
     }
 
     @ApiOperation({ summary: 'Obtém todos os comentários' })
     @ApiResponse({ status: 200, description: 'Lista de comentários.', type: [CommentDto] })
     @Get()
     async findAll(): Promise<CommentDto[]> {
-        return this.commentsService.findAll();
+        const result = await this.commentsService.findAll();
+        return result.data; // Extrai o campo `data` do retorno do serviço
     }
 
     @ApiOperation({ summary: 'Obtém um comentário pelo postId e authorId' })
@@ -33,6 +35,16 @@ export class CommentsController {
         @Param('authorId') authorId: string,
     ): Promise<CommentDto> {
         return this.commentsService.findOne(postId, authorId);
+    }
+
+    @ApiOperation({ summary: 'Obtém comentários pelo status e data' })
+    @ApiResponse({ status: 200, description: 'Comentários encontrados.', type: [CommentDto] })
+    @Get('status/:status')
+    async findByStatusAndDate(
+        @Param('status') status: string,
+        @Query('date') date?: string,
+    ): Promise<CommentDto[]> {
+        return this.commentsService.getCommentsByStatusAndDate(status, date);
     }
 
     @ApiOperation({ summary: 'Atualiza um comentário' })

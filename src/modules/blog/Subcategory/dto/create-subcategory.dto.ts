@@ -1,6 +1,6 @@
 // src/modules/blog/subcategory/dto/create-subcategory.dto.ts
 
-import { IsNotEmpty, IsString, IsOptional } from 'class-validator';
+import { IsNotEmpty, IsString, IsOptional, IsObject } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateSubcategoryDto {
@@ -44,6 +44,11 @@ export class CreateSubcategoryDto {
   @IsString()
   title?: string;
 
+  @ApiProperty({ description: 'SEO da subcategoria', required: false })
+  @IsOptional()
+  @IsObject()
+  seo?: Record<string, unknown>;
+
   constructor(
     categoryIdSubcategoryId: string,
     subcategoryId: string,
@@ -52,7 +57,8 @@ export class CreateSubcategoryDto {
     categoryId: string,
     description?: string,
     keywords?: string,
-    title?: string
+    title?: string,
+    seo?: Record<string, unknown>
   ) {
     this.categoryIdSubcategoryId = categoryIdSubcategoryId;
     this.subcategoryId = subcategoryId;
@@ -62,5 +68,6 @@ export class CreateSubcategoryDto {
     this.description = description;
     this.keywords = keywords;
     this.title = title;
+    this.seo = seo;
   }
 }

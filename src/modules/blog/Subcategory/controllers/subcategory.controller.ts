@@ -22,7 +22,8 @@ export class SubcategoryController {
     @Body() createSubcategoryDto: CreateSubcategoryDto
   ): Promise<SubcategoryDto> {
     createSubcategoryDto.categoryId = categoryId;
-    return this.subcategoryService.createSubcategory(createSubcategoryDto);
+    const result = await this.subcategoryService.createSubcategory(createSubcategoryDto);
+    return result.data; // Extrai o campo `data` do retorno do serviço
   }
 
   @ApiOperation({ summary: 'Buscar todas as subcategorias de uma categoria' })
@@ -30,7 +31,8 @@ export class SubcategoryController {
   @ApiResponse({ status: 404, description: 'Categoria não encontrada.' })
   @Get(':categoryId')
   async findAll(@Param('categoryId') categoryId: string): Promise<SubcategoryDto[]> {
-    return this.subcategoryService.getAllSubcategories(categoryId);
+    const result = await this.subcategoryService.getAllSubcategories(categoryId);
+    return result.data; // Extrai o campo `data` do retorno do serviço
   }
 
   @ApiOperation({ summary: 'Obter uma subcategoria por ID' })
@@ -43,6 +45,15 @@ export class SubcategoryController {
     return this.subcategoryService.findOne(categoryId, subcategoryId);
   }
 
+  @ApiOperation({ summary: 'Obter uma subcategoria por slug' })
+  @ApiResponse({ status: 200, description: 'Subcategoria encontrada.', type: SubcategoryDto })
+  @ApiResponse({ status: 404, description: 'Subcategoria não encontrada.' })
+  @Get('slug/:slug')
+  async findBySlug(@Param('slug') slug: string): Promise<SubcategoryDto> {
+    const result = await this.subcategoryService.getSubcategoryBySlug(slug);
+    return result.data; // Extrai o campo `data` do retorno do serviço
+  }
+
   @ApiOperation({ summary: 'Atualizar uma subcategoria existente' })
   @ApiResponse({ status: 200, description: 'Subcategoria atualizada com sucesso.', type: SubcategoryDto })
   @ApiResponse({ status: 404, description: 'Subcategoria não encontrada.' })
@@ -53,7 +64,8 @@ export class SubcategoryController {
     @Param('subcategoryId') subcategoryId: string,
     @Body() updateSubcategoryDto: UpdateSubcategoryDto
   ): Promise<SubcategoryDto> {
-    return this.subcategoryService.updateSubcategory(categoryId, subcategoryId, updateSubcategoryDto);
+    const result = await this.subcategoryService.updateSubcategory(categoryId, subcategoryId, updateSubcategoryDto);
+    return result.data; // Extrai o campo `data` do retorno do serviço
   }
 
   @ApiOperation({ summary: 'Deletar uma subcategoria' })

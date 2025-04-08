@@ -25,20 +25,20 @@ export class CommentsService {
      */
     @ApiOperation({ summary: 'Cria um novo comentário' })
     @ApiResponse({ status: 201, description: 'Comentário criado com sucesso.', type: CommentDto })
-    async create(createCommentDto: CreateCommentDto): Promise<CommentDto> {
+    async create(createCommentDto: CreateCommentDto): Promise<{ success: boolean; data: CommentDto }> {
         const commentId = Date.now().toString(36); // Gerar um ID único para o comentário
-        // Instanciando o DTO fora da classe
-        const newComment = {
-            ...createCommentDto,
-            commentId, // Adicionar commentId ao item
-            postId: String(createCommentDto.postId), // Converte postId para string
-        };
         const params = {
             TableName: this.tableName,
-            Item: newComment,
+            Item: {
+                postId: { S: createCommentDto.postId },
+                commentId: { S: commentId },
+                content: { S: createCommentDto.content },
+                date: { S: createCommentDto.date },
+            },
         };
         await this.dynamoDbService.putItem(params);
-        return this.findOne(String(createCommentDto.postId), createCommentDto.authorId);
+        const comment = await this.findOne(createCommentDto.postId, commentId);
+        return { success: true, data: comment };
     }
 
     /**
@@ -47,9 +47,11 @@ export class CommentsService {
      */
     @ApiOperation({ summary: 'Obtém todos os comentários' })
     @ApiResponse({ status: 200, description: 'Lista de comentários.', type: [CommentDto] })
-    async findAll(): Promise<CommentDto[]> {
+    async findAll(): Promise<{ success: boolean; data: CommentDto[] }> {
         const result = await this.dynamoDbService.scan({ TableName: this.tableName });
-        return (result.Items || []).map(item => this.mapCommentFromDynamoDb(item));
+        const items = result.data.Items || []; // Acesse `data` antes de `Items`
+        const comments = items.map(item => this.mapCommentFromDynamoDb(item));
+        return { success: true, data: comments };
     }
 
     /**
@@ -62,21 +64,22 @@ export class CommentsService {
     @ApiOperation({ summary: 'Obtém um comentário pelo postId e authorId' })
     @ApiResponse({ status: 200, description: 'Comentário encontrado.', type: CommentDto })
     @ApiResponse({ status: 404, description: 'Comentário não encontrado.' })
-    async findOne(postId: string, authorId: string): Promise<CommentDto> {
-        this.logger.log(`Buscando comentário com postId: ${postId} e authorId: ${authorId}`);
+    async findOne(postId: string, commentId: string): Promise<CommentDto> {
+        this.logger.log(`Buscando comentário com postId: ${postId} e commentId: ${commentId}`);
         const params = {
             TableName: this.tableName,
             Key: {
-                postId: postId, // Ajustar o formato da chave
-                authorId: authorId, // Ajustar o formato da chave
+                postId: { S: postId },
+                commentId: { S: commentId },
             },
         };
 
         const result = await this.dynamoDbService.getItem(params);
-        if (!result.Item) {
-            throw new NotFoundException(`Comentário com postId '${postId}' e authorId '${authorId}' não encontrado`);
+        const item = result.data.Item; // Acesse `data` antes de `Item`
+        if (!item) {
+            throw new NotFoundException(`Comentário com ID '${commentId}' não encontrado no post '${postId}'.`);
         }
-        return this.mapCommentFromDynamoDb(result.Item);
+        return this.mapCommentFromDynamoDb(item);
     }
 
     /**
@@ -90,10 +93,13 @@ export class CommentsService {
         const params = {
             TableName: this.tableName,
             KeyConditionExpression: 'postId = :postId',
-            ExpressionAttributeValues: { ':postId': postId },
+            ExpressionAttributeValues: { ':postId': { S: postId } },
+            ProjectionExpression: 'postId, commentId, content, date, status', // Retorna apenas os atributos necessários
         };
+
         const result = await this.dynamoDbService.query(params);
-        return (result.Items || []).map(item => this.mapCommentFromDynamoDb(item));
+        const items = result.data.Items || [];
+        return items.map(item => this.mapCommentFromDynamoDb(item));
     }
 
     /**
@@ -105,10 +111,37 @@ export class CommentsService {
         const params = {
             TableName: this.tableName,
             KeyConditionExpression: 'postId = :postId',
-            ExpressionAttributeValues: { ':postId': postId },
+            ExpressionAttributeValues: { ':postId': { S: postId } },
         };
         const result = await this.dynamoDbService.query(params);
-        return (result.Items || []).map(item => this.mapCommentFromDynamoDb(item));
+        const items = result.data.Items || []; // Acesse `data` antes de `Items`
+        return items.map(item => this.mapCommentFromDynamoDb(item));
+    }
+
+    /**
+     * Obtém comentários pelo status e data.
+     * @param status - Status do comentário (ex: 'published').
+     * @param date - Data do comentário (opcional).
+     * @returns Uma lista de comentários encontrados.
+     */
+    async getCommentsByStatusAndDate(status: string, date?: string): Promise<CommentDto[]> {
+        const params = {
+            TableName: this.tableName,
+            IndexName: 'status-date-index', // Usa o índice criado
+            KeyConditionExpression: 'status = :status' + (date ? ' AND #date = :date' : ''),
+            ExpressionAttributeValues: {
+                ':status': { S: status },
+                ...(date && { ':date': { S: date } }),
+            },
+            ExpressionAttributeNames: {
+                '#date': 'date',
+            },
+            ProjectionExpression: 'postId, commentId, content, date, status', // Retorna apenas os atributos necessários
+        };
+
+        const result = await this.dynamoDbService.query(params);
+        const items = result.data.Items || [];
+        return items.map(item => this.mapCommentFromDynamoDb(item));
     }
 
     /**
