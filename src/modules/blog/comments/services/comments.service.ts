@@ -1,5 +1,5 @@
 import { DynamoDbService } from '@src/services/dynamoDb.service';
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger, InternalServerErrorException } from '@nestjs/common';
 import { CreateCommentDto } from '@src/modules/blog/comments/dto/create-comment.dto';
 import { UpdateCommentDto } from '@src/modules/blog/comments/dto/update-comment.dto';
 import { CommentDto } from '@src/modules/blog/comments/dto/comment.dto';
@@ -161,23 +161,31 @@ export class CommentsService {
 
         const params = {
             TableName: this.tableName,
-            Key: { postId, authorId }, // Adicionando a chave primária
+            Key: {
+                postId: { S: postId },
+                authorId: { S: authorId },
+            },
             UpdateExpression: 'set #content = :content',
             ExpressionAttributeNames: { '#content': 'content' },
-            ExpressionAttributeValues: { ':content': updateCommentDto.content },
+            ExpressionAttributeValues: {
+                ':content': { S: updateCommentDto.content || '' }, // Garante que o valor não seja undefined
+            },
             ReturnValues: 'ALL_NEW',
         };
 
-        await this.dynamoDbService.updateItem(
+        const result = await this.dynamoDbService.updateItem(
             params.TableName,
             params.Key,
-            {
-                content: updateCommentDto.content,
-            },
+            params.ExpressionAttributeValues,
             params.ReturnValues as ReturnValue | undefined,
-        ); // Ajustando a chamada para passar os argumentos corretos
+        );
 
-        return this.findOne(postId, authorId);
+        const attributes = result.data.Attributes;
+        if (!attributes) {
+            throw new InternalServerErrorException('Falha ao obter os dados atualizados do comentário.');
+        }
+
+        return this.mapCommentFromDynamoDb(attributes as Record<string, unknown>);
     }
 
     /**
