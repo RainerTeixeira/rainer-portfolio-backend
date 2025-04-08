@@ -280,13 +280,14 @@ export class DynamoDbService {
     try {
         // Remove chaves não utilizadas de ExpressionAttributeNames
         if (params.ExpressionAttributeNames) {
-            const usedKeys = (params.ProjectionExpression || '').match(/#[a-zA-Z0-9_]+/g) || [];
+            const usedKeys: string[] = (params.ProjectionExpression || '').match(/#[a-zA-Z0-9_]+/g) || [];
             params.ExpressionAttributeNames = Object.fromEntries(
                 Object.entries(params.ExpressionAttributeNames).filter(([key]) => usedKeys.includes(key))
             );
         }
 
-        const result = await this.documentClient.scan(params);
+        const command = new ScanCommand(params); // Cria o comando Scan
+        const result = await this.docClient.send(command); // Usa o método send com o comando
         return { success: true, data: result };
     } catch (error) {
         this.logger.error(`[scan] Erro na operação na tabela ${params.TableName}: ${(error as Error).message}`);
