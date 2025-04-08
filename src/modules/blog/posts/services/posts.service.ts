@@ -98,7 +98,6 @@ export class PostsService {
 
       const params: QueryCommandInput = {
         TableName: this.tableName,
-        IndexName: 'postsByPublishDate-index', // Usa o índice corrigido
         Limit: limit,
         ExclusiveStartKey: nextKey ? this.decodeNextKey(nextKey) : undefined,
         ProjectionExpression: 'postId, title, description, publishDate, slug, featuredImageURL, #st, views',
