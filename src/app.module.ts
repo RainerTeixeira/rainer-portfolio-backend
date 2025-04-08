@@ -1,12 +1,11 @@
 import { Global, Module, forwardRef } from '@nestjs/common';
-import { APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
+import { APP_FILTER } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { CacheModule } from '@nestjs/cache-manager';
 
 import { DynamoDbService } from '@src/services/dynamoDb.service';
 import { BlogModule } from '@src/modules/blog.module';
 import { AuthModule } from '@src/auth/auth.module';
-import { ResponseInterceptor } from '@src/common/interceptors/response.interceptor';
 import { HttpExceptionFilter } from '@src/common/filters/http-exception.filter';
 
 import { PostsModule } from '@src/modules/blog/posts/posts.module';
@@ -51,10 +50,6 @@ import { CommentsModule } from '@src/modules/blog/comments/comments.module';
      * Utiliza useClass para garantir que uma única instância seja utilizada em toda a aplicação.
      */
     { provide: DynamoDbService, useClass: DynamoDbService },
-    /**
-     * Interceptor global para formatação das respostas da API.
-     */
-    { provide: APP_INTERCEPTOR, useClass: ResponseInterceptor },
     /**
      * Filtro global para tratamento das exceções HTTP.
      */
