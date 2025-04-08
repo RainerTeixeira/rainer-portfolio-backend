@@ -1,12 +1,13 @@
 import {
   Controller, Get, Post, Patch, Delete,
   Query, Param, Body, UseInterceptors, UseGuards,
-  DefaultValuePipe, ParseIntPipe, NotFoundException, BadRequestException
+  DefaultValuePipe, ParseIntPipe, NotFoundException
 } from '@nestjs/common';
 import {
   ApiTags, ApiOperation, ApiResponse, ApiQuery,
   ApiParam, ApiBearerAuth, ApiOkResponse
 } from '@nestjs/swagger';
+
 import { ResponseInterceptor } from '@src/common/interceptors/response.interceptor';
 import { PostsService } from '@src/modules/blog/posts/services/posts.service';
 import { PostCreateDto } from '@src/modules/blog/posts/dto/post-create.dto';
@@ -17,10 +18,15 @@ import { PostFullDto } from '@src/modules/blog/posts/dto/post-full.dto';
 import { CognitoAuthGuard } from '@src/auth/cognito-auth.guard';
 
 /**
- * PostsController - Controlador responsável pelas operações de manipulação de posts do blog.
- * Este controlador lida com a criação, atualização, exclusão e listagem de posts.
+ * @controller PostsController
+ * Responsável por expor os endpoints para manipulação de posts do blog.
+ * 
+ * 🛠️ Otimizações:
+ * - Paginação por cursor para melhor performance com DynamoDB
+ * - Projeção de campos para reduzir consumo e tráfego
+ * - Cache no service para minimizar acessos repetidos
  */
-@Controller('/blog/posts')
+@Controller('/posts')
 @UseInterceptors(ResponseInterceptor)
 @ApiTags('Blog Posts')
 @ApiBearerAuth()
@@ -28,47 +34,25 @@ export class PostsController {
   constructor(private readonly postsService: PostsService) { }
 
   /**
-   * Retorna uma lista paginada de posts.
-   * Utiliza paginação baseada em cursor, permitindo que os posts sejam carregados em partes.
-   *
-   * @param limit Número máximo de posts a serem retornados por vez (padrão: 10).
-   * @param nextKey Chave para a próxima página de resultados (opcional).
-   *
-   * @returns Lista de posts com resumo.
+   * Lista paginada de posts.
+   * 
+   * @query limit Número máximo de itens por página
+   * @query nextKey Chave de cursor para próxima página
    */
   @Get()
-  @ApiOperation({
-    summary: 'Lista paginada de posts',
-    description: 'Retorna posts paginados independentemente da categoria e subcategoria'
-  })
+  @ApiOperation({ summary: 'Lista paginada de posts' })
   @ApiQuery({ name: 'limit', type: Number, required: false, example: 10 })
   @ApiQuery({ name: 'nextKey', type: String, required: false })
-  @ApiResponse({ status: 200, description: 'Lista de posts retornada com sucesso.' })
-  @ApiResponse({ status: 400, description: 'Parâmetros inválidos.' })
   @ApiOkResponse({ type: [PostSummaryDto] })
   async getPaginatedPosts(
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
     @Query('nextKey') nextKey?: string,
-  ): Promise<any> {
-    const response = await this.postsService.getPaginatedPosts(limit, nextKey);
-
-    // Retorna os dados conforme o formato esperado
-    return {
-      success: true,
-      data: response.data,
-      nextKey: response.nextKey,
-      timestamp: new Date().toISOString(),
-      path: `/blog/posts?limit=${limit}`,
-      statusCode: 200,
-    };
+  ) {
+    return this.postsService.getPaginatedPosts(limit, nextKey);
   }
 
   /**
-   * Retorna os detalhes completos de um post, identificado pelo seu slug.
-   *
-   * @param slug Identificador único do post (slug).
-   *
-   * @returns Detalhes completos de um post.
+   * Retorna os detalhes completos de um post a partir do slug.
    */
   @Get(':slug')
   @ApiOperation({ summary: 'Busca post completo por slug' })
@@ -83,12 +67,7 @@ export class PostsController {
   }
 
   /**
-   * Cria um novo post.
-   * Requer autenticação via Cognito para validar o usuário.
-   *
-   * @param postCreateDto Dados necessários para criar o novo post.
-   *
-   * @returns O post criado com os dados completos.
+   * Cria um novo post. Requer autenticação.
    */
   @Post()
   @UseGuards(CognitoAuthGuard)
@@ -99,13 +78,7 @@ export class PostsController {
   }
 
   /**
-   * Atualiza um post existente.
-   * Requer autenticação via Cognito para validar o usuário.
-   *
-   * @param id Identificador único do post a ser atualizado.
-   * @param postUpdateDto Dados para atualização do post.
-   *
-   * @returns O post atualizado com os dados completos.
+   * Atualiza um post existente. Requer autenticação.
    */
   @Patch(':id')
   @UseGuards(CognitoAuthGuard)
@@ -120,12 +93,7 @@ export class PostsController {
   }
 
   /**
-   * Exclui um post permanentemente.
-   * Requer autenticação via Cognito para validar o usuário.
-   *
-   * @param id Identificador único do post a ser excluído.
-   *
-   * @returns Mensagem indicando o sucesso da exclusão.
+   * Exclui um post permanentemente. Requer autenticação.
    */
   @Delete(':id')
   @UseGuards(CognitoAuthGuard)

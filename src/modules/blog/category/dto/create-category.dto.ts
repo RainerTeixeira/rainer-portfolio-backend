@@ -15,7 +15,8 @@ export class CreateCategoryDto {
     @IsOptional()
     seo?: CategorySeoDto; // Use o DTO de SEO aqui e torne opcional
 
-    constructor(
+    // Removendo o construtor para evitar a instanciação da classe dentro do DTO
+    /*constructor(
         categoryId: string,
         name: string,
         slug: string,
@@ -25,5 +26,5 @@ export class CreateCategoryDto {
         this.name = name;
         this.slug = slug;
         this.seo = seo;
-    }
+    }*/
 }

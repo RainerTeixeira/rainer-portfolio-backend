@@ -14,6 +14,15 @@ import { SubcategoryService } from '@src/modules/blog/subcategory/services/subca
 import { CommentsService } from '@src/modules/blog/comments/services/comments.service';
 import { generatePostId } from '@src/common/generateUUID/generatePostId';
 
+/**
+ * PostsService - Responsável pela lógica de negócio dos posts.
+ * 
+ * Estratégias para performance e uso otimizado do Free Tier:
+ * - Projeção de atributos para retornar somente os campos necessários.
+ * - Paginação via cursor para reduzir varreduras completas.
+ * - Uso de cache para minimizar leituras repetidas no DynamoDB.
+ * - Execução de consultas em paralelo para enriquecer os dados.
+ */
 @Injectable()
 export class PostsService {
   private readonly logger = new Logger(PostsService.name);
@@ -33,8 +42,14 @@ export class PostsService {
 
   /**
    * Cria um novo post no banco de dados.
+   * 
+   * Estratégias:
+   * - Geração única de ID.
+   * - Registro de datas em ISO string.
+   * - Remoção de campos não utilizados para economizar capacidade de escrita.
+   * 
    * @param dto DTO com dados para criação do post.
-   * @returns Retorna o post criado no formato PostContentDto.
+   * @returns Objeto com o post criado e metadados.
    * @throws BadRequestException em caso de erro.
    */
   async createPost(dto: PostCreateDto): Promise<any> {
@@ -42,7 +57,7 @@ export class PostsService {
       const postId = generatePostId();
       const now = new Date().toISOString();
 
-      // Monta o item a ser salvo no DynamoDB
+      // Monta o item a ser salvo no DynamoDB com somente os campos necessários
       const postItem: Record<string, AttributeValue> = {
         postId: { S: postId },
         status: { S: 'draft' },
@@ -56,7 +71,7 @@ export class PostsService {
         ...(dto.keywords && { keywords: { SS: dto.keywords } }),
         ...(dto.readingTime && { readingTime: { N: dto.readingTime.toString() } }),
         ...(dto.tags && { tags: { SS: dto.tags } }),
-        // Se existir categoria e subcategoria, monta o campo concatenado e os individuais
+        // Campos de categoria e subcategoria para facilitar consultas
         ...(dto.categoryId && dto.subcategoryId && {
           'categoryId#subcategoryId': { S: `${dto.categoryId}#${dto.subcategoryId}` },
           categoryId: { S: dto.categoryId },
@@ -75,9 +90,10 @@ export class PostsService {
       // Limpa o cache relacionado a este post
       await this.clearPostCache(postId);
 
+      const postContentDto = this.mapToContentDto(postItem); // Instanciação correta
       return {
         success: true,
-        data: this.mapToContentDto(postItem),
+        data: postContentDto,
         timestamp: new Date().toISOString(),
         path: '/blog/posts',
       };
@@ -88,18 +104,22 @@ export class PostsService {
   }
 
   /**
-   * Obtém posts paginados.
+   * Obtém posts paginados a partir do DynamoDB.
+   * 
+   * Estratégias:
+   * - Projeção para retornar somente os campos necessários.
+   * - Paginação via cursor (ExclusiveStartKey) para evitar varreduras completas.
+   * 
    * @param limit Número máximo de posts por página.
-   * @param nextKey Chave para paginação.
-   * @returns Lista de posts com resumo.
-   * @throws BadRequestException em caso de erro na consulta.
+   * @param nextKey Chave para paginação (opcional).
+   * @returns Objeto com os posts e a próxima chave para paginação.
+   * @throws BadRequestException em caso de erro.
    */
   async getPaginatedPosts(limit: number, nextKey?: string): Promise<any> {
     try {
       const params: ScanCommandInput = {
         TableName: this.tableName,
         Limit: limit,
-        // Projeta todos os atributos necessários para o resumo
         ProjectionExpression: 'postId, title, description, publishDate, slug, featuredImageURL, status, views',
         ...(nextKey && { ExclusiveStartKey: this.decodeNextKey(nextKey) }),
       };
@@ -123,10 +143,15 @@ export class PostsService {
 
   /**
    * Obtém um post completo pelo slug.
+   * 
+   * Estratégias:
+   * - Utiliza índice secundário (slug-index) para consulta.
+   * - Enriquecimento dos dados é feito em paralelo.
+   * 
    * @param slug Slug único do post.
-   * @returns Post completo com dados relacionados.
-   * @throws NotFoundException se não encontrar o post.
-   * @throws BadRequestException em caso de erro na consulta.
+   * @returns Objeto com o post completo e dados relacionados.
+   * @throws NotFoundException se o post não for encontrado.
+   * @throws BadRequestException em caso de erro.
    */
   async getPostBySlug(slug: string): Promise<any> {
     if (!slug) throw new BadRequestException('Slug não pode estar vazio');
@@ -137,7 +162,7 @@ export class PostsService {
         IndexName: 'slug-index',
         KeyConditionExpression: 'slug = :slug',
         ExpressionAttributeValues: {
-          ':slug': { S: slug } as AttributeValue
+          ':slug': { S: slug } as AttributeValue,
         },
       };
 
@@ -159,15 +184,20 @@ export class PostsService {
   }
 
   /**
-   * Atualiza um post existente.
+   * Atualiza um post existente no banco de dados.
+   * 
+   * Estratégias:
+   * - Atualiza somente os campos alterados via expressão de atualização.
+   * - Limpa o cache do post atualizado.
+   * 
    * @param id ID do post.
    * @param dto DTO com dados para atualização.
-   * @returns Post atualizado.
-   * @throws BadRequestException em caso de erro na atualização.
+   * @returns Objeto com o post atualizado.
+   * @throws BadRequestException em caso de erro.
    */
   async updatePost(id: string, dto: PostUpdateDto): Promise<any> {
     try {
-      // Monta a expressão de atualização dinamicamente
+      // Cria a expressão de atualização com base nos dados fornecidos
       const updateExpression = [
         'SET title = :title',
         'status = :status',
@@ -199,9 +229,10 @@ export class PostsService {
       // Limpa o cache do post atualizado
       await this.clearPostCache(id);
 
+      const postContentDto = this.mapToContentDto(result.Attributes); // Instanciação correta
       return {
         success: true,
-        data: this.mapToContentDto(result.Attributes),
+        data: postContentDto,
         timestamp: new Date().toISOString(),
         path: `/blog/posts/${id}`,
       };
@@ -213,9 +244,14 @@ export class PostsService {
 
   /**
    * Exclui um post do sistema.
+   * 
+   * Estratégias:
+   * - Exclusão direta pelo ID.
+   * - Limpeza do cache relacionado.
+   * 
    * @param id ID do post.
-   * @returns Mensagem de sucesso na exclusão.
-   * @throws BadRequestException em caso de erro na exclusão.
+   * @returns Objeto com mensagem de sucesso.
+   * @throws BadRequestException em caso de erro.
    */
   async deletePost(id: string): Promise<any> {
     try {
@@ -241,8 +277,9 @@ export class PostsService {
   // MÉTODOS AUXILIARES
 
   /**
-   * Limpa o cache relacionado ao post.
-   * @param postId ID do post a ser limpo do cache.
+   * Limpa o cache relacionado a um post específico.
+   * Utiliza operações paralelas para otimizar a performance.
+   * @param postId ID do post.
    */
   private async clearPostCache(postId: string): Promise<void> {
     try {
@@ -256,7 +293,7 @@ export class PostsService {
   }
 
   /**
-   * Decodifica a chave de paginação a partir de base64.
+   * Decodifica a chave de paginação (nextKey) de base64 para objeto.
    * @param nextKey Chave codificada.
    * @returns Objeto decodificado.
    */
@@ -265,8 +302,8 @@ export class PostsService {
   }
 
   /**
-   * Codifica a chave de paginação para base64.
-   * @param lastKey Última chave da consulta.
+   * Codifica a chave de paginação (LastEvaluatedKey) para base64.
+   * @param lastKey Última chave retornada na consulta.
    * @returns Chave codificada.
    */
   private encodeNextKey(lastKey: Record<string, AttributeValue>): string {
@@ -274,9 +311,12 @@ export class PostsService {
   }
 
   /**
-   * Enriquece os dados do post com informações relacionadas (autor, categoria, subcategoria e comentários).
+   * Enriquece os dados brutos do post com informações relacionadas, como autor, categoria, subcategoria e comentários.
+   * Executa as consultas em paralelo para reduzir o tempo de resposta.
+   * 
    * @param post Dados brutos do post.
-   * @returns Post completo com dados relacionados.
+   * @returns Objeto PostFullDto com os dados enriquecidos.
+   * @throws BadRequestException em caso de erro.
    */
   private async enrichPostData(post: Record<string, AttributeValue>): Promise<PostFullDto> {
     try {
@@ -285,7 +325,7 @@ export class PostsService {
       const categoryId = post.categoryId?.S || '';
       const subcategoryId = post.subcategoryId?.S || '';
 
-      // Executa as consultas em paralelo para otimizar o tempo de resposta
+      // Executa as consultas em paralelo
       const [author, category, subcategory, comments] = await Promise.all([
         this.authorsService.findOne(authorId),
         this.categoryService.findOne(categoryId),
@@ -313,6 +353,7 @@ export class PostsService {
 
   /**
    * Mapeia os dados brutos do DynamoDB para o DTO PostContentDto.
+   * Retorna todos os campos obrigatórios para o DTO.
    * @param item Item do DynamoDB.
    * @returns PostContentDto formatado.
    */
@@ -334,12 +375,12 @@ export class PostsService {
       subcategoryId: item.subcategoryId?.S || '',
       authorId: item.authorId?.S || '',
       canonical: item.canonical?.S || '',
-      // Removido: content: item.content?.S || ''
     };
   }
-  
+
   /**
    * Mapeia os dados brutos do DynamoDB para o DTO PostSummaryDto.
+   * Retorna somente os campos necessários para o resumo.
    * @param item Item do DynamoDB.
    * @returns PostSummaryDto formatado.
    */
@@ -351,8 +392,8 @@ export class PostsService {
       publishDate: item.publishDate?.S || '',
       slug: item.slug?.S || '',
       featuredImageURL: item.featuredImageURL?.S || '',
-      status: item.status?.S || '', // Adicionado para incluir o status
-      views: item.views ? Number(item.views.N) : 0, // Adicionado para incluir as visualizações
+      status: item.status?.S || '',
+      views: item.views?.N ? Number(item.views.N) : 0,
     };
   }
 

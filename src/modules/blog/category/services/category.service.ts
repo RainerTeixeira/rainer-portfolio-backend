@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { CreateCategoryDto } from '@src/modules/blog/category/dto/create-category.dto';
 import { UpdateCategoryDto } from '@src/modules/blog/category/dto/update-category.dto';
 import { CategoryDto } from '@src/modules/blog/category/dto/category.dto';
@@ -14,6 +14,7 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 @Injectable()
 export class CategoryService {
     private readonly tableName = process.env.DYNAMO_TABLE_NAME_CATEGORIES || 'Category';
+    private readonly logger = new Logger(CategoryService.name);
 
     constructor(private readonly dynamoDbService: DynamoDbService) { }
 
@@ -25,9 +26,17 @@ export class CategoryService {
     @ApiOperation({ summary: 'Criar uma nova categoria' })
     @ApiResponse({ status: 201, description: 'A categoria foi criada com sucesso.', type: CategoryDto })
     async create(createCategoryDto: CreateCategoryDto): Promise<CategoryDto> {
+        this.logger.log(`Criando categoria com ID: ${createCategoryDto.categoryId}`);
+
+        // Instanciando o DTO fora da classe
+        const newCategory = {
+            ...createCategoryDto,
+        };
+
         const params = {
             TableName: this.tableName,
-            Item: createCategoryDto,
+            Item: newCategory,
+            ConditionExpression: 'attribute_not_exists(categoryId)', // Garante que não existe
         };
         await this.dynamoDbService.putItem(params);
         return this.findOne(createCategoryDto.categoryId);
