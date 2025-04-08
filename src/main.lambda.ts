@@ -6,6 +6,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { ValidationPipe } from '@nestjs/common';
 import { FastifyInstance, fastify } from 'fastify';
+import { ApiSuccessResponseClass } from '@src/common/interceptors/response.interceptor'; // Importa o modelo
 
 // Define um tipo customizado para a resposta do inject
 interface InjectResponse {
@@ -45,7 +46,9 @@ async function bootstrapFastify(): Promise<FastifyInstance> {
         .setDescription('Documentação da API')
         .setVersion('1.0')
         .build();
-      const document = SwaggerModule.createDocument(app, swaggerConfig);
+      const document = SwaggerModule.createDocument(app, swaggerConfig, {
+        extraModels: [ApiSuccessResponseClass], // Registra o modelo extra
+      });
       SwaggerModule.setup('api', app, document);
     }
 
