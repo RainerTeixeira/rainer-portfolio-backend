@@ -100,13 +100,13 @@ export class PostsService {
         TableName: this.tableName,
         Limit: limit,
         ExclusiveStartKey: nextKey ? this.decodeNextKey(nextKey) : undefined,
-        ProjectionExpression: 'postId, title, description, publishDate, slug, featuredImageURL, #st, views',
-        ExpressionAttributeNames: { '#st': 'status' },
-        KeyConditionExpression: '#st = :published', // Filtra por status
+        ProjectionExpression: 'postId, title, description, publishDate, slug, featuredImageURL, #st, #views',
+        ExpressionAttributeNames: { '#st': 'status', '#views': 'views' },
         ExpressionAttributeValues: { ':published': { S: 'published' } }, // Garante que o valor não está vazio
+        FilterExpression: '#st = :published', // Adiciona o filtro
       };
 
-      const result = await this.dynamoDbService.query(params);
+      const result = await this.dynamoDbService.scan(params);
       const items = result.data.Items?.map(item => this.mapToSummaryDto(item)) || [];
       const newNextKey = result.data.LastEvaluatedKey ? this.encodeNextKey(result.data.LastEvaluatedKey) : null;
 
