@@ -126,20 +126,17 @@ export class DynamoDbService {
    * @returns A resposta do comando Get do DynamoDB.
    */
   async getItem(params: GetCommandInput): Promise<{ success: boolean; data: GetCommandOutput }> {
-    const operation = 'getItem';
-    this.logOperationStart(operation, params.TableName, params.Key);
+    this.logger.log(`[getItem] Iniciando operação na tabela: ${params.TableName}...`);
+    this.logger.debug(`[getItem] Detalhes: ${JSON.stringify(params)}`);
+
     try {
-      // Valida se a chave primária foi informada
-      if (!params.Key || Object.keys(params.Key).length === 0) {
-        throw new Error('A chave primária (Key) é obrigatória.');
-      }
-      // Cria e envia o comando Get para o DynamoDB
-      const command = new GetCommand(params);
-      const result = await this.docClient.send(command);
-      this.logOperationSuccess(operation, params.TableName, result);
-      return { success: true, data: result };
+        const command = new GetCommand(params);
+        const result = await this.docClient.send(command);
+        return { success: true, data: result };
     } catch (error) {
-      this.handleError(operation, params.TableName, error);
+        this.logger.error(`[getItem] Erro na operação na tabela ${params.TableName}: ${(error as Error).message}`);
+        this.logger.error(`[getItem] Contexto do erro: ${JSON.stringify(params)}`);
+        throw new DynamoDBOperationError('getItem', 'Erro ao realizar operação de getItem', error);
     }
   }
 
