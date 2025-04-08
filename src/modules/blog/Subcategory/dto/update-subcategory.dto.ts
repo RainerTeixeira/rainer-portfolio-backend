@@ -1,4 +1,4 @@
-import { IsOptional, IsString } from 'class-validator';
+import { IsOptional, IsString, IsObject } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class UpdateSubcategoryDto {
@@ -27,11 +27,17 @@ export class UpdateSubcategoryDto {
   @IsString()
   title?: string;
 
-  constructor(name?: string, slug?: string, description?: string, keywords?: string, title?: string) {
+  @ApiProperty({ description: 'SEO da subcategoria', required: false })
+  @IsOptional()
+  @IsObject()
+  seo?: Record<string, unknown>;
+
+  constructor(name?: string, slug?: string, description?: string, keywords?: string, title?: string, seo?: Record<string, unknown>) {
     this.name = name;
     this.slug = slug;
     this.description = description;
     this.keywords = keywords;
     this.title = title;
+    this.seo = seo;
   }
 }

@@ -274,31 +274,24 @@ export class DynamoDbService {
    * @returns A resposta do comando Scan do DynamoDB.
    */
   async scan(params: ScanCommandInput): Promise<{ success: boolean; data: ScanCommandOutput }> {
-    const operation = 'scan';
-    this.logOperationStart(operation, params.TableName, params);
+    this.logger.log(`[scan] Iniciando operação na tabela: ${params.TableName}...`);
+    this.logger.debug(`[scan] Detalhes: ${JSON.stringify(params)}`);
 
     try {
-        // Sugestão: sempre utilize ProjectionExpression para limitar os dados retornados e reduzir o consumo
-        if (params.ProjectionExpression) {
-            params.ExpressionAttributeNames = {
-                ...(params.ExpressionAttributeNames || {}),
-                '#st': 'status',
-                '#vi': 'views',
-            };
-            params.ProjectionExpression = params.ProjectionExpression
-                .replace(/status/g, '#st')
-                .replace(/views/g, '#vi');
+        // Remove chaves não utilizadas de ExpressionAttributeNames
+        if (params.ExpressionAttributeNames) {
+            const usedKeys = (params.ProjectionExpression || '').match(/#[a-zA-Z0-9_]+/g) || [];
+            params.ExpressionAttributeNames = Object.fromEntries(
+                Object.entries(params.ExpressionAttributeNames).filter(([key]) => usedKeys.includes(key))
+            );
         }
 
-        // Define um limite padrão para evitar varreduras pesadas na tabela
-        params.Limit = params.Limit || 100;
-
-        const command = new ScanCommand(params);
-        const result = await this.docClient.send(command);
-        this.logOperationSuccess(operation, params.TableName, result);
+        const result = await this.documentClient.scan(params);
         return { success: true, data: result };
     } catch (error) {
-        this.handleError(operation, params.TableName, error, params);
+        this.logger.error(`[scan] Erro na operação na tabela ${params.TableName}: ${(error as Error).message}`);
+        this.logger.error(`[scan] Contexto do erro: ${JSON.stringify(params)}`);
+        throw new DynamoDBOperationError('scan', 'Erro ao realizar operação de scan', error);
     }
   }
 
@@ -346,20 +339,26 @@ export class DynamoDbService {
    */
   buildUpdateExpression(updateData: Record<string, AttributeValue>): {
     UpdateExpression: string;
+    ExpressionAttributeNames: Record<string, string>;
     ExpressionAttributeValues: Record<string, AttributeValue>;
   } {
     const updateExpressionParts: string[] = [];
+    const expressionAttributeNames: Record<string, string> = {};
     const expressionAttributeValues: Record<string, AttributeValue> = {};
 
     Object.entries(updateData).forEach(([key, value]) => {
       if (value !== undefined) {
-        updateExpressionParts.push(`${key} = :${key}`);
-        expressionAttributeValues[`:${key}`] = value;
+        const namePlaceholder = `#${key}`;
+        const valuePlaceholder = `:${key}`;
+        updateExpressionParts.push(`${namePlaceholder} = ${valuePlaceholder}`);
+        expressionAttributeNames[namePlaceholder] = key;
+        expressionAttributeValues[valuePlaceholder] = value;
       }
     });
 
     return {
       UpdateExpression: `SET ${updateExpressionParts.join(', ')}`,
+      ExpressionAttributeNames: expressionAttributeNames,
       ExpressionAttributeValues: expressionAttributeValues,
     };
   }

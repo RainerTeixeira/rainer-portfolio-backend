@@ -353,20 +353,22 @@ export class PostsService {
 
   // Métodos de cache
   private async clearPostCache(): Promise<void> {
-    const store = (this.cacheManager as Cache & { stores: { keys: () => Promise<string[]> } }).stores;
+    const store = (this.cacheManager as Cache & { stores: { keys: () => Promise<Iterable<number>> } }).stores;
     const keys = await store.keys();
+    const keysArray = [...keys].map(key => String(key)); // Converte o iterador para um array e depois para strings
     await Promise.all(
-      keys
+      keysArray
         .filter(key => key.startsWith(this.CACHE_KEY_PREFIX_POST))
         .map(key => this.cacheManager.del(key))
     );
   }
 
   private async clearPaginatedCache(): Promise<void> {
-    const store = (this.cacheManager.store as { keys: () => Promise<string[]> });
+    const store = (this.cacheManager as Cache & { stores: { keys: () => Promise<Iterable<number>> } }).stores;
     const keys = await store.keys();
+    const keysArray = [...keys].map(key => String(key)); // Converte o iterador para um array e depois para strings
     await Promise.all(
-      keys
+      keysArray
         .filter(key => key.startsWith(this.CACHE_KEY_PAGINATED_PREFIX))
         .map(key => this.cacheManager.del(key))
     );

@@ -127,7 +127,8 @@ export class AuthorsService {
 
             const params = {
                 TableName: this.tableName,
-                ProjectionExpression: 'authorId, name, slug, socialProof',
+                ProjectionExpression: '#name, authorId, slug, socialProof',
+                ExpressionAttributeNames: { '#name': 'name' }, // Garante que apenas '#name' seja usado
             };
 
             const result = await this.dynamoDbService.scan(params);

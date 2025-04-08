@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import {
   ApiTags, ApiOperation, ApiResponse, ApiOkResponse, ApiCreatedResponse, // Usar respostas específicas
-  ApiQuery, ApiParam, ApiBearerAuth, getSchemaPath // Importar getSchemaPath
+  ApiQuery, ApiParam, ApiBearerAuth, getSchemaPath, ApiExtraModels // Importar getSchemaPath e ApiExtraModels
 } from '@nestjs/swagger';
 
 // Importar a estrutura final da resposta para documentação Swagger
@@ -34,10 +34,11 @@ import { CognitoAuthGuard } from '@src/auth/cognito-auth.guard'; // Assumindo qu
  * - `@ApiTags('Blog Posts')`: Agrupa os endpoints na documentação Swagger.
  * - `@ApiBearerAuth()`: Indica que a autenticação Bearer (via CognitoAuthGuard) é esperada para endpoints protegidos.
  */
+@ApiTags('Blog Posts')
+@ApiBearerAuth()
+@ApiExtraModels(PostSummaryDto) // Registrar o modelo no Swagger
 @Controller('/blog/posts') // Rota base mais específica
 @UseInterceptors(ResponseInterceptor) // Aplica o interceptor a todas as rotas deste controller
-@ApiTags('Blog Posts')
-@ApiBearerAuth() // Assume que a maioria das rotas (ou todas) pode precisar de autenticação
 export class PostsController {
   constructor(private readonly postsService: PostsService) { }
 

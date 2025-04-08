@@ -156,20 +156,25 @@ export class SubcategoryService {
     ): Promise<{ success: boolean; data: SubcategoryDto }> {
         await this.findOne(categoryId, subcategoryId);
 
-        const updateExpression = this.dynamoDbService.buildUpdateExpression(updateSubcategoryDto);
+        const updateData = this.mapDtoToDynamoAttributes(updateSubcategoryDto);
+
+        const updateExpression = this.dynamoDbService.buildUpdateExpression(updateData);
 
         const params = {
             TableName: this.tableName,
             Key: {
                 'categoryId#subcategoryId': { S: `${categoryId}#${subcategoryId}` },
             },
-            ...updateExpression,
+            UpdateExpression: updateExpression.UpdateExpression,
+            ExpressionAttributeNames: updateExpression.ExpressionAttributeNames,
+            ExpressionAttributeValues: updateExpression.ExpressionAttributeValues,
+            ReturnValues: 'ALL_NEW',
         };
 
         const result = await this.dynamoDbService.updateItem(
-            this.tableName,
+            params.TableName,
             params.Key as Record<string, AttributeValue>,
-            updateSubcategoryDto,
+            updateData,
             'ALL_NEW'
         );
 
@@ -194,13 +199,12 @@ export class SubcategoryService {
     @ApiResponse({ status: 200, description: 'Subcategoria deletada com sucesso.' })
     @ApiResponse({ status: 404, description: 'Subcategoria não encontrada.' })
     async deleteSubcategory(categoryId: string, subcategoryId: string): Promise<void> {
-        await this.findOne(categoryId, subcategoryId);
+        const categoryIdSubcategoryId = `${categoryId}#${subcategoryId}`; // Define a variável corretamente
 
         const params = {
             TableName: this.tableName,
             Key: {
                 'categoryId#subcategoryId': { S: categoryIdSubcategoryId },
-                subcategoryId: { S: subcategoryId },
             },
         };
 
@@ -353,5 +357,23 @@ export class SubcategoryService {
             description: item.description?.S || '', // Adicionado para suportar o campo description
             seo,
         };
+    }
+
+    private mapDtoToDynamoAttributes(dto: UpdateSubcategoryDto): Record<string, AttributeValue> {
+        const attributes: Record<string, AttributeValue> = {};
+        if (dto.name) attributes['name'] = { S: dto.name };
+        if (dto.slug) attributes['slug'] = { S: dto.slug };
+        if (dto.description) attributes['description'] = { S: dto.description };
+        if (dto.keywords) attributes['keywords'] = { S: dto.keywords };
+        if (dto.title) attributes['title'] = { S: dto.title };
+        if (dto.seo) {
+            attributes['seo'] = {
+                M: Object.entries(dto.seo).reduce<Record<string, AttributeValue>>((acc, [key, value]) => {
+                    acc[key] = { S: value as string };
+                    return acc;
+                }, {}),
+            };
+        }
+        return attributes;
     }
 }

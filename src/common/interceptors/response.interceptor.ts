@@ -8,10 +8,11 @@ import {
     HttpException,
     HttpStatus, // Importar HttpStatus para códigos padrão
 } from '@nestjs/common';
-import { Request } from 'express';
+import { Request, Response } from 'express'; // Importar Response do Express
 import { Observable, throwError } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid'; // Para um ID de requisição/erro
+import { ApiExtraModels } from '@nestjs/swagger'; // Importar ApiExtraModels
 
 /**
  * @interface ApiResponseMetadata
@@ -70,6 +71,7 @@ interface ApiErrorResponse {
  * Garante uma estrutura consistente com metadados essenciais para todas as respostas enviadas ao cliente.
  * Separa claramente a estrutura da resposta dos dados retornados pela lógica de negócio (controllers/services).
  */
+@ApiExtraModels(ApiSuccessResponseClass) // Registrar o modelo no Swagger
 @Injectable()
 export class ResponseInterceptor<T> implements NestInterceptor<T, ApiSuccessResponse<T>> {
 
@@ -86,7 +88,7 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, ApiSuccessResp
         const now = new Date().toISOString();
         const httpContext = context.switchToHttp();
         const request = httpContext.getRequest<Request>();
-        const response = httpContext.getResponse();
+        const response = httpContext.getResponse<Response>();
 
         return next.handle().pipe(
             map((data: T) => this.formatSuccessResponse(data, request, response, now, requestId)),
@@ -106,7 +108,7 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, ApiSuccessResp
      * @returns Objeto `ApiSuccessResponse<T>` formatado.
      */
     private formatSuccessResponse(payload: T, request: Request, response: Response, timestamp: string, requestId: string): ApiSuccessResponse<T> {
-        const statusCode = response.statusCode || HttpStatus.OK;
+        const statusCode = response.statusCode || HttpStatus.OK; // Corrigido para usar response.statusCode corretamente
 
         return {
             success: true,
@@ -135,7 +137,7 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, ApiSuccessResp
         let statusCode: number;
         let message: string;
         let errorCode: string | undefined;
-        let errorDetails: Record<string, unknown> | undefined;
+        let errorDetails: Record<string, unknown> | undefined; // Ajustado para garantir compatibilidade
 
         if (error instanceof HttpException) {
             statusCode = error.getStatus();
@@ -144,7 +146,7 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, ApiSuccessResp
                 message = errorResponse;
             } else if (typeof errorResponse === 'object' && errorResponse !== null) {
                 message = (errorResponse as Record<string, unknown>).message as string || error.message || 'Erro inesperado';
-                errorDetails = (errorResponse as Record<string, unknown>).details || undefined;
+                errorDetails = (errorResponse as Record<string, unknown>).details as Record<string, unknown> || undefined; // Corrigido para garantir compatibilidade
                 errorCode = (errorResponse as Record<string, unknown>).errorCode as string;
             } else {
                 message = error.message || 'Erro inesperado';
