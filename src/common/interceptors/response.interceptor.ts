@@ -6,137 +6,182 @@ import {
     ExecutionContext,
     CallHandler,
     HttpException,
+    HttpStatus, // Importar HttpStatus para códigos padrão
 } from '@nestjs/common';
-// Importa o tipo Request do express para tipagem correta
 import { Request } from 'express';
 import { Observable, throwError } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
+import { v4 as uuidv4 } from 'uuid'; // Para um ID de requisição/erro
 
 /**
- * @interface ApiResponse
- * @description Estrutura padrão para todas as respostas da API, tanto sucesso quanto erro (embora o formato de erro possa variar ligeiramente).
- * Define os campos comuns esperados em uma resposta padronizada.
+ * @interface ApiResponseMetadata
+ * @description Metadados incluídos em cada resposta da API para rastreabilidade e informação.
  */
-interface ApiResponse<T> {
-    /** Indica se a operação foi bem-sucedida. */
-    success: boolean;
-    /** Os dados retornados pela operação em caso de sucesso. Opcional. */
-    data?: T;
+interface ApiResponseMetadata {
     /** Timestamp ISO 8601 de quando a resposta foi gerada. */
-    timestamp: string;
+    readonly timestamp: string;
     /** O caminho (URL) da requisição original que gerou esta resposta. */
-    path: string;
+    readonly path: string;
     /** O código de status HTTP da resposta. */
-    statusCode: number;
-    /** Mensagem descritiva, especialmente útil em caso de erro. */
-    message?: string;
-    /** Detalhes adicionais do erro, se houver. */
-    errorDetails?: unknown;
+    readonly statusCode: number;
+    /** Um ID único para rastrear esta requisição/resposta específica. */
+    readonly requestId: string;
+}
+
+/**
+ * @interface ApiSuccessResponse
+ * @description Estrutura padrão para respostas de sucesso da API.
+ */
+interface ApiSuccessResponse<T> {
+    /** Sempre `true` para indicar sucesso. */
+    readonly success: true;
+    /** Metadados da resposta. */
+    readonly metadata: ApiResponseMetadata;
+    /** Os dados retornados pela operação. Pode ser qualquer tipo. */
+    readonly data: T;
+}
+
+/**
+ * @interface ApiErrorResponse
+ * @description Estrutura padrão para respostas de erro da API.
+ */
+interface ApiErrorResponse {
+    /** Sempre `false` para indicar erro. */
+    readonly success: false;
+    /** Metadados da resposta (incluindo o status code do erro). */
+    readonly metadata: ApiResponseMetadata;
+    /** Mensagem principal descrevendo o erro. */
+    readonly message: string;
+    /** Código de erro interno ou específico da aplicação (opcional). */
+    readonly errorCode?: string;
+    /** Detalhes adicionais do erro (ex: erros de validação). */
+    readonly errorDetails?: unknown;
 }
 
 /**
  * @class ResponseInterceptor
- * @description Interceptor global do NestJS que padroniza todas as respostas de sucesso e erro da API.
- * Ele intercepta as respostas dos controllers e as encapsula em um formato unificado (`ApiResponse`)
- * antes de enviá-las ao cliente, adicionando metadados úteis como timestamp, path e status code.
- * Também captura exceções (HttpException ou Erros genéricos) e as formata em um padrão de erro consistente.
+ * @description Interceptor global que padroniza TODAS as respostas da API (sucesso e erro).
+ * Garante uma estrutura consistente com metadados essenciais para todas as respostas enviadas ao cliente.
+ * Separa claramente a estrutura da resposta dos dados retornados pela lógica de negócio (controllers/services).
  */
 @Injectable()
-export class ResponseInterceptor<T> implements NestInterceptor<T, ApiResponse<T>> {
+export class ResponseInterceptor<T> implements NestInterceptor<T, ApiSuccessResponse<T>> {
+
     /**
      * @method intercept
-     * @description Método principal do interceptor, chamado pelo NestJS para cada requisição.
-     * Ele "ouve" o stream de resposta (`next.handle()`) e aplica transformações.
-     * Usa `map` para formatar respostas de sucesso e `catchError` para formatar erros.
-     * @param context O contexto de execução da requisição atual (contém request, response, etc.).
-     * @param next O manipulador que permite continuar o fluxo da requisição/resposta.
-     * @returns Um Observable que emitirá a resposta formatada (ApiResponse) ou lançará um erro formatado.
+     * @description Intercepta o fluxo de resposta. Aplica formatação de sucesso via `map`
+     * e formatação de erro via `catchError`.
+     * @param context Contexto de execução atual.
+     * @param next Manipulador para continuar o fluxo.
+     * @returns Observable com a resposta final formatada (ApiSuccessResponse) ou um erro formatado (ApiErrorResponse via HttpException).
      */
-    intercept(context: ExecutionContext, next: CallHandler): Observable<ApiResponse<T>> {
+    intercept(context: ExecutionContext, next: CallHandler): Observable<ApiSuccessResponse<T>> {
+        const requestId = uuidv4(); // Gera um ID único para esta requisição
+        const now = new Date().toISOString();
+        const httpContext = context.switchToHttp();
+        const request = httpContext.getRequest<Request>();
+        const response = httpContext.getResponse();
+
         return next.handle().pipe(
-            // Mapeia a resposta de sucesso para o formato padronizado
-            map((data: T) => this.formatSuccessResponse(data, context)),
-            // Captura qualquer erro ocorrido no stream e o formata
-            catchError((err: HttpException | Error) => this.formatErrorResponse(err, context)) // Passa context para obter path no erro, se necessário
+            map((data: T) => this.formatSuccessResponse(data, request, response, now, requestId)),
+            catchError((err: HttpException | Error) => this.formatErrorResponse(err, request, now, requestId))
         );
     }
 
     /**
      * @method formatSuccessResponse
-     * @description Formata uma resposta bem-sucedida, encapsulando os dados originais (`payload`)
-     * dentro da estrutura `ApiResponse`. Adiciona metadados como success=true, timestamp, path e statusCode.
-     * Inclui uma verificação para evitar re-formatação se a resposta já estiver no formato `ApiResponse` completo.
-     * @param payload Os dados retornados pelo controller.
-     * @param context O contexto de execução para obter informações da requisição (URL) e resposta (status code).
-     * @returns O objeto de resposta padronizado `ApiResponse<T>`.
+     * @description Formata uma resposta de sucesso. SEMPRE envolve os dados retornados pelo controller
+     * na estrutura padronizada `ApiSuccessResponse`, adicionando metadados.
+     * @param payload Os dados brutos retornados pelo controller/service.
+     * @param request Objeto Request para obter o URL.
+     * @param response Objeto Response para obter o status code final.
+     * @param timestamp Timestamp da interceptação.
+     * @param requestId ID único da requisição.
+     * @returns Objeto `ApiSuccessResponse<T>` formatado.
      */
-    private formatSuccessResponse(payload: T, context: ExecutionContext): ApiResponse<T> {
-        const httpContext = context.switchToHttp();
-        const request = httpContext.getRequest<Request>(); // Obtém o objeto Request
-        const response = httpContext.getResponse();       // Obtém o objeto Response
+    private formatSuccessResponse(payload: T, request: Request, response: any, timestamp: string, requestId: string): ApiSuccessResponse<T> {
+        const statusCode = response.statusCode || HttpStatus.OK; // Garante um status code
 
-        // Verifica se o payload já parece ser uma ApiResponse completa para evitar formatação duplicada.
-        // Isso é útil se algum serviço/controller já retornar a estrutura padronizada.
-        if (
-            typeof payload === 'object' &&
-            payload !== null &&
-            'success' in payload &&
-            'data' in payload &&
-            'timestamp' in payload &&
-            'statusCode' in payload &&
-            'path' in payload // <-- CORREÇÃO: Verifica também a existência de 'path'
-        ) {
-            // Se já tem todas as chaves, incluindo 'path', assume que já está formatado.
-            return payload as ApiResponse<T>;
-        }
-
-        // Se não estiver formatado, cria a estrutura padrão de sucesso.
+        // Monta a estrutura de sucesso padrão, envolvendo o payload original em 'data'
         return {
             success: true,
-            statusCode: response.statusCode, // Pega o status code definido no controller/NestJS
-            timestamp: new Date().toISOString(),
-            path: request.url, // Pega a URL da requisição atual
-            data: payload, // Os dados originais retornados pelo controller
+            metadata: {
+                timestamp,
+                path: request.url,
+                statusCode,
+                requestId,
+            },
+            data: payload, // O payload original do controller/service fica aqui
         };
     }
 
     /**
      * @method formatErrorResponse
-     * @description Formata um erro (HttpException ou Error genérico) em uma estrutura `ApiResponse` padronizada.
-     * Extrai status code, mensagem e detalhes do erro original.
-     * @param error O erro capturado (pode ser HttpException ou um Error padrão).
-     * @param context O contexto de execução para obter o path da requisição original.
-     * @returns Um Observable que emite o erro formatado usando `throwError` do RxJS.
+     * @description Formata um erro capturado (HttpException ou Error genérico) na estrutura `ApiErrorResponse`.
+     * Extrai informações relevantes do erro e as encapsula no formato padrão.
+     * Relança o erro formatado como uma HttpException para o NestJS tratar corretamente.
+     * @param error O erro capturado.
+     * @param request Objeto Request para obter o URL.
+     * @param timestamp Timestamp da interceptação.
+     * @param requestId ID único da requisição.
+     * @returns Observable que emite o erro formatado (`never` pois lança exceção).
      */
-    private formatErrorResponse(error: HttpException | Error, context: ExecutionContext): Observable<never> {
-        const httpContext = context.switchToHttp();
-        const request = httpContext.getRequest<Request>();
+    private formatErrorResponse(error: HttpException | Error, request: Request, timestamp: string, requestId: string): Observable<never> {
+        let statusCode: number;
+        let message: string;
+        let errorCode: string | undefined;
+        let errorDetails: unknown | undefined;
 
-        const statusCode = error instanceof HttpException ? error.getStatus() : 500; // Padrão 500 para erros não-HTTP
-        const message = error.message || 'Erro interno do servidor';
+        if (error instanceof HttpException) {
+            statusCode = error.getStatus();
+            const errorResponse = error.getResponse();
+            if (typeof errorResponse === 'string') {
+                message = errorResponse;
+            } else if (typeof errorResponse === 'object' && errorResponse !== null) {
+                // Tenta extrair de formatos comuns do NestJS (ex: validação)
+                message = (errorResponse as any).message || error.message || 'Erro inesperado';
+                errorDetails = (errorResponse as any).error || (errorResponse as any).details || (message !== (errorResponse as any).message ? errorResponse : undefined);
+                errorCode = (errorResponse as any).errorCode; // Se houver um código de erro específico
+            } else {
+                message = error.message || 'Erro inesperado';
+            }
+        } else {
+            // Erro genérico não-HttpException
+            statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
+            message = 'Erro interno do servidor';
+            errorDetails = error instanceof Error ? { name: error.name, stack: error.stack } : error; // Inclui stack em dev? Cuidado em prod!
+            this.logInternalError(error, request, requestId); // Log específico para erros inesperados
+        }
 
-        // Tenta extrair detalhes adicionais se for uma HttpException com corpo de resposta estruturado
-        const errorResponse = error instanceof HttpException ? error.getResponse() : undefined;
-        const errorDetails =
-            typeof errorResponse === 'object' && errorResponse !== null && 'message' in errorResponse // NestJS geralmente coloca a mensagem ou array de mensagens aqui
-                ? errorResponse.message // Pega a(s) mensagem(ns) de validação, por exemplo
-                : (typeof errorResponse === 'string' ? errorResponse : undefined); // Ou pega a string se for o caso
-
-
-        // Cria o objeto de erro padronizado
-        const formattedError: ApiResponse<null> = { // Usa null como tipo de dado para erro
+        const formattedError: ApiErrorResponse = {
             success: false,
-            statusCode,
-            message: typeof errorDetails === 'string' && errorDetails !== message ? errorDetails : message, // Usa detalhes como msg principal se for string e diferente
-            timestamp: new Date().toISOString(),
-            path: request.url, // Inclui o path também no erro
-            errorDetails: typeof errorDetails !== 'string' ? errorDetails : undefined, // Inclui detalhes se não forem a mensagem principal
-            data: null, // Garante que data seja null ou omitido no erro
+            metadata: {
+                timestamp,
+                path: request.url,
+                statusCode,
+                requestId,
+            },
+            message,
+            ...(errorCode && { errorCode }), // Adiciona se existir
+            ...(errorDetails && { errorDetails }), // Adiciona se existir
         };
 
-        // Usa throwError do RxJS para propagar o erro formatado no stream Observable
-        // O NestJS irá capturar isso e enviar como resposta HTTP de erro.
+        // Relança como HttpException contendo o corpo formatado.
+        // Isso permite que o NestJS e os clientes lidem com o erro corretamente.
         return throwError(() => new HttpException(formattedError, statusCode));
-        // É comum re-lançar como HttpException para garantir que o NestJS trate corretamente o status code
+    }
+
+    /**
+     * @method logInternalError
+     * @description Loga erros inesperados (não-HttpException) para depuração.
+     * @param error O erro original.
+     * @param request Objeto Request.
+     * @param requestId ID da requisição.
+     */
+    private logInternalError(error: unknown, request: Request, requestId: string): void {
+        console.error(
+            `[Internal Server Error] RequestID: ${requestId}, Path: ${request.url}, Method: ${request.method}`,
+            error instanceof Error ? error.stack : error
+        );
     }
 }

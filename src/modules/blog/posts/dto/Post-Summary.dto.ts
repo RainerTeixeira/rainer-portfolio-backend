@@ -1,36 +1,49 @@
-import { IsString, IsUrl, IsNumber } from 'class-validator';
+// src/modules/blog/posts/dto/post-summary.dto.ts
+
+import { IsString, IsUrl, IsNumber, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
+/**
+ * @dto PostSummaryDto
+ * @description Data Transfer Object para representar um resumo de um post,
+ * frequentemente usado em listagens. Contém apenas os campos essenciais.
+ */
 export class PostSummaryDto {
-    @ApiProperty({ description: 'ID do post', example: 'mbx9zi-1a3' })
+    @ApiProperty({ description: 'ID único do post.', example: 'm87r1mcb' })
     @IsString()
     postId: string;
 
-    @ApiProperty({ description: 'Título do post', example: 'Guia Definitivo: Construindo APIs Escaláveis com NestJS' })
+    @ApiProperty({ description: 'Título principal do post.', example: 'Desvendando o Cache no NestJS' })
     @IsString()
     title: string;
 
-    @ApiProperty({ description: 'Descrição breve do post', example: 'Descubra como utilizar NestJS para desenvolver APIs escaláveis...' })
+    @ApiProperty({
+        description: 'Uma breve descrição ou resumo do conteúdo do post.',
+        example: 'Aprenda como implementar cache de forma eficiente em suas aplicações NestJS para otimizar a performance.',
+        required: false // Descrição pode ser opcional dependendo do seu modelo
+    })
     @IsString()
-    description: string;
+    @IsOptional() // Marcar como opcional se não for obrigatório
+    description?: string;
 
-    @ApiProperty({ description: 'Data de publicação do post (ISO 8601)', example: '2024-09-15T10:00:00Z' })
-    @IsString() // ou @IsISO8601, se preferir
+    @ApiProperty({ description: 'Data em que o post foi (ou será) publicado (formato ISO 8601).', example: '2025-04-08T10:00:00Z' })
+    @IsString() // Poderia ser @IsISO8601() para validação mais estrita
     publishDate: string;
 
-    @ApiProperty({ description: 'Slug do post', example: 'guia-definitivo-apis-nestjs-13' })
+    @ApiProperty({ description: 'Identificador único do post na URL (kebab-case).', example: 'desvendando-cache-nestjs' })
     @IsString()
     slug: string;
 
-    @ApiProperty({ description: 'URL da imagem destacada', example: 'url-imagem-destaque-nestjs.jpg' })
-    @IsUrl() // ou @IsString() se não precisar de validação de URL
-    featuredImageURL: string;
+    @ApiProperty({ description: 'URL da imagem principal ou de destaque do post.', example: 'https://example.com/images/cache-nestjs.png', required: false })
+    @IsOptional()
+    @IsUrl() // Valida se é uma URL válida
+    featuredImageURL?: string;
 
-    @ApiProperty({ description: 'Status do post', example: 'publicado' })
+    @ApiProperty({ description: 'Status atual do post (ex: draft, published, archived).', example: 'published' })
     @IsString()
     status: string;
 
-    @ApiProperty({ description: 'Número de visualizações do post', example: 0 })
+    @ApiProperty({ description: 'Contagem de visualizações do post.', example: 1532 })
     @IsNumber()
     views: number;
 }
