@@ -33,6 +33,8 @@ import {
   DeleteCommandOutput,
   QueryCommandOutput,
   ScanCommandOutput,
+  BatchGetCommand,
+  BatchWriteCommand,
 } from '@aws-sdk/lib-dynamodb';
 
 // Carrega as variáveis de ambiente definidas no arquivo .env
@@ -123,7 +125,7 @@ export class DynamoDbService {
    * @param params Objeto contendo os parâmetros da operação (nome da tabela e chave do item).
    * @returns A resposta do comando Get do DynamoDB.
    */
-  async getItem(params: GetCommandInput): Promise<GetCommandOutput> {
+  async getItem(params: GetCommandInput): Promise<{ success: boolean; data: GetCommandOutput }> {
     const operation = 'getItem';
     this.logOperationStart(operation, params.TableName, params.Key);
     try {
@@ -135,7 +137,7 @@ export class DynamoDbService {
       const command = new GetCommand(params);
       const result = await this.docClient.send(command);
       this.logOperationSuccess(operation, params.TableName, result);
-      return result;
+      return { success: true, data: result };
     } catch (error) {
       this.handleError(operation, params.TableName, error);
     }
@@ -146,7 +148,7 @@ export class DynamoDbService {
    * @param params Objeto contendo os parâmetros da operação (nome da tabela e item a ser inserido).
    * @returns A resposta do comando Put do DynamoDB.
    */
-  async putItem(params: PutCommandInput): Promise<PutCommandOutput> {
+  async putItem(params: PutCommandInput): Promise<{ success: boolean; data: PutCommandOutput }> {
     const operation = 'putItem';
     this.logOperationStart(operation, params.TableName, params.Item);
     try {
@@ -158,7 +160,7 @@ export class DynamoDbService {
       const command = new PutCommand(params);
       const result = await this.docClient.send(command);
       this.logOperationSuccess(operation, params.TableName, result);
-      return result;
+      return { success: true, data: result };
     } catch (error) {
       this.handleError(operation, params.TableName, error);
     }
@@ -174,10 +176,10 @@ export class DynamoDbService {
    */
   async updateItem(
     tableName: string,
-    key: Record<string, any>,
-    updateData: Record<string, any>,
+    key: Record<string, AttributeValue>,
+    updateData: Record<string, AttributeValue>,
     returnValues: UpdateCommandInput['ReturnValues'] = 'ALL_NEW'
-  ): Promise<UpdateCommandOutput> {
+  ): Promise<{ success: boolean; data: UpdateCommandOutput }> {
     const operation = 'updateItem';
     this.logOperationStart(operation, tableName, { key, updateData });
 
@@ -238,7 +240,7 @@ export class DynamoDbService {
       const command = new UpdateCommand(paramsUpdate);
       const result = await this.docClient.send(command);
       this.logOperationSuccess(operation, tableName, result);
-      return result;
+      return { success: true, data: result };
     } catch (error) {
       this.handleError(operation, tableName, error, { key, updateData });
     }
@@ -249,7 +251,7 @@ export class DynamoDbService {
    * @param params Objeto contendo os parâmetros da operação (nome da tabela e chave do item).
    * @returns A resposta do comando Delete do DynamoDB.
    */
-  async deleteItem(params: DeleteCommandInput): Promise<DeleteCommandOutput> {
+  async deleteItem(params: DeleteCommandInput): Promise<{ success: boolean; data: DeleteCommandOutput }> {
     const operation = 'deleteItem';
     this.logOperationStart(operation, params.TableName, params.Key);
     try {
@@ -260,7 +262,7 @@ export class DynamoDbService {
       const command = new DeleteCommand(params);
       const result = await this.docClient.send(command);
       this.logOperationSuccess(operation, params.TableName, result);
-      return result;
+      return { success: true, data: result };
     } catch (error) {
       this.handleError(operation, params.TableName, error, params.Key);
     }
@@ -271,30 +273,32 @@ export class DynamoDbService {
    * @param params Objeto contendo os parâmetros da operação, podendo incluir ProjectionExpression para limitar os dados retornados.
    * @returns A resposta do comando Scan do DynamoDB.
    */
-  async scan(params: ScanCommandInput): Promise<ScanCommandOutput> {
+  async scan(params: ScanCommandInput): Promise<{ success: boolean; data: ScanCommandOutput }> {
     const operation = 'scan';
     this.logOperationStart(operation, params.TableName, params);
-    try {
-      // Sugestão: sempre utilize ProjectionExpression para limitar os dados retornados e reduzir o consumo
-      if (params.ProjectionExpression) {
-        params.ExpressionAttributeNames = {
-          ...(params.ExpressionAttributeNames || {}),
-          '#st': 'status',
-          '#vi': 'views',
-        };
-        params.ProjectionExpression = params.ProjectionExpression
-          .replace(/status/g, '#st')
-          .replace(/views/g, '#vi');
-      }
-      // Define um limite padrão para evitar varreduras pesadas na tabela
-      params.Limit = params.Limit || 100;
 
-      const command = new ScanCommand(params);
-      const result = await this.docClient.send(command);
-      this.logOperationSuccess(operation, params.TableName, result);
-      return result;
+    try {
+        // Sugestão: sempre utilize ProjectionExpression para limitar os dados retornados e reduzir o consumo
+        if (params.ProjectionExpression) {
+            params.ExpressionAttributeNames = {
+                ...(params.ExpressionAttributeNames || {}),
+                '#st': 'status',
+                '#vi': 'views',
+            };
+            params.ProjectionExpression = params.ProjectionExpression
+                .replace(/status/g, '#st')
+                .replace(/views/g, '#vi');
+        }
+
+        // Define um limite padrão para evitar varreduras pesadas na tabela
+        params.Limit = params.Limit || 100;
+
+        const command = new ScanCommand(params);
+        const result = await this.docClient.send(command);
+        this.logOperationSuccess(operation, params.TableName, result);
+        return { success: true, data: result };
     } catch (error) {
-      this.handleError(operation, params.TableName, error, params);
+        this.handleError(operation, params.TableName, error, params);
     }
   }
 
@@ -303,7 +307,7 @@ export class DynamoDbService {
    * @param params Objeto contendo os parâmetros da operação, incluindo ExpressionAttributeValues e ExpressionAttributeNames.
    * @returns A resposta do comando Query do DynamoDB.
    */
-  async query(params: QueryCommandInput): Promise<QueryCommandOutput> {
+  async query(params: QueryCommandInput): Promise<{ success: boolean; data: QueryCommandOutput }> {
     const operation = 'query';
     this.logOperationStart(operation, params.TableName, params);
 
@@ -329,7 +333,7 @@ export class DynamoDbService {
       const command = new QueryCommand(params);
       const result = await this.docClient.send(command);
       this.logOperationSuccess(operation, params.TableName, result);
-      return result;
+      return { success: true, data: result };
     } catch (error) {
       this.handleError(operation, params.TableName, error, params);
     }
@@ -340,12 +344,12 @@ export class DynamoDbService {
    * @param updateData Objeto contendo os campos e valores a serem atualizados.
    * @returns Um objeto contendo a UpdateExpression e os ExpressionAttributeValues correspondentes.
    */
-  buildUpdateExpression(updateData: Record<string, any>): {
+  buildUpdateExpression(updateData: Record<string, AttributeValue>): {
     UpdateExpression: string;
-    ExpressionAttributeValues: Record<string, any>;
+    ExpressionAttributeValues: Record<string, AttributeValue>;
   } {
     const updateExpressionParts: string[] = [];
-    const expressionAttributeValues: Record<string, any> = {};
+    const expressionAttributeValues: Record<string, AttributeValue> = {};
 
     Object.entries(updateData).forEach(([key, value]) => {
       if (value !== undefined) {
@@ -358,6 +362,40 @@ export class DynamoDbService {
       UpdateExpression: `SET ${updateExpressionParts.join(', ')}`,
       ExpressionAttributeValues: expressionAttributeValues,
     };
+  }
+
+  /**
+   * Realiza uma operação de batch get para recuperar múltiplos itens com base nas chaves fornecidas.
+   * @param keys Array de objetos representando as chaves dos itens a serem recuperados.
+   * @param tableName Nome da tabela.
+   * @returns Array de itens recuperados.
+   */
+  async batchGetItems(keys: Record<string, AttributeValue>[], tableName: string): Promise<Record<string, AttributeValue>[]> {
+    const params = {
+      RequestItems: {
+        [tableName]: {
+          Keys: keys,
+        },
+      },
+    };
+    const command = new BatchGetCommand(params);
+    const result = await this.docClient.send(command);
+    return result.Responses?.[tableName] || [];
+  }
+
+  /**
+   * Realiza uma operação de batch write para inserir múltiplos itens na tabela.
+   * @param items Array de objetos representando os itens a serem inseridos.
+   * @param tableName Nome da tabela.
+   */
+  async batchWriteItems(items: Record<string, AttributeValue>[], tableName: string): Promise<void> {
+    const params = {
+      RequestItems: {
+        [tableName]: items.map(item => ({ PutRequest: { Item: item } })),
+      },
+    };
+    const command = new BatchWriteCommand(params);
+    await this.docClient.send(command);
   }
 
   /**

@@ -24,10 +24,15 @@ export class CreateCommentDto {
     @IsString()
     date?: string;
 
+    @ApiProperty({ description: 'Status do comentário', required: false })
+    @IsOptional()
+    @IsString()
+    status?: string;
+
     // Removendo o construtor para evitar a instanciação da classe dentro do DTO
     /*constructor(postId: string, authorId: string, content: string, date?: string) {
         this.postId = postId;
-        this.authorId = authorId;
+        this.authorId = postId;
         this.content = content;
         this.date = date;
     }*/

@@ -105,13 +105,8 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, ApiSuccessResp
      * @param requestId ID único da requisição.
      * @returns Objeto `ApiSuccessResponse<T>` formatado.
      */
-    private formatSuccessResponse(payload: T, request: Request, response: any, timestamp: string, requestId: string): ApiSuccessResponse<T> {
+    private formatSuccessResponse(payload: T, request: Request, response: Response, timestamp: string, requestId: string): ApiSuccessResponse<T> {
         const statusCode = response.statusCode || HttpStatus.OK;
-
-        // Evita encapsular novamente se a resposta já estiver no formato ApiSuccessResponse
-        if ((payload as any)?.success === true && (payload as any)?.metadata) {
-            return payload as ApiSuccessResponse<T>;
-        }
 
         return {
             success: true,
@@ -140,7 +135,7 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, ApiSuccessResp
         let statusCode: number;
         let message: string;
         let errorCode: string | undefined;
-        let errorDetails: unknown | undefined;
+        let errorDetails: Record<string, unknown> | undefined;
 
         if (error instanceof HttpException) {
             statusCode = error.getStatus();
@@ -148,19 +143,17 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, ApiSuccessResp
             if (typeof errorResponse === 'string') {
                 message = errorResponse;
             } else if (typeof errorResponse === 'object' && errorResponse !== null) {
-                // Tenta extrair de formatos comuns do NestJS (ex: validação)
-                message = (errorResponse as any).message || error.message || 'Erro inesperado';
-                errorDetails = (errorResponse as any).error || (errorResponse as any).details || (message !== (errorResponse as any).message ? errorResponse : undefined);
-                errorCode = (errorResponse as any).errorCode; // Se houver um código de erro específico
+                message = (errorResponse as Record<string, unknown>).message as string || error.message || 'Erro inesperado';
+                errorDetails = (errorResponse as Record<string, unknown>).details || undefined;
+                errorCode = (errorResponse as Record<string, unknown>).errorCode as string;
             } else {
                 message = error.message || 'Erro inesperado';
             }
         } else {
-            // Erro genérico não-HttpException
             statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
             message = 'Erro interno do servidor';
-            errorDetails = error instanceof Error ? { name: error.name, stack: error.stack } : error; // Inclui stack em dev? Cuidado em prod!
-            this.logInternalError(error, request, requestId); // Log específico para erros inesperados
+            errorDetails = error instanceof Error ? { name: error.name, stack: error.stack } : undefined;
+            this.logInternalError(error, request, requestId);
         }
 
         const formattedError: ApiErrorResponse = {
@@ -172,12 +165,10 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, ApiSuccessResp
                 requestId,
             },
             message,
-            ...(errorCode && { errorCode }), // Adiciona se existir
-            ...(errorDetails && typeof errorDetails === 'object' && errorDetails !== null ? { errorDetails } : {}), // Adiciona se existir
+            ...(errorCode && { errorCode }),
+            ...(errorDetails ? { errorDetails } : {}),
         };
 
-        // Relança como HttpException contendo o corpo formatado.
-        // Isso permite que o NestJS e os clientes lidem com o erro corretamente.
         return throwError(() => new HttpException(formattedError, statusCode));
     }
 

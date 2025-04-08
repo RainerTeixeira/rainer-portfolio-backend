@@ -3,11 +3,11 @@
 import {
   Injectable,
   Logger,
-  BadRequestException,
   NotFoundException,
   Inject,
   InternalServerErrorException,
   HttpException,
+  BadRequestException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
@@ -16,8 +16,6 @@ import {
   AttributeValue,
   DeleteItemCommandInput,
   QueryCommandInput,
-  ScanCommandInput,
-  UpdateItemCommandInput,
 } from '@aws-sdk/client-dynamodb';
 import { generatePostId } from '@src/common/generateUUID/generatePostId';
 import { AuthorsService } from '@src/modules/blog/authors/services/authors.service';
@@ -65,7 +63,7 @@ export class PostsService {
    * @param dto Dados para criação do post
    * @returns PostContentDto com dados do post criado
    */
-  async createPost(dto: PostCreateDto): Promise<PostContentDto> {
+  async createPost(dto: PostCreateDto): Promise<{ success: boolean; data: PostContentDto }> {
     const postId = generatePostId();
     const now = new Date().toISOString();
 
@@ -77,8 +75,8 @@ export class PostsService {
       });
 
       await this.clearPaginatedCache();
-      return this.mapToContentDto(postItem);
-    } catch (error: any) {
+      return { success: true, data: this.mapToContentDto(postItem) };
+    } catch (error: unknown) {
       this.logger.error(`Falha ao criar post: ${(error as Error).message}`);
       throw new InternalServerErrorException('Erro ao criar post');
     }
@@ -91,27 +89,34 @@ export class PostsService {
    * @param nextKey Chave para paginação (opcional)
    * @returns Resultado paginado de posts
    */
-  async getPaginatedPosts(limit: number, nextKey?: string): Promise<PaginatedPostsResult> {
+  async getPaginatedPosts(limit: number, nextKey?: string): Promise<{ success: boolean; data: PaginatedPostsResult }> {
     const cacheKey = `${this.CACHE_KEY_PAGINATED_PREFIX}${limit}:${nextKey || 'first'}`;
 
     try {
       const cached = await this.cacheManager.get<PaginatedPostsResult>(cacheKey);
-      if (cached) return cached;
+      if (cached) return { success: true, data: cached };
 
-      const params: ScanCommandInput = {
+      const params: QueryCommandInput = {
         TableName: this.tableName,
+        IndexName: 'postsByPublishDate-index', // Use o índice para ordenar por data de publicação
         Limit: limit,
         ExclusiveStartKey: nextKey ? this.decodeNextKey(nextKey) : undefined,
         ProjectionExpression: 'postId, title, description, publishDate, slug, featuredImageURL, #st, views',
         ExpressionAttributeNames: { '#st': 'status' },
+        KeyConditionExpression: '#st = :published',
+        ExpressionAttributeValues: { ':published': { S: 'published' } },
       };
 
-      const result = await this.dynamoDbService.scan(params);
-      const items = result.Items?.map(item => this.mapToSummaryDto(item)) || [];
-      const newNextKey = result.LastEvaluatedKey ? this.encodeNextKey(result.LastEvaluatedKey) : null;
+      const result = await this.dynamoDbService.query(params);
+      const items = result.data.Items?.map(item => this.mapToSummaryDto(item)) || [];
+      const newNextKey = result.data.LastEvaluatedKey ? this.encodeNextKey(result.data.LastEvaluatedKey) : null;
 
-      return { items, nextKey: newNextKey }; // Retorna os dados brutos
-    } catch (error: any) {
+      // Salva no cache antes de retornar
+      const paginatedResult = { items, nextKey: newNextKey };
+      await this.cacheManager.set(cacheKey, paginatedResult, this.CACHE_TTL_POST);
+
+      return { success: true, data: paginatedResult };
+    } catch {
       this.logger.error(`Falha na busca paginada: ${(error as Error).message}`);
       throw new InternalServerErrorException('Erro ao buscar posts');
     }
@@ -123,33 +128,33 @@ export class PostsService {
    * @param slug Slug único do post
    * @returns PostFullDto com dados completos enriquecidos
    */
-  async getPostBySlug(slug: string): Promise<PostFullDto> {
+  async getPostBySlug(slug: string): Promise<{ success: boolean; data: PostFullDto }> {
     const cacheKey = `${this.CACHE_KEY_PREFIX_POST}slug:${slug}`;
 
     try {
       const cached = await this.cacheManager.get<PostFullDto>(cacheKey);
-      if (cached) return cached;
+      if (cached) return { success: true, data: cached };
 
       const params: QueryCommandInput = {
         TableName: this.tableName,
         IndexName: 'slug-index',
         KeyConditionExpression: 'slug = :slug',
         ExpressionAttributeValues: { ':slug': { S: slug } },
-        Limit: 1,
       };
 
       const result = await this.dynamoDbService.query(params);
-      const postItem = result.Items?.[0];
-      if (!postItem) throw new NotFoundException(`Post com slug "${slug}" não encontrado`);
-
-      const enriched = await this.enrichPostData(postItem);
-      await this.cacheManager.set(cacheKey, enriched, this.CACHE_TTL_POST);
-
-      return enriched;
-    } catch (error: any) {
-      if (error instanceof HttpException) throw error;
-      this.logger.error(`Falha ao buscar post por slug: ${(error as Error).message}`);
-      throw new InternalServerErrorException('Erro ao buscar post');
+      const items = result.data.Items || []; // Acesse `data` antes de `Items`
+      if (items.length === 0) {
+        throw new NotFoundException(`Post com slug '${slug}' não encontrado.`);
+      }
+      const enrichedPost = await this.enrichPostData(items[0]);
+      return { success: true, data: enrichedPost };
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        if (error instanceof HttpException) throw error;
+        this.logger.error(`Falha ao buscar post por slug: ${(error as Error).message}`);
+        throw new InternalServerErrorException('Erro ao buscar post');
+      }
     }
   }
 
@@ -160,7 +165,7 @@ export class PostsService {
    * @param dto Dados para atualização
    * @returns PostContentDto atualizado
    */
-  async updatePost(id: string, dto: PostUpdateDto): Promise<PostContentDto> {
+  async updatePost(id: string, dto: PostUpdateDto): Promise<{ success: boolean; data: PostContentDto }> {
     try {
       const now = new Date().toISOString();
       const updateParams = this.buildUpdateParams(id, dto, now);
@@ -171,12 +176,13 @@ export class PostsService {
         updateParams, // Update data
         'ALL_NEW' // Return values
       );
-      if (!result.Attributes) throw new InternalServerErrorException('Falha na atualização');
+      const attributes = result.data.Attributes; // Acesse `data` antes de `Attributes`
+      if (!attributes) throw new InternalServerErrorException('Falha na atualização');
 
       await this.clearPostCache(id);
       await this.clearPaginatedCache();
 
-      return this.mapToContentDto(result.Attributes);
+      return { success: true, data: this.mapToContentDto(attributes) };
     } catch (error) {
       this.handleUpdateError(error, id);
     }
@@ -188,7 +194,7 @@ export class PostsService {
    * @param id ID do post a ser excluído
    * @returns Mensagem de sucesso
    */
-  async deletePost(id: string): Promise<SimpleSuccessMessage> {
+  async deletePost(id: string): Promise<{ success: boolean; data: SimpleSuccessMessage }> {
     try {
       const params: DeleteItemCommandInput = {
         TableName: this.tableName,
@@ -200,7 +206,7 @@ export class PostsService {
       await this.clearPostCache(id);
       await this.clearPaginatedCache();
 
-      return { message: 'Post excluído com sucesso' };
+      return { success: true, data: { message: 'Post excluído com sucesso' } };
     } catch (error) {
       this.handleDeleteError(error, id);
     }
@@ -246,12 +252,15 @@ export class PostsService {
     if (!postId) throw new InternalServerErrorException('Post inválido');
 
     try {
-      const [author, category, subcategory, comments] = await Promise.all([
+      const [author, categoryResult, subcategoryResult, comments] = await Promise.all([
         this.authorsService.findOne(item.authorId?.S ?? ''),
         this.categoryService.findOne(item.categoryId?.S ?? ''),
         this.subcategoryService.getSubcategoryById(item.categoryId?.S ?? '', item.subcategoryId?.S ?? ''),
         this.commentsService.findAllByPostId(postId),
       ]);
+
+      const category = categoryResult.data; // Extraia `data` do resultado
+      const subcategory = subcategoryResult.data; // Extraia `data` do resultado
 
       return {
         post: this.mapToContentDto(item),
@@ -265,7 +274,7 @@ export class PostsService {
         subcategoryId: item.subcategoryId?.S ?? '',
         authorId: item.authorId?.S ?? '',
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       this.logger.error(`Falha no enriquecimento de dados: ${(error as Error).message}`);
       throw new InternalServerErrorException('Erro ao processar post');
     }
@@ -317,7 +326,7 @@ export class PostsService {
     const updateExpressionParts: string[] = [];
     const expressionAttributeNames: Record<string, string> = {};
     const expressionAttributeValues: Record<string, AttributeValue> = {};
-    let index = 0;
+    // Removed unused variable 'index'
 
     const attributes = this.mapDtoToDynamoAttributes(dto);
 
@@ -345,8 +354,8 @@ export class PostsService {
   }
 
   // Métodos de cache
-  private async clearPostCache(postId: string): Promise<void> {
-    const store = (this.cacheManager as any).store;
+  private async clearPostCache(): Promise<void> {
+    const store = (this.cacheManager as Cache & { store: { keys: () => Promise<string[]> } }).store;
     const keys = await store.keys();
     await Promise.all(
       keys
@@ -356,7 +365,7 @@ export class PostsService {
   }
 
   private async clearPaginatedCache(): Promise<void> {
-    const store = (this.cacheManager as any).store;
+    const store = (this.cacheManager.store as { keys: () => Promise<string[]> });
     const keys = await store.keys();
     await Promise.all(
       keys
@@ -373,13 +382,13 @@ export class PostsService {
   private decodeNextKey(encoded: string): Record<string, AttributeValue> {
     try {
       return JSON.parse(Buffer.from(encoded, 'base64').toString('utf8'));
-    } catch (error) {
+    } catch {
       throw new BadRequestException('Chave de paginação inválida');
     }
   }
 
   // Tratamento de erros
-  private handleUpdateError(error: any, postId: string): never {
+  private handleUpdateError(error: Error, postId: string): never {
     if (error.name === 'ConditionalCheckFailedException') {
       throw new NotFoundException(`Post ${postId} não encontrado`);
     }
@@ -387,7 +396,7 @@ export class PostsService {
     throw new InternalServerErrorException('Falha na atualização do post');
   }
 
-  private handleDeleteError(error: any, postId: string): never {
+  private handleDeleteError(error: Error, postId: string): never {
     if (error.name === 'ConditionalCheckFailedException') {
       throw new NotFoundException(`Post ${postId} não encontrado`);
     }

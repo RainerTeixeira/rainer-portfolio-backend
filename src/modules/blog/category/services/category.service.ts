@@ -1,9 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger, InternalServerErrorException } from '@nestjs/common';
 import { CreateCategoryDto } from '@src/modules/blog/category/dto/create-category.dto';
 import { UpdateCategoryDto } from '@src/modules/blog/category/dto/update-category.dto';
 import { CategoryDto } from '@src/modules/blog/category/dto/category.dto';
 import { DynamoDbService } from '@src/services/dynamoDb.service';
-import { UpdateCommandInput } from '@aws-sdk/lib-dynamodb';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 /**
@@ -25,21 +24,24 @@ export class CategoryService {
      */
     @ApiOperation({ summary: 'Criar uma nova categoria' })
     @ApiResponse({ status: 201, description: 'A categoria foi criada com sucesso.', type: CategoryDto })
-    async create(createCategoryDto: CreateCategoryDto): Promise<CategoryDto> {
+    async create(createCategoryDto: CreateCategoryDto): Promise<{ success: boolean; data: CategoryDto }> {
         this.logger.log(`Criando categoria com ID: ${createCategoryDto.categoryId}`);
 
         // Instanciando o DTO fora da classe
-        const newCategory = {
-            ...createCategoryDto,
-        };
 
         const params = {
             TableName: this.tableName,
-            Item: newCategory,
+            Item: {
+                categoryId: { S: createCategoryDto.categoryId },
+                name: { S: createCategoryDto.name },
+                slug: { S: createCategoryDto.slug },
+                seo: { M: createCategoryDto.seo },
+            },
             ConditionExpression: 'attribute_not_exists(categoryId)', // Garante que não existe
         };
         await this.dynamoDbService.putItem(params);
-        return this.findOne(createCategoryDto.categoryId);
+        const category = await this.findOne(createCategoryDto.categoryId);
+        return { success: true, data: category.data };
     }
 
     /**
@@ -48,9 +50,11 @@ export class CategoryService {
      */
     @ApiOperation({ summary: 'Obter todas as categorias' })
     @ApiResponse({ status: 200, description: 'Retorna todas as categorias.', type: [CategoryDto] })
-    async findAll(): Promise<CategoryDto[]> {
+    async findAll(): Promise<{ success: boolean; data: CategoryDto[] }> {
         const result = await this.dynamoDbService.scan({ TableName: this.tableName });
-        return (result.Items || []).map(item => this.mapCategoryFromDynamoDb(item));
+        const items = result.data.Items || []; // Acesse `data` antes de `Items`
+        const categories = items.map(item => this.mapCategoryFromDynamoDb(item));
+        return { success: true, data: categories };
     }
 
     /**
@@ -62,20 +66,23 @@ export class CategoryService {
     @ApiOperation({ summary: 'Obter uma categoria por ID' })
     @ApiResponse({ status: 200, description: 'Retorna a categoria.', type: CategoryDto })
     @ApiResponse({ status: 404, description: 'Categoria não encontrada.' })
-    async findOne(categoryId: string): Promise<CategoryDto> {
+    async findOne(categoryId: string): Promise<{ success: boolean; data: CategoryDto }> {
         const params = {
             TableName: this.tableName,
-            Key: { categoryId: categoryId },
+            Key: { categoryId: { S: categoryId } },
         };
         const result = await this.dynamoDbService.getItem(params);
-        if (!result.Item) {
+        const item = result.data.Item; // Acesse `data` antes de `Item`
+        if (!item) {
             throw new NotFoundException(`Category com ID '${categoryId}' não encontrada`);
         }
-        return this.mapCategoryFromDynamoDb(result.Item);
+        const category = this.mapCategoryFromDynamoDb(item);
+        return { success: true, data: category };
     }
 
     async getCategoryById(categoryId: string): Promise<CategoryDto> {
-        return this.findOne(categoryId);
+        const result = await this.findOne(categoryId);
+        return result.data;
     }
 
     /**
@@ -88,21 +95,23 @@ export class CategoryService {
     @ApiOperation({ summary: 'Atualizar uma categoria por ID' })
     @ApiResponse({ status: 200, description: 'A categoria foi atualizada com sucesso.', type: CategoryDto })
     @ApiResponse({ status: 404, description: 'Categoria não encontrada.' })
-    async update(categoryId: string, updateCategoryDto: UpdateCategoryDto): Promise<CategoryDto> {
-        // Verifica se a categoria existe antes de atualizar
+    async update(categoryId: string, updateCategoryDto: UpdateCategoryDto): Promise<{ success: boolean; data: CategoryDto }> {
         await this.findOne(categoryId);
-
-        const { UpdateExpression, ExpressionAttributeValues } =
-            this.dynamoDbService.buildUpdateExpression(updateCategoryDto);
 
         const result = await this.dynamoDbService.updateItem(
             this.tableName,
-            { categoryId: categoryId }, // Ajuste a chave primária
+            { categoryId },
             updateCategoryDto,
             'ALL_NEW'
         );
 
-        return this.mapCategoryFromDynamoDb(result.Attributes as Record<string, unknown>);
+        const attributes = result.data.Attributes;
+        if (!attributes) {
+            throw new InternalServerErrorException('Falha ao obter os dados atualizados da categoria.');
+        }
+
+        const updatedCategory = this.mapCategoryFromDynamoDb(attributes as Record<string, unknown>);
+        return { success: true, data: updatedCategory };
     }
 
     /**

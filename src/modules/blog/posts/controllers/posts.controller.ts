@@ -3,7 +3,7 @@
 import {
   Controller, Get, Post, Patch, Delete, HttpCode, // Adicionar HttpCode
   Query, Param, Body, UseInterceptors, UseGuards,
-  DefaultValuePipe, ParseIntPipe, NotFoundException, HttpStatus // Adicionar HttpStatus
+  DefaultValuePipe, ParseIntPipe, HttpStatus // Adicionar HttpStatus
 } from '@nestjs/common';
 import {
   ApiTags, ApiOperation, ApiResponse, ApiOkResponse, ApiCreatedResponse, // Usar respostas específicas
@@ -87,8 +87,9 @@ export class PostsController {
   async getPaginatedPosts(
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
     @Query('nextKey') nextKey?: string,
-  ): Promise<PaginatedPostsResult> { // Retorna o tipo definido no Service
-    return this.postsService.getPaginatedPosts(limit, nextKey); // Retorna os dados brutos
+  ): Promise<PaginatedPostsResult> {
+    const result = await this.postsService.getPaginatedPosts(limit, nextKey);
+    return result.data; // Retorna diretamente o `data` do serviço
   }
 
   /**
@@ -112,9 +113,9 @@ export class PostsController {
     }
   })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Post não encontrado.' }) // Documenta o 404
-  async getPostBySlug(@Param('slug') slug: string): Promise<PostFullDto> { // Retorna o tipo definido no Service
+  async getPostBySlug(@Param('slug') slug: string): Promise<PostFullDto> {
     const post = await this.postsService.getPostBySlug(slug);
-    return post; // Retorna os dados brutos
+    return post.data; // Retorna diretamente o `data` do serviço
   }
 
   /**
@@ -139,8 +140,9 @@ export class PostsController {
   })
   @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Dados inválidos ou erro na criação.' })
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Não autorizado.' }) // Documenta erro de autenticação
-  async createPost(@Body() postCreateDto: PostCreateDto): Promise<PostContentDto> { // Retorna o tipo definido no Service
-    return this.postsService.createPost(postCreateDto); // Retorna os dados brutos
+  async createPost(@Body() postCreateDto: PostCreateDto): Promise<PostContentDto> {
+    const post = await this.postsService.createPost(postCreateDto);
+    return post.data; // Retorna diretamente o `data` do serviço
   }
 
   /**
@@ -171,8 +173,9 @@ export class PostsController {
   async updatePost(
     @Param('id') id: string,
     @Body() postUpdateDto: PostUpdateDto
-  ): Promise<PostContentDto> { // Retorna o tipo definido no Service
-    return this.postsService.updatePost(id, postUpdateDto); // Retorna os dados brutos
+  ): Promise<PostContentDto> {
+    const post = await this.postsService.updatePost(id, postUpdateDto);
+    return post.data; // Retorna diretamente o `data` do serviço
   }
 
   /**
@@ -210,7 +213,8 @@ export class PostsController {
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Post não encontrado.' })
   @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: 'Erro ao excluir o post.' })
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Não autorizado.' })
-  async deletePost(@Param('id') id: string): Promise<SimpleSuccessMessage> { // Retorna o tipo definido no Service
-    return this.postsService.deletePost(id); // Retorna os dados brutos
+  async deletePost(@Param('id') id: string): Promise<SimpleSuccessMessage> {
+    const result = await this.postsService.deletePost(id);
+    return result.data; // Retorna diretamente o `data` do serviço
   }
 }

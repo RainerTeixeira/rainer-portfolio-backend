@@ -18,21 +18,24 @@ export class CategoryController {
     @UseGuards(CognitoAuthGuard)
     @Post()
     async create(@Body() createCategoryDto: CreateCategoryDto): Promise<CategoryDto> {
-        return this.categoryService.create(createCategoryDto);
+        const result = await this.categoryService.create(createCategoryDto);
+        return result.data; // Extrai o campo `data` do retorno do serviço
     }
 
     @ApiOperation({ summary: 'Obter todas as categorias' })
     @ApiResponse({ status: 200, description: 'Retorna todas as categorias.', type: [CategoryDto] })
     @Get()
     async findAll(): Promise<CategoryDto[]> {
-        return this.categoryService.findAll();
+        const result = await this.categoryService.findAll();
+        return result.data; // Extrai o campo `data` do retorno do serviço
     }
 
     @ApiOperation({ summary: 'Obter uma categoria por ID' })
     @ApiResponse({ status: 200, description: 'Retorna a categoria.', type: CategoryDto })
     @Get(':categoryId')
     async findOne(@Param('categoryId') categoryId: string): Promise<CategoryDto> {
-        return this.categoryService.findOne(categoryId);
+        const result = await this.categoryService.findOne(categoryId);
+        return result.data; // Extrai o campo `data` do retorno do serviço
     }
 
     @ApiOperation({ summary: 'Atualizar uma categoria por ID' })
@@ -44,7 +47,8 @@ export class CategoryController {
         @Param('categoryId') categoryId: string,
         @Body() updateCategoryDto: UpdateCategoryDto,
     ): Promise<CategoryDto> {
-        return this.categoryService.update(categoryId, updateCategoryDto);
+        const result = await this.categoryService.update(categoryId, updateCategoryDto);
+        return result.data; // Extrai o campo `data` do retorno do serviço
     }
 
     @ApiOperation({ summary: 'Deletar uma categoria por ID' })
