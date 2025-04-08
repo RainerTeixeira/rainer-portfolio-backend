@@ -98,13 +98,13 @@ export class PostsService {
 
       const params: QueryCommandInput = {
         TableName: this.tableName,
-        IndexName: 'postsByPublishDate-index', // Use o índice para ordenar por data de publicação
+        IndexName: 'postsByPublishDate-index', // Usa o índice corrigido
         Limit: limit,
         ExclusiveStartKey: nextKey ? this.decodeNextKey(nextKey) : undefined,
         ProjectionExpression: 'postId, title, description, publishDate, slug, featuredImageURL, #st, views',
         ExpressionAttributeNames: { '#st': 'status' },
-        KeyConditionExpression: '#st = :published',
-        ExpressionAttributeValues: { ':published': { S: 'published' } },
+        KeyConditionExpression: '#st = :published', // Filtra por status
+        ExpressionAttributeValues: { ':published': { S: 'published' } }, // Garante que o valor não está vazio
       };
 
       const result = await this.dynamoDbService.query(params);
