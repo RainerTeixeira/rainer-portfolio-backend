@@ -116,8 +116,8 @@ export class PostsService {
       await this.cacheManager.set(cacheKey, paginatedResult, this.CACHE_TTL_POST);
 
       return { success: true, data: paginatedResult };
-    } catch {
-      this.logger.error(`Falha na busca paginada: ${(error as Error).message}`);
+    } catch (err) {
+      this.logger.error(`Falha na busca paginada: ${(err as Error).message}`);
       throw new InternalServerErrorException('Erro ao buscar posts');
     }
   }
@@ -149,12 +149,10 @@ export class PostsService {
       }
       const enrichedPost = await this.enrichPostData(items[0]);
       return { success: true, data: enrichedPost };
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        if (error instanceof HttpException) throw error;
-        this.logger.error(`Falha ao buscar post por slug: ${(error as Error).message}`);
-        throw new InternalServerErrorException('Erro ao buscar post');
-      }
+    } catch (err) {
+      if (err instanceof HttpException) throw err;
+      this.logger.error(`Falha ao buscar post por slug: ${(err as Error).message}`);
+      throw new InternalServerErrorException('Erro ao buscar post');
     }
   }
 
@@ -173,18 +171,18 @@ export class PostsService {
       const result = await this.dynamoDbService.updateItem(
         this.tableName,
         { postId: { S: id } }, // Key
-        updateParams, // Update data
+        updateParams.ExpressionAttributeValues, // Update data
         'ALL_NEW' // Return values
       );
       const attributes = result.data.Attributes; // Acesse `data` antes de `Attributes`
       if (!attributes) throw new InternalServerErrorException('Falha na atualização');
 
-      await this.clearPostCache(id);
+      await this.clearPostCache();
       await this.clearPaginatedCache();
 
       return { success: true, data: this.mapToContentDto(attributes) };
-    } catch (error) {
-      this.handleUpdateError(error, id);
+    } catch (err) {
+      this.handleUpdateError(err as Error, id);
     }
   }
 
@@ -203,12 +201,12 @@ export class PostsService {
       };
 
       await this.dynamoDbService.deleteItem(params);
-      await this.clearPostCache(id);
+      await this.clearPostCache();
       await this.clearPaginatedCache();
 
       return { success: true, data: { message: 'Post excluído com sucesso' } };
-    } catch (error) {
-      this.handleDeleteError(error, id);
+    } catch (err) {
+      this.handleDeleteError(err as Error, id);
     }
   }
 
@@ -355,7 +353,7 @@ export class PostsService {
 
   // Métodos de cache
   private async clearPostCache(): Promise<void> {
-    const store = (this.cacheManager as Cache & { store: { keys: () => Promise<string[]> } }).store;
+    const store = (this.cacheManager as Cache & { stores: { keys: () => Promise<string[]> } }).stores;
     const keys = await store.keys();
     await Promise.all(
       keys

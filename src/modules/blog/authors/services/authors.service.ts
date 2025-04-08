@@ -205,13 +205,15 @@ export class AuthorsService {
         await this.findOne(authorId); // findOne já lida com NotFoundException e cache
 
         try {
+            const updateData = this.mapDtoToDynamoAttributes(updateAuthorDto);
+
             // 2. Chama o updateItem do DynamoDbService
             // O terceiro argumento (updateData) é o DTO com os campos a serem atualizados.
             // O DynamoDbService construirá a UpdateExpression.
             const result = await this.dynamoDbService.updateItem(
                 this.tableName,
                 { authorId: { S: authorId } }, // Corrigido para usar AttributeValue
-                updateAuthorDto, // Os dados a serem atualizados
+                updateData, // Os dados a serem atualizados
                 'ALL_NEW', // Retorna todos os atributos do item como ele ficou *após* a atualização
             );
 
@@ -410,6 +412,21 @@ export class AuthorsService {
         const listCacheKey = this.getAuthorsListCacheKey();
         await this.cacheManager.del(listCacheKey);
         this.logger.log(`Cache da lista de autores (${listCacheKey}) invalidado.`);
+    }
+
+    private mapDtoToDynamoAttributes(dto: UpdateAuthorDto): Record<string, AttributeValue> {
+        const attributes: Record<string, AttributeValue> = {};
+        if (dto.name) attributes['name'] = { S: dto.name };
+        if (dto.slug) attributes['slug'] = { S: dto.slug };
+        if (dto.socialProof) {
+            attributes['socialProof'] = {
+                M: Object.entries(dto.socialProof).reduce<Record<string, AttributeValue>>((acc, [key, value]) => {
+                    acc[key] = { S: value }; // Converte os valores para AttributeValue
+                    return acc;
+                }, {}),
+            };
+        }
+        return attributes;
     }
 
 }

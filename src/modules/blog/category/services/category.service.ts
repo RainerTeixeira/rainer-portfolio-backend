@@ -4,6 +4,7 @@ import { UpdateCategoryDto } from '@src/modules/blog/category/dto/update-categor
 import { CategoryDto } from '@src/modules/blog/category/dto/category.dto';
 import { DynamoDbService } from '@src/services/dynamoDb.service';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { AttributeValue } from '@aws-sdk/client-dynamodb'; // Importado para corrigir os erros de tipo
 
 /**
  * @CategoryService
@@ -98,10 +99,12 @@ export class CategoryService {
     async update(categoryId: string, updateCategoryDto: UpdateCategoryDto): Promise<{ success: boolean; data: CategoryDto }> {
         await this.findOne(categoryId);
 
+        const updateData = this.mapDtoToDynamoAttributes(updateCategoryDto);
+
         const result = await this.dynamoDbService.updateItem(
             this.tableName,
-            { categoryId },
-            updateCategoryDto,
+            { categoryId: { S: categoryId } },
+            updateData,
             'ALL_NEW'
         );
 
@@ -128,7 +131,7 @@ export class CategoryService {
 
         const params = {
             TableName: this.tableName,
-            Key: { categoryId },
+            Key: { categoryId: { S: categoryId } },
         };
         await this.dynamoDbService.deleteItem(params);
     }
@@ -162,5 +165,20 @@ export class CategoryService {
             slug: item.slug && typeof item.slug === 'string' ? item.slug : '',
             seo: seo,
         };
+    }
+
+    private mapDtoToDynamoAttributes(dto: UpdateCategoryDto): Record<string, AttributeValue> {
+        const attributes: Record<string, AttributeValue> = {};
+        if (dto.name) attributes['name'] = { S: dto.name };
+        if (dto.slug) attributes['slug'] = { S: dto.slug };
+        if (dto.seo) {
+            attributes['seo'] = {
+                M: Object.entries(dto.seo).reduce<Record<string, AttributeValue>>((acc, [key, value]) => {
+                    acc[key] = { S: value }; // Converte os valores para AttributeValue
+                    return acc;
+                }, {}),
+            };
+        }
+        return attributes;
     }
 }
