@@ -27,13 +27,15 @@ export class CommentsService {
     @ApiResponse({ status: 201, description: 'Comentário criado com sucesso.', type: CommentDto })
     async create(createCommentDto: CreateCommentDto): Promise<CommentDto> {
         const commentId = Date.now().toString(36); // Gerar um ID único para o comentário
+        // Instanciando o DTO fora da classe
+        const newComment = {
+            ...createCommentDto,
+            commentId, // Adicionar commentId ao item
+            postId: String(createCommentDto.postId), // Converte postId para string
+        };
         const params = {
             TableName: this.tableName,
-            Item: {
-                ...createCommentDto,
-                commentId, // Adicionar commentId ao item
-                postId: String(createCommentDto.postId), // Converte postId para string
-            },
+            Item: newComment,
         };
         await this.dynamoDbService.putItem(params);
         return this.findOne(String(createCommentDto.postId), createCommentDto.authorId);

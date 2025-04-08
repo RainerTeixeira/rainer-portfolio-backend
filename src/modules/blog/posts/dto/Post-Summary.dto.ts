@@ -1,5 +1,4 @@
-// src/modules/blog/posts/dto/post-summary.dto.ts
-import { IsString, IsUrl } from 'class-validator';
+import { IsString, IsUrl, IsNumber } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class PostSummaryDto {
@@ -16,7 +15,7 @@ export class PostSummaryDto {
     description: string;
 
     @ApiProperty({ description: 'Data de publicação do post (ISO 8601)', example: '2024-09-15T10:00:00Z' })
-    @IsString() // Ou IsISO8601
+    @IsString() // ou @IsISO8601, se preferir
     publishDate: string;
 
     @ApiProperty({ description: 'Slug do post', example: 'guia-definitivo-apis-nestjs-13' })
@@ -24,14 +23,14 @@ export class PostSummaryDto {
     slug: string;
 
     @ApiProperty({ description: 'URL da imagem destacada', example: 'url-imagem-destaque-nestjs.jpg' })
-    @IsUrl() // Ou IsString
+    @IsUrl() // ou @IsString() se não precisar de validação de URL
     featuredImageURL: string;
 
     @ApiProperty({ description: 'Status do post', example: 'publicado' })
     @IsString()
-    status: string; // Adicionado para incluir o status do post
+    status: string;
 
     @ApiProperty({ description: 'Número de visualizações do post', example: 0 })
-    @IsString()
+    @IsNumber()
     views: number;
 }
