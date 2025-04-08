@@ -9,41 +9,37 @@ import { ApiProperty } from '@nestjs/swagger';
  * frequentemente usado em listagens. Contém apenas os campos essenciais.
  */
 export class PostSummaryDto {
-    @ApiProperty({ description: 'ID único do post.', example: 'm87r1mcb' })
+    @ApiProperty({ description: 'ID do post' })
     @IsString()
     postId: string;
 
-    @ApiProperty({ description: 'Título principal do post.', example: 'Desvendando o Cache no NestJS' })
+    @ApiProperty({ description: 'Título do post' })
     @IsString()
     title: string;
 
-    @ApiProperty({
-        description: 'Uma breve descrição ou resumo do conteúdo do post.',
-        example: 'Aprenda como implementar cache de forma eficiente em suas aplicações NestJS para otimizar a performance.',
-        required: false // Descrição pode ser opcional dependendo do seu modelo
-    })
+    @ApiProperty({ description: 'Descrição do post', required: false })
     @IsString()
-    @IsOptional() // Marcar como opcional se não for obrigatório
+    @IsOptional()
     description?: string;
 
-    @ApiProperty({ description: 'Data em que o post foi (ou será) publicado (formato ISO 8601).', example: '2025-04-08T10:00:00Z' })
-    @IsString() // Poderia ser @IsISO8601() para validação mais estrita
+    @ApiProperty({ description: 'Data de publicação do post' })
+    @IsString()
     publishDate: string;
 
-    @ApiProperty({ description: 'Identificador único do post na URL (kebab-case).', example: 'desvendando-cache-nestjs' })
+    @ApiProperty({ description: 'Slug do post' })
     @IsString()
     slug: string;
 
-    @ApiProperty({ description: 'URL da imagem principal ou de destaque do post.', example: 'https://example.com/images/cache-nestjs.png', required: false })
+    @ApiProperty({ description: 'URL da imagem destacada', required: false })
     @IsOptional()
-    @IsUrl() // Valida se é uma URL válida
+    @IsUrl()
     featuredImageURL?: string;
 
-    @ApiProperty({ description: 'Status atual do post (ex: draft, published, archived).', example: 'published' })
+    @ApiProperty({ description: 'Status do post' })
     @IsString()
     status: string;
 
-    @ApiProperty({ description: 'Contagem de visualizações do post.', example: 1532 })
+    @ApiProperty({ description: 'Número de visualizações do post' })
     @IsNumber()
     views: number;
 }
