@@ -11,7 +11,7 @@ import {
 } from '@nestjs/swagger';
 
 // Importar a estrutura final da resposta para documentação Swagger
-import { ApiSuccessResponse } from '@src/common/interceptors/response.interceptor';
+import { ApiSuccessResponseClass } from '@src/common/interceptors/response.interceptor';
 
 import { ResponseInterceptor } from '@src/common/interceptors/response.interceptor';
 import { PostsService, PaginatedPostsResult, SimpleSuccessMessage } from '@src/modules/blog/posts/services/posts.service'; // Importar tipos de retorno do service
@@ -61,7 +61,7 @@ export class PostsController {
     // Documenta a estrutura final da resposta, incluindo o wrapper do interceptor
     schema: {
       allOf: [
-        { $ref: getSchemaPath(ApiSuccessResponse) }, // Referencia a estrutura base
+        { $ref: getSchemaPath(ApiSuccessResponseClass) }, // Referencia a estrutura base
         {
           properties: {
             data: { // Especifica o tipo dentro do 'data'
@@ -88,9 +88,7 @@ export class PostsController {
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
     @Query('nextKey') nextKey?: string,
   ): Promise<PaginatedPostsResult> { // Retorna o tipo definido no Service
-    // Delega a lógica para o service e retorna o resultado bruto
-    return this.postsService.getPaginatedPosts(limit, nextKey);
-    // O ResponseInterceptor irá envolver este retorno na estrutura ApiSuccessResponse
+    return this.postsService.getPaginatedPosts(limit, nextKey); // Retorna os dados brutos
   }
 
   /**
@@ -108,7 +106,7 @@ export class PostsController {
     description: 'Detalhes do post recuperados com sucesso.',
     schema: {
       allOf: [
-        { $ref: getSchemaPath(ApiSuccessResponse) },
+        { $ref: getSchemaPath(ApiSuccessResponseClass) },
         { properties: { data: { $ref: getSchemaPath(PostFullDto) } } } // O 'data' contém o PostFullDto
       ]
     }
@@ -116,9 +114,7 @@ export class PostsController {
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Post não encontrado.' }) // Documenta o 404
   async getPostBySlug(@Param('slug') slug: string): Promise<PostFullDto> { // Retorna o tipo definido no Service
     const post = await this.postsService.getPostBySlug(slug);
-    // A NotFoundException será capturada pelo formatErrorResponse do interceptor
-    // e formatada na estrutura ApiErrorResponse
-    return post; // Retorna o DTO completo. O interceptor envolve.
+    return post; // Retorna os dados brutos
   }
 
   /**
@@ -136,7 +132,7 @@ export class PostsController {
     description: 'Post criado com sucesso.',
     schema: {
       allOf: [
-        { $ref: getSchemaPath(ApiSuccessResponse) },
+        { $ref: getSchemaPath(ApiSuccessResponseClass) },
         { properties: { data: { $ref: getSchemaPath(PostContentDto) } } } // O 'data' contém o PostContentDto
       ]
     }
@@ -144,7 +140,7 @@ export class PostsController {
   @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Dados inválidos ou erro na criação.' })
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Não autorizado.' }) // Documenta erro de autenticação
   async createPost(@Body() postCreateDto: PostCreateDto): Promise<PostContentDto> { // Retorna o tipo definido no Service
-    return this.postsService.createPost(postCreateDto); // O interceptor envolve
+    return this.postsService.createPost(postCreateDto); // Retorna os dados brutos
   }
 
   /**
@@ -164,7 +160,7 @@ export class PostsController {
     description: 'Post atualizado com sucesso.',
     schema: {
       allOf: [
-        { $ref: getSchemaPath(ApiSuccessResponse) },
+        { $ref: getSchemaPath(ApiSuccessResponseClass) },
         { properties: { data: { $ref: getSchemaPath(PostContentDto) } } } // O 'data' contém o PostContentDto
       ]
     }
@@ -176,8 +172,7 @@ export class PostsController {
     @Param('id') id: string,
     @Body() postUpdateDto: PostUpdateDto
   ): Promise<PostContentDto> { // Retorna o tipo definido no Service
-    // O service deve lançar NotFoundException se não encontrar, que será formatado pelo interceptor
-    return this.postsService.updatePost(id, postUpdateDto); // O interceptor envolve
+    return this.postsService.updatePost(id, postUpdateDto); // Retorna os dados brutos
   }
 
   /**
@@ -197,7 +192,7 @@ export class PostsController {
     description: 'Post excluído com sucesso.',
     schema: {
       allOf: [
-        { $ref: getSchemaPath(ApiSuccessResponse) },
+        { $ref: getSchemaPath(ApiSuccessResponseClass) },
         {
           properties: {
             data: { // O 'data' contém um objeto simples de mensagem
@@ -216,7 +211,6 @@ export class PostsController {
   @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: 'Erro ao excluir o post.' })
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Não autorizado.' })
   async deletePost(@Param('id') id: string): Promise<SimpleSuccessMessage> { // Retorna o tipo definido no Service
-    // O service deve lançar NotFoundException se não encontrar
-    return this.postsService.deletePost(id); // O interceptor envolve a mensagem de sucesso
+    return this.postsService.deletePost(id); // Retorna os dados brutos
   }
 }
