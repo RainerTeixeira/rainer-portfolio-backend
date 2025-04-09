@@ -27,6 +27,8 @@ export class CommentsService {
     @ApiResponse({ status: 201, description: 'Comentário criado com sucesso.', type: CommentDto })
     async create(createCommentDto: CreateCommentDto): Promise<{ success: boolean; data: CommentDto }> {
         const commentId = Date.now().toString(36); // Gerar um ID único para o comentário
+        const ttl = Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7; // TTL de 7 dias
+
         const params = {
             TableName: this.tableName,
             Item: {
@@ -34,6 +36,7 @@ export class CommentsService {
                 commentId: { S: commentId },
                 content: { S: createCommentDto.content },
                 date: { S: createCommentDto.date },
+                ttl: { N: ttl.toString() }, // Adicionado campo TTL
             },
         };
         await this.dynamoDbService.putItem(params);
@@ -94,7 +97,7 @@ export class CommentsService {
             TableName: this.tableName,
             KeyConditionExpression: 'postId = :postId',
             ExpressionAttributeValues: { ':postId': { S: postId } },
-            ProjectionExpression: 'postId, commentId, content, date, status', // Retorna apenas os atributos necessários
+            ProjectionExpression: 'postId, commentId, content, date', // Limita os atributos retornados
         };
 
         const result = await this.dynamoDbService.query(params);

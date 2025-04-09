@@ -24,4 +24,8 @@ export class CacheService {
   async del(key: string): Promise<void> {
     await this.client.del(key);
   }
+
+  async keys(pattern: string): Promise<string[]> {
+    return this.client.keys(pattern); // Adicionado para suportar busca de chaves com padrão
+  }
 }

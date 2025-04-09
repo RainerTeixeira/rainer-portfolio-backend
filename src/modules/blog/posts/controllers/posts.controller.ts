@@ -1,84 +1,53 @@
-// src/modules/blog/posts/controllers/posts.controller.ts
-
 import {
-  Controller, Get, Post, Patch, Delete, HttpCode, // Adicionar HttpCode
-  Query, Param, Body, UseInterceptors, UseGuards,
-  DefaultValuePipe, ParseIntPipe, HttpStatus // Adicionar HttpStatus
+  Controller, Get, Post, Patch, Delete, Query, Param,
+  Body, UseInterceptors, UseGuards, HttpCode, HttpStatus,
+  DefaultValuePipe, ParseIntPipe
 } from '@nestjs/common';
 import {
-  ApiTags, ApiOperation, ApiResponse, ApiOkResponse, ApiCreatedResponse, // Usar respostas específicas
-  ApiQuery, ApiParam, ApiBearerAuth, getSchemaPath, ApiExtraModels // Importar getSchemaPath e ApiExtraModels
+  ApiTags, ApiOperation, ApiResponse, ApiOkResponse, ApiCreatedResponse,
+  ApiQuery, ApiParam, ApiBearerAuth, ApiExtraModels, getSchemaPath
 } from '@nestjs/swagger';
-
-// Importar a estrutura final da resposta para documentação Swagger
-import { ApiSuccessResponseClass } from '@src/common/interceptors/response.interceptor';
-
 import { ResponseInterceptor } from '@src/common/interceptors/response.interceptor';
-import { PostsService, PaginatedPostsResult, SimpleSuccessMessage } from '@src/modules/blog/posts/services/posts.service'; // Importar tipos de retorno do service
+import { PostsService } from './posts.service';
 import { PostCreateDto } from '@src/modules/blog/posts/dto/post-create.dto';
 import { PostUpdateDto } from '@src/modules/blog/posts/dto/post-update.dto';
 import { PostContentDto } from '@src/modules/blog/posts/dto/post-content.dto';
 import { PostSummaryDto } from '@src/modules/blog/posts/dto/post-summary.dto';
-import { PostFullDto } from '@src/modules/blog/posts/dto/post-full.dto';
-import { CognitoAuthGuard } from '@src/auth/cognito-auth.guard'; // Assumindo que está correto
+import { PostFullDto } from '@src/modules/blog/posts/dto/post-full.dto'; import { CognitoAuthGuard } from '@src/auth/cognito-auth.guard';
+import { PaginatedPostsResult } from '@src/blog/post/interfaces/paginated-posts.interface';
 
-/**
- * @controller PostsController
- * @description Ponto de entrada da API para gerenciar posts do blog.
- * Responsável por receber requisições HTTP, validar entradas, delegar a lógica para PostsService
- * e retornar os dados que serão formatados pelo ResponseInterceptor.
- *
- * @decorators
- * - `@Controller('/blog/posts')`: Define a rota base para este controller.
- * - `@UseInterceptors(ResponseInterceptor)`: Aplica o interceptor de resposta padrão a todos os endpoints.
- * - `@ApiTags('Blog Posts')`: Agrupa os endpoints na documentação Swagger.
- * - `@ApiBearerAuth()`: Indica que a autenticação Bearer (via CognitoAuthGuard) é esperada para endpoints protegidos.
- */
 @ApiTags('Blog Posts')
 @ApiBearerAuth()
-@ApiExtraModels(PostSummaryDto) // Registrar o modelo no Swagger
-@Controller('/blog/posts') // Rota base mais específica
-@UseInterceptors(ResponseInterceptor) // Aplica o interceptor a todas as rotas deste controller
+@ApiExtraModels(PostSummaryDto, PostFullDto)
+@Controller('/blog/posts')
+@UseInterceptors(ResponseInterceptor)
 export class PostsController {
   constructor(private readonly postsService: PostsService) { }
 
   /**
-   * @endpoint GET /blog/posts
-   * @description Retorna uma lista paginada de resumos de posts.
-   * Ideal para listagens principais do blog. Não requer autenticação.
-   * @query limit Número máximo de itens por página (padrão 10).
-   * @query nextKey Cursor opaco (string base64) para buscar a próxima página.
-   * @returns Estrutura `ApiSuccessResponse` contendo `PaginatedPostsResult` no campo `data`.
+   * @operation GET /blog/posts
+   * @description Lista paginada de posts com ordenação por data de publicação
+   * @param {number} [limit=10] - Número de itens por página (1-100)
+   * @param {string} [nextKey] - Token para próxima página (codificado em Base64)
+   * @returns {PaginatedPostsResult} Lista paginada com metadados
    */
   @Get()
   @ApiOperation({
     summary: 'Listar Posts Paginados',
-    description: 'Recupera uma lista de resumos de posts com suporte à paginação por cursor.'
+    description: 'Retorna posts paginados usando cursor-based pagination'
   })
-  @ApiQuery({ name: 'limit', type: Number, required: false, description: 'Itens por página', example: 10 })
-  @ApiQuery({ name: 'nextKey', type: String, required: false, description: 'Cursor para a próxima página (formato Base64)' })
+  @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
+  @ApiQuery({ name: 'nextKey', required: false, description: 'Token de paginação codificado' })
   @ApiOkResponse({
-    description: 'Lista de posts recuperada com sucesso.',
-    // Documenta a estrutura final da resposta, incluindo o wrapper do interceptor
+    description: 'Lista de posts recuperada com sucesso',
     schema: {
       allOf: [
-        { $ref: getSchemaPath(ApiSuccessResponseClass) }, // Referencia a estrutura base
+        { $ref: getSchemaPath(PaginatedPostsResult) },
         {
           properties: {
-            data: { // Especifica o tipo dentro do 'data'
-              type: 'object',
-              properties: {
-                items: {
-                  type: 'array',
-                  items: { $ref: getSchemaPath(PostSummaryDto) } // Array do DTO de resumo
-                },
-                nextKey: {
-                  type: 'string',
-                  nullable: true,
-                  description: 'Cursor para a próxima página ou null',
-                  example: 'eyJJRCI6eyJTIjoibThuN3IxbWNiIn19'
-                }
-              }
+            items: {
+              type: 'array',
+              items: { $ref: getSchemaPath(PostSummaryDto) }
             }
           }
         }
@@ -87,135 +56,87 @@ export class PostsController {
   })
   async getPaginatedPosts(
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
-    @Query('nextKey') nextKey?: string,
+    @Query('nextKey') nextKey?: string
   ): Promise<PaginatedPostsResult> {
-    const result = await this.postsService.getPaginatedPosts(limit, nextKey);
-    return result.data; // Retorna diretamente o `data` do serviço
+    return this.postsService.getPaginatedPosts(limit, nextKey);
   }
 
   /**
-   * @endpoint GET /blog/posts/{slug}
-   * @description Busca os detalhes completos de um post específico pelo seu slug.
-   * Inclui conteúdo, autor, categoria, comentários, etc. Não requer autenticação.
-   * @param slug Identificador único do post na URL.
-   * @returns Estrutura `ApiSuccessResponse` contendo `PostFullDto` no campo `data`.
-   * @throws NotFoundException (404) Se o post com o slug fornecido não for encontrado.
+   * @operation GET /blog/posts/{slug}
+   * @description Busca detalhes completos de um post pelo slug
+   * @param {string} slug - Slug único do post (kebab-case)
+   * @returns {PostFullDto} Detalhes completos do post
    */
   @Get(':slug')
-  @ApiOperation({ summary: 'Buscar Post por Slug', description: 'Recupera todos os detalhes de um post usando seu slug único.' })
-  @ApiParam({ name: 'slug', type: String, description: 'Slug único do post (kebab-case)', example: 'desvendando-cache-nestjs' })
+  @ApiOperation({ summary: 'Buscar Post por Slug', description: 'Recupera todos os detalhes de um post' })
+  @ApiParam({ name: 'slug', type: String, example: 'meu-post' })
   @ApiOkResponse({
-    description: 'Detalhes do post recuperados com sucesso.',
-    schema: {
-      allOf: [
-        { $ref: getSchemaPath(ApiSuccessResponseClass) },
-        { properties: { data: { $ref: getSchemaPath(PostFullDto) } } } // O 'data' contém o PostFullDto
-      ]
-    }
+    description: 'Detalhes do post',
+    type: PostFullDto
   })
-  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Post não encontrado.' }) // Documenta o 404
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Post não encontrado' })
   async getPostBySlug(@Param('slug') slug: string): Promise<PostFullDto> {
-    const post = await this.postsService.getPostBySlug(slug);
-    return post.data; // Retorna diretamente o `data` do serviço
+    return this.postsService.getPostBySlug(slug);
   }
 
   /**
-   * @endpoint POST /blog/posts
-   * @description Cria um novo post no blog. Requer autenticação.
-   * @body postCreateDto Dados do post a ser criado.
-   * @returns Estrutura `ApiSuccessResponse` contendo `PostContentDto` do post criado no campo `data`. Retorna status 201.
-   * @throws BadRequestException (400) Se os dados de entrada forem inválidos ou ocorrer erro na criação.
+   * @operation POST /blog/posts
+   * @description Cria um novo post no blog (requer autenticação)
+   * @param {PostCreateDto} postCreateDto - Dados para criação do post
+   * @returns {PostFullDto} Post criado com dados completos
    */
   @Post()
-  @UseGuards(CognitoAuthGuard) // Protege a rota
-  @HttpCode(HttpStatus.CREATED) // Define o status code de sucesso para 201
-  @ApiOperation({ summary: 'Criar Novo Post', description: 'Adiciona um novo post ao blog (requer autenticação).' })
-  @ApiCreatedResponse({ // Use ApiCreatedResponse para status 201
-    description: 'Post criado com sucesso.',
-    schema: {
-      allOf: [
-        { $ref: getSchemaPath(ApiSuccessResponseClass) },
-        { properties: { data: { $ref: getSchemaPath(PostContentDto) } } } // O 'data' contém o PostContentDto
-      ]
-    }
+  @UseGuards(CognitoAuthGuard)
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Criar Novo Post', description: 'Cria um novo post (requer autenticação)' })
+  @ApiCreatedResponse({
+    description: 'Post criado com sucesso',
+    type: PostFullDto
   })
-  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Dados inválidos ou erro na criação.' })
-  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Não autorizado.' }) // Documenta erro de autenticação
-  async createPost(@Body() postCreateDto: PostCreateDto): Promise<PostContentDto> {
-    const post = await this.postsService.createPost(postCreateDto);
-    return post.data; // Retorna diretamente o `data` do serviço
+  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Dados inválidos' })
+  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Não autorizado' })
+  async createPost(@Body() postCreateDto: PostCreateDto): Promise<PostFullDto> {
+    return this.postsService.createPost(postCreateDto);
   }
 
   /**
-   * @endpoint PATCH /blog/posts/{id}
-   * @description Atualiza parcialmente um post existente pelo seu ID. Requer autenticação.
-   * @param id ID do post a ser atualizado.
-   * @body postUpdateDto Campos do post a serem atualizados.
-   * @returns Estrutura `ApiSuccessResponse` contendo `PostContentDto` do post atualizado no campo `data`.
-   * @throws NotFoundException (404) Se o post com o ID não for encontrado.
-   * @throws BadRequestException (400) Se os dados de entrada forem inválidos ou ocorrer erro na atualização.
+   * @operation PATCH /blog/posts/{postId}
+   * @description Atualiza parcialmente um post existente (requer autenticação)
+   * @param {string} postId - ID único do post
+   * @param {PostUpdateDto} postUpdateDto - Campos para atualização
+   * @returns {PostFullDto} Post atualizado
    */
-  @Patch(':id')
+  @Patch(':postId')
   @UseGuards(CognitoAuthGuard)
-  @ApiOperation({ summary: 'Atualizar Post por ID', description: 'Modifica um post existente (requer autenticação).' })
-  @ApiParam({ name: 'id', type: String, description: 'ID único do post', example: 'm87r1mcb' })
+  @ApiOperation({ summary: 'Atualizar Post', description: 'Atualiza um post existente' })
+  @ApiParam({ name: 'postId', type: String, example: 'mbx9zi-1a3' })
   @ApiOkResponse({
-    description: 'Post atualizado com sucesso.',
-    schema: {
-      allOf: [
-        { $ref: getSchemaPath(ApiSuccessResponseClass) },
-        { properties: { data: { $ref: getSchemaPath(PostContentDto) } } } // O 'data' contém o PostContentDto
-      ]
-    }
+    description: 'Post atualizado com sucesso',
+    type: PostFullDto
   })
-  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Post não encontrado.' })
-  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Dados inválidos ou erro na atualização.' })
-  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Não autorizado.' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Post não encontrado' })
+  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Não autorizado' })
   async updatePost(
-    @Param('id') id: string,
+    @Param('postId') postId: string,
     @Body() postUpdateDto: PostUpdateDto
-  ): Promise<PostContentDto> {
-    const post = await this.postsService.updatePost(id, postUpdateDto);
-    return post.data; // Retorna diretamente o `data` do serviço
+  ): Promise<PostFullDto> {
+    return this.postsService.updatePost(postId, postUpdateDto);
   }
 
   /**
-   * @endpoint DELETE /blog/posts/{id}
-   * @description Exclui permanentemente um post pelo seu ID. Requer autenticação.
-   * @param id ID do post a ser excluído.
-   * @returns Estrutura `ApiSuccessResponse` contendo um objeto com mensagem de sucesso no campo `data`. Retorna status 200 (ou 204 No Content).
-   * @throws NotFoundException (404) Se o post com o ID não for encontrado.
-   * @throws InternalServerErrorException (500) Se ocorrer um erro inesperado durante a exclusão.
+   * @operation DELETE /blog/posts/{postId}
+   * @description Exclui permanentemente um post (requer autenticação)
+   * @param {string} postId - ID único do post
    */
-  @Delete(':id')
+  @Delete(':postId')
   @UseGuards(CognitoAuthGuard)
-  // @HttpCode(HttpStatus.NO_CONTENT) // Alternativa: Retornar 204 sem corpo na resposta
-  @ApiOperation({ summary: 'Excluir Post por ID', description: 'Remove um post permanentemente (requer autenticação).' })
-  @ApiParam({ name: 'id', type: String, description: 'ID único do post', example: 'm87r1mcb' })
-  @ApiOkResponse({ // Se usar 200 OK com corpo
-    description: 'Post excluído com sucesso.',
-    schema: {
-      allOf: [
-        { $ref: getSchemaPath(ApiSuccessResponseClass) },
-        {
-          properties: {
-            data: { // O 'data' contém um objeto simples de mensagem
-              type: 'object',
-              properties: {
-                message: { type: 'string', example: 'Post excluído com sucesso' }
-              }
-            }
-          }
-        }
-      ]
-    }
-  })
-  // @ApiResponse({ status: HttpStatus.NO_CONTENT, description: 'Post excluído com sucesso (sem corpo).' }) // Se usar 204
-  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Post não encontrado.' })
-  @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: 'Erro ao excluir o post.' })
-  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Não autorizado.' })
-  async deletePost(@Param('id') id: string): Promise<SimpleSuccessMessage> {
-    const result = await this.postsService.deletePost(id);
-    return result.data; // Retorna diretamente o `data` do serviço
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Excluir Post', description: 'Remove permanentemente um post' })
+  @ApiParam({ name: 'postId', type: String, example: 'mbx9zi-1a3' })
+  @ApiResponse({ status: HttpStatus.NO_CONTENT, description: 'Post excluído com sucesso' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Post não encontrado' })
+  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Não autorizado' })
+  async deletePost(@Param('postId') postId: string): Promise<void> {
+    await this.postsService.deletePost(postId);
   }
 }
