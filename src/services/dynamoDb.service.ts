@@ -6,461 +6,213 @@
  */
 
 import { Injectable, Logger } from '@nestjs/common';
-import * as dotenv from 'dotenv';
-import {
-  DynamoDBClient,
-  DynamoDBClientConfig,
-  AttributeValue,
-} from '@aws-sdk/client-dynamodb';
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import {
   DynamoDBDocumentClient,
-  TranslateConfig,
   GetCommand,
   PutCommand,
   UpdateCommand,
   DeleteCommand,
   QueryCommand,
   ScanCommand,
-  GetCommandInput,
-  PutCommandInput,
-  UpdateCommandInput,
-  DeleteCommandInput,
-  QueryCommandInput,
-  ScanCommandInput,
-  GetCommandOutput,
-  PutCommandOutput,
-  UpdateCommandOutput,
-  DeleteCommandOutput,
-  QueryCommandOutput,
-  ScanCommandOutput,
   BatchGetCommand,
   BatchWriteCommand,
+  type GetCommandInput,
+  type PutCommandInput,
+  type UpdateCommandInput,
+  type DeleteCommandInput,
+  type QueryCommandInput,
+  type ScanCommandInput,
+  type BatchGetCommandInput,
+  type BatchWriteCommandInput,
 } from '@aws-sdk/lib-dynamodb';
 
-// Carrega as variáveis de ambiente definidas no arquivo .env
-dotenv.config();
-
 /**
- * Classe personalizada para tratar erros de operações com o DynamoDB.
- * Estende a classe Error padrão e encapsula informações adicionais como o nome da operação e o erro original.
+ * Exceção customizada para operações DynamoDB com:
+ * - Contexto completo da operação
+ * - Metadados de diagnóstico
+ * - Stack trace original preservado
  */
 export class DynamoDBOperationError extends Error {
-  public readonly originalError: unknown;
-  public readonly operationName: string;
-
-  /**
-   * Cria uma instância de DynamoDBOperationError.
-   * @param operationName Nome da operação que falhou.
-   * @param message Mensagem de erro descritiva.
-   * @param originalError O erro original capturado.
-   */
-  constructor(operationName: string, message: string, originalError: unknown) {
+  constructor(
+    public readonly operation: string,
+    message: string,
+    public readonly context: {
+      table?: string;
+      originalError?: string;
+      params?: Record<string, any>;
+    }
+  ) {
     super(message);
     this.name = 'DynamoDBOperationError';
-    this.operationName = operationName;
-    this.originalError = originalError;
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, DynamoDBOperationError);
-    }
+    Error.captureStackTrace?.(this, DynamoDBOperationError);
   }
 }
 
-// Define um tipo que engloba os possíveis retornos dos comandos do DynamoDB
-type DynamoDBCommandOutput =
-  | GetCommandOutput
-  | PutCommandOutput
-  | UpdateCommandOutput
-  | DeleteCommandOutput
-  | QueryCommandOutput
-  | ScanCommandOutput;
-
+/**
+ * Serviço de alto nível para operações DynamoDB com:
+ * - Conversão automática de tipos JavaScript <-> DynamoDB
+ * - Logging detalhado para auditoria
+ * - Controle transacional implícito
+ * - Suporte completo a operações CRUD + queries
+ */
 @Injectable()
 export class DynamoDbService {
-  // Instância do Logger do NestJS para registrar logs de operações e erros
   private readonly logger = new Logger(DynamoDbService.name);
-  // Cliente base para comunicação com o DynamoDB
-  private readonly client: DynamoDBClient;
-  // Cliente document para operações simplificadas com o DynamoDB
   private readonly docClient: DynamoDBDocumentClient;
 
-  /**
-   * Construtor do serviço.
-   * Inicializa o DynamoDBClient e o DynamoDBDocumentClient com as configurações obtidas das variáveis de ambiente.
-   */
   constructor() {
-    this.logger.log('Inicializando DynamoDbService...');
-    // Obtém a região AWS a partir da variável de ambiente ou define como 'us-east-1' se não estiver definida
-    const region = process.env.AWS_REGION || 'us-east-1';
-    // Possível endpoint customizado para ambientes de desenvolvimento ou teste
-    const endpoint = process.env.DYNAMO_ENDPOINT || undefined;
-
-    const clientConfig: DynamoDBClientConfig = { region };
-    if (endpoint) {
-      clientConfig.endpoint = endpoint;
-      this.logger.log(`Usando endpoint customizado: ${endpoint}`);
-    }
-
-    // Inicializa o cliente do DynamoDB com as configurações definidas
-    this.client = new DynamoDBClient(clientConfig);
-
-    // Configura as opções de tradução para conversão dos tipos do DynamoDB para objetos JavaScript
-    const translateConfig: TranslateConfig = {
-      marshallOptions: {
-        convertEmptyValues: false,
-        removeUndefinedValues: true,
-        convertClassInstanceToMap: false,
-      },
-      unmarshallOptions: {
-        wrapNumbers: false,
-      },
-    };
-
-    // Cria um único DocumentClient para melhorar a performance e evitar reconfigurações desnecessárias
-    this.docClient = DynamoDBDocumentClient.from(this.client, translateConfig);
-    this.logger.log(`Client e DocumentClient inicializados para a região: ${region}`);
-  }
-
-  /**
-   * Recupera um item da tabela com base na chave primária.
-   * @param params Objeto contendo os parâmetros da operação (nome da tabela e chave do item).
-   * @returns A resposta do comando Get do DynamoDB.
-   */
-  async getItem(params: GetCommandInput): Promise<{ success: boolean; data: GetCommandOutput }> {
-    this.logger.log(`[getItem] Iniciando operação na tabela: ${params.TableName}...`);
-    this.logger.debug(`[getItem] Detalhes: ${JSON.stringify(params)}`);
-
-    try {
-        const command = new GetCommand(params);
-        const result = await this.docClient.send(command);
-        return { success: true, data: result };
-    } catch (error) {
-        this.logger.error(`[getItem] Erro na operação na tabela ${params.TableName}: ${(error as Error).message}`);
-        this.logger.error(`[getItem] Contexto do erro: ${JSON.stringify(params)}`);
-        throw new DynamoDBOperationError('getItem', 'Erro ao realizar operação de getItem', error);
-    }
-  }
-
-  /**
-   * Insere ou substitui um item em uma tabela do DynamoDB.
-   * @param params Objeto contendo os parâmetros da operação (nome da tabela e item a ser inserido).
-   * @returns A resposta do comando Put do DynamoDB.
-   */
-  async putItem(params: PutCommandInput): Promise<{ success: boolean; data: PutCommandOutput }> {
-    const operation = 'putItem';
-    this.logOperationStart(operation, params.TableName, params.Item);
-    try {
-      // Verifica se o item a ser inserido foi informado
-      if (!params.Item || Object.keys(params.Item).length === 0) {
-        throw new Error('O item (Item) a ser inserido é obrigatório.');
-      }
-      // Cria e envia o comando Put para inserir o item
-      const command = new PutCommand(params);
-      const result = await this.docClient.send(command);
-      this.logOperationSuccess(operation, params.TableName, result);
-      return { success: true, data: result };
-    } catch (error) {
-      this.handleError(operation, params.TableName, error);
-    }
-  }
-
-  /**
-   * Atualiza atributos de um item existente na tabela.
-   * @param tableName Nome da tabela.
-   * @param key Objeto representando a chave primária do item.
-   * @param updateData Objeto com os dados a serem atualizados.
-   * @param returnValues Especifica os valores de retorno da operação, padrão 'ALL_NEW'.
-   * @returns A resposta do comando Update do DynamoDB.
-   */
-  async updateItem(
-    tableName: string,
-    key: Record<string, AttributeValue>,
-    updateData: Record<string, AttributeValue>,
-    returnValues: UpdateCommandInput['ReturnValues'] = 'ALL_NEW'
-  ): Promise<{ success: boolean; data: UpdateCommandOutput }> {
-    const operation = 'updateItem';
-    this.logOperationStart(operation, tableName, { key, updateData });
-
-    // Validação: garante que há dados para atualizar
-    if (!updateData || Object.keys(updateData).length === 0) {
-      throw new DynamoDBOperationError(
-        operation,
-        `Nenhum dado fornecido para atualização do item com chave ${JSON.stringify(key)}`,
-        null
-      );
-    }
-    // Validação: garante que a chave primária está presente
-    if (!key || Object.keys(key).length === 0) {
-      throw new DynamoDBOperationError(
-        operation,
-        `A chave primária (Key) é obrigatória para a atualização na tabela ${tableName}`,
-        null
-      );
-    }
-
-    // Prepara a expressão de atualização dinâmica
-    const updateExpressionParts: string[] = [];
-    const expressionAttributeNames: Record<string, string> = {};
-    const expressionAttributeValues: Record<string, AttributeValue> = {};
-    let index = 0;
-
-    for (const attributeKey in updateData) {
-      if (updateData[attributeKey] !== undefined) {
-        const namePlaceholder = `#attr${index}`;
-        const valuePlaceholder = `:val${index}`;
-        updateExpressionParts.push(`${namePlaceholder} = ${valuePlaceholder}`);
-        expressionAttributeNames[namePlaceholder] = attributeKey;
-        expressionAttributeValues[valuePlaceholder] = updateData[attributeKey];
-        index++;
-      }
-    }
-
-    // Verifica se foi construída alguma expressão válida
-    if (updateExpressionParts.length === 0) {
-      throw new DynamoDBOperationError(
-        operation,
-        `Nenhum dado válido fornecido para atualização do item com chave ${JSON.stringify(key)}`,
-        null
-      );
-    }
-
-    // Monta os parâmetros para o comando Update
-    const paramsUpdate: UpdateCommandInput = {
-      TableName: tableName,
-      Key: key,
-      UpdateExpression: `SET ${updateExpressionParts.join(', ')}`,
-      ExpressionAttributeNames: expressionAttributeNames,
-      ExpressionAttributeValues: expressionAttributeValues,
-      ReturnValues: returnValues,
-    };
-
-    try {
-      const command = new UpdateCommand(paramsUpdate);
-      const result = await this.docClient.send(command);
-      this.logOperationSuccess(operation, tableName, result);
-      return { success: true, data: result };
-    } catch (error) {
-      this.handleError(operation, tableName, error, { key, updateData });
-    }
-  }
-
-  /**
-   * Deleta um item de uma tabela com base na chave primária.
-   * @param params Objeto contendo os parâmetros da operação (nome da tabela e chave do item).
-   * @returns A resposta do comando Delete do DynamoDB.
-   */
-  async deleteItem(params: DeleteCommandInput): Promise<{ success: boolean; data: DeleteCommandOutput }> {
-    const operation = 'deleteItem';
-    this.logOperationStart(operation, params.TableName, params.Key);
-    try {
-      // Valida se a chave primária foi informada para a deleção
-      if (!params.Key || Object.keys(params.Key).length === 0) {
-        throw new Error('A chave primária (Key) é obrigatória para deletar.');
-      }
-      const command = new DeleteCommand(params);
-      const result = await this.docClient.send(command);
-      this.logOperationSuccess(operation, params.TableName, result);
-      return { success: true, data: result };
-    } catch (error) {
-      this.handleError(operation, params.TableName, error, params.Key);
-    }
-  }
-
-  /**
-   * Realiza uma varredura (scan) na tabela, retornando múltiplos itens.
-   * @param params Objeto contendo os parâmetros da operação, podendo incluir ProjectionExpression para limitar os dados retornados.
-   * @returns A resposta do comando Scan do DynamoDB.
-   */
-  async scan(params: ScanCommandInput): Promise<{ success: boolean; data: ScanCommandOutput }> {
-    this.logger.log(`[scan] Iniciando operação na tabela: ${params.TableName}...`);
-    this.logger.debug(`[scan] Detalhes: ${JSON.stringify(params)}`);
-
-    try {
-        // Remove chaves não utilizadas de ExpressionAttributeNames
-        if (params.ExpressionAttributeNames) {
-            const usedKeys: string[] = (params.ProjectionExpression || '').match(/#[a-zA-Z0-9_]+/g) || [];
-            params.ExpressionAttributeNames = Object.fromEntries(
-                Object.entries(params.ExpressionAttributeNames).filter(([key]) => usedKeys.includes(key))
-            );
-        }
-
-        const command = new ScanCommand(params); // Cria o comando Scan
-        const result = await this.docClient.send(command); // Usa o método send com o comando
-        return { success: true, data: result };
-    } catch (error) {
-        this.logger.error(`[scan] Erro na operação na tabela ${params.TableName}: ${(error as Error).message}`);
-        this.logger.error(`[scan] Contexto do erro: ${JSON.stringify(params)}`);
-        throw new DynamoDBOperationError('scan', 'Erro ao realizar operação de scan', error);
-    }
-  }
-
-  /**
-   * Executa uma consulta (query) na tabela baseada em condições específicas.
-   * @param params Objeto contendo os parâmetros da operação, incluindo ExpressionAttributeValues e ExpressionAttributeNames.
-   * @returns A resposta do comando Query do DynamoDB.
-   */
-  async query(params: QueryCommandInput): Promise<{ success: boolean; data: QueryCommandOutput }> {
-    const operation = 'query';
-    this.logOperationStart(operation, params.TableName, params);
-
-    // Valida se os valores das expressões foram definidos e não estão vazios
-    if (params.ExpressionAttributeValues) {
-      for (const [key, value] of Object.entries(params.ExpressionAttributeValues)) {
-        if (value === undefined || (typeof value === 'object' && Object.keys(value).length === 0)) {
-          throw new DynamoDBOperationError(
-            operation,
-            `O valor para ${key} em ExpressionAttributeValues está vazio ou indefinido.`,
-            null
-          );
-        }
-      }
-    }
-
-    // Garante que o parâmetro obrigatório ':categoryIdSubcategoryId' esteja definido para evitar cobranças desnecessárias
-    if (!params.ExpressionAttributeValues || !params.ExpressionAttributeValues[':categoryIdSubcategoryId']) {
-      throw new Error("O valor de ':categoryIdSubcategoryId' não pode ser vazio.");
-    }
-
-    try {
-      const command = new QueryCommand(params);
-      const result = await this.docClient.send(command);
-      this.logOperationSuccess(operation, params.TableName, result);
-      return { success: true, data: result };
-    } catch (error) {
-      this.handleError(operation, params.TableName, error, params);
-    }
-  }
-
-  /**
-   * Constrói dinamicamente uma expressão de atualização (UpdateExpression) com os dados fornecidos.
-   * @param updateData Objeto contendo os campos e valores a serem atualizados.
-   * @returns Um objeto contendo a UpdateExpression e os ExpressionAttributeValues correspondentes.
-   */
-  buildUpdateExpression(updateData: Record<string, AttributeValue>): {
-    UpdateExpression: string;
-    ExpressionAttributeNames: Record<string, string>;
-    ExpressionAttributeValues: Record<string, AttributeValue>;
-  } {
-    const updateExpressionParts: string[] = [];
-    const expressionAttributeNames: Record<string, string> = {};
-    const expressionAttributeValues: Record<string, AttributeValue> = {};
-
-    Object.entries(updateData).forEach(([key, value]) => {
-      if (value !== undefined) {
-        const namePlaceholder = `#${key}`;
-        const valuePlaceholder = `:${key}`;
-        updateExpressionParts.push(`${namePlaceholder} = ${valuePlaceholder}`);
-        expressionAttributeNames[namePlaceholder] = key;
-        expressionAttributeValues[valuePlaceholder] = value;
-      }
-    });
-
-    return {
-      UpdateExpression: `SET ${updateExpressionParts.join(', ')}`,
-      ExpressionAttributeNames: expressionAttributeNames,
-      ExpressionAttributeValues: expressionAttributeValues,
-    };
-  }
-
-  /**
-   * Realiza uma operação de batch get para recuperar múltiplos itens com base nas chaves fornecidas.
-   * @param keys Array de objetos representando as chaves dos itens a serem recuperados.
-   * @param tableName Nome da tabela.
-   * @returns Array de itens recuperados.
-   */
-  async batchGetItems(keys: Record<string, AttributeValue>[], tableName: string): Promise<Record<string, AttributeValue>[]> {
-    const params = {
-      RequestItems: {
-        [tableName]: {
-          Keys: keys,
+    this.docClient = DynamoDBDocumentClient.from(
+      new DynamoDBClient({
+        region: process.env.AWS_REGION || 'us-east-1',
+        endpoint: process.env.DYNAMO_ENDPOINT,
+      }),
+      {
+        marshallOptions: {
+          removeUndefinedValues: true,
+          convertClassInstanceToMap: true,
         },
-      },
-    };
-    const command = new BatchGetCommand(params);
-    const result = await this.docClient.send(command);
-    return result.Responses?.[tableName] || [];
-  }
-
-  /**
-   * Realiza uma operação de batch write para inserir múltiplos itens na tabela.
-   * @param items Array de objetos representando os itens a serem inseridos.
-   * @param tableName Nome da tabela.
-   */
-  async batchWriteItems(items: Record<string, AttributeValue>[], tableName: string): Promise<void> {
-    const params = {
-      RequestItems: {
-        [tableName]: items.map(item => ({ PutRequest: { Item: item } })),
-      },
-    };
-    const command = new BatchWriteCommand(params);
-    await this.docClient.send(command);
-  }
-
-  /**
-   * Registra o início de uma operação, informando o nome da operação, o nome da tabela e detalhes adicionais (se houver).
-   * @param operationName Nome da operação.
-   * @param tableName Nome da tabela envolvida na operação.
-   * @param details Informações adicionais (opcionais) sobre a operação.
-   */
-  private logOperationStart(
-    operationName: string,
-    tableName: string | undefined,
-    details?: Record<string, unknown>
-  ): void {
-    this.logger.log(`[${operationName}] Iniciando operação na tabela: ${tableName ?? 'Não especificada'}...`);
-    if (details) {
-      this.logger.debug(`[${operationName}] Detalhes: ${JSON.stringify(details)}`);
-    }
-  }
-
-  /**
-   * Registra o sucesso de uma operação, exibindo informações adicionais sobre o resultado.
-   * @param operationName Nome da operação.
-   * @param tableName Nome da tabela envolvida.
-   * @param result Resultado retornado pela operação.
-   */
-  private logOperationSuccess(
-    operationName: string,
-    tableName: string | undefined,
-    result?: DynamoDBCommandOutput | string
-  ): void {
-    this.logger.log(`[${operationName}] Operação na tabela ${tableName ?? 'Não especificada'} concluída com sucesso.`);
-    if (result && typeof result !== 'string') {
-      if ('Items' in result && result.Items) {
-        this.logger.debug(`[${operationName}] Contagem de itens: ${result.Items.length}`);
-      } else if ('Attributes' in result && result.Attributes) {
-        this.logger.debug(`[${operationName}] Atributos retornados: ${JSON.stringify(result.Attributes)}`);
-      } else if ('Item' in result && result.Item) {
-        this.logger.debug(`[${operationName}] Item retornado: ${JSON.stringify(result.Item)}`);
-      } else if ('$metadata' in result) {
-        this.logger.debug(`[${operationName}] Metadados da resposta: ${JSON.stringify(result.$metadata)}`);
+        unmarshallOptions: {
+          wrapNumbers: false,
+        },
       }
-    } else if (typeof result === 'string') {
-      this.logger.debug(`[${operationName}] Detalhes do sucesso: ${result}`);
-    }
+    );
   }
 
   /**
-   * Trata os erros ocorridos durante as operações com o DynamoDB.
-   * Registra o erro e seu contexto, e lança uma instância de DynamoDBOperationError para propagação.
-   * @param operationName Nome da operação que falhou.
-   * @param tableName Nome da tabela envolvida.
-   * @param error Erro capturado.
-   * @param context Informações adicionais de contexto (opcional).
-   * @throws DynamoDBOperationError
+   * Operação GET para recuperar um único item
+   * @param params Parâmetros da operação
+   * @returns Item recuperado ou null
    */
-  private handleError(
-    operationName: string,
-    tableName: string | undefined,
-    error: unknown,
-    context?: Record<string, unknown>
-  ): never {
-    const baseMessage = `Erro na operação [${operationName}] na tabela ${tableName ?? 'Não especificada'}`;
-    const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+  async getItem(params: GetCommandInput) {
+    return this.executeOperation('get', params, () =>
+      this.docClient.send(new GetCommand(params))
+    );
+  }
 
-    this.logger.error(`${baseMessage}: ${errorMessage}`, error instanceof Error ? error.stack : undefined);
-    if (context) {
-      this.logger.error(`[${operationName}] Contexto do erro: ${JSON.stringify(context)}`);
+  /**
+   * Operação PUT para criar/atualizar item
+   * @param params Parâmetros da operação
+   * @returns Metadados da operação
+   */
+  async putItem(params: PutCommandInput) {
+    return this.executeOperation('put', params, () =>
+      this.docClient.send(new PutCommand(params))
+    );
+  }
+
+  /**
+   * Operação UPDATE para atualização parcial
+   * @param params Parâmetros da operação
+   * @returns Item atualizado
+   */
+  async updateItem(params: UpdateCommandInput) {
+    return this.executeOperation('update', params, () =>
+      this.docClient.send(new UpdateCommand(params))
+    );
+  }
+
+  /**
+   * Operação DELETE para remover item
+   * @param params Parâmetros da operação
+   * @returns Metadados da operação
+   */
+  async deleteItem(params: DeleteCommandInput) {
+    return this.executeOperation('delete', params, () =>
+      this.docClient.send(new DeleteCommand(params))
+    );
+  }
+
+  /**
+   * Operação QUERY para consultas em índices
+   * @param params Parâmetros da query
+   * @returns Conjunto de resultados paginados
+   */
+  async query(params: QueryCommandInput) {
+    return this.executeOperation('query', params, () =>
+      this.docClient.send(new QueryCommand(params))
+  }
+
+  /**
+   * Operação SCAN para varredura completa da tabela
+   * @param params Parâmetros do scan
+   * @returns Todos os itens correspondentes
+   */
+  async scan(params: ScanCommandInput) {
+    return this.executeOperation('scan', params, () =>
+      this.docClient.send(new ScanCommand(params))
+    );
+  }
+
+  /**
+   * Operação BatchGet para múltiplas leituras
+   * @param params Parâmetros da operação
+   * @returns Itens recuperados
+   */
+  async batchGet(params: BatchGetCommandInput) {
+    return this.executeOperation('batchGet', params, () =>
+      this.docClient.send(new BatchGetCommand(params))
+    );
+  }
+
+  /**
+   * Operação BatchWrite para múltiplas escritas
+   * @param params Parâmetros da operação
+   * @returns Resultado das operações
+   */
+  async batchWrite(params: BatchWriteCommandInput) {
+    return this.executeOperation('batchWrite', params, () =>
+      this.docClient.send(new BatchWriteCommand(params))
+    );
+  }
+
+  /**
+   * Método base para execução de operações com:
+   * - Controle de tempo de execução
+   * - Logging contextual
+   * - Formatação padronizada de erros
+   */
+  private async executeOperation<T>(
+    operation: string,
+    params: Record<string, any>,
+    handler: () => Promise<T>
+  ) {
+    const table = params.TableName || 'unknown-table';
+    const startTime = Date.now();
+
+    try {
+      this.logger.log(`[${operation}] Iniciando em ${table}`);
+      this.logger.debug(`Parâmetros: ${JSON.stringify(params, null, 2)}`);
+
+      const result = await handler();
+      const duration = Date.now() - startTime;
+
+      this.logger.log(`[${operation}] Sucesso em ${table} (${duration}ms)`);
+      return {
+        success: true,
+        data: result,
+        metadata: {
+          operation,
+          table,
+          duration,
+          capacityUnits: (result as any)?.ConsumedCapacity
+        }
+      };
+
+    } catch (error) {
+      this.logger.error(`[${operation}] Falha em ${table}: ${error.message}`);
+      this.logger.error(`Stack: ${error.stack}`);
+      this.logger.error(`Contexto: ${JSON.stringify(params, null, 2)}`);
+
+      throw new DynamoDBOperationError(
+        operation,
+        `Falha na operação ${operation}`,
+        {
+          table,
+          originalError: error.code,
+          params
+        }
+      );
     }
-    throw new DynamoDBOperationError(operationName, `${baseMessage}. Detalhes: ${errorMessage}`, error);
   }
 }

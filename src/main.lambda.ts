@@ -7,6 +7,7 @@ import { ConfigService } from '@nestjs/config';
 import { ValidationPipe } from '@nestjs/common';
 import { FastifyInstance, fastify } from 'fastify';
 import { ApiSuccessResponseClass } from '@src/common/interceptors/response.interceptor'; // Importa o modelo
+import fastifyCompress from '@fastify/compress';
 
 // Define um tipo customizado para a resposta do inject
 interface InjectResponse {
@@ -23,6 +24,8 @@ async function bootstrapFastify(): Promise<FastifyInstance> {
       logger: process.env.NODE_ENV === 'development',
       trustProxy: true,
     });
+
+    await instance.register(fastifyCompress); // Ativa compressão HTTP
 
     const app = await NestFactory.create<NestFastifyApplication>(
       AppModule,

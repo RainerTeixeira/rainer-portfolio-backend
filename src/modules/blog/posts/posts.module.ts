@@ -1,41 +1,39 @@
 import { Module } from '@nestjs/common';
-import { CacheModule } from '@nestjs/cache-manager';
-import { PostsService } from '@src/modules/blog/posts/services/posts.service';
+import { ConfigModule } from '@nestjs/config';
+
 import { PostsController } from '@src/modules/blog/posts/controllers/posts.controller';
-import { DynamoDbService } from '@src/services/dynamoDb.service';
-import { AuthorsService } from '@src/modules/blog/authors/services/authors.service';
-import { CategoryService } from '@src/modules/blog/category/services/category.service';
-import { SubcategoryService } from '@src/modules/blog/subcategory/services/subcategory.service';
-import { CommentsService } from '@src/modules/blog/comments/services/comments.service';
+import { PostsService } from '@src/modules/blog/posts/services/posts.service';
+
+// Importa os módulos que disponibilizam os serviços de domínio necessários
 import { AuthorsModule } from '@src/modules/blog/authors/authors.module';
 import { CategoryModule } from '@src/modules/blog/category/category.module';
 import { SubcategoryModule } from '@src/modules/blog/subcategory/subcategory.module';
 import { CommentsModule } from '@src/modules/blog/comments/comments.module';
-import { ConfigModule } from '@nestjs/config';
 
 /**
- * Módulo para gerenciamento de posts.
+ * PostsModule
+ * 
+ * Módulo responsável pela funcionalidade de gerenciamento de posts:
+ * - Importa módulos de domínio (autores, categorias, etc.) que são necessários para o enriquecimento dos posts.
+ * - Registra o PostsService e o PostsController.
+ * - O DynamoDbService já está registrado globalmente, assim como os outros serviços,
+ *   eliminando redundância.
  */
 @Module({
   imports: [
+    ConfigModule,
     AuthorsModule,
     CategoryModule,
     SubcategoryModule,
     CommentsModule,
-    ConfigModule,
-    CacheModule.register({ // Configuração do CacheModule
-      store: 'memory', // Use a string 'memory' aqui
-      ttl: 60 * 1000, // Tempo de vida padrão de 1 minuto (opcional)
-    }),
   ],
   controllers: [PostsController],
   providers: [
     PostsService,
-    DynamoDbService,
-    AuthorsService,
-    CategoryService,
-    SubcategoryService,
-    CommentsService,
+    // Não é necessário registrar novamente:
+    // - DynamoDbService (já é global via AppModule)
+    // - AuthorsService, CategoryService, SubcategoryService e CommentsService (fornecidos em seus respectivos módulos)
   ],
+  exports: [PostsService],
 })
 export class PostsModule { }
