@@ -7,7 +7,7 @@ import { Cache } from 'cache-manager';
 import { DynamoDbService, DynamoDBOperationError } from '@src/services/dynamoDb.service';
 import { PostStatus } from './entities/post.entity';
 import { PostCreateDto, PostUpdateDto, PostFullDto, PaginatedPostsResult } from './dto';
-import { generatePostId } from '@src/common/generateUUID/generatePostId';
+import { generatePostId } from '@src/common/utils/generatePostId';
 
 @Injectable()
 export class PostsService {
