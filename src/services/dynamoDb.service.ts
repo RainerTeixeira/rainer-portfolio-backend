@@ -255,7 +255,7 @@ export class DynamoDbService {
     operation: string,
     table: string,
     error: unknown,
-    params: { TableName: string; [key: string]: unknown }
+    params: Record<string, unknown>
   ): never {
     if (error instanceof Error) {
       this.logger.error(`[${operation}] Falha em ${table}: ${error.message}`);
@@ -271,7 +271,7 @@ export class DynamoDbService {
       {
         table,
         originalError: error instanceof Error ? error.message : String(error),
-        params,
+        params: { TableName: table, ...params } // Objeto corrigido
       }
     );
   }
