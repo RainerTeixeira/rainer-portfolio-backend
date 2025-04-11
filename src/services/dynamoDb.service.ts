@@ -53,7 +53,7 @@ export class DynamoDBOperationError extends Error {
     public readonly context: {
       table?: string;
       originalError?: string;
-      params?: Record<string, any>;
+      params?: Record<string, unknown>;
     }
   ) {
     super(message);
@@ -198,10 +198,10 @@ export class DynamoDbService {
    */
   private async executeOperation<T>(
     operation: string,
-    params: Record<string, any>,
+    params: Record<string, unknown>,
     handler: () => Promise<T>
   ) {
-    const table = params.TableName || 'unknown-table';
+    const table: string = params.TableName?.toString() || 'unknown-table';
     const startTime = Date.now();
 
     try {
@@ -226,7 +226,7 @@ export class DynamoDbService {
   }
 
   /** Loga o início de uma operação */
-  private logOperationStart(operation: string, table: string, params: any) {
+  private logOperationStart(operation: string, table: string, params: Record<string, unknown>) {
     this.logger.log(`[${operation}] Iniciando em ${table}`);
     this.logger.debug(`Parâmetros: ${JSON.stringify(params, null, 2)}`);
   }
@@ -245,13 +245,18 @@ export class DynamoDbService {
         operation,
         table,
         duration,
-        capacityUnits: (result as any)?.ConsumedCapacity
+        capacityUnits: (result as { ConsumedCapacity?: number })?.ConsumedCapacity
       }
     };
   }
 
   /** Loga e trata erros da operação */
-  private logOperationError(operation: string, table: string, error: unknown, params: any) {
+  private logOperationError(
+    operation: string,
+    table: string,
+    error: unknown,
+    params: { TableName: string; [key: string]: unknown }
+  ): never {
     if (error instanceof Error) {
       this.logger.error(`[${operation}] Falha em ${table}: ${error.message}`);
       this.logger.error(`Stack: ${error.stack}`);
@@ -259,10 +264,20 @@ export class DynamoDbService {
       this.logger.error(`[${operation}] Falha em ${table}: Erro desconhecido`);
     }
     this.logger.error(`Contexto: ${JSON.stringify(params, null, 2)}`);
+
+    throw new DynamoDBOperationError(
+      operation,
+      `Falha na operação ${operation}`,
+      {
+        table,
+        originalError: error instanceof Error ? error.message : String(error),
+        params,
+      }
+    );
   }
 
   /** Formata erro padronizado para lançamento */
-  private formatErrorResponse(operation: string, table: string, error: unknown, params: any) {
+  private formatErrorResponse(operation: string, table: string, error: unknown, params: Record<string, unknown>) {
     return new DynamoDBOperationError(
       operation,
       `Falha na operação ${operation}`,
