@@ -267,18 +267,31 @@ export class AuthorsService {
      * @param context Contexto da operação
      * @private
      */
-    private handleDynamoError(error: any, context: string): never {
-        this.logger.error(`[${context}] ${error.message}`, error.stack);
+    private handleDynamoError(error: unknown, context: string): never {
+        // Verificação de tipo para Error
+        if (error instanceof Error) {
+            this.logger.error(`[${context}] ${error.message}`, error.stack);
 
-        if (error instanceof DynamoDBOperationError) {
-            switch (error.context.originalError) {
-                case 'ConditionalCheckFailedException':
-                    throw new BadRequestException('Conflito: Autor já existe');
-                case 'ResourceNotFoundException':
-                    throw new NotFoundException('Recurso não encontrado');
-                case 'ValidationException':
-                    throw new BadRequestException('Parâmetros inválidos na requisição');
+            // Verificação específica para erros do DynamoDB
+            if (error instanceof DynamoDBOperationError) {
+                // Type assertion para garantir que originalError é string
+                const errorCode = error.context.originalError || 'UnknownError';
+
+                switch (errorCode.toString()) { // Conversão explícita para string
+                    case 'ConditionalCheckFailedException':
+                        throw new BadRequestException('Conflito: Autor já existe');
+                    case 'ResourceNotFoundException':
+                        throw new NotFoundException('Recurso não encontrado');
+                    case 'ValidationException':
+                        throw new BadRequestException('Parâmetros inválidos na requisição');
+                    default:
+                        this.logger.error(`Erro não mapeado: ${errorCode}`);
+                        throw new InternalServerErrorException(`Falha na operação: ${context}`);
+                }
             }
+        } else {
+            // Tratamento para erros não padrão
+            this.logger.error(`[${context}] Erro desconhecido: ${String(error)}`);
         }
 
         throw new InternalServerErrorException(`Falha na operação: ${context}`);
