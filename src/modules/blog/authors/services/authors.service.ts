@@ -1,418 +1,403 @@
+// src/modules/blog/authors/services/authors.service.ts
+
+/**
+ * Serviço para gestão de autores no sistema
+ * 
+ * Responsabilidades principais:
+ * - CRUD de autores
+ * - Cache de dados
+ * - Integração com DynamoDB
+ * - Validação de dados
+ * 
+ * Estratégias chave:
+ * - Cache em dois níveis (individual e lista completa)
+ * - Operações atômicas com tratamento de erros específicos
+ * - Mapeamento seguro entre DTOs e DynamoDB
+ */
+
 import {
     Injectable,
     NotFoundException,
-    Logger,
-    Inject,
     BadRequestException,
-    InternalServerErrorException, // Pode ser útil
-    // Removed unused UseGuards
+    InternalServerErrorException,
+    Inject,
+    Logger,
 } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger'; // Para documentação Swagger
-import { AttributeValue } from '@aws-sdk/client-dynamodb'; // Importado para corrigir os erros de tipo
-
-// --- Assumindo que seus DTOs estão nesses caminhos ---
-import { CreateAuthorDto } from '@src/modules/blog/authors/dto/create-author.dto';
-import { UpdateAuthorDto } from '@src/modules/blog/authors/dto/update-author.dto';
-import { AuthorDetailDto } from '@src/modules/blog/authors/dto/author-detail.dto';
-// -----------------------------------------------------
-
-// --- Importe o serviço DynamoDB e o Erro personalizado ---
+import { AttributeValue } from '@aws-sdk/client-dynamodb';
 import { DynamoDbService, DynamoDBOperationError } from '@src/services/dynamoDb.service';
-// -----------------------------------------------------
+import { CreateAuthorDto } from '../dto/create-author.dto';
+import { UpdateAuthorDto } from '../dto/update-author.dto';
+import { AuthorDetailDto } from '../dto/author-detail.dto';
 
-// Se estiver usando autenticação
-
-
-/**
- * @ApiTags Authors
- * @Injectable
- * @Service AuthorsService
- * @description
- * Serviço responsável pela lógica de negócio relacionada aos Autores (Authors).
- * Interage com o DynamoDbService para operações CRUD na tabela 'Authors'
- * e utiliza cache para otimizar leituras frequentes.
- */
-@ApiTags('Authors') // Agrupa endpoints relacionados a autores no Swagger
 @Injectable()
 export class AuthorsService {
-    // Nome da tabela DynamoDB para autores. Mova para config se preferir.
-    private readonly tableName = process.env.DYNAMO_TABLE_NAME_AUTHORS || 'Authors';
     private readonly logger = new Logger(AuthorsService.name);
-    // TTL (Time To Live) padrão para itens no cache (em segundos)
-    private readonly cacheTtl = 300; // 5 minutos
+    private readonly tableName = process.env.DYNAMO_TABLE_NAME_AUTHORS || 'Authors';
+    private readonly cacheTtl = 300; // 5 minutos em segundos
 
-    /**
-     * Construtor que injeta as dependências necessárias.
-     * @param dynamoDbService - Serviço para interagir com o DynamoDB.
-     * @param cacheManager - Gerenciador de cache (provido pelo @nestjs/cache-manager).
-     */
     constructor(
-        private readonly dynamoDbService: DynamoDbService,
-        @Inject(CACHE_MANAGER) private cacheManager: Cache,
-    ) {
-        this.logger.log(`Serviço AuthorsService inicializado. Tabela: ${this.tableName}`);
-    }
+        private readonly dynamoDb: DynamoDbService,
+        @Inject(CACHE_MANAGER) private cache: Cache,
+    ) { }
+
+    // --- Operações CRUD Principais ---
 
     /**
-     * @ApiOperation Cria um novo autor.
-     * @ApiResponse Status 201: Autor criado com sucesso. Retorna o AuthorDetailDto.
-     * @ApiResponse Status 400: Dados inválidos fornecidos no DTO.
-     * @ApiResponse Status 500: Erro interno ao interagir com o DynamoDB.
-     * @param createAuthorDto - DTO com os dados para a criação do autor.
-     * @returns Promise<{ success: boolean; data: AuthorDetailDto }> - O autor recém-criado.
-     * @throws {BadRequestException} Se o DTO for inválido (validação do NestJS deve tratar isso).
-     * @throws {InternalServerErrorException} Se ocorrer um erro no DynamoDB.
+     * Cria um novo autor no sistema
+     * 
+     * Fluxo principal:
+     * 1. Validação implícita via DTO
+     * 2. Conversão para formato DynamoDB
+     * 3. Inserção atômica com verificação de duplicidade
+     * 4. Atualização de cache
+     * 
+     * @param dto Dados do autor a ser criado
+     * @returns Autor criado com dados completos
+     * @throws BadRequestException se o autor já existir
+     * @throws InternalServerErrorException para erros inesperados
      */
-    @ApiOperation({ summary: 'Cria um novo autor' })
-    @ApiResponse({ status: 201, description: 'Autor criado com sucesso.', type: AuthorDetailDto })
-    @ApiResponse({ status: 400, description: 'Dados inválidos fornecidos.' })
-    @ApiResponse({ status: 500, description: 'Erro interno no servidor.' })
-    async create(createAuthorDto: CreateAuthorDto): Promise<{ success: boolean; data: AuthorDetailDto }> {
-        this.logger.log(`Tentando criar autor com ID: ${createAuthorDto.authorId}`);
-
-        // O DTO já deve vir validado pelo ValidationPipe do NestJS
-        // Adicione validações extras aqui se necessário
-
-        const params = {
-            TableName: this.tableName,
-            Item: {
-                authorId: { S: createAuthorDto.authorId },
-                name: { S: createAuthorDto.name },
-                slug: { S: createAuthorDto.slug },
-                socialProof: { M: createAuthorDto.socialProof },
-            },
-        };
-
+    async create(dto: CreateAuthorDto): Promise<AuthorDetailDto> {
         try {
-            await this.dynamoDbService.putItem(params);
-            this.logger.log(`Autor ${createAuthorDto.authorId} criado com sucesso.`);
-            // Após criar, busca o autor recém-criado para retornar o DTO completo
-            // ou pode mapear diretamente `createAuthorDto` se ele já tiver todos os campos necessários.
-            // Buscar garante que estamos retornando o que de fato foi salvo.
-            // Limpa o cache de lista de autores (se houver)
-            await this.clearAuthorsListCache();
-            const author = await this.findOne(createAuthorDto.authorId);
-            return { success: true, data: author };
-        } catch (error: unknown) {
-            const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-            const errorStack = error instanceof Error ? error.stack : undefined;
-            this.logger.error(`Erro ao criar autor ${createAuthorDto.authorId}: ${errorMessage}`, errorStack);
-            if (error instanceof DynamoDBOperationError && error.originalError && (error.originalError as { name: string }).name === 'ConditionalCheckFailedException') {
-                throw new BadRequestException(`Autor com ID '${createAuthorDto.authorId}' já existe.`);
-            }
-            throw new InternalServerErrorException('Falha ao criar o autor no banco de dados.');
+            // Operação atômica com verificação de existência
+            await this.dynamoDb.putItem({
+                TableName: this.tableName,
+                Item: this.mapToDynamoItem(dto),
+                ConditionExpression: 'attribute_not_exists(authorId)'
+            });
+
+            // Invalida cache de lista
+            await this.clearListCache();
+
+            // Retorna o novo autor com cache warm-up
+            return this.getAuthorById(dto.authorId);
+        } catch (error) {
+            this.handleDynamoError(error, `create-${dto.authorId}`);
         }
     }
 
     /**
-     * @ApiOperation Busca todos os autores cadastrados.
-     * @ApiResponse Status 200: Lista de autores retornada com sucesso.
-     * @ApiResponse Status 500: Erro interno ao buscar autores.
-     * @returns Promise<{ success: boolean; data: AuthorDetailDto[] }> - Um array com todos os autores. Retorna array vazio se não houver autores.
+     * Lista todos os autores com estratégia de cache
+     * 
+     * Otimizações:
+     * - Projeção de campos para reduzir transferência de dados
+     * - Cache de lista completa com TTL configurável
+     * 
+     * @returns Lista de autores formatados
+     * @throws InternalServerErrorException para erros de banco de dados
      */
-    @ApiOperation({ summary: 'Busca todos os autores' })
-    @ApiResponse({ status: 200, description: 'Lista de autores.', type: [AuthorDetailDto] })
-    @ApiResponse({ status: 500, description: 'Erro interno no servidor.' })
-    // @UseGuards(CognitoAuthGuard) // Descomente se esta rota precisar de autenticação
-    async findAll(): Promise<{ success: boolean; data: AuthorDetailDto[] }> {
-        const cacheKey = `authors_all`;
-
+    async findAll(): Promise<AuthorDetailDto[]> {
+        const cacheKey = 'authors_all';
         try {
-            const cachedAuthors = await this.cacheManager.get<AuthorDetailDto[]>(cacheKey);
-            if (cachedAuthors) {
-                return { success: true, data: cachedAuthors };
-            }
+            // Tenta obter do cache primeiro
+            const cached = await this.cache.get<AuthorDetailDto[]>(cacheKey);
+            if (cached) return cached;
 
-            const params = {
+            // Scan com projeção otimizada
+            const result = await this.dynamoDb.scan({
                 TableName: this.tableName,
-                ProjectionExpression: '#name, authorId, slug, socialProof',
-                ExpressionAttributeNames: { '#name': 'name' }, // Garante que apenas '#name' seja usado
-            };
+                ProjectionExpression: 'authorId, #name, slug, socialProof',
+                ExpressionAttributeNames: { '#name': 'name' }
+            });
 
-            const result = await this.dynamoDbService.scan(params);
-            const items = result.data.Items || [];
-            const authors = items
+            // Mapeamento e filtro de dados inválidos
+            const authors = (result.data.Items || [])
                 .map(item => AuthorDetailDto.fromDynamoDB(item as Record<string, AttributeValue>))
                 .filter((author): author is AuthorDetailDto => author !== null);
 
-            await this.cacheManager.set(cacheKey, authors, this.cacheTtl);
-            return { success: true, data: authors };
+            // Atualiza cache com nova lista
+            await this.cache.set(cacheKey, authors, this.cacheTtl);
+            return authors;
         } catch (error) {
-            this.logger.error(`Erro ao buscar autores: ${(error as Error).message}`);
-            throw new InternalServerErrorException('Erro ao buscar autores');
+            this.handleDynamoError(error, 'findAll');
         }
     }
 
     /**
-     * @ApiOperation Busca um autor específico pelo seu ID.
-     * @ApiResponse Status 200: Autor encontrado e retornado.
-     * @ApiResponse Status 400: ID do autor inválido ou não fornecido.
-     * @ApiResponse Status 404: Autor não encontrado com o ID fornecido.
-     * @ApiResponse Status 500: Erro interno ao buscar o autor.
-     * @param authorId - O ID único do autor a ser buscado.
-     * @returns Promise<AuthorDetailDto> - O DTO detalhado do autor encontrado.
-     * @throws {BadRequestException} Se authorId for inválido.
-     * @throws {NotFoundException} Se o autor não for encontrado.
-     * @throws {InternalServerErrorException} Se ocorrer um erro no DynamoDB.
+     * Obtém um autor específico por ID
+     * 
+     * Estratégias:
+     * - Cache individual com TTL
+     * - Validação de formato de ID
+     * 
+     * @param authorId ID único do autor (UUID)
+     * @returns Detalhes completos do autor
+     * @throws BadRequestException para IDs inválidos
+     * @throws NotFoundException se o autor não existir
      */
-    @ApiOperation({ summary: 'Busca um autor pelo ID' })
-    @ApiResponse({ status: 200, description: 'Autor encontrado.', type: AuthorDetailDto })
-    @ApiResponse({ status: 400, description: 'ID do autor inválido.' })
-    @ApiResponse({ status: 404, description: 'Autor não encontrado.' })
-    @ApiResponse({ status: 500, description: 'Erro interno no servidor.' })
     async findOne(authorId: string): Promise<AuthorDetailDto> {
-        if (!authorId || typeof authorId !== 'string' || authorId.trim() === '') {
-            throw new BadRequestException('O ID do autor deve ser uma string não vazia.');
+        if (!this.isValidId(authorId)) {
+            throw new BadRequestException('Formato de ID do autor inválido');
         }
-        this.logger.log(`Buscando autor com ID: ${authorId}`);
-        // Usa o método com cache para buscar
         return this.getAuthorById(authorId);
     }
 
     /**
-     * @ApiOperation Atualiza os dados de um autor existente.
-     * @ApiResponse Status 200: Autor atualizado com sucesso. Retorna o DTO atualizado.
-     * @ApiResponse Status 400: ID inválido ou nenhum dado fornecido para atualização.
-     * @ApiResponse Status 404: Autor não encontrado para atualizar.
-     * @ApiResponse Status 500: Erro interno ao atualizar o autor.
-     * @param authorId - O ID do autor a ser atualizado.
-     * @param updateAuthorDto - DTO com os campos a serem atualizados. Campos não presentes não serão alterados.
-     * @returns Promise<AuthorDetailDto> - O DTO do autor com os dados atualizados.
-     * @throws {BadRequestException} Se ID ou DTO forem inválidos.
-     * @throws {NotFoundException} Se o autor não existir.
-     * @throws {InternalServerErrorException} Se ocorrer erro no DynamoDB.
+     * Atualiza parcialmente um autor existente
+     * 
+     * Funcionamento:
+     * 1. Validação de ID
+     * 2. Construção dinâmica da query
+     * 3. Atualização atômica
+     * 4. Invalidação de cache
+     * 
+     * @param authorId ID do autor a ser atualizado
+     * @param dto Campos para atualização
+     * @returns Autor atualizado
+     * @throws NotFoundException se o autor não existir
      */
-    @ApiOperation({ summary: 'Atualiza um autor pelo ID' })
-    @ApiResponse({ status: 200, description: 'Autor atualizado com sucesso.', type: AuthorDetailDto })
-    @ApiResponse({ status: 400, description: 'Dados inválidos ou ID não fornecido.' })
-    @ApiResponse({ status: 404, description: 'Autor não encontrado.' })
-    @ApiResponse({ status: 500, description: 'Erro interno no servidor.' })
-    // @UseGuards(CognitoAuthGuard) // Descomente se precisar de autenticação
-    async update(authorId: string, updateAuthorDto: UpdateAuthorDto): Promise<AuthorDetailDto> {
-        if (!authorId || typeof authorId !== 'string' || authorId.trim() === '') {
-            throw new BadRequestException('O ID do autor deve ser uma string não vazia.');
+    async update(authorId: string, dto: UpdateAuthorDto): Promise<AuthorDetailDto> {
+        if (!this.isValidId(authorId)) {
+            throw new BadRequestException('ID do autor inválido');
         }
-        // Verifica se há dados para atualizar
-        if (!updateAuthorDto || Object.keys(updateAuthorDto).length === 0) {
-            throw new BadRequestException('Nenhum dado fornecido para atualização.');
-        }
-
-        this.logger.log(`Tentando atualizar autor com ID: ${authorId}`);
-        this.logger.debug(`Dados para atualização: ${JSON.stringify(updateAuthorDto)}`);
-
-        // 1. Garante que o autor existe antes de tentar atualizar
-        await this.findOne(authorId); // findOne já lida com NotFoundException e cache
 
         try {
-            const updateData = this.mapDtoToDynamoAttributes(updateAuthorDto);
+            // Construção dinâmica da query
+            const updateExpression = this.buildUpdateExpression(dto);
+            const expressionAttributes = this.buildExpressionAttributes(dto);
+            const attributeNames = this.buildExpressionAttributeNames(dto);
 
-            // 2. Chama o updateItem do DynamoDbService
-            // O terceiro argumento (updateData) é o DTO com os campos a serem atualizados.
-            // O DynamoDbService construirá a UpdateExpression.
-            const result = await this.dynamoDbService.updateItem(
-                this.tableName,
-                { authorId: { S: authorId } }, // Corrigido para usar AttributeValue
-                updateData, // Os dados a serem atualizados
-                'ALL_NEW', // Retorna todos os atributos do item como ele ficou *após* a atualização
-            );
-
-            // 3. Verifica se a atualização retornou os atributos atualizados
-            const attributes = result.data.Attributes; // Acesse `data` antes de `Attributes`
-            if (!attributes) {
-                this.logger.error(`Update para autor ${authorId} não retornou atributos. Verifique a operação no DynamoDB.`);
-                throw new InternalServerErrorException('Falha ao obter os dados atualizados do autor.');
-            }
-
-            this.logger.log(`Autor ${authorId} atualizado com sucesso.`);
-
-            // 4. Mapeia o resultado para o DTO
-            const updatedAuthor = AuthorDetailDto.fromDynamoDB(attributes as Record<string, AttributeValue>);
-
-            if (!updatedAuthor) {
-                throw new InternalServerErrorException('Falha ao obter os dados atualizados do autor.');
-            }
-
-            // 5. Atualiza o cache para este autor específico e limpa cache da lista
-            const cacheKey = this.getAuthorCacheKey(authorId);
-            await this.cacheManager.set(cacheKey, updatedAuthor, this.cacheTtl);
-            await this.clearAuthorsListCache(); // Invalida cache da lista completa
-            this.logger.log(`Cache atualizado para o autor ${authorId}.`);
-
-            return updatedAuthor;
-
-        } catch (error) {
-            // Se o erro for do nosso serviço DynamoDB, logamos de forma mais específica
-            if (error instanceof DynamoDBOperationError) {
-                this.logger.error(`Erro na operação DynamoDB ao atualizar autor ${authorId}: ${error.message}`, error.originalError);
-            } else {
-                this.logger.error(`Erro inesperado ao atualizar autor ${authorId}: ${error instanceof Error ? error.message : 'Erro desconhecido'}`, error instanceof Error ? error.stack : undefined);
-            }
-            // Re-lança como erro interno genérico para o cliente, a menos que seja um erro específico tratável
-            if (error instanceof NotFoundException || error instanceof BadRequestException) {
-                throw error; // Mantém erros de validação ou não encontrado
-            }
-            throw new InternalServerErrorException('Falha ao atualizar o autor no banco de dados.');
-        }
-    }
-
-    /**
-     * @ApiOperation Remove um autor pelo seu ID.
-     * @ApiResponse Status 204: Autor removido com sucesso (No Content).
-     * @ApiResponse Status 400: ID do autor inválido.
-     * @ApiResponse Status 404: Autor não encontrado para remover.
-     * @ApiResponse Status 500: Erro interno ao remover o autor.
-     * @param authorId - O ID do autor a ser removido.
-     * @returns Promise<void> - Retorna vazio em caso de sucesso.
-     * @throws {BadRequestException} Se authorId for inválido.
-     * @throws {NotFoundException} Se o autor não existir.
-     * @throws {InternalServerErrorException} Se ocorrer erro no DynamoDB.
-     */
-    @ApiOperation({ summary: 'Remove um autor pelo ID' })
-    @ApiResponse({ status: 204, description: 'Autor removido com sucesso.' })
-    @ApiResponse({ status: 400, description: 'ID do autor inválido.' })
-    @ApiResponse({ status: 404, description: 'Autor não encontrado.' })
-    @ApiResponse({ status: 500, description: 'Erro interno no servidor.' })
-    // @UseGuards(CognitoAuthGuard) // Descomente se precisar de autenticação
-    async remove(authorId: string): Promise<void> {
-        if (!authorId || typeof authorId !== 'string' || authorId.trim() === '') {
-            throw new BadRequestException('O ID do autor deve ser uma string não vazia.');
-        }
-        this.logger.log(`Tentando remover autor com ID: ${authorId}`);
-
-        // 1. Garante que o autor existe antes de tentar remover
-        await this.findOne(authorId); // findOne lida com NotFoundException
-
-        const params = {
-            TableName: this.tableName,
-            Key: { authorId: { S: authorId } }, // Chave primária do item a ser deletado
-        };
-
-        try {
-            // 2. Chama o deleteItem do serviço DynamoDB
-            await this.dynamoDbService.deleteItem(params);
-            this.logger.log(`Autor ${authorId} removido com sucesso.`);
-
-            // 3. Remove o autor do cache individual e limpa cache da lista
-            const cacheKey = this.getAuthorCacheKey(authorId);
-            await this.cacheManager.del(cacheKey);
-            await this.clearAuthorsListCache();
-            this.logger.log(`Cache removido/invalidado para o autor ${authorId}.`);
-
-            // Retorna void (ou status 204 No Content no controller)
-        } catch (error) {
-            this.logger.error(`Erro ao remover autor ${authorId}: ${error instanceof Error ? error.message : 'Erro desconhecido'}`, error instanceof Error ? error.stack : undefined);
-            throw new InternalServerErrorException('Falha ao remover o autor do banco de dados.');
-        }
-    }
-
-    /**
-     * @ApiOperation Busca um autor pelo ID, utilizando cache para otimização.
-     * @description Método interno usado por `findOne` e potencialmente outros locais.
-     * Primeiro tenta buscar no cache; se não encontrar, busca no DynamoDB e armazena no cache.
-     * @param authorId - ID do autor.
-     * @returns Promise<AuthorDetailDto> - O DTO do autor.
-     * @throws {NotFoundException} Se o autor não for encontrado no cache nem no DB.
-     * @throws {InternalServerErrorException} Se ocorrer erro no DynamoDB.
-     * @privateRemarks Usado internamente para centralizar a lógica de cache de `findOne`.
-     */
-    @ApiOperation({ summary: 'Busca um autor pelo ID (com cache)', description: 'Prioriza cache, depois busca no DB.' })
-    @ApiResponse({ status: 200, description: 'Autor encontrado.', type: AuthorDetailDto })
-    @ApiResponse({ status: 404, description: 'Autor não encontrado.' })
-    @ApiResponse({ status: 500, description: 'Erro interno no servidor.' })
-    async getAuthorById(authorId: string): Promise<AuthorDetailDto> {
-        if (!authorId) {
-            throw new BadRequestException('ID do autor não fornecido para getAuthorById.');
-        }
-        const cacheKey = this.getAuthorCacheKey(authorId);
-        this.logger.debug(`Verificando cache para a chave: ${cacheKey}`);
-
-        try {
-            // 1. Tenta buscar no cache
-            const cachedAuthor = await this.cacheManager.get<AuthorDetailDto>(cacheKey);
-            if (cachedAuthor) {
-                this.logger.log(`Autor ${authorId} encontrado no cache.`);
-                return cachedAuthor;
-            }
-
-            this.logger.log(`Autor ${authorId} não encontrado no cache. Buscando no DynamoDB...`);
-
-            // 2. Busca no DynamoDB usando apenas a chave de partição
-            const params = {
+            // Operação de update atômica
+            await this.dynamoDb.updateItem({
                 TableName: this.tableName,
-                Key: { authorId: { S: authorId } }, // Apenas a chave de partição
-            };
-            const result = await this.dynamoDbService.getItem(params);
+                Key: { authorId: { S: authorId } },
+                UpdateExpression: updateExpression,
+                ExpressionAttributeNames: attributeNames,
+                ExpressionAttributeValues: expressionAttributes,
+                ReturnValues: 'ALL_NEW'
+            });
 
-            // 3. Verifica se o item foi encontrado no DB
-            const item = result.data.Item;
-            if (!item) {
-                this.logger.warn(`Autor com ID '${authorId}' não encontrado no DynamoDB.`);
-                throw new NotFoundException(`Autor com ID '${authorId}' não encontrado.`);
-            }
+            // Invalida caches relevantes
+            await this.clearCache(authorId);
 
-            // 4. Mapeia o item do DB para o DTO
-            const author = AuthorDetailDto.fromDynamoDB(item as Record<string, AttributeValue>);
-            if (!author) {
-                throw new NotFoundException(`Autor com ID '${authorId}' não encontrado no banco de dados.`);
-            }
-
-            // 5. Salva no cache antes de retornar
-            await this.cacheManager.set(cacheKey, author, this.cacheTtl);
-            this.logger.log(`Autor ${authorId} salvo no cache com TTL ${this.cacheTtl}s.`);
-
-            return author;
-
+            // Retorna dados atualizados
+            return this.getAuthorById(authorId);
         } catch (error) {
-            this.logger.error(`Erro ao buscar autor ${authorId} (via getAuthorById): ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
-            throw new InternalServerErrorException(`Falha ao buscar o autor ${authorId}.`);
+            this.handleDynamoError(error, `update-${authorId}`);
         }
     }
 
-    // --- Métodos auxiliares de Cache ---
+    /**
+     * Remove um autor do sistema
+     * 
+     * Considerações:
+     * - Operação irreversível
+     * - Limpeza de cache imediata
+     * 
+     * @param authorId ID do autor a ser removido
+     * @throws NotFoundException se o autor não existir
+     */
+    async remove(authorId: string): Promise<void> {
+        if (!this.isValidId(authorId)) {
+            throw new BadRequestException('ID do autor inválido');
+        }
+
+        try {
+            await this.dynamoDb.deleteItem({
+                TableName: this.tableName,
+                Key: { authorId: { S: authorId } }
+            });
+
+            await this.clearCache(authorId);
+        } catch (error) {
+            this.handleDynamoError(error, `remove-${authorId}`);
+        }
+    }
+
+    // --- Métodos Auxiliares ---
 
     /**
-     * Gera a chave de cache padrão para um autor específico.
-     * @param authorId - O ID do autor.
-     * @returns A string da chave de cache.
+     * Obtém um autor com cache layer
+     * 
+     * Fluxo:
+     * 1. Verifica cache
+     * 2. Busca no DynamoDB se necessário
+     * 3. Atualiza cache
+     * 
+     * @param authorId ID do autor
+     * @private
      */
-    private getAuthorCacheKey(authorId: string): string {
+    private async getAuthorById(authorId: string): Promise<AuthorDetailDto> {
+        const cacheKey = this.cacheKey(authorId);
+        try {
+            // Tenta obter do cache primeiro
+            const cached = await this.cache.get<AuthorDetailDto>(cacheKey);
+            if (cached) return cached;
+
+            // Operação de leitura no DynamoDB
+            const result = await this.dynamoDb.getItem({
+                TableName: this.tableName,
+                Key: { authorId: { S: authorId } }
+            });
+
+            if (!result.data.Item) {
+                throw new NotFoundException(`Autor ${authorId} não encontrado`);
+            }
+
+            // Conversão e validação do DTO
+            const author = AuthorDetailDto.fromDynamoDB(result.data.Item);
+            if (!author) {
+                throw new InternalServerErrorException('Formato de dados inválido do banco');
+            }
+
+            // Warm-up do cache
+            await this.cache.set(cacheKey, author, this.cacheTtl);
+            return author;
+        } catch (error) {
+            this.handleDynamoError(error, `getAuthorById-${authorId}`);
+        }
+    }
+
+    /**
+     * Valida o formato do ID do autor
+     * 
+     * @param authorId ID a ser validado
+     * @returns true se válido
+     * @private
+     */
+    private isValidId(authorId: string): boolean {
+        return typeof authorId === 'string' && authorId.trim().length > 0;
+    }
+
+    /**
+     * Tratamento centralizado de erros do DynamoDB
+     * 
+     * @param error Objeto de erro original
+     * @param context Contexto da operação
+     * @private
+     */
+    private handleDynamoError(error: any, context: string): never {
+        this.logger.error(`[${context}] ${error.message}`, error.stack);
+
+        if (error instanceof DynamoDBOperationError) {
+            switch (error.context.originalError) {
+                case 'ConditionalCheckFailedException':
+                    throw new BadRequestException('Conflito: Autor já existe');
+                case 'ResourceNotFoundException':
+                    throw new NotFoundException('Recurso não encontrado');
+                case 'ValidationException':
+                    throw new BadRequestException('Parâmetros inválidos na requisição');
+            }
+        }
+
+        throw new InternalServerErrorException(`Falha na operação: ${context}`);
+    }
+
+    /**
+     * Converte DTO para formato DynamoDB
+     * 
+     * @param dto DTO de entrada
+     * @returns Item formatado para DynamoDB
+     * @private
+     */
+    private mapToDynamoItem(dto: CreateAuthorDto | UpdateAuthorDto): Record<string, AttributeValue> {
+        const item: Record<string, AttributeValue> = {};
+
+        // Mapeamento de campos com sanitização
+        if ('authorId' in dto) item.authorId = { S: dto.authorId };
+        if (dto.name) item.name = { S: dto.name.trim() };
+        if (dto.slug) item.slug = { S: dto.slug.trim() };
+
+        // Conversão de objetos aninhados
+        if (dto.socialProof) {
+            item.socialProof = {
+                M: Object.entries(dto.socialProof).reduce((acc, [key, value]) => {
+                    acc[key] = { S: value.toString().trim() };
+                    return acc;
+                }, {})
+            };
+        }
+
+        return item;
+    }
+
+    /**
+     * Constrói expressão de atualização dinâmica
+     * 
+     * @param dto DTO com campos para atualizar
+     * @returns Expressão SET para DynamoDB
+     * @private
+     */
+    private buildUpdateExpression(dto: UpdateAuthorDto): string {
+        const updates: string[] = [];
+        if (dto.name) updates.push('#name = :name');
+        if (dto.slug) updates.push('#slug = :slug');
+        if (dto.socialProof) updates.push('socialProof = :socialProof');
+
+        return `SET ${updates.join(', ')}`;
+    }
+
+    /**
+     * Mapeia nomes de atributos para evitar conflitos
+     * 
+     * @param dto DTO de atualização
+     * @returns Mapa de nomes de atributos
+     * @private
+     */
+    private buildExpressionAttributeNames(dto: UpdateAuthorDto): Record<string, string> {
+        const names: Record<string, string> = {};
+        if (dto.name) names['#name'] = 'name';
+        if (dto.slug) names['#slug'] = 'slug';
+        return names;
+    }
+
+    /**
+     * Constrói valores para expressões DynamoDB
+     * 
+     * @param dto DTO de atualização
+     * @returns Valores formatados
+     * @private
+     */
+    private buildExpressionAttributes(dto: UpdateAuthorDto): Record<string, AttributeValue> {
+        const attributes: Record<string, AttributeValue> = {};
+
+        if (dto.name) attributes[':name'] = { S: dto.name };
+        if (dto.slug) attributes[':slug'] = { S: dto.slug };
+        if (dto.socialProof) {
+            attributes[':socialProof'] = {
+                M: Object.entries(dto.socialProof).reduce((acc, [k, v]) => {
+                    acc[k] = { S: v };
+                    return acc;
+                }, {})
+            };
+        }
+
+        return attributes;
+    }
+
+    // --- Gerenciamento de Cache ---
+
+    /**
+     * Gera chave de cache para autor individual
+     * 
+     * @param authorId ID do autor
+     * @returns Chave de cache formatada
+     * @private
+     */
+    private cacheKey(authorId: string): string {
         return `author_${authorId}`;
     }
 
     /**
-     * Gera a chave de cache padrão para a lista de todos os autores.
-     * @returns A string da chave de cache.
+     * Limpa cache relacionado a um autor específico
+     * 
+     * @param authorId ID do autor
+     * @private
      */
-    private getAuthorsListCacheKey(): string {
-        return `authors_all`;
+    private async clearCache(authorId: string): Promise<void> {
+        await Promise.all([
+            this.cache.del(this.cacheKey(authorId)),
+            this.cache.del('authors_all')
+        ]);
     }
-
 
     /**
-     * Limpa (invalida) o cache da lista completa de autores.
-     * Deve ser chamado após criar, atualizar ou remover um autor.
+     * Limpa cache da lista completa de autores
+     * 
+     * @private
      */
-    private async clearAuthorsListCache(): Promise<void> {
-        const listCacheKey = this.getAuthorsListCacheKey();
-        await this.cacheManager.del(listCacheKey);
-        this.logger.log(`Cache da lista de autores (${listCacheKey}) invalidado.`);
+    private async clearListCache(): Promise<void> {
+        await this.cache.del('authors_all');
     }
-
-    private mapDtoToDynamoAttributes(dto: UpdateAuthorDto): Record<string, AttributeValue> {
-        const attributes: Record<string, AttributeValue> = {};
-        if (dto.name) attributes['name'] = { S: dto.name };
-        if (dto.slug) attributes['slug'] = { S: dto.slug };
-        if (dto.socialProof) {
-            attributes['socialProof'] = {
-                M: Object.entries(dto.socialProof).reduce<Record<string, AttributeValue>>((acc, [key, value]) => {
-                    acc[key] = { S: value }; // Converte os valores para AttributeValue
-                    return acc;
-                }, {}),
-            };
-        }
-        return attributes;
-    }
-
 }

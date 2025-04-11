@@ -1,108 +1,106 @@
-import { Controller, Get, Post, Body, Put, Param, Delete, Logger, UseGuards } from '@nestjs/common'; // Importa decorators e Logger do NestJS
-import { AuthorsService } from '../services/authors.service'; // Importa AuthorsService
+import { Controller, Get, Post, Body, Put, Param, Delete, UseGuards } from '@nestjs/common';
+import { AuthorsService } from '../services/authors.service';
+
 import { CreateAuthorDto } from '../dto/create-author.dto'; // Importa DTO para criação de autor
 import { UpdateAuthorDto } from '../dto/update-author.dto'; // Importa DTO para atualização de autor
-import { AuthorDetailDto } from '../dto/author-detail.dto'; // Corrigir a capitalização do nome do arquivo
+import { AuthorDetailDto } from '../dto/author-detail.dto'; // Importa AuthorDetailDto
+
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CognitoAuthGuard } from '@src/auth/cognito-auth.guard';
 
-/**
- * @Controller('blog/authors')
- * Controller responsável por gerenciar as rotas relacionadas a Autores dentro do módulo 'blog'.
- * Define os endpoints para operações CRUD (Create, Read, Update, Delete) de autores.
- * A rota base para este controller é '/blog/authors'.
- */
-@ApiTags('Authors')
+@ApiTags('Autores')
 @Controller('blog/authors')
 export class AuthorsController {
-    private readonly logger = new Logger(AuthorsController.name); // Logger para registrar eventos e erros neste controller
-
-    /**
-     * Injeta a instância de AuthorsService para utilizar a lógica de negócio dos autores.
-     * @param authorsService Serviço de Autores.
-     */
     constructor(private readonly authorsService: AuthorsService) { }
 
     /**
-     * Rota POST para criar um novo autor.
-     * Endpoint: POST /blog/authors
-     * @param createAuthorDto DTO contendo os dados para criação do autor, recebidos no corpo da requisição.
-     * @returns Uma Promise que resolve para um AuthorDetailDto representando o autor criado.
+     * Cria um novo autor na tabela Authors
+     * @param dto Dados do autor conforme schema DynamoDB
+     * @example {
+     *   "authorId": "123",
+     *   "name": "Nome do Autor",
+     *   "slug": "slug-autor",
+     *   "socialProof": {
+     *     "twitter": "https://twitter.com/autor"
+     *   }
+     * }
      */
-    @ApiOperation({ summary: 'Cria um novo autor' })
-    @ApiResponse({ status: 201, description: 'Autor criado com sucesso.', type: AuthorDetailDto })
-    @ApiResponse({ status: 400, description: 'Dados inválidos.' })
-    @UseGuards(CognitoAuthGuard)
     @Post()
-    async create(@Body() createAuthorDto: CreateAuthorDto): Promise<AuthorDetailDto> {
-        this.logger.log('Endpoint POST /blog/authors acionado'); // Log de acesso ao endpoint POST
-        const result = await this.authorsService.create(createAuthorDto);
-        return result.data; // Extrai o campo `data` do retorno do serviço
-    }
-
-    /**
-     * Rota GET para buscar todos os autores.
-     * Endpoint: GET /blog/authors
-     * @returns Uma Promise que resolve para um array de AuthorDetailDto, contendo todos os autores.
-     */
-    @ApiOperation({ summary: 'Retorna uma listagem de autores' })
-    @ApiResponse({ status: 200, description: 'Lista de autores.', type: [AuthorDetailDto] })
-    @ApiResponse({ status: 404, description: 'Nenhum autor encontrado.' })
-    @Get()
-    async findAll(): Promise<AuthorDetailDto[]> {
-        this.logger.log('Endpoint GET /blog/authors acionado'); // Log de acesso ao endpoint GET (todos)
-        const result = await this.authorsService.findAll();
-        return result.data; // Extrai o campo `data` do retorno do serviço
-    }
-
-    /**
-     * Rota GET para buscar um autor específico pelo authorId.
-     * Endpoint: GET /blog/authors/:authorId
-     * @param authorId ID do autor a ser buscado, extraído dos parâmetros da rota.
-     * @returns Uma Promise que resolve para um AuthorDetailDto, se o autor for encontrado.
-     */
-    @ApiOperation({ summary: 'Retorna um autor pelo ID' })
-    @ApiResponse({ status: 200, description: 'Autor encontrado.', type: AuthorDetailDto })
-    @ApiResponse({ status: 404, description: 'Autor não encontrado.' })
-    @Get(':authorId')
-    async findOne(@Param('authorId') authorId: string): Promise<AuthorDetailDto> {
-        this.logger.log(`Endpoint GET /blog/authors/${authorId} acionado`); // Log de acesso ao endpoint GET (por ID)
-        return this.authorsService.findOne(authorId); // Chama o serviço para buscar um autor por ID
-    }
-
-    /**
-     * Rota PUT para atualizar um autor existente pelo authorId.
-     * Endpoint: PUT /blog/authors/:authorId
-     * @param authorId ID do autor a ser atualizado, extraído dos parâmetros da rota.
-     * @param updateAuthorDto DTO contendo os dados para atualização do autor, recebidos no corpo da requisição.
-     * @returns Uma Promise que resolve para um AuthorDetailDto representando o autor atualizado.
-     */
-    @ApiOperation({ summary: 'Atualiza um autor existente' })
-    @ApiResponse({ status: 200, description: 'Autor atualizado com sucesso.', type: AuthorDetailDto })
-    @ApiResponse({ status: 404, description: 'Autor não encontrado.' })
     @UseGuards(CognitoAuthGuard)
+    @ApiOperation({ summary: 'Cria novo autor' })
+    @ApiResponse({
+        status: 201,
+        description: 'Autor criado com sucesso na tabela Authors',
+        type: AuthorDetailDto
+    })
+    async create(@Body() dto: CreateAuthorDto): Promise<AuthorDetailDto> {
+        return this.authorsService.create(dto);
+    }
+
+    /**
+     * Lista todos os autores usando operação SCAN na tabela Authors
+     * @returns Array de autores formatados conforme AuthorDetailDto
+     */
+    @Get()
+    @ApiOperation({ summary: 'Lista todos autores' })
+    @ApiResponse({
+        status: 200,
+        description: 'Listagem completa de autores',
+        type: [AuthorDetailDto]
+    })
+    async findAll(): Promise<AuthorDetailDto[]> {
+        return this.authorsService.findAll();
+    }
+
+    /**
+     * Busca autor específico usando authorId como chave de partição
+     * @param authorId Chave primária da tabela Authors (string)
+     * @example GET /blog/authors/123
+     */
+    @Get(':authorId')
+    @ApiOperation({ summary: 'Busca autor por ID' })
+    @ApiResponse({
+        status: 200,
+        description: 'Detalhes completos do autor',
+        type: AuthorDetailDto
+    })
+    async findOne(@Param('authorId') authorId: string): Promise<AuthorDetailDto> {
+        return this.authorsService.findOne(authorId);
+    }
+
+    /**
+     * Atualiza parcialmente um autor existente
+     * @param authorId Chave primária para localização do registro
+     * @param dto Campos atualizados conforme schema DynamoDB
+     */
     @Put(':authorId')
+    @UseGuards(CognitoAuthGuard)
+    @ApiOperation({ summary: 'Atualiza autor existente' })
+    @ApiResponse({
+        status: 200,
+        description: 'Autor atualizado com sucesso',
+        type: AuthorDetailDto
+    })
     async update(
         @Param('authorId') authorId: string,
-        @Body() updateAuthorDto: UpdateAuthorDto,
+        @Body() dto: UpdateAuthorDto,
     ): Promise<AuthorDetailDto> {
-        this.logger.log(`Endpoint PUT /blog/authors/${authorId} acionado`); // Log de acesso ao endpoint PUT
-        return this.authorsService.update(authorId, updateAuthorDto); // Chama o serviço para atualizar o autor
+        return this.authorsService.update(authorId, dto);
     }
 
     /**
-     * Rota DELETE para remover um autor pelo authorId.
-     * Endpoint: DELETE /blog/authors/:authorId
-     * @param authorId ID do autor a ser removido, extraído dos parâmetros da rota.
-     * @returns Uma Promise que resolve void (sem retorno), indicando sucesso na remoção.
+     * Remove autor usando operação DELETE com chave primária
+     * @param authorId Chave de partição para exclusão
+     * @example DELETE /blog/authors/123
      */
-    @ApiOperation({ summary: 'Remove um autor pelo ID' })
-    @ApiResponse({ status: 200, description: 'Autor removido com sucesso.' })
-    @ApiResponse({ status: 404, description: 'Autor não encontrado.' })
-    @UseGuards(CognitoAuthGuard)
     @Delete(':authorId')
+    @UseGuards(CognitoAuthGuard)
+    @ApiOperation({ summary: 'Remove autor' })
+    @ApiResponse({
+        status: 204,
+        description: 'Autor removido com sucesso'
+    })
     async remove(@Param('authorId') authorId: string): Promise<void> {
-        this.logger.log(`Endpoint DELETE /blog/authors/${authorId} acionado`); // Log de acesso ao endpoint DELETE
-        return this.authorsService.remove(authorId); // Chama o serviço para remover o autor
+        return this.authorsService.remove(authorId);
     }
 }

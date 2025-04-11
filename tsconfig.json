@@ -30,7 +30,7 @@
     "noImplicitThis": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "typeRoots": ["./node_modules/@types", "./src/common/compress"]
+    "typeRoots": ["./node_modules/@types", "src/common/compression"]
   },
   "include": [
     "src/**/*"
