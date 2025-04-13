@@ -1,6 +1,5 @@
 /**
  * Representa a tabela "Category" no banco de dados.
- * Chave de partição: categoryId
  */
 export class Category {
   /** Chave de partição única para identificar a categoria */
@@ -9,15 +8,15 @@ export class Category {
   /** Nome da categoria */
   name: string;
 
+  /** Slug único para a categoria */
+  slug: string;
+
   /** Informações de SEO para a categoria */
   seo: {
     /** Título meta para SEO */
     metaTitle: string;
 
     /** Prioridade da categoria para SEO */
-    priority: number;
+    priority: string;
   };
-
-  /** Slug único para a categoria */
-  slug: string;
 }

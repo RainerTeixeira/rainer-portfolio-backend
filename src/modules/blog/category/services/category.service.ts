@@ -144,13 +144,16 @@ export class CategoryService {
      * @private
      */
     private mapCategoryFromDynamoDb(item: Record<string, unknown>): CategoryDto {
-        interface Seo {
-            metaTitle?: string;
-            priority?: string;
-            // ...outras propriedades existentes...
-        }
-
-        const seo: Seo = {
+        const seo: CategorySeoDto = {
+            canonical: typeof item.seo === 'object' && item.seo?.['canonical'] && typeof item.seo['canonical'] === 'string'
+                ? item.seo['canonical']
+                : undefined,
+            description: typeof item.seo === 'object' && item.seo?.['description'] && typeof item.seo['description'] === 'string'
+                ? item.seo['description']
+                : undefined,
+            keywords: Array.isArray(item.seo?.['keywords']) && item.seo['keywords'].every(keyword => typeof keyword === 'string')
+                ? item.seo['keywords']
+                : undefined,
             metaTitle: typeof item.seo === 'object' && item.seo?.['metaTitle'] && typeof item.seo['metaTitle'] === 'string'
                 ? item.seo['metaTitle']
                 : undefined,
