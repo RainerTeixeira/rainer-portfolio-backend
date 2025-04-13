@@ -1,30 +1,29 @@
 // src/modules/blog/categories/dto/create-category.dto.ts
-import { IsOptional, IsString } from 'class-validator';
-import { CategorySeoDto } from './category-seo.dto'; // Importe o DTO de SEO
+import { IsString, IsNotEmpty, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
+import { CategorySeoDto } from './category-seo.dto';
 
+/**
+ * DTO para criação de uma categoria.
+ */
 export class CreateCategoryDto {
-    @IsString()
-    categoryId: string;
+  /** ID único da categoria */
+  @IsString()
+  @IsNotEmpty()
+  categoryId: string;
 
-    @IsString()
-    name: string;
+  /** Nome da categoria */
+  @IsString()
+  @IsNotEmpty()
+  name: string;
 
-    @IsString()
-    slug: string;
+  /** Slug único da categoria */
+  @IsString()
+  @IsNotEmpty()
+  slug: string;
 
-    @IsOptional()
-    seo?: CategorySeoDto; // Use o DTO de SEO aqui e torne opcional
-
-    // Removendo o construtor para evitar a instanciação da classe dentro do DTO
-    /*constructor(
-        categoryId: string,
-        name: string,
-        slug: string,
-        seo?: CategorySeoDto, // Use o DTO de SEO no construtor e torne opcional
-    ) {
-        this.categoryId = categoryId;
-        this.name = name;
-        this.slug = slug;
-        this.seo = seo;
-    }*/
+  /** Informações de SEO */
+  @ValidateNested()
+  @Type(() => CategorySeoDto)
+  seo: CategorySeoDto;
 }

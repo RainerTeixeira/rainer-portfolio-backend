@@ -1,11 +1,19 @@
 // src/modules/blog/category/dto/category.dto.ts
-import { CategorySeoDto } from './category-seo.dto'; // Importe o DTO de SEO
+import { CategorySeoDto } from './category-seo.dto';
 
+/**
+ * DTO para representar uma categoria.
+ */
 export class CategoryDto {
-    categoryId: string;
-    name: string;
-    slug: string;
-    seo?: CategorySeoDto; // Use o DTO de SEO aqui e torne opcional
+  /** ID único da categoria */
+  categoryId: string;
 
-    // Removendo o construtor para evitar a instanciação da classe dentro do DTO
+  /** Nome da categoria */
+  name: string;
+
+  /** Slug único da categoria */
+  slug: string;
+
+  /** Informações de SEO */
+  seo: CategorySeoDto;
 }

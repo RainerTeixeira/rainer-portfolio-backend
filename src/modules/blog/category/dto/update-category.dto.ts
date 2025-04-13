@@ -1,16 +1,25 @@
 // src/modules/blog/categories/dto/update-category.dto.ts
-import { IsOptional, IsString } from 'class-validator'; // Removido IsArray
-import { CategorySeoDto } from './category-seo.dto'; // Importe o DTO de SEO
+import { IsOptional, IsString, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
+import { CategorySeoDto } from './category-seo.dto';
 
+/**
+ * DTO para atualização de uma categoria.
+ */
 export class UpdateCategoryDto {
+  /** Nome da categoria (opcional) */
   @IsOptional()
   @IsString()
   name?: string;
 
+  /** Slug único da categoria (opcional) */
   @IsOptional()
   @IsString()
   slug?: string;
 
+  /** Informações de SEO (opcional) */
   @IsOptional()
-  seo?: CategorySeoDto; // Use o DTO de SEO aqui e torne opcional
+  @ValidateNested()
+  @Type(() => CategorySeoDto)
+  seo?: CategorySeoDto;
 }
