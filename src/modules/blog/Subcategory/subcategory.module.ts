@@ -1,15 +1,20 @@
-// src/modules/blog/Subcategory/Subcategory.module.ts
-
-import { Module, forwardRef } from '@nestjs/common';
-import { SubcategoryController } from '@src/modules/blog/subcategory/controllers/subcategory.controller';
-import { SubcategoryService } from '@src/modules/blog/subcategory/services/subcategory.service';
-import { BlogModule } from '@src/modules/blog.module';
-import { DynamoDbService } from '@src/services/dynamoDb.service';
+import { Module } from '@nestjs/common';
+import { DynamoDbModule } from '@src/core/database/dynamodb.module';
+import { SubcategoriesController } from './subcategory.controller';
+import { SubcategoriesService } from './subcategory.service';
+import { SubcategoryRepository } from './subcategory.repository';
+import { CacheModule } from '@nestjs/cache-manager';
 
 @Module({
-  imports: [forwardRef(() => BlogModule)],
-  controllers: [SubcategoryController],
-  providers: [SubcategoryService, DynamoDbService],
-  exports: [SubcategoryService],
+  imports: [
+    DynamoDbModule,
+    CacheModule.register()
+  ],
+  controllers: [SubcategoriesController],
+  providers: [
+    SubcategoriesService,
+    SubcategoryRepository
+  ],
+  exports: [SubcategoriesService]
 })
-export class SubcategoryModule {}
+export class SubcategoryModule { }

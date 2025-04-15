@@ -1,15 +1,20 @@
-// src/modules/blog/categories/categories.module.ts
-
-import { Module, forwardRef } from '@nestjs/common';
-import { CategoryController } from '@src/modules/blog/category/controllers/category.controller';
-import { CategoryService } from '@src/modules/blog/category/services/category.service';
-import { BlogModule } from '@src/modules/blog.module';
-import { DynamoDbService } from '@src/services/dynamoDb.service';
+import { Module } from '@nestjs/common';
+import { DynamoDbModule } from '@src/core/database/dynamodb.module';
+import { CategoriesController } from './category.controller';
+import { CategoriesService } from './category.service';
+import { CategoryRepository } from './category.repository';
+import { CacheModule } from '@nestjs/cache-manager';
 
 @Module({
-  imports: [forwardRef(() => BlogModule)],
-  controllers: [CategoryController],
-  providers: [CategoryService, DynamoDbService],
-  exports: [CategoryService],
+  imports: [
+    DynamoDbModule,
+    CacheModule.register()
+  ],
+  controllers: [CategoriesController],
+  providers: [
+    CategoriesService,
+    CategoryRepository
+  ],
+  exports: [CategoriesService]
 })
-export class CategoryModule {}
+export class CategoryModule { }

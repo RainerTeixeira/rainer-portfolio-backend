@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Query } from '@nestjs/common';
-import { CommentsService } from '@src/modules/blog/comments/services/comments.service';
+import { CommentsService } from '@src/modules/blog/comments/comments.service';
 import { CreateCommentDto } from '@src/modules/blog/comments/dto/create-comment.dto';
 import { UpdateCommentDto } from '@src/modules/blog/comments/dto/update-comment.dto';
 import { CommentDto } from '@src/modules/blog/comments/dto/comment.dto';
