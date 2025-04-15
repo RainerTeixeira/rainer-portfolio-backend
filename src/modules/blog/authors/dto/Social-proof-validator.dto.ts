@@ -1,18 +1,7 @@
 import { registerDecorator, ValidationOptions, ValidationArguments } from 'class-validator';
 
-interface SocialProofEntry {
-    S?: string;
-}
-
-interface SocialProofObject {
-    [key: string]: SocialProofEntry;
-}
-
 /**
- * Decorator personalizado para validar o campo socialProof.
- *
- * @param validationOptions Opções de validação.
- * @returns Função de validação.
+ * Validador customizado para links sociais no formato DynamoDB
  */
 export function IsSocialProof(validationOptions?: ValidationOptions) {
     return function (object: object, propertyName: string) {
@@ -22,30 +11,19 @@ export function IsSocialProof(validationOptions?: ValidationOptions) {
             propertyName: propertyName,
             options: validationOptions,
             validator: {
-                validate(value: unknown, _args: ValidationArguments) {
-                    void _args; // Sinaliza que o parâmetro foi intencionalmente ignorado.
-                    if (value === null || value === undefined) return true; // Se for opcional
-                    if (typeof value !== 'object' || Array.isArray(value)) return false;
+                validate(value: unknown) {
+                    if (typeof value !== 'object' || value === null) return false;
 
-                    const socialProof = value as SocialProofObject;
-
-                    // Verifica se cada valor do objeto está no formato correto
-                    for (const key in socialProof) {
-                        const entry = socialProof[key];
-                        if (
-                            typeof key !== 'string' ||
-                            typeof entry !== 'object' ||
-                            !entry ||
-                            typeof entry.S !== 'string'
-                        ) {
-                            return false;
-                        }
-                    }
-                    return true;
+                    return Object.entries(value).every(([key, entry]) =>
+                        typeof key === 'string' &&
+                        typeof entry === 'object' &&
+                        entry !== null &&
+                        'S' in entry &&
+                        typeof entry.S === 'string'
+                    );
                 },
-                defaultMessage(_args: ValidationArguments) {
-                    void _args;
-                    return 'socialProof deve ser um objeto no formato { chave: { S: "valor" } }';
+                defaultMessage(args: ValidationArguments) {
+                    return `${args.property} deve ser um objeto no formato { rede: { S: "url" } }`;
                 },
             },
         });
