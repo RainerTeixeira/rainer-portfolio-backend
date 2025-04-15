@@ -147,7 +147,7 @@ export class PostsService {
     // Não vamos cachear por ID primário aqui, pois o slug é o identificador principal para leitura pública.
     // Se precisar de cache por ID, adicionar lógica similar a getPostBySlug.
     try {
-      const result = await this.dynamoDbService.getItem({
+      const result = await this.dynamoDbService.get({
         TableName: this.tableName,
         Key: { postId: postId } // DocumentClient syntax
       });
@@ -201,7 +201,7 @@ export class PostsService {
 
     try {
       this.logger.log(`Creating post with ID: ${postId}, Slug: ${item.slug}`);
-      await this.dynamoDbService.putItem({
+      await this.dynamoDbService.put({
         TableName: this.tableName,
         Item: item,
         ConditionExpression: 'attribute_not_exists(postId)' // Ensure postId is unique
@@ -304,7 +304,7 @@ export class PostsService {
       };
 
       this.logger.log(`Updating post ID: ${postId}`);
-      const result = await this.dynamoDbService.updateItem(params);
+      const result = await this.dynamoDbService.update(params);
 
       const updatedAttributes = result.data.Attributes;
       if (!updatedAttributes) {
@@ -347,7 +347,7 @@ export class PostsService {
       const postToDelete = await this.getPostById(postId);
 
       this.logger.log(`Deleting post ID: ${postId}, Slug: ${postToDelete.slug}`);
-      await this.dynamoDbService.deleteItem({
+      await this.dynamoDbService.getdelete({
         TableName: this.tableName,
         Key: { postId: postId }, // DocumentClient syntax
         ConditionExpression: 'attribute_exists(postId)' // Optional: Redundant check if getPostById succeeded
@@ -440,7 +440,7 @@ export class PostsService {
       switch (originalError) {
         case 'ConditionalCheckFailedException':
           // Context matters: could be Not Found or Conflict/Precondition Failed
-          if (error.operation === 'putItem' || error.operation === 'updateItem' || error.operation === 'deleteItem') {
+          if (error.operation === 'put' || error.operation === 'update' || error.operation === 'getdelete') {
             throw new NotFoundException(`Falha na operação: O post alvo não foi encontrado ou a condição não foi atendida (${contextMessage}).`);
           } else {
             // Should not happen often for Query/Scan/GetItem unless using conditional reads

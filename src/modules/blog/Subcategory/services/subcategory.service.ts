@@ -12,7 +12,6 @@ export class SubcategorySeoDto {
     @ApiPropertyOptional() @IsOptional() @IsString() priority?: string;
 }
 
-
 export class SubcategoryDto {
     @ApiProperty({ description: 'Chave composta: categoryId#subcategoryId', example: 'cat-123#sub-456' })
     @IsString()

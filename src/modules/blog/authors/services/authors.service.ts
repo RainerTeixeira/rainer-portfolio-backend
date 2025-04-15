@@ -61,7 +61,7 @@ export class AuthorsService {
     async create(dto: CreateAuthorDto): Promise<AuthorDetailDto> {
         try {
             // Operação atômica com verificação de existência
-            await this.dynamoDb.putItem({
+            await this.dynamoDb.put({
                 TableName: this.tableName,
                 Item: this.mapToDynamoItem(dto),
                 ConditionExpression: 'attribute_not_exists(authorId)'
@@ -159,7 +159,7 @@ export class AuthorsService {
             const attributeNames = this.buildExpressionAttributeNames(dto);
 
             // Operação de update atômica
-            await this.dynamoDb.updateItem({
+            await this.dynamoDb.update({
                 TableName: this.tableName,
                 Key: { authorId: { S: authorId } },
                 UpdateExpression: updateExpression,
@@ -194,7 +194,7 @@ export class AuthorsService {
         }
 
         try {
-            await this.dynamoDb.deleteItem({
+            await this.dynamoDb.getdelete({
                 TableName: this.tableName,
                 Key: { authorId: { S: authorId } }
             });
@@ -226,7 +226,7 @@ export class AuthorsService {
             if (cached) return cached;
 
             // Operação de leitura no DynamoDB
-            const result = await this.dynamoDb.getItem({
+            const result = await this.dynamoDb.get({
                 TableName: this.tableName,
                 Key: { authorId: { S: authorId } }
             });

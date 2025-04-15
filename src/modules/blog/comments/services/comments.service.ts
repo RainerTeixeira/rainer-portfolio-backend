@@ -83,7 +83,7 @@ export class CommentsService {
 
         try {
             this.logger.log(`Criando comentário para post ${dto.postId} por autor ${dto.authorId}`);
-            await this.dynamoDbService.putItem({
+            await this.dynamoDbService.put({
                 TableName: this.tableName,
                 Item: itemToCreate,
                 // ConditionExpression: 'attribute_not_exists(commentId)' // Garante unicidade (UUID já é altamente único)
@@ -236,7 +236,7 @@ export class CommentsService {
             const updateExpression = `SET ${updateExpressionParts.join(', ')}`;
 
 
-            const result = await this.dynamoDbService.updateItem({
+            const result = await this.dynamoDbService.update({
                 TableName: this.tableName,
                 Key: { postId: postId, commentId: commentId },
                 UpdateExpression: updateExpression,
@@ -303,7 +303,7 @@ export class CommentsService {
 
         try {
             this.logger.log(`Removendo comentário ${commentId} do post ${postId}`);
-            await this.dynamoDbService.deleteItem({
+            await this.dynamoDbService.getdelete({
                 TableName: this.tableName,
                 Key: { postId: postId, commentId: commentId },
                 ConditionExpression: 'attribute_exists(commentId)', // Garante que existe
@@ -345,7 +345,7 @@ export class CommentsService {
             }
 
             this.logger.debug(`Buscando comentário ${commentId} (post ${postId}) do DynamoDB.`);
-            const result = await this.dynamoDbService.getItem({
+            const result = await this.dynamoDbService.get({
                 TableName: this.tableName,
                 Key: { postId: postId, commentId: commentId }, // DocumentClient Key format
             });
