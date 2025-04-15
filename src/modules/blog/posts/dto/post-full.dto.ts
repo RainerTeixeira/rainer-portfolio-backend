@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { CommentDto } from '@src/modules/blog/comments/dto/comment.dto';
+import { CommentDto } from '@src/modules/blog/comments/dto/base-comment.dto';
 
 /**
  * DTO que representa um post completo no sistema.

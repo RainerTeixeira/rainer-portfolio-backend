@@ -1,15 +1,23 @@
-// src/modules/blog/comments/comments.module.ts
-
-import { Module, forwardRef } from '@nestjs/common'; // Importa o decorator Module para definir o módulo.
-import { CommentsController } from '@src/modules/blog/comments/comments.controller'; // Importa CommentsController usando alias @src.
-import { CommentsService } from '@src/modules/blog/comments/comments.service'; // Importa CommentsService usando alias @src.
-import { BlogModule } from '@src/modules/blog.module'; // <--- IMPORTA BlogModule AQUI!
-import { DynamoDbService } from '@src/services/dynamoDb.service';
+import { Module } from '@nestjs/common';
+import { DynamoDbModule } from '@src/services/dynamoDb.service';
+import { CommentsController } from './comments.controller';
+import { CommentsService } from './comments.service';
+import { CommentsRepository } from './comments.repository';
+import { CacheModule } from '@nestjs/cache-manager';
 
 @Module({
-    imports: [forwardRef(() => BlogModule)], // Use forwardRef envolvendo BlogModule para resolver dependência circular
+    imports: [
+        DynamoDbModule,
+        CacheModule.register({
+            ttl: 300, // 5 minutos
+            max: 100 // Limite de itens em cache
+        })
+    ],
     controllers: [CommentsController],
-    providers: [CommentsService, DynamoDbService],
-    exports: [CommentsService],
+    providers: [
+        CommentsService,
+        CommentsRepository
+    ],
+    exports: [CommentsService]
 })
 export class CommentsModule { }
