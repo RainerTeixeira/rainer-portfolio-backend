@@ -1,94 +1,89 @@
+import { DynamoDBTable } from '@nestjs/aws-dynamodb';
+import { Attribute, HashKey, RangeKey, Table } from 'dynamodb-data-mapper-annotations';
 import { Exclude, Expose } from 'class-transformer';
 
 /**
- * Entidade que representa a estrutura de dados de um autor no DynamoDB
- * 
- * @remarks
- * - Utiliza class-transformer para controle de exposição de campos
- * - Mapeia os campos do DynamoDB para propriedades TypeScript
+ * Entidade que representa um autor no DynamoDB
+ * @remarks Mapeia a estrutura da tabela e índices globais
  */
 @Exclude()
+@Table('blog-table')
 export class AuthorEntity {
-  @Expose({ name: 'pk' })
-  private _pk: string;
-
-  @Expose({ name: 'sk' })
-  private _sk = 'PROFILE';
-
   @Expose()
+  @HashKey({ attributeName: 'AUTHOR#id' })
   id: string;
 
   @Expose()
+  @RangeKey({ attributeName: 'PROFILE' })
+  profile: string = 'PROFILE';
+
+  @Expose()
+  @Attribute()
   name: string;
 
   @Expose()
+  @Attribute()
   email: string;
 
   @Expose()
+  @Attribute()
   slug: string;
 
   @Expose()
+  @Attribute()
   bio: string;
 
   @Expose()
-  profile_picture_url: string;
+  @Attribute({ attributeName: 'profile_picture_url' })
+  profilePictureUrl: string;
 
   @Expose()
-  meta_description: string;
+  @Attribute({ attributeName: 'meta_description' })
+  metaDescription: string;
 
   @Expose()
-  social_links: Record<string, string>;
+  @Attribute({ attributeName: 'social_links' })
+  socialLinks: Record<string, string>;
 
   @Expose()
-  created_at: string;
+  @Attribute({ attributeName: 'created_at' })
+  createdAt: string;
 
   @Expose()
-  updated_at: string;
+  @Attribute({ attributeName: 'updated_at' })
+  updatedAt: string;
 
   @Expose()
-  type = 'AUTHOR';
+  @Attribute()
+  type: string = 'AUTHOR';
 
-  constructor(partial: Partial<AuthorEntity>) {
-    Object.assign(this, partial);
-    this.generateCompositeKeys();
-  }
+  // GSI_Slug
+  @Expose()
+  @Attribute()
+  @DynamoDBIndexHashKey('GSI_Slug')
+  gsiSlug: string;
 
-  /**
-   * Gera as chaves compostas do DynamoDB
-   */
-  private generateCompositeKeys(): void {
-    if (!this.id) throw new Error('ID é obrigatório para gerar chaves compostas');
-    this._pk = `AUTHOR#${this.id}`;
-  }
+  @Expose()
+  @DynamoDBIndexRangeKey('GSI_Slug')
+  @Attribute()
+  gsiSlugType: string = 'AUTHOR';
 
-  /**
-   * Serializa a entidade para o formato DynamoDB
-   */
-  toDynamoItem(): Record<string, any> {
-    return {
-      pk: { S: this._pk },
-      sk: { S: this._sk },
-      id: { S: this.id },
-      name: { S: this.name },
-      email: { S: this.email },
-      slug: { S: this.slug },
-      bio: { S: this.bio },
-      profile_picture_url: { S: this.profile_picture_url },
-      meta_description: { S: this.meta_description },
-      social_links: { M: this.mapSocialLinks() },
-      created_at: { S: this.created_at },
-      updated_at: { S: this.updated_at },
-      type: { S: this.type }
-    };
-  }
+  // GSI_RecentAuthors
+  @Expose()
+  @Attribute()
+  @DynamoDBIndexHashKey('GSI_RecentAuthors')
+  gsiRecentType: string = 'AUTHOR';
 
-  /**
-   * Mapeia os links sociais para o formato DynamoDB
-   */
-  private mapSocialLinks(): Record<string, any> {
-    return Object.entries(this.social_links).reduce((acc, [key, value]) => {
-      acc[key] = { S: value };
-      return acc;
-    }, {});
+  @Expose()
+  @DynamoDBIndexRangeKey('GSI_RecentAuthors')
+  @Attribute({ attributeName: 'created_at' })
+  gsiRecentCreatedAt: string;
+
+  constructor(partial?: Partial<AuthorEntity>) {
+    if (partial) {
+      Object.assign(this, partial);
+      this.gsiSlug = this.slug;
+      this.gsiRecentCreatedAt = this.createdAt;
+    }
   }
 }

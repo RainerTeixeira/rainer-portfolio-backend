@@ -1,3 +1,4 @@
+import { Attribute, HashKey, RangeKey, Table } from 'dynamodb-data-mapper-annotations';
 import { Exclude, Expose } from 'class-transformer';
 
 /**
@@ -5,70 +6,79 @@ import { Exclude, Expose } from 'class-transformer';
  * @remarks Mapeia a estrutura da tabela e índices globais
  */
 @Exclude()
+@Table('blog-table')
 export class CategoryEntity {
-  @Expose({ name: 'pk' })
-  private _pk: string;
-
-  @Expose({ name: 'sk' })
-  private _sk = 'METADATA';
-
   @Expose()
+  @HashKey({ attributeName: 'CATEGORY#id' })
   id: string;
 
   @Expose()
+  @RangeKey({ attributeName: 'METADATA' })
+  metadata: string = 'METADATA';
+
+  @Expose()
+  @Attribute()
   name: string;
 
   @Expose()
+  @Attribute()
   slug: string;
 
   @Expose()
+  @Attribute()
   description: string;
 
   @Expose()
+  @Attribute()
   keywords: string[];
 
   @Expose()
-  post_count: number;
+  @Attribute({ attributeName: 'post_count' })
+  postCount: number;
 
   @Expose()
-  meta_description: string;
+  @Attribute({ attributeName: 'meta_description' })
+  metaDescription: string;
 
   @Expose()
-  created_at: string;
+  @Attribute({ attributeName: 'created_at' })
+  createdAt: string;
 
   @Expose()
-  updated_at: string;
+  @Attribute({ attributeName: 'updated_at' })
+  updatedAt: string;
 
   @Expose()
-  type = 'CATEGORY';
+  @Attribute()
+  type: string = 'CATEGORY';
 
-  constructor(partial: Partial<CategoryEntity>) {
-    Object.assign(this, partial);
-    this.generateCompositeKeys();
-  }
+  // GSI_Slug
+  @Expose()
+  @Attribute()
+  @DynamoDBIndexHashKey('GSI_Slug')
+  gsiSlug: string;
 
-  private generateCompositeKeys(): void {
-    if (!this.id) throw new Error('ID é obrigatório');
-    this._pk = `CATEGORY#${this.id}`;
-  }
+  @Expose()
+  @DynamoDBIndexRangeKey('GSI_Slug')
+  @Attribute()
+  gsiSlugType: string = 'CATEGORY';
 
-  /**
-   * Converte para formato DynamoDB
-   */
-  toDynamoItem(): Record<string, any> {
-    return {
-      pk: { S: this._pk },
-      sk: { S: this._sk },
-      id: { S: this.id },
-      name: { S: this.name },
-      slug: { S: this.slug },
-      description: { S: this.description },
-      keywords: { SS: this.keywords },
-      post_count: { N: this.post_count.toString() },
-      meta_description: { S: this.meta_description },
-      created_at: { S: this.created_at },
-      updated_at: { S: this.updated_at },
-      type: { S: this.type }
-    };
+  // GSI_Popular
+  @Expose()
+  @Attribute()
+  @DynamoDBIndexHashKey('GSI_Popular')
+  gsiPopularType: string = 'CATEGORY';
+
+  @Expose()
+  @DynamoDBIndexRangeKey('GSI_Popular')
+  @Attribute({ attributeName: 'post_count' })
+  gsiPopularPostCount: number;
+
+  constructor(partial?: Partial<CategoryEntity>) {
+    if (partial) {
+      Object.assign(this, partial);
+      this.gsiSlug = this.slug;
+      this.gsiPopularPostCount = this.postCount;
+    }
   }
 }
