@@ -44,7 +44,7 @@ export function IsSocialProof(validationOptions?: ValidationOptions) {
                     return true;
                 },
                 defaultMessage(_args: ValidationArguments) {
-                    void _args; // Sinaliza que o parâmetro foi intencionalmente ignorado.
+                    void _args;
                     return 'socialProof deve ser um objeto no formato { chave: { S: "valor" } }';
                 },
             },

@@ -93,13 +93,13 @@ export class DynamoDbService {
 
   /**
    * Recupera um único item da tabela
-   * @param params Parâmetros do comando GetItem
+   * @param params Parâmetros do comando Get
    * @returns Objeto contendo:
    * - success: Indicador de sucesso
    * - data: Resultado da operação
    * - metadata: Metadados de execução
    */
-  async getItem(params: GetCommandInput) {
+  async get(params: GetCommandInput) {
     return this.executeOperation('get', params, () =>
       this.docClient.send(new GetCommand(params))
     );
@@ -107,10 +107,10 @@ export class DynamoDbService {
 
   /**
    * Cria ou substitui um item na tabela
-   * @param params Parâmetros do comando PutItem
+   * @param params Parâmetros do comando Put
    * @returns Objeto com metadados da operação
    */
-  async putItem(params: PutCommandInput) {
+  async put(params: PutCommandInput) {
     return this.executeOperation('put', params, () =>
       this.docClient.send(new PutCommand(params))
     );
@@ -121,7 +121,7 @@ export class DynamoDbService {
    * @param params Parâmetros do comando UpdateItem
    * @returns Item atualizado
    */
-  async updateItem(params: UpdateCommandInput) {
+  async update(params: UpdateCommandInput) {
     return this.executeOperation('update', params, () =>
       this.docClient.send(new UpdateCommand(params))
     );
@@ -129,10 +129,10 @@ export class DynamoDbService {
 
   /**
    * Remove um item da tabela
-   * @param params Parâmetros do comando DeleteItem
+   * @param params Parâmetros do comando Delete
    * @returns Metadados da operação
    */
-  async deleteItem(params: DeleteCommandInput) {
+  async getdelete(params: DeleteCommandInput) {
     return this.executeOperation('delete', params, () =>
       this.docClient.send(new DeleteCommand(params))
     );

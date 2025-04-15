@@ -1,26 +1,49 @@
-/**
- * Representa a tabela "Authors" no banco de dados.
- * Chave de partição: authorId
- */
-export class Authors {
-  /** Chave de partição única para identificar o autor */
-  authorId: string;
+// src/modules/authors/entities/author.entity.ts
+import { Exclude, Expose } from 'class-transformer';
 
-  /** Nome do autor */
+@Exclude()
+export class AuthorEntity {
+  @Expose()
+  pk: string; // AUTHOR#id
+
+  @Expose()
+  sk: string = 'PROFILE';
+
+  @Expose()
+  id: string;
+
+  @Expose()
   name: string;
 
-  /** Slug único para o autor */
+  @Expose()
+  email: string;
+
+  @Expose()
   slug: string;
 
-  /** Provas sociais do autor, como links para redes sociais */
-  socialProof: {
-    /** URL do perfil no Facebook */
-    facebook: string;
+  @Expose()
+  bio: string;
 
-    /** URL do perfil no GitHub */
-    github: string;
+  @Expose()
+  profile_picture_url: string;
 
-    /** URL do perfil no LinkedIn */
-    linkdin: string;
-  };
+  @Expose()
+  meta_description: string;
+
+  @Expose()
+  social_links: Record<string, string>;
+
+  @Expose()
+  created_at: string;
+
+  @Expose()
+  updated_at: string;
+
+  @Expose()
+  type: string = 'AUTHOR';
+
+  constructor(partial: Partial<AuthorEntity>) {
+    Object.assign(this, partial);
+    this.pk = `AUTHOR#${this.id}`;
+  }
 }

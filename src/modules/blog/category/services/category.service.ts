@@ -74,7 +74,7 @@ export class CategoryService {
             // Prepara o item para o DocumentClient (sem tipos explícitos S, M, etc.)
             const itemToCreate = this.mapCreateDtoToDynamoItem(dto);
 
-            await this.dynamoDbService.putItem({
+            await this.dynamoDbService.put({
                 TableName: this.tableName,
                 Item: itemToCreate,
                 ConditionExpression: 'attribute_not_exists(categoryId)', // Garante unicidade
@@ -207,7 +207,7 @@ export class CategoryService {
             const expressionAttributeValues = this.buildExpressionAttributes(dto);
             const expressionAttributeNames = this.buildExpressionAttributeNames(dto); // Necessário se houver palavras reservadas
 
-            const result = await this.dynamoDbService.updateItem({
+            const result = await this.dynamoDbService.update({
                 TableName: this.tableName,
                 Key: { categoryId: categoryId }, // DocumentClient usa o valor diretamente
                 UpdateExpression: updateExpression,
@@ -269,7 +269,7 @@ export class CategoryService {
         }
 
         try {
-            await this.dynamoDbService.deleteItem({
+            await this.dynamoDbService.getdelete({
                 TableName: this.tableName,
                 Key: { categoryId: categoryId },
                 ConditionExpression: 'attribute_exists(categoryId)', // Garante que existe antes de deletar
@@ -305,7 +305,7 @@ export class CategoryService {
             }
 
             this.logger.debug(`Buscando categoria ${categoryId} do DynamoDB.`);
-            const result = await this.dynamoDbService.getItem({
+            const result = await this.dynamoDbService.get({
                 TableName: this.tableName,
                 Key: { categoryId: categoryId }, // DocumentClient Key format
             });

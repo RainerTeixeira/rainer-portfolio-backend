@@ -1,31 +1,43 @@
-import { IsString, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, IsEmail } from 'class-validator';
 import { IsSocialProof } from './social-proof-validator.dto';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { BaseAuthorDto } from './base-author.dto';
 
-export class CreateAuthorDto {
-    @ApiProperty({ description: 'ID do autor', example: '1' })
+export class CreateAuthorDto extends BaseAuthorDto {
     @IsString()
+    @IsNotEmpty()
     authorId: string;
 
-    @ApiProperty({ description: 'Nome do autor', example: 'John Doe' })
+    @IsString()
+    @IsNotEmpty()
+    profile: string;
+
+    @IsString()
+    bio: string;
+
+    @IsString()
+    created_at: string;
+
+    @IsEmail()
+    email: string;
+
+    @IsString()
+    meta_description: string;
+
     @IsString()
     name: string;
 
-    @ApiProperty({ description: 'Slug do autor (parte da URL)', example: 'john-doe' })
+    @IsString()
+    profile_picture_url: string;
+
     @IsString()
     slug: string;
 
-    @ApiPropertyOptional({
-        description: 'Provas sociais do autor, como redes sociais ou referências',
-        type: 'object',
-        example: {
-            github: 'github.com/john-doe',
-            medium: 'john-doe.medium.com',
-            socialProof: 'facebook.com/john-doe'
-        },
-        additionalProperties: { type: 'string' }
-    })
-    @IsOptional()
-    @IsSocialProof({ message: 'socialProof deve ser um objeto contendo chaves e valores do tipo string.' })
-    socialProof?: Record<string, string>;
+    @IsSocialProof({ message: 'social_links deve ser um objeto no formato { chave: { S: "valor" } }' })
+    social_links: Record<string, { S: string }>;
+
+    @IsString()
+    type: string;
+
+    @IsString()
+    updated_at: string;
 }
