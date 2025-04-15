@@ -1,17 +1,40 @@
+import { IsString, IsEmail, IsOptional } from 'class-validator';
+import { IsSocialProof } from './social-proof-validator.dto';
+
+/**
+ * DTO base com campos comuns para criação e atualização
+ */
 export class BaseAuthorDto {
-    // Chave primária: "AUTHOR#id" (S)
-    authorId: string;
-    // Chave de classificação: "PROFILE" (S)
-    profile: string;
-    bio: string;
-    created_at: string;
-    email: string;
-    meta_description: string;
+    @IsString()
+    @IsOptional()
+    id?: string;
+
+    @IsString()
     name: string;
-    profile_picture_url: string;
+
+    @IsEmail()
+    email: string;
+
+    @IsString()
     slug: string;
-    // social_links deverá seguir o formato validado pelo decorator customizado
+
+    @IsString()
+    bio: string;
+
+    @IsString()
+    profile_picture_url: string;
+
+    @IsString()
+    meta_description: string;
+
+    @IsSocialProof()
     social_links: Record<string, { S: string }>;
-    type: string; // ex: "AUTHOR"
-    updated_at: string;
+
+    @IsString()
+    @IsOptional()
+    created_at?: string;
+
+    @IsString()
+    @IsOptional()
+    updated_at?: string;
 }

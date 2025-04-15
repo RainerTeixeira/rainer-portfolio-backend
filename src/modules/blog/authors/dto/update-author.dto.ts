@@ -1,7 +1,10 @@
 import { PartialType } from '@nestjs/mapped-types';
-import { CreateAuthorDto } from './create-author.dto';
+import { BaseAuthorDto } from './base-author.dto';
 
-export class UpdateAuthorDto extends PartialType(CreateAuthorDto) {
+/**
+ * DTO para atualização de autores com campos opcionais
+ */
+export class UpdateAuthorDto extends PartialType(BaseAuthorDto) {
     @IsNotEmpty()
-    updated_at: string = new Date().toISOString();
+    updated_at!: string;
 }
