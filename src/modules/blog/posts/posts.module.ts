@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
-import { PostsController } from '@src/modules/blog/posts/controllers/posts.controller';
-import { PostsService } from '@src/modules/blog/posts/services/posts.service';
+import { PostsController } from '@src/modules/blog/posts/posts.controller';
+import { PostsService } from '@src/modules/blog/posts/posts.service';
 
 // Importa os módulos que disponibilizam os serviços de domínio necessários
 import { AuthorsModule } from '@src/modules/blog/authors/authors.module';

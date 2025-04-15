@@ -1,63 +1,78 @@
-// C:\projetos\rainer-portfolio-backend\src\modules\blog\authors\author.entity.ts
+import { DynamoDBTable } from '@nestjs/aws-dynamodb';
 import { Attribute, HashKey, RangeKey, Table } from 'dynamodb-data-mapper-annotations';
+import { Exclude, Expose } from 'class-transformer';
 
+/**
+ * Entidade que representa um comentário em um post
+ * @remarks
+ * - Partition Key: COMMENT#postId
+ * - Sort Key: TIMESTAMP
+ * - Índices Globais: GSI_PostComments, GSI_UserComments
+ */
+@Exclude()
 @Table('blog-table')
-export class AuthorEntity {
-    @HashKey({ attributeName: 'AUTHOR#id' })
-    authorId: string;
+export class CommentEntity {
+    @Expose()
+    @HashKey({ attributeName: 'COMMENT#postId' })
+    postId: string;
 
-    @RangeKey({ attributeName: 'PROFILE' })
-    profile: string;
+    @Expose()
+    @RangeKey({ attributeName: 'TIMESTAMP' })
+    timestamp: string;
 
+    @Expose()
+    @Attribute({ attributeName: 'user_id' })
+    userId: string;
+
+    @Expose()
     @Attribute()
-    bio: string;
+    text: string;
 
+    @Expose()
+    @Attribute()
+    status: string;
+
+    @Expose()
     @Attribute({ attributeName: 'created_at' })
     createdAt: string;
 
+    @Expose()
+    @Attribute({ attributeName: 'parent_comment_id' })
+    parentCommentId?: string;
+
+    @Expose()
     @Attribute()
-    email: string;
+    type: string = 'COMMENT';
 
-    @Attribute({ attributeName: 'meta_description' })
-    metaDescription: string;
+    // GSI_PostComments (post_id, created_at)
+    @Expose()
+    @Attribute({ attributeName: 'post_id' })
+    @DynamoDBIndexHashKey('GSI_PostComments')
+    gsiPostId: string;
 
-    @Attribute()
-    name: string;
-
-    @Attribute({ attributeName: 'profile_picture_url' })
-    profilePictureUrl: string;
-
-    @Attribute()
-    slug: string;
-
-    @Attribute({ attributeName: 'social_links' })
-    socialLinks: {
-        github?: string;
-        linkedin?: string;
-        twitter?: string;
-    };
-
-    @Attribute()
-    type: string;
-
-    @Attribute({ attributeName: 'updated_at' })
-    updatedAt: string;
-
-    // GSI_Slug
-    @Attribute()
-    @DynamoDBIndexHashKey('GSI_Slug')
-    gsiSlug: string;
-
-    @DynamoDBIndexRangeKey('GSI_Slug')
-    @Attribute()
-    gsiSlugType: string;
-
-    // GSI_RecentAuthors
-    @Attribute()
-    @DynamoDBIndexHashKey('GSI_RecentAuthors')
-    gsiRecentType: string;
-
-    @DynamoDBIndexRangeKey('GSI_RecentAuthors')
+    @Expose()
+    @DynamoDBIndexRangeKey('GSI_PostComments')
     @Attribute({ attributeName: 'created_at' })
-    gsiRecentCreatedAt: string;
+    gsiPostCreatedAt: string;
+
+    // GSI_UserComments (user_id, created_at)
+    @Expose()
+    @Attribute({ attributeName: 'user_id' })
+    @DynamoDBIndexHashKey('GSI_UserComments')
+    gsiUserId: string;
+
+    @Expose()
+    @DynamoDBIndexRangeKey('GSI_UserComments')
+    @Attribute({ attributeName: 'created_at' })
+    gsiUserCreatedAt: string;
+
+    constructor(partial?: Partial<CommentEntity>) {
+        if (partial) {
+            Object.assign(this, partial);
+            this.gsiPostId = this.postId;
+            this.gsiPostCreatedAt = this.createdAt;
+            this.gsiUserId = this.userId;
+            this.gsiUserCreatedAt = this.createdAt;
+        }
+    }
 }
