@@ -1,43 +1,9 @@
-import { IsOptional, IsString, IsObject } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+// update-subcategory.dto.ts
+import { PartialType } from '@nestjs/mapped-types';
+import { BaseSubcategoryDto } from './base-subcategory.dto';
+import { IsNotEmpty } from 'class-validator';
 
-export class UpdateSubcategoryDto {
-  @ApiProperty({ description: 'Nome da subcategoria', required: false })
-  @IsOptional()
-  @IsString()
-  name?: string;
-
-  @ApiProperty({ description: 'Slug da subcategoria', required: false })
-  @IsOptional()
-  @IsString()
-  slug?: string;
-
-  @ApiProperty({ description: 'Descrição da subcategoria', required: false })
-  @IsOptional()
-  @IsString()
-  description?: string;
-
-  @ApiProperty({ description: 'Palavras-chave da subcategoria', required: false })
-  @IsOptional()
-  @IsString()
-  keywords?: string;
-
-  @ApiProperty({ description: 'Título da subcategoria', required: false })
-  @IsOptional()
-  @IsString()
-  title?: string;
-
-  @ApiProperty({ description: 'SEO da subcategoria', required: false })
-  @IsOptional()
-  @IsObject()
-  seo?: Record<string, unknown>;
-
-  constructor(name?: string, slug?: string, description?: string, keywords?: string, title?: string, seo?: Record<string, unknown>) {
-    this.name = name;
-    this.slug = slug;
-    this.description = description;
-    this.keywords = keywords;
-    this.title = title;
-    this.seo = seo;
-  }
+export class UpdateSubcategoryDto extends PartialType(BaseSubcategoryDto) {
+  @IsNotEmpty()
+  updated_at!: string;
 }

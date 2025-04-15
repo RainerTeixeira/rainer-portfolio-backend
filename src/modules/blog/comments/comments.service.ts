@@ -30,9 +30,9 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { v4 as uuidv4 } from 'uuid'; // Import UUID generator
 import { DynamoDbService, DynamoDBOperationError } from '@src/services/dynamoDb.service'; // Ajuste o path
-import { CreateCommentDto } from '../dto/create-comment.dto';
-import { UpdateCommentDto } from '../dto/update-comment.dto';
-import { CommentDto } from '../dto/comment.dto';
+import { CreateCommentDto } from './dto/create-comment.dto';
+import { UpdateCommentDto } from './dto/update-comment.dto';
+import { CommentDto } from './dto/comment.dto';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 // Constante para o nome do índice GSI, se usado
