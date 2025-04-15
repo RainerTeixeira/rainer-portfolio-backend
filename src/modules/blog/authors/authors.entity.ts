@@ -3,8 +3,11 @@ import { Attribute, HashKey, RangeKey, Table } from 'dynamodb-data-mapper-annota
 import { Exclude, Expose } from 'class-transformer';
 
 /**
- * Entidade que representa um autor no DynamoDB
- * @remarks Mapeia a estrutura da tabela e índices globais
+ * Entidade que representa um autor no sistema
+ * @remarks
+ * - Partition Key: AUTHOR#id
+ * - Sort Key: PROFILE
+ * - Índices Globais: GSI_Slug, GSI_RecentAuthors
  */
 @Exclude()
 @Table('blog-table')
@@ -57,7 +60,7 @@ export class AuthorEntity {
   @Attribute()
   type: string = 'AUTHOR';
 
-  // GSI_Slug
+  // GSI_Slug (slug, type)
   @Expose()
   @Attribute()
   @DynamoDBIndexHashKey('GSI_Slug')
@@ -68,7 +71,7 @@ export class AuthorEntity {
   @Attribute()
   gsiSlugType: string = 'AUTHOR';
 
-  // GSI_RecentAuthors
+  // GSI_RecentAuthors (type, created_at)
   @Expose()
   @Attribute()
   @DynamoDBIndexHashKey('GSI_RecentAuthors')

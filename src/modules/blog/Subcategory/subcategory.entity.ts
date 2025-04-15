@@ -1,73 +1,93 @@
+import { DynamoDBTable } from '@nestjs/aws-dynamodb';
+import { Attribute, HashKey, RangeKey, Table } from 'dynamodb-data-mapper-annotations';
 import { Exclude, Expose } from 'class-transformer';
 
+/**
+ * Entidade que representa uma subcategoria
+ * @remarks
+ * - Partition Key: SUBCAT#parent#id
+ * - Sort Key: METADATA
+ * - Índices Globais: GSI_ParentCategory, GSI_Slug
+ */
 @Exclude()
+@Table('blog-table')
 export class SubcategoryEntity {
-  @Expose({ name: 'pk' })
-  private _pk: string;
-
-  @Expose({ name: 'sk' })
-  private _sk = 'METADATA';
+  @Expose()
+  @HashKey({ attributeName: 'SUBCAT#parent#id' })
+  parentId: string;
 
   @Expose()
-  id: string;
+  @RangeKey({ attributeName: 'METADATA' })
+  metadata: string = 'METADATA';
 
   @Expose()
+  @Attribute()
   name: string;
 
   @Expose()
+  @Attribute()
   slug: string;
 
   @Expose()
+  @Attribute()
   description: string;
 
   @Expose()
-  post_count: number;
+  @Attribute({ attributeName: 'meta_description' })
+  metaDescription: string;
 
   @Expose()
-  parent_category_id: string;
+  @Attribute({ attributeName: 'parent_category_id' })
+  parentCategoryId: string;
 
   @Expose()
-  parent_category_slug: string;
+  @Attribute({ attributeName: 'parent_category_slug' })
+  parentCategorySlug: string;
 
   @Expose()
-  meta_description: string;
+  @Attribute({ attributeName: 'post_count' })
+  postCount: number;
 
   @Expose()
-  created_at: string;
+  @Attribute({ attributeName: 'created_at' })
+  createdAt: string;
 
   @Expose()
-  updated_at: string;
+  @Attribute({ attributeName: 'updated_at' })
+  updatedAt: string;
 
   @Expose()
-  type = 'SUBCATEGORY';
+  @Attribute()
+  type: string = 'SUBCATEGORY';
 
-  constructor(partial: Partial<SubcategoryEntity>) {
-    Object.assign(this, partial);
-    this.generateCompositeKeys();
-  }
+  // GSI_ParentCategory (parent_category_id, created_at)
+  @Expose()
+  @Attribute({ attributeName: 'parent_category_id' })
+  @DynamoDBIndexHashKey('GSI_ParentCategory')
+  gsiParentCategoryId: string;
 
-  private generateCompositeKeys(): void {
-    if (!this.id || !this.parent_category_id) {
-      throw new Error('ID e parent_category_id são obrigatórios');
+  @Expose()
+  @DynamoDBIndexRangeKey('GSI_ParentCategory')
+  @Attribute({ attributeName: 'created_at' })
+  gsiParentCreatedAt: string;
+
+  // GSI_Slug (slug, type)
+  @Expose()
+  @Attribute()
+  @DynamoDBIndexHashKey('GSI_Slug')
+  gsiSlug: string;
+
+  @Expose()
+  @DynamoDBIndexRangeKey('GSI_Slug')
+  @Attribute()
+  gsiSlugType: string = 'SUBCATEGORY';
+
+  constructor(partial?: Partial<SubcategoryEntity>) {
+    if (partial) {
+      Object.assign(this, partial);
+      this.gsiParentCategoryId = this.parentCategoryId;
+      this.gsiParentCreatedAt = this.createdAt;
+      this.gsiSlug = this.slug;
     }
-    this._pk = `SUBCAT#${this.parent_category_id}#${this.id}`;
-  }
-
-  toDynamoItem(): Record<string, any> {
-    return {
-      pk: { S: this._pk },
-      sk: { S: this._sk },
-      id: { S: this.id },
-      name: { S: this.name },
-      slug: { S: this.slug },
-      description: { S: this.description },
-      post_count: { N: this.post_count.toString() },
-      parent_category_id: { S: this.parent_category_id },
-      parent_category_slug: { S: this.parent_category_slug },
-      meta_description: { S: this.meta_description },
-      created_at: { S: this.created_at },
-      updated_at: { S: this.updated_at },
-      type: { S: this.type }
-    };
   }
 }

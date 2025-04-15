@@ -1,9 +1,13 @@
+import { DynamoDBTable } from '@nestjs/aws-dynamodb';
 import { Attribute, HashKey, RangeKey, Table } from 'dynamodb-data-mapper-annotations';
 import { Exclude, Expose } from 'class-transformer';
 
 /**
- * Entidade que representa uma categoria no DynamoDB
- * @remarks Mapeia a estrutura da tabela e índices globais
+ * Entidade que representa uma categoria de conteúdo
+ * @remarks
+ * - Partition Key: CATEGORY#id
+ * - Sort Key: METADATA
+ * - Índices Globais: GSI_Slug, GSI_Popular
  */
 @Exclude()
 @Table('blog-table')
@@ -52,7 +56,7 @@ export class CategoryEntity {
   @Attribute()
   type: string = 'CATEGORY';
 
-  // GSI_Slug
+  // GSI_Slug (slug, type)
   @Expose()
   @Attribute()
   @DynamoDBIndexHashKey('GSI_Slug')
@@ -63,7 +67,7 @@ export class CategoryEntity {
   @Attribute()
   gsiSlugType: string = 'CATEGORY';
 
-  // GSI_Popular
+  // GSI_Popular (type, post_count)
   @Expose()
   @Attribute()
   @DynamoDBIndexHashKey('GSI_Popular')
