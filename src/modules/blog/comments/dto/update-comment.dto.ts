@@ -1,21 +1,9 @@
-// src/modules/blog/comments/dto/update-comment.dto.ts
+// update-comment.dto.ts
+import { PartialType } from '@nestjs/mapped-types';
+import { BaseCommentDto } from './base-comment.dto';
+import { IsNotEmpty } from 'class-validator';
 
-import { IsOptional, IsString } from 'class-validator'; // Removido CommentDto e IsNumber
-import { ApiProperty } from '@nestjs/swagger';
-
-export class UpdateCommentDto {
-    @ApiProperty({ description: 'Conteúdo do comentário', required: false })
-    @IsOptional()
-    @IsString()
-    content?: string;
-
-    @ApiProperty({ description: 'Data do comentário', required: false })
-    @IsOptional()
-    @IsString()
-    date?: string;
-
-    @ApiProperty({ description: 'Status do comentário', required: false })
-    @IsOptional()
-    @IsString()
-    status?: string;
+export class UpdateCommentDto extends PartialType(BaseCommentDto) {
+    @IsNotEmpty()
+    updated_at!: string;
 }
