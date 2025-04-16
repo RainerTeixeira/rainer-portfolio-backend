@@ -15,6 +15,13 @@ export interface AuthorSocialLinks {
  *
  * Entidade que representa um autor no sistema.
  * Define a estrutura dos dados de um autor, incluindo informações pessoais, links sociais e metadados.
+ * 
+ * Chave primária:
+ * Partition Key: AUTHOR#id
+ * Sort Key: PROFILE
+ * 
+ * Meta descrição para SEO: Descrição do autor para motores de busca.
+ * 
  */
 export class AuthorEntity {
   @ApiProperty({ description: 'Chave de partição no formato AUTHOR#id' })
