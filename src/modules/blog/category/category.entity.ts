@@ -1,88 +1,100 @@
-import { DynamoDBTable } from '@nestjs/aws-dynamodb';
-import { Attribute, HashKey, RangeKey, Table } from 'dynamodb-data-mapper-annotations';
+import {
+  DynamoDBTable,
+  DynamoDBHashKey,
+  DynamoDBRangeKey,
+  DynamoDBAttribute,
+  DynamoDBGlobalSecondaryIndex,
+} from '@nestjs/aws-dynamodb';
 import { Exclude, Expose } from 'class-transformer';
 
-/**
- * Entidade que representa uma categoria de conteúdo
- * @remarks
- * - Partition Key: CATEGORY#id
- * - Sort Key: METADATA
- * - Índices Globais: GSI_Slug, GSI_Popular
- */
 @Exclude()
-@Table('blog-table')
+@DynamoDBTable('Category') // Nome da tabela no .env: DYNAMO_TABLE_NAME_CATEGORIES
 export class CategoryEntity {
+  /**
+   * PK: CATEGORY#id
+   * SK: METADATA
+   */
   @Expose()
-  @HashKey({ attributeName: 'CATEGORY#id' })
-  id: string;
+  @DynamoDBHashKey({ name: 'CATEGORY#id' })
+  pk: string;
 
   @Expose()
-  @RangeKey({ attributeName: 'METADATA' })
-  metadata: string = 'METADATA';
+  @DynamoDBRangeKey({ name: 'METADATA' })
+  sk: string = 'METADATA';
 
   @Expose()
-  @Attribute()
+  @DynamoDBAttribute()
   name: string;
 
   @Expose()
-  @Attribute()
+  @DynamoDBAttribute()
   slug: string;
 
   @Expose()
-  @Attribute()
+  @DynamoDBAttribute()
   description: string;
 
   @Expose()
-  @Attribute()
+  @DynamoDBAttribute()
   keywords: string[];
 
   @Expose()
-  @Attribute({ attributeName: 'post_count' })
+  @DynamoDBAttribute({ name: 'post_count' })
   postCount: number;
 
   @Expose()
-  @Attribute({ attributeName: 'meta_description' })
+  @DynamoDBAttribute({ name: 'meta_description' })
   metaDescription: string;
 
   @Expose()
-  @Attribute({ attributeName: 'created_at' })
+  @DynamoDBAttribute({ name: 'created_at' })
   createdAt: string;
 
   @Expose()
-  @Attribute({ attributeName: 'updated_at' })
+  @DynamoDBAttribute({ name: 'updated_at' })
   updatedAt: string;
 
   @Expose()
-  @Attribute()
+  @DynamoDBAttribute()
   type: string = 'CATEGORY';
 
-  // GSI_Slug (slug, type)
-  @Expose()
-  @Attribute()
-  @DynamoDBIndexHashKey('GSI_Slug')
-  gsiSlug: string;
+  /**
+   * GSI_Slug: slug + type
+   */
+  @DynamoDBGlobalSecondaryIndex({
+    indexName: 'GSI_Slug',
+    partitionKey: { name: 'slug' },
+    sortKey: { name: 'type' },
+  })
+  gsiSlug?: string;
 
-  @Expose()
-  @DynamoDBIndexRangeKey('GSI_Slug')
-  @Attribute()
-  gsiSlugType: string = 'CATEGORY';
-
-  // GSI_Popular (type, post_count)
-  @Expose()
-  @Attribute()
-  @DynamoDBIndexHashKey('GSI_Popular')
-  gsiPopularType: string = 'CATEGORY';
-
-  @Expose()
-  @DynamoDBIndexRangeKey('GSI_Popular')
-  @Attribute({ attributeName: 'post_count' })
-  gsiPopularPostCount: number;
+  /**
+   * GSI_Popular: type + post_count
+   */
+  @DynamoDBGlobalSecondaryIndex({
+    indexName: 'GSI_Popular',
+    partitionKey: { name: 'type' },
+    sortKey: { name: 'post_count' },
+  })
+  gsiPopular?: number;
 
   constructor(partial?: Partial<CategoryEntity>) {
     if (partial) {
       Object.assign(this, partial);
-      this.gsiSlug = this.slug;
-      this.gsiPopularPostCount = this.postCount;
+      // Autoajuste das chaves caso o `id` venha separado
+      if (!partial.pk && partial.id) {
+        this.pk = `CATEGORY#${partial.id}`;
+      }
     }
+  }
+
+  // Getter virtual para acessar ID sem o prefixo
+  get id(): string {
+    return this.pk?.replace('CATEGORY#', '') ?? '';
+  }
+
+  // Setter virtual (caso queira criar com apenas id)
+  set id(value: string) {
+    this.pk = `CATEGORY#${value}`;
   }
 }

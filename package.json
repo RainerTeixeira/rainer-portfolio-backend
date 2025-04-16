@@ -14,8 +14,8 @@
 		"lint": "eslint 'src/**/*.ts' --fix"
 	},
 	"dependencies": {
-		"@aws-sdk/client-dynamodb": "^3.751.0",
-		"@aws-sdk/lib-dynamodb": "^3.751.0",
+		"@aws-sdk/client-dynamodb": "^3.788.0",
+		"@aws-sdk/lib-dynamodb": "^3.789.0",
 		"@aws-sdk/util-dynamodb": "^3.738.0",
 		"@effect/core": "^0.0.16",
 		"@fastify/compress": "^8.0.1",

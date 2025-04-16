@@ -1,37 +1,49 @@
-import { Injectable, Inject, NotFoundException } from '@nestjs/common';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Injectable, Inject, CACHE_MANAGER } from '@nestjs/common';
 import { Cache } from 'cache-manager';
-import { SubcategoryRepository } from '../repositories/subcategory.repository';
-import { SubcategoryEntity } from '../entities/subcategory.entity';
+import { SubcategoryRepository } from './subcategory.repository';
+import { CreateSubcategoryDto } from './dto/create-subcategory.dto';
+import { UpdateSubcategoryDto } from './dto/update-subcategory.dto';
+import { SubcategoryEntity } from './subcategory.entity';
 
 @Injectable()
-export class SubcategoriesService {
-    private readonly cacheTtl = 300;
-
+export class SubcategoryService {
     constructor(
-        private readonly repository: SubcategoryRepository,
-        @Inject(CACHE_MANAGER) private cache: Cache
+        private readonly subcategoryRepository: SubcategoryRepository,
+        @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     ) { }
 
-    async findByParent(parentId: string): Promise<SubcategoryEntity[]> {
-        const cacheKey = `subcategories:parent:${parentId}`;
-        const cached = await this.cache.get<SubcategoryEntity[]>(cacheKey);
-        if (cached) return cached;
+    async create(createDto: CreateSubcategoryDto): Promise<SubcategoryEntity> {
+        const subcategory = await this.subcategoryRepository.create(createDto);
+        await this.cacheManager.del(`subcategory_${subcategory.parentId}`);
+        return subcategory;
+    }
 
-        const subcategories = await this.repository.findByParent(parentId);
-        await this.cache.set(cacheKey, subcategories, this.cacheTtl);
-        return subcategories;
+    async findById(id: string): Promise<SubcategoryEntity> {
+        const cacheKey = `subcategory_${id}`;
+        let subcategory: SubcategoryEntity = await this.cacheManager.get(cacheKey);
+        if (!subcategory) {
+            subcategory = await this.subcategoryRepository.findById(id);
+            await this.cacheManager.set(cacheKey, subcategory);
+        }
+        return subcategory;
+    }
+
+    async update(id: string, updateDto: UpdateSubcategoryDto): Promise<SubcategoryEntity> {
+        const subcategory = await this.subcategoryRepository.update(id, updateDto);
+        await this.cacheManager.set(`subcategory_${id}`, subcategory);
+        return subcategory;
+    }
+
+    async delete(id: string): Promise<void> {
+        await this.subcategoryRepository.delete(id);
+        await this.cacheManager.del(`subcategory_${id}`);
+    }
+
+    async findByParentCategory(parentCategoryId: string): Promise<SubcategoryEntity[]> {
+        return await this.subcategoryRepository.findByParentCategory(parentCategoryId);
     }
 
     async findBySlug(slug: string): Promise<SubcategoryEntity> {
-        const cacheKey = `subcategory:slug:${slug}`;
-        const cached = await this.cache.get<SubcategoryEntity>(cacheKey);
-        if (cached) return cached;
-
-        const subcategory = await this.repository.findBySlug(slug);
-        if (!subcategory) throw new NotFoundException('Subcategoria não encontrada');
-
-        await this.cache.set(cacheKey, subcategory, this.cacheTtl);
-        return subcategory;
+        return await this.subcategoryRepository.findBySlug(slug);
     }
 }
