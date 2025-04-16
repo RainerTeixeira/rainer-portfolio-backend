@@ -1,63 +1,86 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { DynamoDbService } from '@src/services/dynamoDb.service';
-import { CategoryEntity } from '../entities/category.entity';
-import { AttributeValue } from '@aws-sdk/client-dynamodb';
+import { CategoryEntity } from './category.entity';
+import { CreateCategoryDto } from './dto/create-category.dto';
+import { UpdateCategoryDto } from './dto/update-category.dto';
 
 @Injectable()
 export class CategoryRepository {
-    private readonly tableName = 'YourTableName';
+    private readonly TABLE_NAME = 'blog-table';
 
-    constructor(private readonly dynamoDb: DynamoDbService) { }
+    constructor(private readonly dynamoDbService: DynamoDbService) { }
 
-    /**
-     * Busca categoria por slug usando GSI
-     */
-    async findBySlug(slug: string): Promise<CategoryEntity | null> {
-        const result = await this.dynamoDb.query({
-            TableName: this.tableName,
+    async create(createDto: CreateCategoryDto): Promise<CategoryEntity> {
+        const category = new CategoryEntity(createDto);
+        const params = {
+            TableName: this.TABLE_NAME,
+            Item: category,
+        };
+        await this.dynamoDbService.put(params);
+        return category;
+    }
+
+    async findById(id: string): Promise<CategoryEntity> {
+        const params = {
+            TableName: this.TABLE_NAME,
+            Key: { 'CATEGORY#id': id, METADATA: 'METADATA' },
+        };
+        const result = await this.dynamoDbService.get(params);
+        if (!result?.data?.Item) {
+            throw new NotFoundException(`Category with id ${id} not found`);
+        }
+        return new CategoryEntity(result.data.Item);
+    }
+
+    async update(id: string, updateDto: UpdateCategoryDto): Promise<CategoryEntity> {
+        const existing = await this.findById(id);
+        const updated = { ...existing, ...updateDto };
+        const params = {
+            TableName: this.TABLE_NAME,
+            Item: updated,
+        };
+        await this.dynamoDbService.put(params);
+        return new CategoryEntity(updated);
+    }
+
+    async delete(id: string): Promise<void> {
+        const params = {
+            TableName: this.TABLE_NAME,
+            Key: { 'CATEGORY#id': id, METADATA: 'METADATA' },
+        };
+        await this.dynamoDbService.delete(params);
+    }
+
+    // Consulta por GSI_Slug (busca por slug)
+    async findBySlug(slug: string): Promise<CategoryEntity> {
+        const params = {
+            TableName: this.TABLE_NAME,
             IndexName: 'GSI_Slug',
-            KeyConditionExpression: '#slug = :slug AND #type = :type',
-            ExpressionAttributeNames: {
-                '#slug': 'slug',
-                '#type': 'type'
-            },
+            KeyConditionExpression: 'gsiSlug = :slug and gsiSlugType = :type',
             ExpressionAttributeValues: {
-                ':slug': { S: slug },
-                ':type': { S: 'CATEGORY' }
-            }
-        });
-
-        return result.Items?.length ? this.mapDynamoItem(result.Items[0]) : null;
+                ':slug': slug,
+                ':type': 'CATEGORY',
+            },
+        };
+        const result = await this.dynamoDbService.query(params);
+        if (!result?.data?.Items || result.data.Items.length === 0) {
+            throw new NotFoundException(`Category with slug ${slug} not found`);
+        }
+        return new CategoryEntity(result.data.Items[0]);
     }
 
-    /**
-     * Lista categorias populares usando GSI
-     */
-    async findPopular(): Promise<CategoryEntity[]> {
-        const result = await this.dynamoDb.query({
-            TableName: this.tableName,
+    // Consulta por GSI_Popular (categorias mais populares)
+    async findPopularCategories(): Promise<CategoryEntity[]> {
+        const params = {
+            TableName: this.TABLE_NAME,
             IndexName: 'GSI_Popular',
-            KeyConditionExpression: '#type = :type',
-            ExpressionAttributeNames: { '#type': 'type' },
-            ExpressionAttributeValues: { ':type': { S: 'CATEGORY' } },
-            ScanIndexForward: false,
-            Limit: 10
-        });
-
-        return result.Items?.map(item => this.mapDynamoItem(item)) || [];
-    }
-
-    private mapDynamoItem(item: Record<string, AttributeValue>): CategoryEntity {
-        return new CategoryEntity({
-            id: item.id.S,
-            name: item.name.S,
-            slug: item.slug.S,
-            description: item.description.S,
-            keywords: item.keywords.SS || [],
-            post_count: Number(item.post_count.N),
-            meta_description: item.meta_description.S,
-            created_at: item.created_at.S,
-            updated_at: item.updated_at.S
-        });
+            KeyConditionExpression: 'gsiPopularType = :type',
+            ExpressionAttributeValues: {
+                ':type': 'CATEGORY',
+            },
+            ScanIndexForward: false, // categorias com maior post_count primeiro
+        };
+        const result = await this.dynamoDbService.query(params);
+        return result.data.Items.map((item: any) => new CategoryEntity(item));
     }
 }

@@ -1,62 +1,83 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { DynamoDbService } from '@src/services/dynamoDb.service';
-import { CommentEntity } from '../entities/comment.entity';
-import { AttributeValue } from '@aws-sdk/client-dynamodb';
+import { CommentEntity } from './comment.entity';
+import { CreateCommentDto } from './dto/create-comment.dto';
+import { UpdateCommentDto } from './dto/update-comment.dto';
 
 @Injectable()
-export class CommentsRepository {
-  private readonly tableName = 'YourTableName';
+export class CommentRepository {
+  private readonly TABLE_NAME = 'blog-table';
 
-  constructor(private readonly dynamoDb: DynamoDbService) { }
+  constructor(private readonly dynamoDbService: DynamoDbService) { }
 
-  /**
-   * Busca comentários por post usando GSI
-   * @param postId ID do post
-   * @returns Comentários ordenados por data decrescente
-   */
-  async findByPost(postId: string): Promise<CommentEntity[]> {
-    const result = await this.dynamoDb.query({
-      TableName: this.tableName,
+  async create(createDto: CreateCommentDto): Promise<CommentEntity> {
+    const comment = new CommentEntity(createDto);
+    const params = {
+      TableName: this.TABLE_NAME,
+      Item: comment,
+    };
+    await this.dynamoDbService.put(params);
+    return comment;
+  }
+
+  async findById(postId: string, timestamp: string): Promise<CommentEntity> {
+    const params = {
+      TableName: this.TABLE_NAME,
+      Key: { 'COMMENT#postId': postId, TIMESTAMP: timestamp },
+    };
+    const result = await this.dynamoDbService.get(params);
+    if (!result?.data?.Item) {
+      throw new NotFoundException(`Comment with postId ${postId} and timestamp ${timestamp} not found`);
+    }
+    return new CommentEntity(result.data.Item);
+  }
+
+  async update(postId: string, timestamp: string, updateDto: UpdateCommentDto): Promise<CommentEntity> {
+    const existing = await this.findById(postId, timestamp);
+    const updated = { ...existing, ...updateDto };
+    const params = {
+      TableName: this.TABLE_NAME,
+      Item: updated,
+    };
+    await this.dynamoDbService.put(params);
+    return new CommentEntity(updated);
+  }
+
+  async delete(postId: string, timestamp: string): Promise<void> {
+    const params = {
+      TableName: this.TABLE_NAME,
+      Key: { 'COMMENT#postId': postId, TIMESTAMP: timestamp },
+    };
+    await this.dynamoDbService.delete(params);
+  }
+
+  // Consulta por GSI_PostComments (comentários de um post)
+  async findCommentsByPost(postId: string): Promise<CommentEntity[]> {
+    const params = {
+      TableName: this.TABLE_NAME,
       IndexName: 'GSI_PostComments',
-      KeyConditionExpression: '#post = :post',
-      ExpressionAttributeNames: { '#post': 'post_id' },
-      ExpressionAttributeValues: { ':post': { S: postId } },
-      ScanIndexForward: false
-    });
-
-    return result.Items?.map(item => this.mapDynamoItem(item)) || [];
+      KeyConditionExpression: 'gsiPostId = :postId',
+      ExpressionAttributeValues: {
+        ':postId': postId,
+      },
+      ScanIndexForward: true, // ordem cronológica
+    };
+    const result = await this.dynamoDbService.query(params);
+    return result.data.Items.map((item: any) => new CommentEntity(item));
   }
 
-  /**
-   * Busca comentários por usuário usando GSI
-   * @param userId ID do usuário
-   * @returns Comentários ordenados por data decrescente
-   */
-  async findByUser(userId: string): Promise<CommentEntity[]> {
-    const result = await this.dynamoDb.query({
-      TableName: this.tableName,
+  // Consulta por GSI_UserComments (comentários de um usuário)
+  async findCommentsByUser(userId: string): Promise<CommentEntity[]> {
+    const params = {
+      TableName: this.TABLE_NAME,
       IndexName: 'GSI_UserComments',
-      KeyConditionExpression: '#user = :user',
-      ExpressionAttributeNames: { '#user': 'user_id' },
-      ExpressionAttributeValues: { ':user': { S: userId } },
-      ScanIndexForward: false
-    });
-
-    return result.Items?.map(item => this.mapDynamoItem(item)) || [];
-  }
-
-  /**
-   * Mapeia item DynamoDB para entidade
-   */
-  mapDynamoItem(item: Record<string, AttributeValue>): CommentEntity {
-    return new CommentEntity({
-      id: item.id.S,
-      post_id: item.post_id.S,
-      user_id: item.user_id.S,
-      text: item.text.S,
-      status: item.status.S,
-      created_at: item.created_at.S,
-      parent_comment_id: item.parent_comment_id?.S
-    });
+      KeyConditionExpression: 'gsiUserId = :userId',
+      ExpressionAttributeValues: {
+        ':userId': userId,
+      },
+      ScanIndexForward: true,
+    };
+    const result = await this.dynamoDbService.query(params);
+    return result.data.Items.map((item: any) => new CommentEntity(item));
   }
 }

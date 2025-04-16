@@ -9,10 +9,10 @@
  * 
  * @example
  * // Exemplo de uso:
- * const postId = generatePostId();
+ * const postId = generateId();
  * console.log(postId); // Saída pode ser algo como: "k8fr6uqwb3z"
  */
-export const generatePostId = (): string => {
+export const generateId = (): string => {
     // Gera o identificador usando a data atual em milissegundos (base 36) e um valor aleatório (base 36).
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 11);
 };

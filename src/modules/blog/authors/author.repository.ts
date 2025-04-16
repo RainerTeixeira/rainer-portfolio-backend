@@ -1,94 +1,114 @@
 import { Injectable } from '@nestjs/common';
-import { DynamoDbService } from '@src/services/dynamoDb.service';
-import { AuthorEntity } from '../entities/author.entity';
-import { AttributeValue } from '@aws-sdk/client-dynamodb';
+import { AuthorEntity } from './authors.entity';
+import { DynamoDbService } from '../../../services/dynamoDb.service';
+import { CreateAuthorDto } from './dto/create-author.dto';
+import { UpdateAuthorDto } from './dto/update-author.dto';
 
+/**
+ * @AuthorRepository
+ *
+ * Repositório responsável pelas operações de acesso a dados para a entidade Author.
+ * Usa o DynamoDbService como camada de acesso ao banco de dados.
+ */
 @Injectable()
 export class AuthorRepository {
   private readonly tableName = 'Authors';
 
   constructor(private readonly dynamoDb: DynamoDbService) { }
 
-  /**
-   * Cria um novo autor com verificação de existência
-   */
-  async create(author: AuthorEntity): Promise<AuthorEntity> {
+  async create(createAuthorDto: CreateAuthorDto): Promise<AuthorEntity> {
+    const author = new AuthorEntity(createAuthorDto);
     await this.dynamoDb.put({
       TableName: this.tableName,
-      Item: author.toDynamoItem(),
-      ConditionExpression: 'attribute_not_exists(pk)'
+      Item: author,
     });
     return author;
   }
 
+  async update(id: string, updateAuthorDto: UpdateAuthorDto): Promise<AuthorEntity> {
+    const result = await this.dynamoDb.update({
+      TableName: this.tableName,
+      Key: {
+        'AUTHOR#id': `AUTHOR#${id}`,
+        PROFILE: 'PROFILE',
+      },
+      UpdateExpression: 'SET #name = :name, email = :email, slug = :slug, bio = :bio, '
+        + 'profile_picture_url = :profilePicture, meta_description = :metaDescription, '
+        + 'social_links = :socialLinks, updated_at = :updatedAt',
+      ExpressionAttributeNames: { '#name': 'name' },
+      ExpressionAttributeValues: {
+        ':name': updateAuthorDto.name,
+        ':email': updateAuthorDto.email,
+        ':slug': updateAuthorDto.slug,
+        ':bio': updateAuthorDto.bio,
+        ':profilePicture': updateAuthorDto.profile_picture_url,
+        ':metaDescription': updateAuthorDto.meta_description,
+        ':socialLinks': updateAuthorDto.social_links,
+        ':updatedAt': new Date().toISOString(),
+      },
+      ReturnValues: 'ALL_NEW',
+    });
+
+    // ✅ Verifica se há dados antes de criar a entidade
+    if (!result.data.Attributes) {
+      throw new Error('Erro ao atualizar autor: dados não retornados do banco.');
+    }
+
+    return new AuthorEntity(result.data.Attributes);
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.dynamoDb.delete({
+      TableName: this.tableName,
+      Key: {
+        'AUTHOR#id': `AUTHOR#${id}`,
+        PROFILE: 'PROFILE',
+      },
+    });
+  }
+
   /**
-   * Busca autor por slug usando GSI
+   * Retorna AuthorEntity ou null se não encontrado.
+   */
+  async findById(id: string): Promise<AuthorEntity | null> {
+    const result = await this.dynamoDb.get({
+      TableName: this.tableName,
+      Key: {
+        'AUTHOR#id': `AUTHOR#${id}`,
+        PROFILE: 'PROFILE',
+      },
+    });
+
+    return result.data.Item ? new AuthorEntity(result.data.Item) : null;
+  }
+
+  /**
+   * Retorna AuthorEntity ou null se não encontrado via scan por slug.
    */
   async findBySlug(slug: string): Promise<AuthorEntity | null> {
-    const result = await this.dynamoDb.query({
+    const result = await this.dynamoDb.scan({
       TableName: this.tableName,
-      IndexName: 'GSI_Slug',
-      KeyConditionExpression: '#slug = :slug AND #type = :type',
-      ExpressionAttributeNames: { '#slug': 'slug', '#type': 'type' },
-      ExpressionAttributeValues: {
-        ':slug': { S: slug },
-        ':type': { S: 'AUTHOR' }
-      }
+      FilterExpression: 'slug = :slug',
+      ExpressionAttributeValues: { ':slug': slug },
     });
 
-    return result.Items?.length ? this.mapDynamoItem(result.Items[0]) : null;
+    return result.data.Items?.[0] ? new AuthorEntity(result.data.Items[0]) : null;
   }
 
   /**
-   * Atualização genérica com suporte a campos dinâmicos
+   * Lista os autores mais recentes usando índice GSI_RecentAuthors.
    */
-  async update(id: string, updates: Partial<AuthorEntity>): Promise<AuthorEntity> {
-    const updateParams = this.buildUpdateParams(id, updates);
-
-    const result = await this.dynamoDb.update(updateParams);
-    return this.mapDynamoItem(result.Attributes);
-  }
-
-  private buildUpdateParams(id: string, updates: Partial<AuthorEntity>) {
-    const updateExpressions = [];
-    const expressionAttributes: Record<string, AttributeValue> = {};
-    const expressionNames: Record<string, string> = {};
-
-    Object.entries(updates).forEach(([key, value], index) => {
-      updateExpressions.push(`#field${index} = :value${index}`);
-      expressionNames[`#field${index}`] = key;
-      expressionAttributes[`:value${index}`] = { S: value.toString() };
-    });
-
-    return {
+  async listRecentAuthors(limit: number = 10): Promise<AuthorEntity[]> {
+    const result = await this.dynamoDb.query({
       TableName: this.tableName,
-      Key: { pk: { S: `AUTHOR#${id}` }, sk: { S: 'PROFILE' } },
-      UpdateExpression: `SET ${updateExpressions.join(', ')}`,
-      ExpressionAttributeNames: expressionNames,
-      ExpressionAttributeValues: expressionAttributes,
-      ReturnValues: 'ALL_NEW'
-    };
-  }
-
-  private mapDynamoItem(item: Record<string, AttributeValue>): AuthorEntity {
-    return new AuthorEntity({
-      id: item.id.S,
-      name: item.name.S,
-      email: item.email.S,
-      slug: item.slug.S,
-      bio: item.bio.S,
-      profile_picture_url: item.profile_picture_url.S,
-      meta_description: item.meta_description.S,
-      social_links: this.parseSocialLinks(item.social_links.M),
-      created_at: item.created_at.S,
-      updated_at: item.updated_at.S
+      IndexName: 'GSI_RecentAuthors',
+      KeyConditionExpression: '#type = :type',
+      ExpressionAttributeNames: { '#type': 'type' },
+      ExpressionAttributeValues: { ':type': 'AUTHOR' },
+      Limit: limit,
+      ScanIndexForward: false,
     });
-  }
 
-  private parseSocialLinks(links: Record<string, AttributeValue>): Record<string, string> {
-    return Object.entries(links).reduce((acc, [key, value]) => {
-      acc[key] = value.S;
-      return acc;
-    }, {});
+    return result.data.Items?.map(item => new AuthorEntity(item)) || [];
   }
 }

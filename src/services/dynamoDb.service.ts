@@ -132,7 +132,7 @@ export class DynamoDbService {
    * @param params Parâmetros do comando Delete
    * @returns Metadados da operação
    */
-  async getdelete(params: DeleteCommandInput) {
+  async delete(params: DeleteCommandInput) {
     return this.executeOperation('delete', params, () =>
       this.docClient.send(new DeleteCommand(params))
     );

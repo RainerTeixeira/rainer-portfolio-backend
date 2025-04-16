@@ -1,32 +1,43 @@
-import { Controller, Get, Param } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { SubcategoriesService } from '../services/subcategories.service';
-import { SubcategoryEntity } from '../entities/subcategory.entity';
+import { Controller, Get, Post, Put, Delete, Body, Param } from '@nestjs/common';
+import { SubcategoryService } from './subcategory.service';
+import { CreateSubcategoryDto } from './dto/create-subcategory.dto';
+import { UpdateSubcategoryDto } from './dto/update-subcategory.dto';
+import { SubcategoryEntity } from './subcategory.entity';
 
-@ApiTags('Blog - Subcategories')
-@Controller('blog/subcategories')
-export class SubcategoriesController {
-  constructor(private readonly service: SubcategoriesService) { }
+@Controller('subcategories')
+export class SubcategoryController {
+  constructor(private readonly subcategoryService: SubcategoryService) { }
 
-  @Get('by-parent/:parentId')
-  @ApiOperation({ summary: 'Lista subcategorias por categoria pai' })
-  @ApiResponse({
-    status: 200,
-    description: 'Listagem de subcategorias relacionadas',
-    type: [SubcategoryEntity]
-  })
-  async findByParent(@Param('parentId') parentId: string): Promise<SubcategoryEntity[]> {
-    return this.service.findByParent(parentId);
+  @Post()
+  async create(@Body() createDto: CreateSubcategoryDto): Promise<SubcategoryEntity> {
+    return await this.subcategoryService.create(createDto);
   }
 
-  @Get(':slug')
-  @ApiOperation({ summary: 'Busca subcategoria por slug' })
-  @ApiResponse({
-    status: 200,
-    description: 'Detalhes completos da subcategoria',
-    type: SubcategoryEntity
-  })
+  @Get(':id')
+  async findById(@Param('id') id: string): Promise<SubcategoryEntity> {
+    return await this.subcategoryService.findById(id);
+  }
+
+  @Put(':id')
+  async update(
+    @Param('id') id: string,
+    @Body() updateDto: UpdateSubcategoryDto,
+  ): Promise<SubcategoryEntity> {
+    return await this.subcategoryService.update(id, updateDto);
+  }
+
+  @Delete(':id')
+  async delete(@Param('id') id: string): Promise<void> {
+    return await this.subcategoryService.delete(id);
+  }
+
+  @Get('parent/:parentCategoryId')
+  async findByParentCategory(@Param('parentCategoryId') parentCategoryId: string): Promise<SubcategoryEntity[]> {
+    return await this.subcategoryService.findByParentCategory(parentCategoryId);
+  }
+
+  @Get('slug/:slug')
   async findBySlug(@Param('slug') slug: string): Promise<SubcategoryEntity> {
-    return this.service.findBySlug(slug);
+    return await this.subcategoryService.findBySlug(slug);
   }
 }

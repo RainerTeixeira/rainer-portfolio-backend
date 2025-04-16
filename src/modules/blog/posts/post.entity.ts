@@ -1,162 +1,146 @@
-import { DynamoDBTable } from '@nestjs/aws-dynamodb';
-import { Attribute, HashKey, RangeKey, Table } from 'dynamodb-data-mapper-annotations';
+import {
+    DynamoDBTable,
+    DynamoDBHashKey,
+    DynamoDBRangeKey,
+    DynamoDBGlobalSecondaryIndex,
+    DynamoDBAttribute,
+} from '@nestjs/aws-dynamodb';
 import { Exclude, Expose } from 'class-transformer';
 
 /**
- * Entidade que representa um post de blog
- * @remarks
- * - Partition Key: POST#id
- * - Sort Key: METADATA
- * - Índices Globais: GSI_AuthorPosts, GSI_CategoryPosts, GSI_RecentPosts, GSI_Slug
+ * Entidade que representa um post de blog.
+ * @table blog
+ * PK: POST#id
+ * SK: METADATA
  */
 @Exclude()
-@Table('blog-table')
+@DynamoDBTable(process.env.DYNAMO_TABLE_NAME_POSTS || 'blog') // Nome da tabela do .env ou 'blog' por padrão
 export class PostEntity {
     @Expose()
-    @HashKey({ attributeName: 'POST#id' })
+    @DynamoDBHashKey({ name: 'POST#id' })
     id: string;
 
     @Expose()
-    @RangeKey({ attributeName: 'METADATA' })
+    @DynamoDBRangeKey({ name: 'METADATA' })
     metadata: string = 'METADATA';
 
     @Expose()
-    @Attribute({ attributeName: 'author_id' })
+    @DynamoDBAttribute({ name: 'author_id' })
     authorId: string;
 
     @Expose()
-    @Attribute({ attributeName: 'category_id' })
+    @DynamoDBAttribute({ name: 'category_id' })
     categoryId: string;
 
     @Expose()
-    @Attribute({ attributeName: 'comment_count' })
+    @DynamoDBAttribute({ name: 'comment_count' })
     commentCount: number;
 
     @Expose()
-    @Attribute()
+    @DynamoDBAttribute()
     content: string;
 
     @Expose()
-    @Attribute({ attributeName: 'created_at' })
+    @DynamoDBAttribute({ name: 'created_at' })
     createdAt: string;
 
     @Expose()
-    @Attribute()
+    @DynamoDBAttribute()
     excerpt: string;
 
     @Expose()
-    @Attribute({ attributeName: 'last_updated_date' })
+    @DynamoDBAttribute({ name: 'last_updated_date' })
     lastUpdatedDate: string;
 
     @Expose()
-    @Attribute()
+    @DynamoDBAttribute()
     likes: number;
 
     @Expose()
-    @Attribute({ attributeName: 'meta_description' })
+    @DynamoDBAttribute({ name: 'meta_description' })
     metaDescription: string;
 
     @Expose()
-    @Attribute({ attributeName: 'og_description' })
+    @DynamoDBAttribute({ name: 'og_description' })
     ogDescription: string;
 
     @Expose()
-    @Attribute({ attributeName: 'og_image' })
+    @DynamoDBAttribute({ name: 'og_image' })
     ogImage: string;
 
     @Expose()
-    @Attribute({ attributeName: 'og_title' })
+    @DynamoDBAttribute({ name: 'og_title' })
     ogTitle: string;
 
     @Expose()
-    @Attribute({ attributeName: 'post_picture_url' })
+    @DynamoDBAttribute({ name: 'post_picture_url' })
     postPictureUrl: string;
 
     @Expose()
-    @Attribute({ attributeName: 'publish_date' })
+    @DynamoDBAttribute({ name: 'publish_date' })
     publishDate: string;
 
     @Expose()
-    @Attribute()
+    @DynamoDBAttribute()
     slug: string;
 
     @Expose()
-    @Attribute()
+    @DynamoDBAttribute()
     status: string;
 
     @Expose()
-    @Attribute()
+    @DynamoDBAttribute()
     subcategory: string;
 
     @Expose()
-    @Attribute()
+    @DynamoDBAttribute()
     tags: string[];
 
     @Expose()
-    @Attribute()
+    @DynamoDBAttribute()
     title: string;
 
     @Expose()
-    @Attribute()
+    @DynamoDBAttribute()
     type: string = 'POST';
 
     @Expose()
-    @Attribute()
+    @DynamoDBAttribute()
     views: number;
 
-    // GSI_AuthorPosts (author_id, publish_date)
-    @Expose()
-    @Attribute({ attributeName: 'author_id' })
-    @DynamoDBIndexHashKey('GSI_AuthorPosts')
-    gsiAuthorId: string;
+    // GSI_AuthorPosts: (author_id, publish_date)
+    @DynamoDBGlobalSecondaryIndex({
+        indexName: 'GSI_AuthorPosts',
+        partitionKey: { name: 'author_id' },
+        sortKey: { name: 'publish_date' },
+    })
+    gsiAuthorPosts?: string;
 
-    @Expose()
-    @DynamoDBIndexRangeKey('GSI_AuthorPosts')
-    @Attribute({ attributeName: 'publish_date' })
-    gsiAuthorPublishDate: string;
+    // GSI_CategoryPosts: (category_id, views)
+    @DynamoDBGlobalSecondaryIndex({
+        indexName: 'GSI_CategoryPosts',
+        partitionKey: { name: 'category_id' },
+        sortKey: { name: 'views' },
+    })
+    gsiCategoryPosts?: string;
 
-    // GSI_CategoryPosts (category_id, views)
-    @Expose()
-    @Attribute({ attributeName: 'category_id' })
-    @DynamoDBIndexHashKey('GSI_CategoryPosts')
-    gsiCategoryId: string;
+    // GSI_RecentPosts: (type, publish_date)
+    @DynamoDBGlobalSecondaryIndex({
+        indexName: 'GSI_RecentPosts',
+        partitionKey: { name: 'type' },
+        sortKey: { name: 'publish_date' },
+    })
+    gsiRecentPosts?: string;
 
-    @Expose()
-    @DynamoDBIndexRangeKey('GSI_CategoryPosts')
-    @Attribute()
-    gsiCategoryViews: number;
-
-    // GSI_RecentPosts (type, publish_date)
-    @Expose()
-    @Attribute()
-    @DynamoDBIndexHashKey('GSI_RecentPosts')
-    gsiRecentType: string = 'POST';
-
-    @Expose()
-    @DynamoDBIndexRangeKey('GSI_RecentPosts')
-    @Attribute({ attributeName: 'publish_date' })
-    gsiRecentPublishDate: string;
-
-    // GSI_Slug (slug, type)
-    @Expose()
-    @Attribute()
-    @DynamoDBIndexHashKey('GSI_Slug')
-    gsiSlug: string;
-
-    @Expose()
-    @DynamoDBIndexRangeKey('GSI_Slug')
-    @Attribute()
-    gsiSlugType: string = 'POST';
+    // GSI_Slug: (slug, type)
+    @DynamoDBGlobalSecondaryIndex({
+        indexName: 'GSI_Slug',
+        partitionKey: { name: 'slug' },
+        sortKey: { name: 'type' },
+    })
+    gsiSlug?: string;
 
     constructor(partial?: Partial<PostEntity>) {
-        if (partial) {
-            Object.assign(this, partial);
-            this.gsiAuthorId = this.authorId;
-            this.gsiAuthorPublishDate = this.publishDate;
-            this.gsiCategoryId = this.categoryId;
-            this.gsiCategoryViews = this.views;
-            this.gsiRecentPublishDate = this.publishDate;
-            this.gsiSlug = this.slug;
-        }
+        Object.assign(this, partial);
     }
 }
