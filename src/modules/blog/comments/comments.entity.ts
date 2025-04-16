@@ -12,8 +12,8 @@ import { Exclude, Expose } from 'class-transformer';
 export class CommentEntity {
     /**
      * Chave primária:
-     *  - Partition Key: COMMENT#postId
-     *  - Sort Key: TIMESTAMP (ISO string do timestamp)
+     * Partition Key: COMMENT#postId
+     * Sort Key: TIMESTAMP (ISO string do timestamp)
      */
     @Expose()
     @DynamoDBHashKey({ name: 'COMMENT#postId' })
