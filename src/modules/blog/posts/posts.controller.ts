@@ -9,11 +9,11 @@ import {
 } from '@nestjs/swagger';
 import { ResponseInterceptor } from '@src/common/interceptors/response.interceptor';
 import { PostsService } from './posts.service';
-import { PostCreateDto } from '@src/modules/blog/posts/dto/post-create.dto';
-import { PostUpdateDto } from '@src/modules/blog/posts/dto/post-update.dto';
-import { PostContentDto } from '@src/modules/blog/posts/dto/post-content.dto';
-import { PostSummaryDto } from '@src/modules/blog/posts/dto/post-summary.dto';
-import { PostFullDto } from '@src/modules/blog/posts/dto/post-full.dto'; import { CognitoAuthGuard } from '@src/auth/cognito-auth.guard';
+import { PostCreateDto } from '@src/modules/blog/posts/dto/create-post.dto';
+import { PostUpdateDto } from '@src/modules/blog/posts/dto/update-post.dto';
+import { PostContentDto } from '@src/modules/blog/posts/dto/content-post.dto';
+import { PostSummaryDto } from '@src/modules/blog/posts/dto/summary-post.dto';
+import { PostFullDto } from '@src/modules/blog/posts/dto/full-post.dto'; import { CognitoAuthGuard } from '@src/auth/cognito-auth.guard';
 import { PaginatedPostsResult } from '@src/blog/post/interfaces/paginated-posts.interface';
 
 @ApiTags('Blog Posts')

@@ -1,6 +1,6 @@
 // paginated-posts.interface.ts
 import { ApiProperty } from '@nestjs/swagger';
-import { PostSummaryDto } from '../dto/post-summary.dto';
+import { PostSummaryDto } from '../dto/summary-post.dto';
 
 export class PaginatedPostsResult {
     @ApiProperty({
