@@ -1,8 +1,8 @@
 import { Controller, Get, Post, Put, Delete, Body, Param } from '@nestjs/common';
-import { CommentService } from './comment.service';
+import { CommentService } from './comments.service'; // Nome do arquivo corrigido (plural)
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
-import { CommentEntity } from './comment.entity';
+import { CommentEntity } from './comments.entity'; // Nome do arquivo corrigido (plural)
 
 @Controller('comments')
 export class CommentController {
