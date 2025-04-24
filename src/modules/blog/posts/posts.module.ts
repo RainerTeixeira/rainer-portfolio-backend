@@ -1,27 +1,17 @@
 import { Module } from '@nestjs/common';
 import { CacheModule } from '@nestjs/cache-manager';
 
+// Componentes locais
 import { PostsController } from '@src/modules/blog/posts/posts.controller';
-import { PostsService } from '@src/modules/blog/posts/posts.service';
-import { PostsRepository } from '@src/modules/blog/posts/posts.repository';
+import { PostService } from '@src/modules/blog/posts/posts.service';
+import { PostRepository } from '@src/modules/blog/posts/post.repository';
 
-// Importa os módulos que disponibilizam os serviços de domínio necessários
+// Módulos de dependência
 import { AuthorsModule } from '@src/modules/blog/authors/authors.module';
 import { CategoryModule } from '@src/modules/blog/category/category.module';
 import { SubcategoryModule } from '@src/modules/blog/subcategory/subcategory.module';
 import { CommentsModule } from '@src/modules/blog/comments/comments.module';
 
-/**
- * PostsModule
- * 
- * Módulo responsável pela funcionalidade de gerenciamento de posts:
- * - Importa módulos de domínio (autores, categorias, subcategorias, comentários).
- * - Registra o PostsService, PostsRepository e o PostsController.
- * - Utiliza cache local específico para este módulo.
- * - O DynamoDbService está registrado globalmente.
- *
- * @module PostsModule
- */
 @Module({
   imports: [
     CacheModule.register({
@@ -34,7 +24,7 @@ import { CommentsModule } from '@src/modules/blog/comments/comments.module';
     CommentsModule,
   ],
   controllers: [PostsController],
-  providers: [PostsService, PostsRepository],
-  exports: [PostsService],
+  providers: [PostService, PostRepository],
+  exports: [PostService],
 })
 export class PostsModule { }

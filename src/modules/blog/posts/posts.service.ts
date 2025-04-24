@@ -1,9 +1,13 @@
-import { Injectable, Inject, CACHE_MANAGER } from '@nestjs/common';
+// src/modules/blog/posts/posts.service.ts
+import { Injectable, Inject, NotFoundException } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { PostRepository } from './post.repository';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { PostEntity } from './post.entity';
+
+export type SortOrder = 'asc' | 'desc';
 
 @Injectable()
 export class PostService {
@@ -20,7 +24,7 @@ export class PostService {
 
   async findById(id: string): Promise<PostEntity> {
     const cacheKey = `post_${id}`;
-    let post: PostEntity = await this.cacheManager.get(cacheKey);
+    let post = await this.cacheManager.get<PostEntity>(cacheKey);
     if (!post) {
       post = await this.postRepository.findById(id);
       await this.cacheManager.set(cacheKey, post);
@@ -39,19 +43,38 @@ export class PostService {
     await this.cacheManager.del(`post_${id}`);
   }
 
-  async findPostsByAuthor(authorId: string): Promise<PostEntity[]> {
-    return await this.postRepository.findPostsByAuthor(authorId);
+  async findPostsByAuthor(
+    authorId: string,
+    sort: SortOrder = 'desc',
+  ): Promise<PostEntity[]> {
+    const posts = await this.postRepository.findPostsByAuthor(authorId);
+    return posts.sort((a, b) =>
+      sort === 'asc'
+        ? new Date(a.publishDate).getTime() - new Date(b.publishDate).getTime()
+        : new Date(b.publishDate).getTime() - new Date(a.publishDate).getTime(),
+    );
   }
 
   async findPostsByCategory(categoryId: string): Promise<PostEntity[]> {
-    return await this.postRepository.findPostsByCategory(categoryId);
+    return this.postRepository.findPostsByCategory(categoryId);
   }
 
-  async findRecentPosts(): Promise<PostEntity[]> {
-    return await this.postRepository.findRecentPosts();
+  async findRecentPosts(limit = 10): Promise<PostEntity[]> {
+    const posts = await this.postRepository.findRecentPosts();
+    return posts.slice(0, limit);
+  }
+
+  async findPopularByCategory(
+    categoryId: string,
+    limit = 10,
+  ): Promise<PostEntity[]> {
+    const posts = await this.postRepository.findPostsByCategory(categoryId);
+    return posts
+      .sort((a, b) => b.views - a.views)
+      .slice(0, limit);
   }
 
   async findBySlug(slug: string): Promise<PostEntity> {
-    return await this.postRepository.findBySlug(slug);
+    return this.postRepository.findBySlug(slug);
   }
 }

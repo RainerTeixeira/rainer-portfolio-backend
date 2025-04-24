@@ -1,140 +1,114 @@
-import {
-    DynamoDBTable,
-    DynamoDBHashKey,
-    DynamoDBRangeKey,
-    DynamoDBGlobalSecondaryIndex,
-    DynamoDBAttribute,
-} from '@nestjs/aws-dynamodb';
-import { Exclude, Expose } from 'class-transformer';
+// src/modules/blog/posts/post.entity.ts
+import { ApiProperty } from '@nestjs/swagger';
 
 /**
+ * @PostEntity
+ *
  * Entidade que representa um post de blog.
- * @table blog
- * PK: POST#id
- * SK: METADATA
+ *
+ * Chave primária:
+ *   Partition Key: POST#id
+ *   Sort Key: METADATA
+ *
+ * Meta descrição para SEO: Descrição breve do post para motores de busca.
  */
-@Exclude()
-@DynamoDBTable(process.env.DYNAMO_TABLE_NAME_POSTS || 'blog') // Nome da tabela do .env ou 'blog' por padrão
 export class PostEntity {
-    @Expose()
-    @DynamoDBHashKey({ name: 'POST#id' })
+    @ApiProperty({ description: 'Chave de partição no formato POST#id' })
     id: string;
 
-    @Expose()
-    @DynamoDBRangeKey({ name: 'METADATA' })
+    @ApiProperty({ description: 'Chave de classificação fixa METADATA' })
     metadata: string = 'METADATA';
 
-    @Expose()
-    @DynamoDBAttribute({ name: 'author_id' })
+    @ApiProperty({ description: 'ID do autor' })
     authorId: string;
 
-    @Expose()
-    @DynamoDBAttribute({ name: 'category_id' })
+    @ApiProperty({ description: 'ID da categoria' })
     categoryId: string;
 
-    @Expose()
-    @DynamoDBAttribute({ name: 'comment_count' })
+    @ApiProperty({ description: 'Número de comentários' })
     commentCount: number;
 
-    @Expose()
-    @DynamoDBAttribute()
+    @ApiProperty({ description: 'Conteúdo do post' })
     content: string;
 
-    @Expose()
-    @DynamoDBAttribute({ name: 'created_at' })
+    @ApiProperty({ description: 'Data de criação do post' })
     createdAt: string;
 
-    @Expose()
-    @DynamoDBAttribute()
+    @ApiProperty({ description: 'Resumo/trecho do post' })
     excerpt: string;
 
-    @Expose()
-    @DynamoDBAttribute({ name: 'last_updated_date' })
+    @ApiProperty({ description: 'Data da última atualização do post' })
     lastUpdatedDate: string;
 
-    @Expose()
-    @DynamoDBAttribute()
+    @ApiProperty({ description: 'Número de likes' })
     likes: number;
 
-    @Expose()
-    @DynamoDBAttribute({ name: 'meta_description' })
+    @ApiProperty({ description: 'Meta descrição para SEO' })
     metaDescription: string;
 
-    @Expose()
-    @DynamoDBAttribute({ name: 'og_description' })
+    @ApiProperty({ description: 'Descrição para Open Graph' })
     ogDescription: string;
 
-    @Expose()
-    @DynamoDBAttribute({ name: 'og_image' })
+    @ApiProperty({ description: 'URL da imagem Open Graph' })
     ogImage: string;
 
-    @Expose()
-    @DynamoDBAttribute({ name: 'og_title' })
+    @ApiProperty({ description: 'Título para Open Graph' })
     ogTitle: string;
 
-    @Expose()
-    @DynamoDBAttribute({ name: 'post_picture_url' })
+    @ApiProperty({ description: 'URL da imagem do post' })
     postPictureUrl: string;
 
-    @Expose()
-    @DynamoDBAttribute({ name: 'publish_date' })
+    @ApiProperty({ description: 'Data de publicação do post' })
     publishDate: string;
 
-    @Expose()
-    @DynamoDBAttribute()
+    @ApiProperty({ description: 'Slug do post' })
     slug: string;
 
-    @Expose()
-    @DynamoDBAttribute()
+    @ApiProperty({ description: 'Status do post' })
     status: string;
 
-    @Expose()
-    @DynamoDBAttribute()
+    @ApiProperty({ description: 'Subcategoria do post' })
     subcategory: string;
 
-    @Expose()
-    @DynamoDBAttribute()
+    @ApiProperty({ description: 'Tags do post', type: [String] })
     tags: string[];
 
-    @Expose()
-    @DynamoDBAttribute()
+    @ApiProperty({ description: 'Título do post' })
     title: string;
 
-    @Expose()
-    @DynamoDBAttribute()
+    @ApiProperty({ description: 'Tipo do registro (POST)' })
     type: string = 'POST';
 
-    @Expose()
-    @DynamoDBAttribute()
+    @ApiProperty({ description: 'Número de visualizações' })
     views: number;
 
-    // GSI_AuthorPosts: (author_id, publish_date)
-    @DynamoDBGlobalSecondaryIndex({
-        indexName: 'GSI_AuthorPosts',
-        partitionKey: { name: 'author_id' },
-        sortKey: { name: 'publish_date' },
+    @ApiProperty({
+        description: 'Propriedades do GSI_AuthorPosts',
+        type: 'object',
+        properties: { authorId: { type: 'string' }, publishDate: { type: 'string' } }
     })
+    a?: { authorId: string; publishDate: string };
 
-    // GSI_CategoryPosts: (category_id, views)
-    @DynamoDBGlobalSecondaryIndex({
-        indexName: 'GSI_CategoryPosts',
-        partitionKey: { name: 'category_id' },
-        sortKey: { name: 'views' },
+    @ApiProperty({
+        description: 'Propriedades do GSI_CategoryPosts',
+        type: 'object',
+        properties: { categoryId: { type: 'string' }, views: { type: 'number' } }
     })
+    b?: { categoryId: string; views: number };
 
-    // GSI_RecentPosts: (type, publish_date)
-    @DynamoDBGlobalSecondaryIndex({
-        indexName: 'GSI_RecentPosts',
-        partitionKey: { name: 'type' },
-        sortKey: { name: 'publish_date' },
+    @ApiProperty({
+        description: 'Propriedades do GSI_RecentPosts',
+        type: 'object',
+        properties: { type: { type: 'string' }, publishDate: { type: 'string' } }
     })
+    c?: { type: string; publishDate: string };
 
-    // GSI_Slug: (slug, type)
-    @DynamoDBGlobalSecondaryIndex({
-        indexName: 'GSI_Slug',
-        partitionKey: { name: 'slug' },
-        sortKey: { name: 'type' },
+    @ApiProperty({
+        description: 'Propriedades do GSI_Slug',
+        type: 'object',
+        properties: { slug: { type: 'string' }, type: { type: 'string' } }
     })
+    d?: { slug: string; type: string };
 
     constructor(partial?: Partial<PostEntity>) {
         Object.assign(this, partial);
