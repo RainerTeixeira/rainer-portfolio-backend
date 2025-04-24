@@ -8,18 +8,19 @@ import { SubcategoryModule } from '@src/modules/blog/subcategory/subcategory.mod
 /**
  * BlogModule
  * 
- * Módulo que agrega os submódulos do blog:
- * - Fornece uma forma centralizada de importar e exportar os módulos que compõem o blog.
+ * Módulo principal do blog que agrega e organiza todos os submódulos relacionados:
+ * - Centraliza as importações e exportações dos recursos do blog
+ * - Facilita a manutenção e escalabilidade do sistema
  */
 @Module({
-  imports: [
-    AuthorsModule,
-    CategoryModule,
-    CommentsModule,
-    PostsModule,
-    SubcategoryModule,
+  imports: [ // Lista de módulos necessários para o funcionamento do BlogModule
+    AuthorsModule,       // Responsável pelos autores
+    CategoryModule,      // Gerencia categorias
+    CommentsModule,      // Lida com comentários
+    PostsModule,         // Cuida dos posts (principal recurso)
+    SubcategoryModule,   // Gerencia subcategorias
   ],
-  exports: [
+  exports: [ // Lista de módulos que serão disponibilizados para outros módulos da aplicação
     AuthorsModule,
     CategoryModule,
     CommentsModule,

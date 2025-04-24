@@ -1,3 +1,4 @@
+// src/modules/blog/posts/post.repository.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DynamoDbService } from '@src/services/dynamoDb.service';
 import { PostEntity } from './post.entity';
@@ -12,20 +13,15 @@ export class PostRepository {
 
     async create(createDto: CreatePostDto): Promise<PostEntity> {
         const post = new PostEntity(createDto);
-        const params = {
-            TableName: this.TABLE_NAME,
-            Item: post,
-        };
-        await this.dynamoDbService.put(params);
+        await this.dynamoDbService.put({ TableName: this.TABLE_NAME, Item: post });
         return post;
     }
 
     async findById(id: string): Promise<PostEntity> {
-        const params = {
+        const result = await this.dynamoDbService.get({
             TableName: this.TABLE_NAME,
             Key: { 'POST#id': id, METADATA: 'METADATA' },
-        };
-        const result = await this.dynamoDbService.get(params);
+        });
         if (!result?.data?.Item) {
             throw new NotFoundException(`Post with id ${id} not found`);
         }
@@ -35,82 +31,64 @@ export class PostRepository {
     async update(id: string, updateDto: UpdatePostDto): Promise<PostEntity> {
         const existing = await this.findById(id);
         const updated = { ...existing, ...updateDto };
-        const params = {
-            TableName: this.TABLE_NAME,
-            Item: updated,
-        };
-        await this.dynamoDbService.put(params);
+        await this.dynamoDbService.put({ TableName: this.TABLE_NAME, Item: updated });
         return new PostEntity(updated);
     }
 
     async delete(id: string): Promise<void> {
-        const params = {
+        await this.dynamoDbService.delete({
             TableName: this.TABLE_NAME,
             Key: { 'POST#id': id, METADATA: 'METADATA' },
-        };
-        await this.dynamoDbService.delete(params);
+        });
     }
 
-    // Consulta por GSI_AuthorPosts (posts por autor)
     async findPostsByAuthor(authorId: string): Promise<PostEntity[]> {
-        const params = {
+        const result = await this.dynamoDbService.query({
             TableName: this.TABLE_NAME,
             IndexName: 'GSI_AuthorPosts',
             KeyConditionExpression: 'gsiAuthorId = :authorId',
-            ExpressionAttributeValues: {
-                ':authorId': authorId,
-            },
+            ExpressionAttributeValues: { ':authorId': authorId },
             ScanIndexForward: true,
-        };
-        const result = await this.dynamoDbService.query(params);
-        return result.data.Items.map((item: any) => new PostEntity(item));
+        });
+        const items = result.data?.Items || [];
+        return items.map(i => new PostEntity(i));
     }
 
-    // Consulta por GSI_CategoryPosts (posts por categoria ordenados por views)
     async findPostsByCategory(categoryId: string): Promise<PostEntity[]> {
-        const params = {
+        const result = await this.dynamoDbService.query({
             TableName: this.TABLE_NAME,
             IndexName: 'GSI_CategoryPosts',
             KeyConditionExpression: 'gsiCategoryId = :categoryId',
-            ExpressionAttributeValues: {
-                ':categoryId': categoryId,
-            },
+            ExpressionAttributeValues: { ':categoryId': categoryId },
             ScanIndexForward: false,
-        };
-        const result = await this.dynamoDbService.query(params);
-        return result.data.Items.map((item: any) => new PostEntity(item));
+        });
+        const items = result.data?.Items || [];
+        return items.map(i => new PostEntity(i));
     }
 
-    // Consulta por GSI_RecentPosts (últimos posts)
     async findRecentPosts(): Promise<PostEntity[]> {
-        const params = {
+        const result = await this.dynamoDbService.query({
             TableName: this.TABLE_NAME,
             IndexName: 'GSI_RecentPosts',
             KeyConditionExpression: 'gsiRecentType = :type',
-            ExpressionAttributeValues: {
-                ':type': 'POST',
-            },
+            ExpressionAttributeValues: { ':type': 'POST' },
             ScanIndexForward: false,
-        };
-        const result = await this.dynamoDbService.query(params);
-        return result.data.Items.map((item: any) => new PostEntity(item));
+        });
+        const items = result.data?.Items || [];
+        return items.map(i => new PostEntity(i));
     }
 
-    // Consulta por GSI_Slug (busca por URL)
     async findBySlug(slug: string): Promise<PostEntity> {
-        const params = {
+        const result = await this.dynamoDbService.query({
             TableName: this.TABLE_NAME,
             IndexName: 'GSI_Slug',
             KeyConditionExpression: 'gsiSlug = :slug and gsiSlugType = :type',
-            ExpressionAttributeValues: {
-                ':slug': slug,
-                ':type': 'POST',
-            },
-        };
-        const result = await this.dynamoDbService.query(params);
-        if (!result?.data?.Items || result.data.Items.length === 0) {
+            ExpressionAttributeValues: { ':slug': slug, ':type': 'POST' },
+        });
+        const items = result.data?.Items || [];
+        if (items.length === 0) {
             throw new NotFoundException(`Post with slug ${slug} not found`);
         }
-        return new PostEntity(result.data.Items[0]);
+        return new PostEntity(items[0]);
     }
 }
