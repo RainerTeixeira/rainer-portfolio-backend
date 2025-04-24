@@ -1,6 +1,7 @@
+// comments.repository.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DynamoDbService } from '@src/services/dynamoDb.service';
-import { CommentEntity } from './comment.entity';
+import { CommentEntity } from './comments.entity'; // Nome do arquivo corrigido (plural)
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 
@@ -51,33 +52,33 @@ export class CommentRepository {
     await this.dynamoDbService.delete(params);
   }
 
-  // Consulta por GSI_PostComments (comentários de um post)
   async findCommentsByPost(postId: string): Promise<CommentEntity[]> {
     const params = {
       TableName: this.TABLE_NAME,
       IndexName: 'GSI_PostComments',
-      KeyConditionExpression: 'gsiPostId = :postId',
+      KeyConditionExpression: 'post_id = :postId',
       ExpressionAttributeValues: {
         ':postId': postId,
       },
-      ScanIndexForward: true, // ordem cronológica
+      ScanIndexForward: true,
     };
     const result = await this.dynamoDbService.query(params);
-    return result.data.Items.map((item: any) => new CommentEntity(item));
+    // Corrigido: Trata 'Items' como opcional e fornece fallback
+    return result.data.Items?.map((item: Record<string, unknown>) => new CommentEntity(item)) ?? [];
   }
 
-  // Consulta por GSI_UserComments (comentários de um usuário)
   async findCommentsByUser(userId: string): Promise<CommentEntity[]> {
     const params = {
       TableName: this.TABLE_NAME,
       IndexName: 'GSI_UserComments',
-      KeyConditionExpression: 'gsiUserId = :userId',
+      KeyConditionExpression: 'user_id = :userId',
       ExpressionAttributeValues: {
         ':userId': userId,
       },
       ScanIndexForward: true,
     };
     const result = await this.dynamoDbService.query(params);
-    return result.data.Items.map((item: any) => new CommentEntity(item));
+    // Corrigido: Trata 'Items' como opcional e fornece fallback
+    return result.data.Items?.map((item: any) => new CommentEntity(item)) ?? [];
   }
 }

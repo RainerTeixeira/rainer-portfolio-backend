@@ -1,9 +1,10 @@
-import { Injectable, Inject, CACHE_MANAGER } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
-import { CommentRepository } from './comment.repository';
+import { CommentRepository } from './comments.repository';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
-import { CommentEntity } from './comment.entity';
+import { CommentEntity } from './comments.entity';
 
 @Injectable()
 export class CommentService {
@@ -14,17 +15,21 @@ export class CommentService {
 
     async create(createDto: CreateCommentDto): Promise<CommentEntity> {
         const comment = await this.commentRepository.create(createDto);
-        await this.cacheManager.del(`comment_${comment.postId}_${comment.timestamp}`);
+        // Corrigido: usa comment.sk (que contém o timestamp)
+        await this.cacheManager.del(`comment_${comment.postId}_${comment.sk}`);
         return comment;
     }
 
     async findById(postId: string, timestamp: string): Promise<CommentEntity> {
         const cacheKey = `comment_${postId}_${timestamp}`;
-        let comment: CommentEntity = await this.cacheManager.get(cacheKey);
-        if (!comment) {
-            comment = await this.commentRepository.findById(postId, timestamp);
-            await this.cacheManager.set(cacheKey, comment);
+        const cachedComment = await this.cacheManager.get<CommentEntity>(cacheKey);
+
+        if (cachedComment) {
+            return cachedComment;
         }
+
+        const comment = await this.commentRepository.findById(postId, timestamp);
+        await this.cacheManager.set(cacheKey, comment);
         return comment;
     }
 

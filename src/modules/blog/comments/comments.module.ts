@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { CacheModule } from '@nestjs/cache-manager';
 
-import { CommentsController } from './comments.controller';
-import { CommentsService } from './comments.service';
-import { CommentsRepository } from './comments.repository';
+import { CommentController } from './comments.controller'; // Nome corrigido
+import { CommentService } from './comments.service'; // Nome corrigido
+import { CommentRepository } from './comments.repository'; // Nome corrigido
 
 /**
  * Responsabilidades:
@@ -12,9 +12,9 @@ import { CommentsRepository } from './comments.repository';
  *  - Exporta o serviço de comentários para uso em outros módulos.
  *
  * Estrutura:
- * - Controller: CommentsController
- * - Service: CommentsService
- * - Repository: CommentsRepository
+ * - Controller: CommentController
+ * - Service: CommentService
+ * - Repository: CommentRepository
  * - Integração com DynamoDbService (global) e CacheModule
  *
  * @module CommentsModule       
@@ -23,14 +23,13 @@ import { CommentsRepository } from './comments.repository';
 
 @Module({
     imports: [
-        // Cache local (se você quiser uma config diferente da global)
         CacheModule.register({
             ttl: 300,
             max: 100,
         }),
     ],
-    controllers: [CommentsController],
-    providers: [CommentsService, CommentsRepository],
-    exports: [CommentsService],
+    controllers: [CommentController], // Nome corrigido
+    providers: [CommentService, CommentRepository], // Nomes corrigidos
+    exports: [CommentService], // Nome corrigido
 })
 export class CommentsModule { }
