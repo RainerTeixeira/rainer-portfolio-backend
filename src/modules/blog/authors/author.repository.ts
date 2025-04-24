@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { AuthorEntity } from './authors.entity';
 import { DynamoDbService } from '../../../services/dynamoDb.service';
+import { AuthorEntity } from './authors.entity';
 import { CreateAuthorDto } from './dto/create-author.dto';
 import { UpdateAuthorDto } from './dto/update-author.dto';
 

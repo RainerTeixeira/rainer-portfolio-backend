@@ -1,8 +1,9 @@
+// src/modules/blog/subcategory/subcategory.module.ts
 import { Module } from '@nestjs/common';
 import { CacheModule } from '@nestjs/cache-manager';
 
-import { SubcategoriesController } from './subcategory.controller';
-import { SubcategoriesService } from './subcategory.service';
+import { SubcategoryController } from './subcategory.controller';
+import { SubcategoryService } from './subcategory.service';
 import { SubcategoryRepository } from './subcategory.repository';
 
 /**
@@ -12,10 +13,10 @@ import { SubcategoryRepository } from './subcategory.repository';
  *   * - Interage com o repositório de subcategorias para operações de banco de dados.
  * * - Gerencia dependências de serviço, repositório e cache.
  * - Exporta o serviço de subcategorias para uso em outros módulos.
- * 
+ *
  * Estrutura:
- * - Controller: SubcategoriesController    
- * - Service: SubcategoriesService
+ * - Controller: SubcategoryController    
+ * - Service: SubcategoryService
  * - Repository: SubcategoryRepository  
  * - Integração com DynamoDbService (global) e CacheModule
  *  
@@ -30,8 +31,8 @@ import { SubcategoryRepository } from './subcategory.repository';
             max: 100,
         }),
     ],
-    controllers: [SubcategoriesController],
-    providers: [SubcategoriesService, SubcategoryRepository],
-    exports: [SubcategoriesService],
+    controllers: [SubcategoryController],
+    providers: [SubcategoryService, SubcategoryRepository],
+    exports: [SubcategoryService],
 })
 export class SubcategoryModule { }

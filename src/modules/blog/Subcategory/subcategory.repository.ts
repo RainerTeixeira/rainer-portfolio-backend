@@ -1,3 +1,4 @@
+// src/modules/blog/subcategory/subcategory.repository.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DynamoDbService } from '@src/services/dynamoDb.service';
 import { SubcategoryEntity } from './subcategory.entity';
@@ -10,77 +11,61 @@ export class SubcategoryRepository {
 
     constructor(private readonly dynamoDbService: DynamoDbService) { }
 
-    async create(createDto: CreateSubcategoryDto): Promise<SubcategoryEntity> {
-        const subcategory = new SubcategoryEntity(createDto);
-        const params = {
-            TableName: this.TABLE_NAME,
-            Item: subcategory,
-        };
-        await this.dynamoDbService.put(params);
-        return subcategory;
+    async create(dto: CreateSubcategoryDto): Promise<SubcategoryEntity> {
+        const entity = new SubcategoryEntity(dto);
+        await this.dynamoDbService.put({ TableName: this.TABLE_NAME, Item: entity });
+        return entity;
     }
 
     async findById(id: string): Promise<SubcategoryEntity> {
-        const params = {
+        const result = await this.dynamoDbService.get({
             TableName: this.TABLE_NAME,
-            Key: { 'SUBCAT#parent#id': id, METADATA: 'METADATA' },
-        };
-        const result = await this.dynamoDbService.get(params);
+            Key: { 'SUBCAT#id': id, METADATA: 'METADATA' },
+        });
         if (!result?.data?.Item) {
             throw new NotFoundException(`Subcategory with id ${id} not found`);
         }
         return new SubcategoryEntity(result.data.Item);
     }
 
-    async update(id: string, updateDto: UpdateSubcategoryDto): Promise<SubcategoryEntity> {
+    async update(id: string, dto: UpdateSubcategoryDto): Promise<SubcategoryEntity> {
         const existing = await this.findById(id);
-        const updated = { ...existing, ...updateDto };
-        const params = {
-            TableName: this.TABLE_NAME,
-            Item: updated,
-        };
-        await this.dynamoDbService.put(params);
+        const updated = { ...existing, ...dto };
+        await this.dynamoDbService.put({ TableName: this.TABLE_NAME, Item: updated });
         return new SubcategoryEntity(updated);
     }
 
     async delete(id: string): Promise<void> {
-        const params = {
+        await this.dynamoDbService.delete({
             TableName: this.TABLE_NAME,
-            Key: { 'SUBCAT#parent#id': id, METADATA: 'METADATA' },
-        };
-        await this.dynamoDbService.delete(params);
+            Key: { 'SUBCAT#id': id, METADATA: 'METADATA' },
+        });
     }
 
-    // Consulta por GSI_ParentCategory (subcategorias por categoria pai)
     async findByParentCategory(parentCategoryId: string): Promise<SubcategoryEntity[]> {
-        const params = {
+        const result = await this.dynamoDbService.query({
             TableName: this.TABLE_NAME,
             IndexName: 'GSI_ParentCategory',
-            KeyConditionExpression: 'gsiParentCategoryId = :parentId',
-            ExpressionAttributeValues: {
-                ':parentId': parentCategoryId,
-            },
+            KeyConditionExpression: 'parent_category_id = :pid',
+            ExpressionAttributeValues: { ':pid': parentCategoryId },
             ScanIndexForward: true,
-        };
-        const result = await this.dynamoDbService.query(params);
-        return result.data.Items.map((item: any) => new SubcategoryEntity(item));
+        });
+        const items = result.data?.Items || [];
+        return items.map((i: any) => new SubcategoryEntity(i));
     }
 
-    // Consulta por GSI_Slug (busca por slug)
     async findBySlug(slug: string): Promise<SubcategoryEntity> {
-        const params = {
+        const result = await this.dynamoDbService.query({
             TableName: this.TABLE_NAME,
             IndexName: 'GSI_Slug',
-            KeyConditionExpression: 'gsiSlug = :slug and gsiSlugType = :type',
-            ExpressionAttributeValues: {
-                ':slug': slug,
-                ':type': 'SUBCATEGORY',
-            },
-        };
-        const result = await this.dynamoDbService.query(params);
-        if (!result?.data?.Items || result.data.Items.length === 0) {
+            KeyConditionExpression: 'slug = :s and #t = :type',
+            ExpressionAttributeNames: { '#t': 'type' },
+            ExpressionAttributeValues: { ':s': slug, ':type': 'SUBCATEGORY' },
+        });
+        const items = result.data?.Items || [];
+        if (!items.length) {
             throw new NotFoundException(`Subcategory with slug ${slug} not found`);
         }
-        return new SubcategoryEntity(result.data.Items[0]);
+        return new SubcategoryEntity(items[0]);
     }
 }

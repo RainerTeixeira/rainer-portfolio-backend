@@ -1,84 +1,64 @@
-import {
-  DynamoDBTable,
-  DynamoDBHashKey,
-  DynamoDBRangeKey,
-  DynamoDBGlobalSecondaryIndex,
-  DynamoDBAttribute,
-} from '@nestjs/aws-dynamodb';
-import { Exclude, Expose } from 'class-transformer';
+// src/modules/blog/subcategory/subcategory.entity.ts
+import { ApiProperty } from '@nestjs/swagger';
 
 /**
- * Entidade que representa uma subcategoria
- * @table Subcategory
- * PK: SUBCAT#parent#id
+ * @SubcategoryEntity
+ *
+ * Entidade que representa uma subcategoria no sistema.
+ *
+ * PK: SUBCAT#id
  * SK: METADATA
  */
-@Exclude()
-@DynamoDBTable('Subcategory') // Nome da tabela ajustado para Subcategory
 export class SubcategoryEntity {
-  @Expose()
-  @DynamoDBHashKey({ name: 'SUBCAT#parent#id' })
-  parentId: string;
+  @ApiProperty({ description: 'Chave de partição no formato SUBCAT#id' })
+  id: string;
 
-  @Expose()
-  @DynamoDBRangeKey({ name: 'METADATA' })
+  @ApiProperty({ description: 'Chave de classificação fixa METADATA' })
   metadata: string = 'METADATA';
 
-  @Expose()
-  @DynamoDBAttribute()
+  @ApiProperty({ description: 'Nome da subcategoria' })
   name: string;
 
-  @Expose()
-  @DynamoDBAttribute()
+  @ApiProperty({ description: 'Slug amigável da subcategoria' })
   slug: string;
 
-  @Expose()
-  @DynamoDBAttribute()
+  @ApiProperty({ description: 'Descrição da subcategoria' })
   description: string;
 
-  @Expose()
-  @DynamoDBAttribute({ name: 'meta_description' })
+  @ApiProperty({ description: 'Meta descrição para SEO' })
   metaDescription: string;
 
-  @Expose()
-  @DynamoDBAttribute({ name: 'parent_category_id' })
+  @ApiProperty({ description: 'ID da categoria pai' })
   parentCategoryId: string;
 
-  @Expose()
-  @DynamoDBAttribute({ name: 'parent_category_slug' })
+  @ApiProperty({ description: 'Slug da categoria pai' })
   parentCategorySlug: string;
 
-  @Expose()
-  @DynamoDBAttribute({ name: 'post_count' })
+  @ApiProperty({ description: 'Total de posts nesta subcategoria' })
   postCount: number;
 
-  @Expose()
-  @DynamoDBAttribute({ name: 'created_at' })
+  @ApiProperty({ description: 'Data de criação do registro' })
   createdAt: string;
 
-  @Expose()
-  @DynamoDBAttribute({ name: 'updated_at' })
+  @ApiProperty({ description: 'Data da última atualização' })
   updatedAt: string;
 
-  @Expose()
-  @DynamoDBAttribute()
+  @ApiProperty({ description: 'Tipo do registro (SUBCATEGORY)' })
   type: string = 'SUBCATEGORY';
 
-  // GSI_ParentCategory: (parent_category_id, created_at)
-  @DynamoDBGlobalSecondaryIndex({
-    indexName: 'GSI_ParentCategory',
-    partitionKey: { name: 'parent_category_id' },
-    sortKey: { name: 'created_at' },
+  @ApiProperty({
+    description: 'Propriedades do GSI_ParentCategory (parent_category_id, created_at)',
+    type: 'object',
+    properties: { parentCategoryId: { type: 'string' }, createdAt: { type: 'string' } }
   })
-  gsiParentCategory?: string;
+  parentGSI?: { parentCategoryId: string; createdAt: string };
 
-  // GSI_Slug: (slug, type)
-  @DynamoDBGlobalSecondaryIndex({
-    indexName: 'GSI_Slug',
-    partitionKey: { name: 'slug' },
-    sortKey: { name: 'type' },
+  @ApiProperty({
+    description: 'Propriedades do GSI_Slug (slug, type)',
+    type: 'object',
+    properties: { slug: { type: 'string' }, type: { type: 'string' } }
   })
-  gsiSlug?: string;
+  slugGSI?: { slug: string; type: string };
 
   constructor(partial?: Partial<SubcategoryEntity>) {
     Object.assign(this, partial);
