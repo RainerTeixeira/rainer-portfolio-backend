@@ -1,82 +1,87 @@
-import {
-    DynamoDBTable,
-    DynamoDBHashKey,
-    DynamoDBRangeKey,
-    DynamoDBAttribute,
-    DynamoDBGlobalSecondaryIndex,
-} from '@nestjs/aws-dynamodb';
 import { Exclude, Expose } from 'class-transformer';
+import { AttributeValue } from '@aws-sdk/client-dynamodb';
+import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 
 @Exclude()
-@DynamoDBTable('Comments') // usa o valor real da variável .env
 export class CommentEntity {
-    /**
-     * Chave primária:
-     * Partition Key: COMMENT#postId
-     * Sort Key: TIMESTAMP (ISO string do timestamp)
-     */
+    // Partition Key: COMMENT#postId
     @Expose()
-    @DynamoDBHashKey({ name: 'COMMENT#postId' })
-    pk: string;
+    pk: string; // Formato: "COMMENT#postId"
 
+    // Sort Key: TIMESTAMP (ISO string)
     @Expose()
-    @DynamoDBRangeKey({ name: 'TIMESTAMP' })
-    sk: string;
+    sk: string; // Exemplo: "2024-01-01T00:00:00.000Z"
 
-    /**
-     * Atributos principais
-     */
+    // Atributos principais
     @Expose()
-    @DynamoDBAttribute({ name: 'post_id' })
     postId: string;
 
     @Expose()
-    @DynamoDBAttribute({ name: 'user_id' })
     userId: string;
 
     @Expose()
-    @DynamoDBAttribute()
     text: string;
 
     @Expose()
-    @DynamoDBAttribute()
     status: string;
 
     @Expose()
-    @DynamoDBAttribute({ name: 'created_at' })
     createdAt: string;
 
     @Expose()
-    @DynamoDBAttribute({ name: 'parent_comment_id' })
     parentCommentId?: string;
 
     @Expose()
-    @DynamoDBAttribute()
     type: string = 'Comments';
 
-    /**
-     * Índice secundário global (GSI_PostComments)
-     * - post_id / created_at
-     */
-    @DynamoDBGlobalSecondaryIndex({
-        indexName: 'GSI_PostComments',
-        partitionKey: { name: 'post_id' },
-        sortKey: { name: 'created_at' },
-    })
-    gsiPostComments?: string;
+    // Índice Secundário Global (GSI_PostComments)
+    @Expose()
+    gsiPostComments?: string; // Formato: "post_id#postId#created_at#timestamp"
 
-    /**
-     * Índice secundário global (GSI_UserComments)
-     * - user_id / created_at
-     */
-    @DynamoDBGlobalSecondaryIndex({
-        indexName: 'GSI_UserComments',
-        partitionKey: { name: 'user_id' },
-        sortKey: { name: 'created_at' },
-    })
-    gsiUserComments?: string;
+    // Índice Secundário Global (GSI_UserComments)
+    @Expose()
+    gsiUserComments?: string; // Formato: "user_id#userId#created_at#timestamp"
 
     constructor(partial?: Partial<CommentEntity>) {
-        Object.assign(this, partial);
+        if (partial) {
+            Object.assign(this, partial);
+            // Gera PK/SK automaticamente se não fornecidas
+            if (!partial.pk && partial.postId) {
+                this.pk = `COMMENT#${partial.postId}`;
+            }
+            if (!partial.sk && partial.createdAt) {
+                this.sk = partial.createdAt; // Assume que createdAt é um timestamp ISO
+            }
+        }
+    }
+
+    // Getter para timestamp (extrai do SK)
+    get timestamp(): string {
+        return this.sk;
+    }
+
+    // Getter para postId (remove o prefixo da PK)
+    get cleanPostId(): string {
+        return this.pk?.replace('COMMENT#', '') ?? '';
+    }
+
+    // Serialização para DynamoDB
+    static toDynamoDB(comment: CommentEntity): Record<string, AttributeValue> {
+        return marshall({
+            ...comment,
+            gsiPostComments: `post_id#${comment.postId}#created_at#${comment.createdAt}`,
+            gsiUserComments: `user_id#${comment.userId}#created_at#${comment.createdAt}`
+        });
+    }
+
+    // Desserialização do DynamoDB
+    static fromDynamoDB(dynamoItem: Record<string, AttributeValue>): CommentEntity {
+        const unmarshalled = unmarshall(dynamoItem);
+        return new CommentEntity({
+            ...unmarshalled,
+            postId: unmarshalled.postId,
+            userId: unmarshalled.userId,
+            createdAt: unmarshalled.createdAt
+        });
     }
 }
