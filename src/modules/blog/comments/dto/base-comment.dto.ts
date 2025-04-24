@@ -1,5 +1,5 @@
 // base-comment.dto.ts
-import { IsString, IsOptional, IsEnum } from 'class-validator';
+import { IsString, IsOptional, IsIn } from 'class-validator'; // Adicione IsIn
 
 export class BaseCommentDto {
     @IsString()
@@ -12,7 +12,7 @@ export class BaseCommentDto {
     text: string;
 
     @IsString()
-    @IsIn(['pendente', 'aprovado', 'rejeitado'])
+    @IsIn(['pendente', 'aprovado', 'rejeitado']) // Agora reconhecido
     @IsOptional()
     status?: string;
 
