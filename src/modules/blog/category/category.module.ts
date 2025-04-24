@@ -1,18 +1,18 @@
 import { Module } from '@nestjs/common';
 import { CacheModule } from '@nestjs/cache-manager';
 
-import { CategotyController } from './category.controller';
-import { CategoryService } from './category.controller';
-import { CategoryRepository } from './category.repository'
+import { CategoryController } from './category.controller'; // Nome corrigido
+import { CategoryService } from './category.service'; // Importação corrigida
+import { CategoryRepository } from './category.repository';
 
 /**
  * Responsabilidades:
  * - Disponibiliza endpoints REST para operações de categorias.
  * - Gerencia dependências de serviço, repositório e cache.
- * - Exporta o serviço de categorias para uso em outros módulos.
+ * - Exporta o serviço de catego as para uso em outros módulos.
  *
  * Estrutura:
- * - Controller: CategotyController
+ * - Controller: CategoryController 
  * - Service: CategoryService
  * - Repository: CategoryRepository
  * - Integração com DynamoDbService (global) e CacheModule
@@ -27,7 +27,7 @@ import { CategoryRepository } from './category.repository'
             max: 100,
         }),
     ],
-    controllers: [CategotyController],
+    controllers: [CategoryController],
     providers: [CategoryService, CategoryRepository],
     exports: [CategoryService],
 })

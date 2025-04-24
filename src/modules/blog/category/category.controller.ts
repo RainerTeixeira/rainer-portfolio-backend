@@ -1,4 +1,3 @@
-\blog\category\category.controller.ts
 import { Controller, Get, Post, Put, Delete, Body, Param } from '@nestjs/common';
 import { CategoryService } from './category.service';
 import { CreateCategoryDto } from './dto/create-category.dto';

@@ -114,7 +114,6 @@ export class PostEntity {
         partitionKey: { name: 'author_id' },
         sortKey: { name: 'publish_date' },
     })
-    gsiAuthorPosts?: string;
 
     // GSI_CategoryPosts: (category_id, views)
     @DynamoDBGlobalSecondaryIndex({
@@ -122,7 +121,6 @@ export class PostEntity {
         partitionKey: { name: 'category_id' },
         sortKey: { name: 'views' },
     })
-    gsiCategoryPosts?: string;
 
     // GSI_RecentPosts: (type, publish_date)
     @DynamoDBGlobalSecondaryIndex({
@@ -130,7 +128,6 @@ export class PostEntity {
         partitionKey: { name: 'type' },
         sortKey: { name: 'publish_date' },
     })
-    gsiRecentPosts?: string;
 
     // GSI_Slug: (slug, type)
     @DynamoDBGlobalSecondaryIndex({
@@ -138,7 +135,6 @@ export class PostEntity {
         partitionKey: { name: 'slug' },
         sortKey: { name: 'type' },
     })
-    gsiSlug?: string;
 
     constructor(partial?: Partial<PostEntity>) {
         Object.assign(this, partial);
