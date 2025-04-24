@@ -1,5 +1,6 @@
 import { Controller, Get, Post as HttpPost, Put, Delete, Body, Param } from '@nestjs/common';
 import { PostService } from './post.service';
+import { CategoryService } from './category.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { PostEntity } from './post.entity';
@@ -50,4 +51,7 @@ export class PostController {
   async findBySlug(@Param('slug') slug: string): Promise<PostEntity> {
     return await this.postService.findBySlug(slug);
   }
+}
+
+export class CategoryController {
 }

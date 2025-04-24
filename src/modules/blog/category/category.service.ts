@@ -1,4 +1,5 @@
-import { Injectable, Inject, CACHE_MANAGER } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager'; // Import corrigido
 import { Cache } from 'cache-manager';
 import { CategoryRepository } from './category.repository';
 import { CreateCategoryDto } from './dto/create-category.dto';
@@ -20,12 +21,12 @@ export class CategoryService {
 
     async findById(id: string): Promise<CategoryEntity> {
         const cacheKey = `category_${id}`;
-        let category: CategoryEntity = await this.cacheManager.get(cacheKey);
+        let category: CategoryEntity | null = await this.cacheManager.get(cacheKey); // Tipo ajustado
         if (!category) {
             category = await this.categoryRepository.findById(id);
             await this.cacheManager.set(cacheKey, category);
         }
-        return category;
+        return category; // TypeScript entende que agora não é null
     }
 
     async update(id: string, updateDto: UpdateCategoryDto): Promise<CategoryEntity> {

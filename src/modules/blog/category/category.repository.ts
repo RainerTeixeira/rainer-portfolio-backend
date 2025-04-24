@@ -78,9 +78,13 @@ export class CategoryRepository {
             ExpressionAttributeValues: {
                 ':type': 'CATEGORY',
             },
-            ScanIndexForward: false, // categorias com maior post_count primeiro
+            ScanIndexForward: false,
         };
         const result = await this.dynamoDbService.query(params);
-        return result.data.Items.map((item: any) => new CategoryEntity(item));
+
+        // Verifica se result.data.Items existe. Se não, retorna array vazio.
+        const items = result?.data?.Items || [];
+
+        return items.map((item: Record<string, unknown>) => new CategoryEntity(item));
     }
 }
