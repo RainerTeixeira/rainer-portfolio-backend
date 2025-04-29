@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 
@@ -78,14 +78,11 @@ export class AuthorService {
         // Retorna o autor do cache se encontrado
         if (cached) return cached;
 
-        const author = await this.authorRepository.findById(id);
-
-        // Armazena o autor no cache por 300 segundos, se encontrado
+        const author = await this.authorRepository.findById(id).catch(() => null);
         if (author) {
             await this.cacheManager.set(cacheKey, author, 300); // TTL de 300 segundos
         }
-
-        return author;
+        return author ?? null;
     }
 
     /**
@@ -102,14 +99,19 @@ export class AuthorService {
         // Retorna o autor do cache se encontrado
         if (cached) return cached;
 
-        const author = await this.authorRepository.findBySlug(slug);
-
-        // Armazena o autor no cache por 300 segundos, se encontrado
-        if (author) {
-            await this.cacheManager.set(cacheKey, author, 300); // TTL de 300 segundos
+        try {
+            const author = await this.authorRepository.findBySlug(slug);
+            // Armazena o autor no cache por 300 segundos, se encontrado
+            if (author) {
+                await this.cacheManager.set(cacheKey, author, 300); // TTL de 300 segundos
+            }
+            return author;
+        } catch (error) {
+            if (error instanceof NotFoundException) {
+                return null;
+            }
+            throw error;
         }
-
-        return author;
     }
 
     /**
@@ -145,9 +147,17 @@ export class AuthorService {
      */
     private async invalidateCache(id?: string): Promise<void> {
         if (id) {
-            // Invalida o cache do autor específico e do seu slug
+            // Invalida o cache do autor específico
             await this.cacheManager.del(`author_${id}`);
-            await this.cacheManager.del(`author_slug_${id}`);
+            // Busca o autor para obter o slug e invalidar o cache do slug
+            try {
+                const author = await this.authorRepository.findById(id);
+                if (author?.slug) {
+                    await this.cacheManager.del(`author_slug_${author.slug}`);
+                }
+            } catch {
+                // Ignora erro caso o autor não exista mais
+            }
         }
 
         // Invalida caches dos autores mais recentes
