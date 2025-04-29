@@ -1,4 +1,23 @@
 // src/modules/blog/posts/posts.controller.ts
+
+/**
+ * @fileoverview
+ * Controlador responsável por gerenciar operações relacionadas a posts do blog.
+ * 
+ * Este controlador expõe endpoints RESTful para criação, atualização, exclusão, busca e listagem de posts,
+ * incluindo filtros por autor, categoria, popularidade e slug.
+ * 
+ * Cada rota está devidamente documentada com Swagger, facilitando a integração e o entendimento da API.
+ * 
+ * Funcionalidades principais:
+ * - Criar um novo post
+ * - Buscar post por ID ou slug
+ * - Atualizar e excluir posts
+ * - Listar posts por autor, categoria, popularidade e recentes
+ * 
+ * @module PostsController
+ */
+
 import {
   Controller,
   Get,
@@ -24,11 +43,26 @@ import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { PostEntity } from './post.entity';
 
+/**
+ * Controlador de Posts do Blog.
+ * 
+ * Gerencia todas as operações relacionadas a posts, incluindo criação, atualização, exclusão e consultas
+ * por diferentes critérios (autor, categoria, popularidade, slug e recentes).
+ */
 @ApiTags('Posts')
 @Controller('posts')
 export class PostsController {
+  /**
+   * Injeta o serviço de posts.
+   * @param postService Serviço responsável pela lógica de negócios dos posts.
+   */
   constructor(private readonly postService: PostService) { }
 
+  /**
+   * Cria um novo post.
+   * @param createDto Dados para criação do post.
+   * @returns O post criado.
+   */
   @Post()
   @ApiOperation({ summary: 'Criar novo post' })
   @ApiBody({ type: CreatePostDto })
@@ -38,6 +72,11 @@ export class PostsController {
     return this.postService.create(createDto);
   }
 
+  /**
+   * Busca um post pelo seu ID.
+   * @param id Identificador do post.
+   * @returns O post encontrado.
+   */
   @Get(':id')
   @ApiOperation({ summary: 'Obter post por ID' })
   @ApiParam({ name: 'id', type: String, description: 'ID do post' })
@@ -47,6 +86,12 @@ export class PostsController {
     return this.postService.findById(id);
   }
 
+  /**
+   * Atualiza um post existente.
+   * @param id Identificador do post.
+   * @param updateDto Dados para atualização do post.
+   * @returns O post atualizado.
+   */
   @Put(':id')
   @ApiOperation({ summary: 'Atualizar post' })
   @ApiParam({ name: 'id', type: String, description: 'ID do post a ser atualizado' })
@@ -60,6 +105,10 @@ export class PostsController {
     return this.postService.update(id, updateDto);
   }
 
+  /**
+   * Exclui um post pelo seu ID.
+   * @param id Identificador do post.
+   */
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Excluir post' })
@@ -70,6 +119,12 @@ export class PostsController {
     return this.postService.delete(id);
   }
 
+  /**
+   * Lista posts de um autor específico.
+   * @param authorId Identificador do autor.
+   * @param sort Ordem de classificação (ascendente ou descendente).
+   * @returns Lista de posts do autor.
+   */
   @Get('author/:authorId')
   @ApiOperation({ summary: 'Listar posts por autor' })
   @ApiParam({ name: 'authorId', type: String, description: 'ID do autor' })
@@ -82,6 +137,11 @@ export class PostsController {
     return this.postService.findPostsByAuthor(authorId, sort);
   }
 
+  /**
+   * Lista posts de uma categoria específica.
+   * @param categoryId Identificador da categoria.
+   * @returns Lista de posts da categoria.
+   */
   @Get('category/:categoryId')
   @ApiOperation({ summary: 'Listar posts por categoria' })
   @ApiParam({ name: 'categoryId', type: String, description: 'ID da categoria' })
@@ -92,6 +152,11 @@ export class PostsController {
     return this.postService.findPostsByCategory(categoryId);
   }
 
+  /**
+   * Lista os posts mais recentes.
+   * @param limit Limite de posts a serem retornados (padrão: 10).
+   * @returns Lista de posts recentes.
+   */
   @Get('recent/list')
   @ApiOperation({ summary: 'Listar posts recentes' })
   @ApiQuery({ name: 'limit', type: Number, required: false, description: 'Limite de posts a serem retornados' })
@@ -102,6 +167,11 @@ export class PostsController {
     return this.postService.findRecentPosts(limit);
   }
 
+  /**
+   * Busca um post pelo seu slug.
+   * @param slug Slug do post.
+   * @returns O post encontrado.
+   */
   @Get('slug/:slug')
   @ApiOperation({ summary: 'Buscar post por slug' })
   @ApiParam({ name: 'slug', type: String, description: 'Slug do post' })
@@ -111,6 +181,12 @@ export class PostsController {
     return this.postService.findBySlug(slug);
   }
 
+  /**
+   * Lista os posts mais populares de uma categoria.
+   * @param categoryId Identificador da categoria.
+   * @param limit Limite de posts a serem retornados (padrão: 10).
+   * @returns Lista de posts populares da categoria.
+   */
   @Get('category/:categoryId/popular')
   @ApiOperation({ summary: 'Posts populares por categoria' })
   @ApiParam({ name: 'categoryId', type: String, description: 'ID da categoria' })

@@ -6,7 +6,7 @@ import { UpdateCategoryDto } from './dto/update-category.dto';
 
 @Injectable()
 export class CategoryRepository {
-    private readonly TABLE_NAME = 'blog-table';
+    private readonly TABLE_NAME = 'Category';
 
     constructor(private readonly dynamoDbService: DynamoDbService) { }
 

@@ -7,7 +7,7 @@ import { UpdatePostDto } from './dto/update-post.dto';
 
 @Injectable()
 export class PostRepository {
-    private readonly TABLE_NAME = 'blog-table';
+    private readonly TABLE_NAME = 'Post';
 
     constructor(private readonly dynamoDbService: DynamoDbService) { }
 
