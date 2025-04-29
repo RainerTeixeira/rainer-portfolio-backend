@@ -27,6 +27,9 @@ export class PostService {
     let post = await this.cacheManager.get<PostEntity>(cacheKey);
     if (!post) {
       post = await this.postRepository.findById(id);
+      if (!post) {
+        throw new NotFoundException(`Post with id ${id} not found`);
+      }
       await this.cacheManager.set(cacheKey, post);
     }
     return post;
@@ -75,6 +78,10 @@ export class PostService {
   }
 
   async findBySlug(slug: string): Promise<PostEntity> {
-    return this.postRepository.findBySlug(slug);
+    const post = await this.postRepository.findBySlug(slug);
+    if (!post) {
+      throw new NotFoundException(`Post with slug ${slug} not found`);
+    }
+    return post;
   }
 }

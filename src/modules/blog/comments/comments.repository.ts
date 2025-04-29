@@ -7,7 +7,7 @@ import { UpdateCommentDto } from './dto/update-comment.dto';
 
 @Injectable()
 export class CommentRepository {
-  private readonly TABLE_NAME = 'blog-table';
+  private readonly TABLE_NAME = 'Comments';
 
   constructor(private readonly dynamoDbService: DynamoDbService) { }
 
