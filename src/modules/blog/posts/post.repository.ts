@@ -139,7 +139,7 @@ export class PostRepository {
     ): Promise<{ items: PostEntity[]; lastKey?: string }> {
         const safeLimit = Number.isFinite(limit) && limit > 0 ? limit : 10;
 
-        const params: any = {
+        const params: AWS.DynamoDB.DocumentClient.QueryInput = {
             TableName: this.TABLE_NAME,
             IndexName: this.INDEXES.AUTHOR_POSTS,
             KeyConditionExpression: '#authorId = :authorId',

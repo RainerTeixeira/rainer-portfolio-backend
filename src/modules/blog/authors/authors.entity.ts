@@ -76,7 +76,17 @@ export class AuthorEntity {
    */
   constructor(author: Partial<AuthorEntity>) {
     Object.assign(this, author);
-    this['AUTHOR#id'] = `AUTHOR#${author.id}`;
+
+    // Extrai o id puro se vier no formato 'AUTHOR#id'
+    if (author['AUTHOR#id'] && typeof author['AUTHOR#id'] === 'string') {
+      const match = (author['AUTHOR#id'] as string).match(/^AUTHOR#(.+)$/);
+      this.id = match ? match[1] : author.id;
+      this['AUTHOR#id'] = author['AUTHOR#id'];
+    } else if (author.id) {
+      this.id = author.id;
+      this['AUTHOR#id'] = `AUTHOR#${author.id}`;
+    }
+
     this.PROFILE = 'PROFILE';
     this.type = 'AUTHOR';
   }
