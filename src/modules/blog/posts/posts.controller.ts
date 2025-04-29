@@ -120,82 +120,184 @@ export class PostsController {
   }
 
   /**
-   * Lista posts de um autor específico.
+   * Lista posts de um autor específico com paginação.
    * @param authorId Identificador do autor.
-   * @param sort Ordem de classificação (ascendente ou descendente).
-   * @returns Lista de posts do autor.
+   * @param limit Limite de posts a serem retornados (padrão: 10).
+   * @param lastKey Token de paginação seguro (base64url, retornado pela API, só envie nas próximas páginas).
+   * @returns Lista de posts do autor e token para próxima página.
    */
   @Get('author/:authorId')
-  @ApiOperation({ summary: 'Listar posts por autor' })
+  @ApiOperation({ summary: 'Listar posts por autor (paginado)' })
   @ApiParam({ name: 'authorId', type: String, description: 'ID do autor' })
-  @ApiQuery({ name: 'sort', enum: ['asc', 'desc'], required: false, description: 'Ordem de classificação' })
-  @ApiResponse({ status: 200, description: 'Lista de posts do autor.', type: [PostEntity] })
+  @ApiQuery({ name: 'limit', type: Number, required: false, description: 'Limite de posts a serem retornados' })
+  @ApiQuery({
+    name: 'lastKey',
+    type: String,
+    required: false,
+    description: 'Token de paginação seguro (base64url, retornado pela API, só envie nas próximas páginas)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de posts do autor paginada.',
+    schema: {
+      type: 'object',
+      properties: {
+        items: { type: 'array', items: { $ref: '#/components/schemas/PostEntity' } },
+        lastKey: { type: 'string', nullable: true, description: 'Token seguro para próxima página' }
+      }
+    }
+  })
   async findPostsByAuthor(
     @Param('authorId') authorId: string,
-    @Query('sort') sort: 'asc' | 'desc' = 'desc',
-  ): Promise<PostEntity[]> {
-    return this.postService.findPostsByAuthor(authorId, sort);
+    @Query('limit') limit = 10,
+    @Query('lastKey') lastKey?: string,
+  ): Promise<{ items: PostEntity[]; lastKey?: string }> {
+    const safeLimit = Number.isFinite(Number(limit)) && Number(limit) > 0 ? Number(limit) : 10;
+    return this.postService.findPostsByAuthorPaginated(authorId, safeLimit, lastKey);
   }
 
   /**
-   * Lista posts de uma categoria específica.
+   * Lista posts de uma categoria específica com paginação.
    * @param categoryId Identificador da categoria.
-   * @returns Lista de posts da categoria.
+   * @param limit Limite de posts a serem retornados (padrão: 10).
+   * @param lastKey Token de paginação seguro (base64url, retornado pela API, só envie nas próximas páginas).
+   * @returns Lista de posts da categoria e token para próxima página.
    */
   @Get('category/:categoryId')
-  @ApiOperation({ summary: 'Listar posts por categoria' })
+  @ApiOperation({ summary: 'Listar posts por categoria (paginado)' })
   @ApiParam({ name: 'categoryId', type: String, description: 'ID da categoria' })
-  @ApiResponse({ status: 200, description: 'Lista de posts da categoria.', type: [PostEntity] })
+  @ApiQuery({ name: 'limit', type: Number, required: false, description: 'Limite de posts a serem retornados' })
+  @ApiQuery({
+    name: 'lastKey',
+    type: String,
+    required: false,
+    description: 'Token de paginação seguro (base64url, retornado pela API, só envie nas próximas páginas)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de posts da categoria paginada.',
+    schema: {
+      type: 'object',
+      properties: {
+        items: { type: 'array', items: { $ref: '#/components/schemas/PostEntity' } },
+        lastKey: { type: 'string', nullable: true, description: 'Token seguro para próxima página' }
+      }
+    }
+  })
   async findPostsByCategory(
     @Param('categoryId') categoryId: string,
-  ): Promise<PostEntity[]> {
-    return this.postService.findPostsByCategory(categoryId);
+    @Query('limit') limit = 10,
+    @Query('lastKey') lastKey?: string,
+  ): Promise<{ items: PostEntity[]; lastKey?: string }> {
+    const safeLimit = Number.isFinite(Number(limit)) && Number(limit) > 0 ? Number(limit) : 10;
+    return this.postService.findPostsByCategoryPaginated(categoryId, safeLimit, lastKey);
   }
 
   /**
-   * Lista os posts mais recentes.
+   * Lista os posts mais recentes com paginação.
    * @param limit Limite de posts a serem retornados (padrão: 10).
-   * @returns Lista de posts recentes.
+   * @param lastKey Token de paginação seguro (base64url, retornado pela API, só envie nas próximas páginas).
+   * @returns Lista de posts recentes e token para próxima página.
    */
   @Get('recent/list')
-  @ApiOperation({ summary: 'Listar posts recentes' })
+  @ApiOperation({ summary: 'Listar posts recentes (paginado)' })
   @ApiQuery({ name: 'limit', type: Number, required: false, description: 'Limite de posts a serem retornados' })
-  @ApiResponse({ status: 200, description: 'Lista de posts recentes.', type: [PostEntity] })
+  @ApiQuery({
+    name: 'lastKey',
+    type: String,
+    required: false,
+    description: 'Token de paginação seguro (base64url, retornado pela API, só envie nas próximas páginas)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de posts recentes paginada.',
+    schema: {
+      type: 'object',
+      properties: {
+        items: { type: 'array', items: { $ref: '#/components/schemas/PostEntity' } },
+        lastKey: { type: 'string', nullable: true, description: 'Token seguro para próxima página' }
+      }
+    }
+  })
   async findRecentPosts(
     @Query('limit') limit = 10,
-  ): Promise<PostEntity[]> {
-    return this.postService.findRecentPosts(limit);
+    @Query('lastKey') lastKey?: string,
+  ): Promise<{ items: PostEntity[]; lastKey?: string }> {
+    const safeLimit = Number.isFinite(Number(limit)) && Number(limit) > 0 ? Number(limit) : 10;
+    return this.postService.findRecentPostsPaginated(safeLimit, lastKey);
   }
 
   /**
-   * Busca um post pelo seu slug.
+   * Busca posts por slug com paginação.
    * @param slug Slug do post.
-   * @returns O post encontrado.
+   * @param limit Limite de posts a serem retornados (padrão: 10).
+   * @param lastKey Token de paginação seguro (base64url, retornado pela API, só envie nas próximas páginas).
+   * @returns Lista de posts encontrados e token para próxima página.
    */
-  @Get('slug/:slug')
-  @ApiOperation({ summary: 'Buscar post por slug' })
-  @ApiParam({ name: 'slug', type: String, description: 'Slug do post' })
-  @ApiResponse({ status: 200, description: 'Post encontrado.', type: PostEntity })
-  @ApiResponse({ status: 404, description: 'Post não encontrado.' })
-  async findBySlug(@Param('slug') slug: string): Promise<PostEntity> {
-    return this.postService.findBySlug(slug);
+  @Get('slug')
+  @ApiOperation({ summary: 'Buscar posts por slug (paginado)' })
+  @ApiQuery({ name: 'slug', type: String, description: 'Slug do post' })
+  @ApiQuery({ name: 'limit', type: Number, required: false, description: 'Limite de posts a serem retornados' })
+  @ApiQuery({
+    name: 'lastKey',
+    type: String,
+    required: false,
+    description: 'Token de paginação seguro (base64url, retornado pela API, só envie nas próximas páginas)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Posts encontrados pelo slug, paginados.',
+    schema: {
+      type: 'object',
+      properties: {
+        items: { type: 'array', items: { $ref: '#/components/schemas/PostEntity' } },
+        lastKey: { type: 'string', nullable: true, description: 'Token seguro para próxima página' }
+      }
+    }
+  })
+  async findBySlug(
+    @Query('slug') slug: string,
+    @Query('limit') limit = 10,
+    @Query('lastKey') lastKey?: string,
+  ): Promise<{ items: PostEntity[]; lastKey?: string }> {
+    const safeLimit = Number.isFinite(Number(limit)) && Number(limit) > 0 ? Number(limit) : 10;
+    return this.postService.findBySlugPaginated(slug, safeLimit, lastKey);
   }
 
   /**
-   * Lista os posts mais populares de uma categoria.
+   * Lista os posts mais populares de uma categoria com paginação.
    * @param categoryId Identificador da categoria.
    * @param limit Limite de posts a serem retornados (padrão: 10).
-   * @returns Lista de posts populares da categoria.
+   * @param lastKey Token de paginação seguro (base64url, retornado pela API, só envie nas próximas páginas).
+   * @returns Lista de posts populares da categoria e token para próxima página.
    */
   @Get('category/:categoryId/popular')
-  @ApiOperation({ summary: 'Posts populares por categoria' })
+  @ApiOperation({ summary: 'Posts populares por categoria (paginado)' })
   @ApiParam({ name: 'categoryId', type: String, description: 'ID da categoria' })
   @ApiQuery({ name: 'limit', type: Number, required: false, description: 'Limite de posts a serem retornados' })
-  @ApiResponse({ status: 200, description: 'Lista de posts populares da categoria.', type: [PostEntity] })
+  @ApiQuery({
+    name: 'lastKey',
+    type: String,
+    required: false,
+    description: 'Token de paginação seguro (base64url, retornado pela API, só envie nas próximas páginas)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de posts populares da categoria paginada.',
+    schema: {
+      type: 'object',
+      properties: {
+        items: { type: 'array', items: { $ref: '#/components/schemas/PostEntity' } },
+        lastKey: { type: 'string', nullable: true, description: 'Token seguro para próxima página' }
+      }
+    }
+  })
   async findPopularByCategory(
     @Param('categoryId') categoryId: string,
     @Query('limit') limit = 10,
-  ): Promise<PostEntity[]> {
-    return this.postService.findPopularByCategory(categoryId, limit);
+    @Query('lastKey') lastKey?: string,
+  ): Promise<{ items: PostEntity[]; lastKey?: string }> {
+    const safeLimit = Number.isFinite(Number(limit)) && Number(limit) > 0 ? Number(limit) : 10;
+    return this.postService.findPopularByCategoryPaginated(categoryId, safeLimit, lastKey);
   }
 }

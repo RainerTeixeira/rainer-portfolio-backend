@@ -77,7 +77,11 @@ export class DynamoDbService {
     this.docClient = DynamoDBDocumentClient.from(
       new DynamoDBClient({
         region: process.env.AWS_REGION || 'us-east-1',
-        endpoint: process.env.DYNAMO_ENDPOINT,
+        credentials: {
+          accessKeyId: process.env.DYNAMODB_ACCESS_KEY_ID || '',
+          secretAccessKey: process.env.DYNAMODB_SECRET_ACCESS_KEY || '',
+        },
+
       }),
       {
         marshallOptions: {
@@ -100,6 +104,10 @@ export class DynamoDbService {
    * - metadata: Metadados de execução
    */
   async get(params: GetCommandInput) {
+    if (!params.TableName || typeof params.TableName !== 'string' || !params.Key || typeof params.Key !== 'object' || Object.keys(params.Key).length === 0) {
+      this.logger.error(`[get] Parâmetros inválidos: TableName ou Key ausentes`);
+      throw new Error('Parâmetros inválidos para operação get: TableName e Key são obrigatórios.');
+    }
     return this.executeOperation('get', params, () =>
       this.docClient.send(new GetCommand(params))
     );
@@ -205,21 +213,19 @@ export class DynamoDbService {
     const startTime = Date.now();
 
     try {
-      // Fase 1: Log inicial
       this.logOperationStart(operation, table, params);
 
-      // Fase 2: Execução
       const result = await handler();
       const duration = Date.now() - startTime;
 
-      // Fase 3: Log de sucesso
       this.logOperationSuccess(operation, table, duration);
 
-      // Fase 4: Retorno padronizado
+      const consumed = (result as any)?.ConsumedCapacity;
+      this.logger.debug(`[${operation}] Resultado: duration=${duration}ms${consumed ? `, ConsumedCapacity=${JSON.stringify(consumed)}` : ''}`);
+
       return this.formatSuccessResponse(operation, table, duration, result);
 
     } catch (error) {
-      // Fase 5: Tratamento de erros
       this.logOperationError(operation, table, error, params);
       throw this.formatErrorResponse(operation, table, error, params);
     }
@@ -257,13 +263,15 @@ export class DynamoDbService {
     error: unknown,
     params: Record<string, unknown>
   ): never {
+    this.logger.error(`[${operation}] Falha em ${table}`);
     if (error instanceof Error) {
-      this.logger.error(`[${operation}] Falha em ${table}: ${error.message}`);
-      this.logger.error(`Stack: ${error.stack}`);
+      this.logger.error(`Mensagem do erro: ${error.message}`);
+      this.logger.error(`Stack trace: ${error.stack}`);
     } else {
-      this.logger.error(`[${operation}] Falha em ${table}: Erro desconhecido`);
+      this.logger.error(`Erro desconhecido: ${JSON.stringify(error)}`);
     }
-    this.logger.error(`Contexto: ${JSON.stringify(params, null, 2)}`);
+    this.logger.error(`Parâmetros completos: ${JSON.stringify(params, null, 2)}`);
+    this.logger.error(`Contexto: operação=${operation}, tabela=${table}`);
 
     throw new DynamoDBOperationError(
       operation,
@@ -271,7 +279,7 @@ export class DynamoDbService {
       {
         table,
         originalError: error instanceof Error ? error.message : String(error),
-        params: { TableName: table, ...params } // Objeto corrigido
+        params: { TableName: table, ...params }
       }
     );
   }
