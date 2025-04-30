@@ -1,3 +1,19 @@
+/**
+ * @file authors.controller.ts
+ * @description
+ * Controller responsável por expor endpoints REST para operações relacionadas à entidade Author.
+ * Atua como camada de entrada da aplicação, recebendo requisições HTTP e delegando a lógica de negócios ao serviço AuthorService.
+ * 
+ * Principais responsabilidades:
+ * - Criar, atualizar, remover e buscar autores por ID ou slug.
+ * - Listar autores mais recentes.
+ * - Utilizar interceptadores de cache para otimizar o desempenho das respostas.
+ * - Documentar a API utilizando Swagger.
+ * 
+ * Observações:
+ * - Cada endpoint está devidamente anotado para documentação automática e uso de cache.
+ * - O controller não implementa lógica de negócio, apenas orquestra as chamadas ao serviço.
+ */
 import {
     Body,
     Controller,

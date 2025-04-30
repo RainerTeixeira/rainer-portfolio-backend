@@ -1,3 +1,23 @@
+/**
+ * @file author.repository.ts
+ * @description
+ * Repositório responsável por gerenciar as operações de acesso a dados da entidade Author no DynamoDB.
+ * Fornece métodos para criar, buscar, atualizar, remover e listar autores, além de buscar por slug e listar autores recentes.
+ * Utiliza índices secundários globais (GSI) para otimizar buscas por slug e autores recentes.
+ * 
+ * Principais métodos:
+ * - create: Cria um novo autor.
+ * - findById: Busca autor pelo ID.
+ * - update: Atualiza dados de um autor existente.
+ * - delete: Remove um autor.
+ * - findBySlug: Busca autor pelo slug.
+ * - listRecentAuthors: Lista autores mais recentes.
+ * 
+ * Observações:
+ * - O mapeamento entre o formato do DynamoDB e a entidade AuthorEntity é realizado pelo método estático fromDynamo.
+ * - O repositório utiliza o serviço DynamoDbService para abstrair operações de baixo nível com o banco.
+ * - Exceções são lançadas para casos de não encontrados ou falhas em operações críticas.
+ */
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DynamoDbService } from '../../../services/dynamoDb.service';
 import { AuthorEntity } from './authors.entity';

@@ -4,12 +4,21 @@ import { CategoryEntity } from './category.entity';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 
+/**
+ * Repositório responsável por realizar operações de persistência e consulta de categorias no DynamoDB.
+ * Implementa métodos para criar, buscar, atualizar, remover e consultar categorias por diferentes critérios.
+ */
 @Injectable()
 export class CategoryRepository {
     private readonly TABLE_NAME = 'Category';
 
     constructor(private readonly dynamoDbService: DynamoDbService) { }
 
+    /**
+     * Cria uma nova categoria no banco de dados.
+     * @param createDto Dados para criação da categoria.
+     * @returns Entidade da categoria criada.
+     */
     async create(createDto: CreateCategoryDto): Promise<CategoryEntity> {
         const category = new CategoryEntity(createDto);
         const params = {
@@ -20,6 +29,12 @@ export class CategoryRepository {
         return category;
     }
 
+    /**
+     * Busca uma categoria pelo seu ID.
+     * @param id Identificador da categoria.
+     * @returns Entidade da categoria encontrada.
+     * @throws NotFoundException se a categoria não for encontrada.
+     */
     async findById(id: string): Promise<CategoryEntity> {
         const params = {
             TableName: this.TABLE_NAME,
@@ -32,6 +47,12 @@ export class CategoryRepository {
         return new CategoryEntity(result.data.Item);
     }
 
+    /**
+     * Atualiza uma categoria existente.
+     * @param id Identificador da categoria.
+     * @param updateDto Dados para atualização.
+     * @returns Entidade da categoria atualizada.
+     */
     async update(id: string, updateDto: UpdateCategoryDto): Promise<CategoryEntity> {
         const existing = await this.findById(id);
         const updated = { ...existing, ...updateDto };
@@ -43,6 +64,10 @@ export class CategoryRepository {
         return new CategoryEntity(updated);
     }
 
+    /**
+     * Remove uma categoria do banco de dados.
+     * @param id Identificador da categoria.
+     */
     async delete(id: string): Promise<void> {
         const params = {
             TableName: this.TABLE_NAME,
@@ -51,7 +76,12 @@ export class CategoryRepository {
         await this.dynamoDbService.delete(params);
     }
 
-    // Consulta por GSI_Slug (busca por slug)
+    /**
+     * Busca uma categoria pelo seu slug utilizando índice secundário (GSI_Slug).
+     * @param slug Slug da categoria.
+     * @returns Entidade da categoria encontrada.
+     * @throws NotFoundException se a categoria não for encontrada.
+     */
     async findBySlug(slug: string): Promise<CategoryEntity> {
         const params = {
             TableName: this.TABLE_NAME,
@@ -69,7 +99,10 @@ export class CategoryRepository {
         return new CategoryEntity(result.data.Items[0]);
     }
 
-    // Consulta por GSI_Popular (categorias mais populares)
+    /**
+     * Retorna uma lista das categorias mais populares utilizando índice secundário (GSI_Popular).
+     * @returns Array de entidades de categorias populares.
+     */
     async findPopularCategories(): Promise<CategoryEntity[]> {
         const params = {
             TableName: this.TABLE_NAME,

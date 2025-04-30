@@ -21,6 +21,11 @@ import { CommentRepository } from './comments.repository'; // Nome corrigido
  * 
  */
 
+/**
+ * Módulo responsável por agrupar todos os componentes relacionados a comentários.
+ * Inclui controller, service, repository e configuração de cache.
+ * Exporta o serviço para uso em outros módulos da aplicação.
+ */
 @Module({
     imports: [
         CacheModule.register({

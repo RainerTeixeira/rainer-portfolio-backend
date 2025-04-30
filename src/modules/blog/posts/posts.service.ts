@@ -26,6 +26,13 @@ export type SortOrder = 'asc' | 'desc';
  * @method findBySlug - Busca post por slug
  * @method findPopularByCategory - Lista posts populares por categoria
  */
+
+/********************************************************************************
+ * Serviço responsável por gerenciar as operações relacionadas aos posts do blog.
+ * Utiliza repositório para persistência e cache para otimização de consultas.
+ * Implementa métodos para criação, busca, atualização, remoção e listagem paginada
+ * de posts por diferentes critérios (autor, categoria, slug, popularidade, recentes).
+ ********************************************************************************/
 @Injectable()
 export class PostService {
   private readonly CACHE_PREFIX = 'post_';
@@ -37,9 +44,9 @@ export class PostService {
   ) { }
 
   /**
-   * @description Cria novo post e limpa cache relacionado
-   * @param createDto DTO de criação
-   * @returns PostEntity criada
+   * Cria novo post e limpa cache relacionado.
+   * @param createDto DTO de criação.
+   * @returns PostEntity criada.
    */
   async create(createDto: CreatePostDto): Promise<PostEntity> {
     const post = await this.postRepository.create(createDto);
@@ -48,10 +55,10 @@ export class PostService {
   }
 
   /**
-   * @description Busca post por ID com cache layer
-   * @param id ID do post
-   * @throws NotFoundException se não encontrado
-   * @returns PostEntity com dados completos
+   * Busca post por ID com cache layer.
+   * @param id ID do post.
+   * @throws NotFoundException se não encontrado.
+   * @returns PostEntity com dados completos.
    */
   async findById(id: string): Promise<PostEntity> {
     const cacheKey = this.getCacheKey(id);
@@ -67,10 +74,10 @@ export class PostService {
   }
 
   /**
-   * @description Atualiza post e atualiza cache
-   * @param id ID do post
-   * @param updateDto DTO de atualização
-   * @returns PostEntity atualizada
+   * Atualiza post e atualiza cache.
+   * @param id ID do post.
+   * @param updateDto DTO de atualização.
+   * @returns PostEntity atualizada.
    */
   async update(id: string, updateDto: UpdatePostDto): Promise<PostEntity> {
     const post = await this.postRepository.update(id, updateDto);
@@ -79,8 +86,8 @@ export class PostService {
   }
 
   /**
-   * @description Remove post e limpa cache
-   * @param id ID do post
+   * Remove post e limpa cache.
+   * @param id ID do post.
    */
   async delete(id: string): Promise<void> {
     await this.postRepository.delete(id);
@@ -88,10 +95,10 @@ export class PostService {
   }
 
   /**
-   * @description Lista posts por autor com ordenação
-   * @param authorId ID do autor
-   * @param sort Direção da ordenação
-   * @returns Lista de PostEntity ordenada
+   * Lista posts por autor com ordenação.
+   * @param authorId ID do autor.
+   * @param sort Direção da ordenação.
+   * @returns Lista de PostEntity ordenada.
    */
   async findPostsByAuthor(
     authorId: string,
@@ -102,18 +109,18 @@ export class PostService {
   }
 
   /**
-   * @description Lista posts por categoria
-   * @param categoryId ID da categoria
-   * @returns Lista de PostEntity ordenada por popularidade
+   * Lista posts por categoria.
+   * @param categoryId ID da categoria.
+   * @returns Lista de PostEntity ordenada por popularidade.
    */
   async findPostsByCategory(categoryId: string): Promise<PostEntity[]> {
     return this.postRepository.findPostsByCategory(categoryId);
   }
 
   /**
-   * @description Lista posts recentes paginados
-   * @param limit Limite de resultados
-   * @returns Lista de PostEntity recentes
+   * Lista posts recentes paginados.
+   * @param limit Limite de resultados.
+   * @returns Lista de PostEntity recentes.
    */
   async findRecentPosts(limit: number = this.DEFAULT_LIMIT): Promise<PostEntity[]> {
     const posts = await this.postRepository.findRecentPosts();
@@ -121,10 +128,10 @@ export class PostService {
   }
 
   /**
-   * @description Lista posts populares por categoria
-   * @param categoryId ID da categoria
-   * @param limit Limite de resultados
-   * @returns Lista de PostEntity ordenada por views
+   * Lista posts populares por categoria.
+   * @param categoryId ID da categoria.
+   * @param limit Limite de resultados.
+   * @returns Lista de PostEntity ordenada por views.
    */
   async findPopularByCategory(
     categoryId: string,
@@ -135,20 +142,20 @@ export class PostService {
   }
 
   /**
-   * @description Busca post por slug
-   * @param slug Slug único do post
-   * @throws NotFoundException se não encontrado
-   * @returns PostEntity correspondente
+   * Busca post por slug.
+   * @param slug Slug único do post.
+   * @throws NotFoundException se não encontrado.
+   * @returns PostEntity correspondente.
    */
   async findBySlug(slug: string): Promise<PostEntity> {
     return this.postRepository.findBySlug(slug);
   }
 
   /**
-   * @description Lista posts recentes paginados
-   * @param limit Limite de resultados
-   * @param lastKey Chave do último item da página anterior (para paginação)
-   * @returns Lista de PostEntity recentes e lastKey para próxima página
+   * Lista posts recentes paginados.
+   * @param limit Limite de resultados.
+   * @param lastKey Chave do último item da página anterior (para paginação).
+   * @returns Lista de PostEntity recentes e lastKey para próxima página.
    */
   async findRecentPostsPaginated(
     limit: number = this.DEFAULT_LIMIT,
@@ -163,11 +170,11 @@ export class PostService {
   }
 
   /**
-   * @description Lista posts populares por categoria com paginação
-   * @param categoryId ID da categoria
-   * @param limit Limite de resultados
-   * @param lastKey Token de paginação seguro (base64url)
-   * @returns Lista de PostEntity e lastKey para próxima página
+   * Lista posts populares por categoria com paginação.
+   * @param categoryId ID da categoria.
+   * @param limit Limite de resultados.
+   * @param lastKey Token de paginação seguro (base64url).
+   * @returns Lista de PostEntity e lastKey para próxima página.
    */
   async findPopularByCategoryPaginated(
     categoryId: string,
@@ -183,11 +190,11 @@ export class PostService {
   }
 
   /**
-   * @description Lista posts por autor com paginação
-   * @param authorId ID do autor
-   * @param limit Limite de resultados
-   * @param lastKey Token de paginação seguro (base64url)
-   * @returns Lista de PostEntity e lastKey para próxima página
+   * Lista posts por autor com paginação.
+   * @param authorId ID do autor.
+   * @param limit Limite de resultados.
+   * @param lastKey Token de paginação seguro (base64url).
+   * @returns Lista de PostEntity e lastKey para próxima página.
    */
   async findPostsByAuthorPaginated(
     authorId: string,
@@ -203,11 +210,11 @@ export class PostService {
   }
 
   /**
-   * @description Lista posts por categoria com paginação
-   * @param categoryId ID da categoria
-   * @param limit Limite de resultados
-   * @param lastKey Token de paginação seguro (base64url)
-   * @returns Lista de PostEntity e lastKey para próxima página
+   * Lista posts por categoria com paginação.
+   * @param categoryId ID da categoria.
+   * @param limit Limite de resultados.
+   * @param lastKey Token de paginação seguro (base64url).
+   * @returns Lista de PostEntity e lastKey para próxima página.
    */
   async findPostsByCategoryPaginated(
     categoryId: string,
@@ -223,11 +230,11 @@ export class PostService {
   }
 
   /**
-   * @description Busca posts por slug com paginação
-   * @param slug Slug do post
-   * @param limit Limite de resultados
-   * @param lastKey Token de paginação seguro (base64url)
-   * @returns Lista de PostEntity e lastKey para próxima página
+   * Busca posts por slug com paginação.
+   * @param slug Slug do post.
+   * @param limit Limite de resultados.
+   * @param lastKey Token de paginação seguro (base64url).
+   * @returns Lista de PostEntity e lastKey para próxima página.
    */
   async findBySlugPaginated(
     slug: string,
@@ -243,16 +250,16 @@ export class PostService {
   }
 
   /**
-   * @description Gera chave de cache para o post
-   * @param id ID do post
-   * @returns Chave de cache formatada
+   * Gera chave de cache para o post.
+   * @param id ID do post.
+   * @returns Chave de cache formatada.
    */
   private getCacheKey(id: string): string {
     return `${this.CACHE_PREFIX}${id}`;
   }
 
   /**
-   * Gera chave de cache para buscas paginadas (por autor, categoria, slug, etc)
+   * Gera chave de cache para buscas paginadas (por autor, categoria, slug, etc).
    */
   private getPagedCacheKey(prefix: string, params: Record<string, unknown>): string {
     // Exemplo: post_page_author_yjb8rx-240_limit_10_lastKey_xxx
@@ -266,16 +273,16 @@ export class PostService {
   }
 
   /**
-   * @description Atualiza cache do post
-   * @param post PostEntity atualizada
+   * Atualiza cache do post.
+   * @param post PostEntity atualizada.
    */
   private async updateCache(post: PostEntity): Promise<void> {
     await this.cacheManager.set(this.getCacheKey(post.id), post);
   }
 
   /**
-   * @description Limpa cache do post
-   * @param id ID do post
+   * Limpa cache do post.
+   * @param id ID do post.
    */
   private async clearCache(id: string): Promise<void> {
     await this.cacheManager.del(this.getCacheKey(id));
