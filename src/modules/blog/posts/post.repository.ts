@@ -6,16 +6,9 @@ import { UpdatePostDto } from './dto/update-post.dto';
 import * as crypto from 'crypto';
 
 /**
- * @repository PostRepository
- * @description Gerencia operações de acesso a dados para entidades Post no DynamoDB
- * @method create - Cria um novo post
- * @method findById - Busca post por ID
- * @method update - Atualiza post existente
- * @method delete - Remove post
- * @method findPostsByAuthor - Lista posts por autor usando GSI_AuthorPosts
- * @method findPostsByCategory - Lista posts por categoria usando GSI_CategoryPosts
- * @method findRecentPosts - Lista posts recentes usando GSI_RecentPosts
- * @method findBySlug - Busca post por slug usando GSI_Slug
+ * Repositório responsável por realizar operações de persistência e consulta de posts no DynamoDB.
+ * Implementa métodos para criar, buscar, atualizar, remover e consultar posts por diferentes critérios,
+ * incluindo paginação e integração com índices secundários globais (GSI).
  */
 @Injectable()
 export class PostRepository {
@@ -38,9 +31,9 @@ export class PostRepository {
     constructor(private readonly dynamoDbService: DynamoDbService) { }
 
     /**
-     * @description Cria um novo post na tabela Post
-     * @param createDto DTO com dados para criação do post
-     * @returns PostEntity criada
+     * Cria um novo post na tabela Post.
+     * @param createDto DTO com dados para criação do post.
+     * @returns PostEntity criada.
      */
     async create(createDto: CreatePostDto): Promise<PostEntity> {
         const post = new PostEntity(createDto);
@@ -52,10 +45,10 @@ export class PostRepository {
     }
 
     /**
-     * @description Busca post por chave primária (ID)
-     * @param id ID do post no formato POST#id
-     * @throws NotFoundException se o post não existir
-     * @returns PostEntity encontrada
+     * Busca post por chave primária (ID).
+     * @param id ID do post no formato POST#id.
+     * @throws NotFoundException se o post não existir.
+     * @returns PostEntity encontrada.
      */
     async findById(id: string): Promise<PostEntity> {
         const result = await this.dynamoDbService.get({
@@ -74,10 +67,10 @@ export class PostRepository {
     }
 
     /**
-     * @description Atualiza post existente
-     * @param id ID do post
-     * @param updateDto DTO com dados para atualização
-     * @returns PostEntity atualizada
+     * Atualiza post existente.
+     * @param id ID do post.
+     * @param updateDto DTO com dados para atualização.
+     * @returns PostEntity atualizada.
      */
     async update(id: string, updateDto: UpdatePostDto): Promise<PostEntity> {
         const existing = await this.findById(id);
@@ -90,8 +83,8 @@ export class PostRepository {
     }
 
     /**
-     * @description Remove post da base de dados
-     * @param id ID do post a ser removido
+     * Remove post da base de dados.
+     * @param id ID do post a ser removido.
      */
     async delete(id: string): Promise<void> {
         await this.dynamoDbService.delete({
@@ -104,9 +97,9 @@ export class PostRepository {
     }
 
     /**
-     * @description Busca posts por autor usando índice GSI_AuthorPosts
-     * @param authorId ID do autor
-     * @returns Lista de PostEntity ordenadas por data de publicação
+     * Busca posts por autor usando índice GSI_AuthorPosts.
+     * @param authorId ID do autor.
+     * @returns Lista de PostEntity ordenadas por data de publicação.
      */
     async findPostsByAuthor(authorId: string): Promise<PostEntity[]> {
         const result = await this.dynamoDbService.query({
@@ -126,10 +119,10 @@ export class PostRepository {
     }
 
     /**
-     * @description Busca posts por autor usando índice GSI_AuthorPosts com paginação
-     * @param authorId ID do autor
-     * @param limit Limite de itens por página
-     * @param lastKey Token de paginação seguro (base64url)
+     * Busca posts por autor usando índice GSI_AuthorPosts com paginação.
+     * @param authorId ID do autor.
+     * @param limit Limite de itens por página.
+     * @param lastKey Token de paginação seguro (base64url).
      * @returns { items, lastKey }
      */
     async findPostsByAuthorPaginated(
@@ -172,9 +165,9 @@ export class PostRepository {
     }
 
     /**
-     * @description Busca posts por categoria usando índice GSI_CategoryPosts
-     * @param categoryId ID da categoria
-     * @returns Lista de PostEntity ordenadas por visualizações
+     * Busca posts por categoria usando índice GSI_CategoryPosts.
+     * @param categoryId ID da categoria.
+     * @returns Lista de PostEntity ordenadas por visualizações.
      */
     async findPostsByCategory(categoryId: string): Promise<PostEntity[]> {
         const result = await this.dynamoDbService.query({
@@ -194,10 +187,10 @@ export class PostRepository {
     }
 
     /**
-     * @description Busca posts por categoria usando índice GSI_CategoryPosts com paginação
-     * @param categoryId ID da categoria
-     * @param limit Limite de itens por página
-     * @param lastKey Token de paginação seguro (base64url)
+     * Busca posts por categoria usando índice GSI_CategoryPosts com paginação.
+     * @param categoryId ID da categoria.
+     * @param limit Limite de itens por página.
+     * @param lastKey Token de paginação seguro (base64url).
      * @returns { items, lastKey }
      */
     async findPostsByCategoryPaginated(
@@ -240,8 +233,8 @@ export class PostRepository {
     }
 
     /**
-     * @description Lista posts recentes usando índice GSI_RecentPosts
-     * @returns Lista de PostEntity ordenadas por data de publicação
+     * Lista posts recentes usando índice GSI_RecentPosts.
+     * @returns Lista de PostEntity ordenadas por data de publicação.
      */
     async findRecentPosts(): Promise<PostEntity[]> {
         const result = await this.dynamoDbService.query({
@@ -261,9 +254,9 @@ export class PostRepository {
     }
 
     /**
-     * @description Lista posts recentes usando índice GSI_RecentPosts com paginação
-     * @param limit Limite de itens por página
-     * @param lastKey Chave do último item da página anterior (serializada em JSON)
+     * Lista posts recentes usando índice GSI_RecentPosts com paginação.
+     * @param limit Limite de itens por página.
+     * @param lastKey Chave do último item da página anterior (serializada em JSON).
      * @returns { items, lastKey }
      */
     async findRecentPostsPaginated(
@@ -308,10 +301,10 @@ export class PostRepository {
     }
 
     /**
-     * @description Busca post por slug usando índice GSI_Slug
-     * @param slug Slug único do post
-     * @throws NotFoundException se nenhum post for encontrado
-     * @returns PostEntity encontrada
+     * Busca post por slug usando índice GSI_Slug.
+     * @param slug Slug único do post.
+     * @throws NotFoundException se nenhum post for encontrado.
+     * @returns PostEntity encontrada.
      */
     async findBySlug(slug: string): Promise<PostEntity> {
         const result = await this.dynamoDbService.query({
@@ -338,10 +331,10 @@ export class PostRepository {
     }
 
     /**
-     * @description Busca posts por slug usando índice GSI_Slug com paginação (caso haja múltiplos slugs)
-     * @param slug Slug único do post
-     * @param limit Limite de itens por página
-     * @param lastKey Token de paginação seguro (base64url)
+     * Busca posts por slug usando índice GSI_Slug com paginação.
+     * @param slug Slug único do post.
+     * @param limit Limite de itens por página.
+     * @param lastKey Token de paginação seguro (base64url).
      * @returns { items, lastKey }
      */
     async findBySlugPaginated(
@@ -385,7 +378,9 @@ export class PostRepository {
     }
 
     /**
-     * Codifica o objeto lastKey em base64url (sem map in-memory)
+     * Codifica o objeto lastKey em base64url (sem map in-memory).
+     * @param lastKeyObj Objeto de chave de paginação.
+     * @returns String base64url.
      */
     private encodeLastKey(lastKeyObj: Record<string, unknown>): string {
         const json = JSON.stringify(lastKeyObj);
@@ -393,7 +388,9 @@ export class PostRepository {
     }
 
     /**
-     * Decodifica o base64url para objeto lastKey
+     * Decodifica o base64url para objeto lastKey.
+     * @param hash String base64url.
+     * @returns Objeto lastKey.
      */
     private decodeLastKey(hash: string): Record<string, unknown> | undefined {
         try {
@@ -405,9 +402,9 @@ export class PostRepository {
     }
 
     /**
-     * @description Mapeia resultados do DynamoDB para entidades Post
-     * @param result Resultado da consulta DynamoDB
-     * @returns Array de PostEntity
+     * Mapeia resultados do DynamoDB para entidades Post.
+     * @param result Resultado da consulta DynamoDB.
+     * @returns Array de PostEntity.
      */
     private mapItemsToEntities(result: { data?: { Items?: Record<string, unknown>[] } }): PostEntity[] {
         return result.data?.Items?.map((item: Record<string, unknown>) => new PostEntity(item)) || [];

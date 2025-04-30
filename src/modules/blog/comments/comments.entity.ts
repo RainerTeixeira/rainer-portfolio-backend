@@ -2,6 +2,11 @@ import { Exclude, Expose } from 'class-transformer';
 import { AttributeValue } from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 
+/**
+ * Entidade que representa um comentário no domínio do blog.
+ * Utilizada para mapear os dados armazenados no DynamoDB e expor propriedades relevantes para a aplicação.
+ * Inclui campos para integração com índices secundários globais (GSI) e métodos utilitários de serialização.
+ */
 @Exclude()
 export class CommentEntity {
     // Partition Key: COMMENT#postId
@@ -42,6 +47,11 @@ export class CommentEntity {
     @Expose()
     gsiUserComments?: string; // Formato: "user_id#userId#created_at#timestamp"
 
+    /**
+     * Construtor que permite inicializar a entidade a partir de um objeto parcial.
+     * Gera PK/SK automaticamente se não fornecidas.
+     * @param partial Objeto parcial para inicialização.
+     */
     constructor(partial?: Partial<CommentEntity>) {
         if (partial) {
             Object.assign(this, partial);
@@ -55,17 +65,25 @@ export class CommentEntity {
         }
     }
 
-    // Getter para timestamp (extrai do SK)
+    /**
+     * Getter para timestamp (extrai do SK).
+     */
     get timestamp(): string {
         return this.sk;
     }
 
-    // Getter para postId (remove o prefixo da PK)
+    /**
+     * Getter para postId (remove o prefixo da PK).
+     */
     get cleanPostId(): string {
         return this.pk?.replace('COMMENT#', '') ?? '';
     }
 
-    // Serialização para DynamoDB
+    /**
+     * Serialização para o formato aceito pelo DynamoDB.
+     * @param comment Instância da entidade a ser convertida.
+     * @returns Objeto no formato do DynamoDB.
+     */
     static toDynamoDB(comment: CommentEntity): Record<string, AttributeValue> {
         return marshall({
             ...comment,
@@ -74,7 +92,11 @@ export class CommentEntity {
         });
     }
 
-    // Desserialização do DynamoDB
+    /**
+     * Desserialização do DynamoDB para uma instância de CommentEntity.
+     * @param dynamoItem Objeto no formato do DynamoDB.
+     * @returns Instância de CommentEntity.
+     */
     static fromDynamoDB(dynamoItem: Record<string, AttributeValue>): CommentEntity {
         const unmarshalled = unmarshall(dynamoItem);
         return new CommentEntity({

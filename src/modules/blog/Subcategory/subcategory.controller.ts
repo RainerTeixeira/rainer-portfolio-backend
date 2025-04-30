@@ -1,3 +1,19 @@
+/**
+ * @file subcategory.controller.ts
+ * @description
+ * Controller responsável por expor endpoints REST para operações relacionadas à entidade Subcategory.
+ * Atua como camada de entrada da aplicação, recebendo requisições HTTP e delegando a lógica de negócios ao serviço SubcategoryService.
+ * 
+ * Principais responsabilidades:
+ * - Criar, atualizar, remover e buscar subcategorias por ID ou slug.
+ * - Listar subcategorias por categoria pai.
+ * - Documentar a API utilizando Swagger.
+ * 
+ * Observações:
+ * - Cada endpoint está devidamente anotado para documentação automática.
+ * - O controller não implementa lógica de negócio, apenas orquestra as chamadas ao serviço.
+ */
+
 import { Controller, Get, Post, Put, Delete, Body, Param } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
 import { SubcategoryService } from './subcategory.service';
@@ -5,15 +21,19 @@ import { CreateSubcategoryDto } from './dto/create-subcategory.dto';
 import { UpdateSubcategoryDto } from './dto/update-subcategory.dto';
 import { SubcategoryEntity } from './subcategory.entity';
 
-// Controlador responsável pelas rotas relacionadas às subcategorias de blog
+/**
+ * Controller responsável por expor endpoints REST para operações de subcategoria.
+ * Recebe requisições HTTP, valida dados e delega a lógica de negócio ao serviço de subcategorias.
+ * Utiliza decorators do Swagger para documentação automática da API.
+ */
 @ApiTags('Subcategorias')
 @Controller('subcategories')
 export class SubcategoryController {
-  // Injeta o serviço de subcategoria
   constructor(private readonly subcategoryService: SubcategoryService) { }
 
   /**
-   * Cria uma nova subcategoria.
+   * Endpoint para criar uma nova subcategoria.
+   * Recebe dados via DTO e retorna a entidade criada.
    * @param createDto Dados para criação da subcategoria.
    * @returns Subcategoria criada.
    */
@@ -26,7 +46,8 @@ export class SubcategoryController {
   }
 
   /**
-   * Busca uma subcategoria pelo ID.
+   * Endpoint para buscar uma subcategoria pelo ID.
+   * Retorna a entidade correspondente ao ID informado.
    * @param id Identificador da subcategoria.
    * @returns Subcategoria encontrada.
    */
@@ -40,7 +61,8 @@ export class SubcategoryController {
   }
 
   /**
-   * Atualiza uma subcategoria existente.
+   * Endpoint para atualizar uma subcategoria existente.
+   * Recebe dados via DTO e retorna a entidade atualizada.
    * @param id Identificador da subcategoria.
    * @param updateDto Dados para atualização.
    * @returns Subcategoria atualizada.
@@ -59,7 +81,8 @@ export class SubcategoryController {
   }
 
   /**
-   * Remove uma subcategoria pelo ID.
+   * Endpoint para remover uma subcategoria pelo ID.
+   * Não retorna conteúdo em caso de sucesso.
    * @param id Identificador da subcategoria.
    */
   @Delete(':id')
@@ -72,7 +95,8 @@ export class SubcategoryController {
   }
 
   /**
-   * Lista subcategorias por categoria pai.
+   * Endpoint para listar subcategorias por categoria pai.
+   * Retorna um array de entidades de subcategorias.
    * @param parentCategoryId ID da categoria pai.
    * @returns Lista de subcategorias.
    */
@@ -85,7 +109,8 @@ export class SubcategoryController {
   }
 
   /**
-   * Busca subcategoria pelo slug.
+   * Endpoint para buscar subcategoria pelo slug.
+   * Retorna a entidade correspondente ao slug informado.
    * @param slug Slug da subcategoria.
    * @returns Subcategoria encontrada.
    */

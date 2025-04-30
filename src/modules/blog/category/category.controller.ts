@@ -6,10 +6,9 @@ import { UpdateCategoryDto } from './dto/update-category.dto';
 import { CategoryEntity } from './category.entity';
 
 /**
- * @CategoryController
- *
- * Controller responsável por receber as requisições HTTP e interagir com o serviço de categorias.
- * Expõe endpoints REST para criar, atualizar, remover, buscar e listar categorias.
+ * Controller responsável por expor endpoints REST para operações de categoria.
+ * Recebe requisições HTTP, valida dados e delega a lógica de negócio ao serviço de categorias.
+ * Utiliza decorators do Swagger para documentação automática da API.
  */
 @ApiTags('Categories')
 @Controller('categories')
@@ -18,6 +17,7 @@ export class CategoryController {
 
     /**
      * Endpoint para criar uma nova categoria.
+     * Recebe dados via DTO e retorna a entidade criada.
      * @param createDto - Dados da categoria a ser criada (DTO).
      * @returns Uma Promise que resolve para a entidade CategoryEntity recém-criada.
      */
@@ -31,6 +31,7 @@ export class CategoryController {
 
     /**
      * Endpoint para buscar uma categoria pelo ID.
+     * Retorna a entidade correspondente ao ID informado.
      * @param id - ID da categoria a ser buscada (parâmetro da rota).
      * @returns Uma Promise que resolve para a entidade CategoryEntity encontrada.
      */
@@ -44,6 +45,7 @@ export class CategoryController {
 
     /**
      * Endpoint para atualizar uma categoria existente.
+     * Recebe dados via DTO e retorna a entidade atualizada.
      * @param id - ID da categoria a ser atualizada (parâmetro da rota).
      * @param updateDto - Dados da categoria a serem atualizados (DTO).
      * @returns Uma Promise que resolve para a entidade CategoryEntity atualizada.
@@ -61,7 +63,8 @@ export class CategoryController {
     }
 
     /**
-     * Endpoint para remover uma categoria.
+     * Endpoint para remover uma categoria pelo ID.
+     * Não retorna conteúdo em caso de sucesso.
      * @param id - ID da categoria a ser removida (parâmetro da rota).
      * @returns Uma Promise que resolve quando a categoria é removida.
      */
@@ -75,6 +78,7 @@ export class CategoryController {
 
     /**
      * Endpoint para buscar uma categoria pelo slug.
+     * Retorna a entidade correspondente ao slug informado.
      * @param slug - Slug da categoria a ser buscada (parâmetro da rota).
      * @returns Uma Promise que resolve para a entidade CategoryEntity encontrada.
      */
@@ -88,6 +92,7 @@ export class CategoryController {
 
     /**
      * Endpoint para listar as categorias populares.
+     * Retorna um array de entidades de categorias populares.
      * @returns Uma Promise que resolve para um array de entidades CategoryEntity representando as categorias populares.
      */
     @Get('popular/list')

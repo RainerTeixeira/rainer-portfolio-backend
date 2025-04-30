@@ -2,6 +2,11 @@ import { Exclude, Expose } from 'class-transformer';
 import { AttributeValue } from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 
+/**
+ * Entidade que representa uma categoria no domínio do blog.
+ * Utilizada para mapear os dados armazenados no DynamoDB e expor propriedades relevantes para a aplicação.
+ * Inclui métodos utilitários para conversão entre o formato da aplicação e o formato do DynamoDB.
+ */
 @Exclude()
 export class CategoryEntity {
   // PK: CATEGORY#id
@@ -47,6 +52,11 @@ export class CategoryEntity {
   @Expose()
   gsiPopular?: number;
 
+  /**
+   * Construtor que permite inicializar a entidade a partir de um objeto parcial.
+   * Caso seja fornecido apenas o id, monta o pk automaticamente.
+   * @param partial Objeto parcial para inicialização.
+   */
   constructor(partial?: Partial<CategoryEntity>) {
     if (partial) {
       Object.assign(this, partial);
@@ -56,21 +66,35 @@ export class CategoryEntity {
     }
   }
 
-  // Getter para ID (remove o prefixo)
+  /**
+   * Getter para obter o id da categoria a partir do pk.
+   * Remove o prefixo 'CATEGORY#' do pk.
+   */
   get id(): string {
     return this.pk?.replace('CATEGORY#', '') ?? '';
   }
 
+  /**
+   * Setter para definir o id da categoria, ajustando o pk com o prefixo 'CATEGORY#'.
+   */
   set id(value: string) {
     this.pk = `CATEGORY#${value}`;
   }
 
-  // Método para converter para DynamoDB
+  /**
+   * Converte a entidade CategoryEntity para o formato aceito pelo DynamoDB.
+   * @param category Instância da entidade a ser convertida.
+   * @returns Objeto no formato do DynamoDB.
+   */
   static toDynamoDB(category: CategoryEntity): Record<string, AttributeValue> {
     return marshall(category);
   }
 
-  // Método para converter do DynamoDB
+  /**
+   * Converte um item do DynamoDB para uma instância de CategoryEntity.
+   * @param dynamoItem Objeto no formato do DynamoDB.
+   * @returns Instância de CategoryEntity.
+   */
   static fromDynamoDB(dynamoItem: Record<string, AttributeValue>): CategoryEntity {
     return unmarshall(dynamoItem) as CategoryEntity;
   }

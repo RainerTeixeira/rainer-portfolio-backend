@@ -1,3 +1,19 @@
+/**
+ * @file authors.entity.ts
+ * @description
+ * Define a estrutura da entidade Author utilizada no domínio do blog.
+ * Representa os dados persistidos no DynamoDB e expostos pela API.
+ * 
+ * Principais responsabilidades:
+ * - Tipar e documentar todos os campos do autor, incluindo informações pessoais, sociais e metadados.
+ * - Facilitar a integração com o Swagger para documentação automática.
+ * - Fornecer construtor que normaliza e extrai o id puro do campo de partição.
+ * 
+ * Observações:
+ * - A interface AuthorSocialLinks define o formato dos links sociais do autor.
+ * - A entidade é utilizada em DTOs, controllers e serviços para garantir consistência dos dados.
+ */
+
 import { ApiProperty } from '@nestjs/swagger';
 
 /**
@@ -22,6 +38,9 @@ export interface AuthorSocialLinks {
  * 
  * Meta descrição para SEO: Descrição do autor para motores de busca.
  * 
+ * Entidade que representa um autor no domínio do blog.
+ * Utilizada para mapear os dados armazenados no DynamoDB e expor propriedades relevantes para a aplicação.
+ * Inclui campos para integração com índices secundários globais (GSI) e propriedades de SEO.
  */
 export class AuthorEntity {
   @ApiProperty({ description: 'Chave de partição no formato AUTHOR#id' })
@@ -72,7 +91,9 @@ export class AuthorEntity {
 
   /**
    * Construtor da classe AuthorEntity.
-   * @param author - Objeto contendo os dados do autor a serem atribuídos à entidade.
+   * Permite inicializar a entidade a partir de um objeto parcial.
+   * Extrai o id puro se vier no formato 'AUTHOR#id'.
+   * @param author Objeto contendo os dados do autor a serem atribuídos à entidade.
    */
   constructor(author: Partial<AuthorEntity>) {
     Object.assign(this, author);

@@ -2,15 +2,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 /**
- * @PostEntity
- *
- * Entidade que representa um post de blog.
- *
- * Chave primária:
- *   Partition Key: POST#id
- *   Sort Key: METADATA
- *
- * Meta descrição para SEO: Descrição breve do post para motores de busca.
+ * Entidade que representa um post de blog no domínio da aplicação.
+ * Utilizada para mapear os dados armazenados no DynamoDB e expor propriedades relevantes para a aplicação.
+ * Inclui campos para integração com índices secundários globais (GSI) e propriedades de SEO.
  */
 export class PostEntity {
     @ApiProperty({ description: 'Chave de partição no formato POST#id' })
@@ -110,6 +104,10 @@ export class PostEntity {
     })
     d?: { slug: string; type: string };
 
+    /**
+     * Construtor que permite inicializar a entidade a partir de um objeto parcial.
+     * @param partial Objeto parcial para inicialização.
+     */
     constructor(partial?: Partial<PostEntity>) {
         Object.assign(this, partial);
     }

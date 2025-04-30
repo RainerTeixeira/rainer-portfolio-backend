@@ -19,6 +19,12 @@ import { CategoryRepository } from './category.repository';
  *
  * @module CategoryModule
  */
+
+/**
+ * Módulo responsável por agrupar todos os componentes relacionados à categoria.
+ * Inclui controller, service, repository e configuração de cache.
+ * Exporta o serviço para uso em outros módulos da aplicação.
+ */
 @Module({
     imports: [
         // Cache local (se você quiser uma config diferente da global)

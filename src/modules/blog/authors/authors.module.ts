@@ -1,3 +1,18 @@
+/**
+ * @file authors.module.ts
+ * @description
+ * Módulo responsável por agrupar e disponibilizar todos os componentes relacionados à entidade Author.
+ * 
+ * Principais responsabilidades:
+ * - Registrar controllers, serviços e repositórios de autores.
+ * - Configurar o módulo de cache para otimização de performance.
+ * - Exportar o serviço de autores para uso em outros módulos da aplicação.
+ * 
+ * Observações:
+ * - Segue o padrão de módulos do NestJS para organização e injeção de dependências.
+ * - Permite fácil manutenção e escalabilidade do domínio de autores.
+ */
+
 import { Module } from '@nestjs/common';
 import { CacheModule } from '@nestjs/cache-manager';
 

@@ -1,3 +1,19 @@
+/**
+ * @file authors.service.ts
+ * @description
+ * Serviço responsável por centralizar e orquestrar a lógica de negócios relacionada à entidade Author.
+ * Atua como intermediário entre o controller, o repositório e o sistema de cache.
+ * 
+ * Principais responsabilidades:
+ * - Criar, atualizar, remover e buscar autores.
+ * - Gerenciar o cache para otimizar buscas frequentes (por ID, slug e lista de autores recentes).
+ * - Garantir a consistência dos dados ao invalidar o cache após operações de escrita.
+ * 
+ * Observações:
+ * - Utiliza o AuthorRepository para persistência e recuperação dos dados no DynamoDB.
+ * - Utiliza o CacheManager do NestJS para armazenamento temporário dos resultados mais acessados.
+ * - Lança exceções apropriadas para cenários de erro, facilitando o tratamento no controller.
+ */
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';

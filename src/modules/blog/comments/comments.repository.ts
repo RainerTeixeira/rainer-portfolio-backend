@@ -5,12 +5,21 @@ import { CommentEntity } from './comments.entity'; // Nome do arquivo corrigido 
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 
+/**
+ * Repositório responsável por realizar operações de persistência e consulta de comentários no DynamoDB.
+ * Implementa métodos para criar, buscar, atualizar, remover e consultar comentários por diferentes critérios.
+ */
 @Injectable()
 export class CommentRepository {
   private readonly TABLE_NAME = 'Comments';
 
   constructor(private readonly dynamoDbService: DynamoDbService) { }
 
+  /**
+   * Cria um novo comentário no banco de dados.
+   * @param createDto Dados para criar um comentário.
+   * @returns Entidade do comentário criado.
+   */
   async create(createDto: CreateCommentDto): Promise<CommentEntity> {
     const comment = new CommentEntity(createDto);
     const params = {
@@ -21,6 +30,13 @@ export class CommentRepository {
     return comment;
   }
 
+  /**
+   * Busca um comentário pelo postId e timestamp.
+   * @param postId ID do post relacionado ao comentário.
+   * @param timestamp Timestamp do comentário.
+   * @returns Entidade do comentário encontrada.
+   * @throws NotFoundException se o comentário não for encontrado.
+   */
   async findById(postId: string, timestamp: string): Promise<CommentEntity> {
     const params = {
       TableName: this.TABLE_NAME,
@@ -33,6 +49,13 @@ export class CommentRepository {
     return new CommentEntity(result.data.Item);
   }
 
+  /**
+   * Atualiza um comentário existente.
+   * @param postId ID do post relacionado ao comentário.
+   * @param timestamp Timestamp do comentário.
+   * @param updateDto Dados para atualizar o comentário.
+   * @returns Entidade do comentário atualizada.
+   */
   async update(postId: string, timestamp: string, updateDto: UpdateCommentDto): Promise<CommentEntity> {
     const existing = await this.findById(postId, timestamp);
     const updated = { ...existing, ...updateDto };
@@ -44,6 +67,11 @@ export class CommentRepository {
     return new CommentEntity(updated);
   }
 
+  /**
+   * Remove um comentário do banco de dados.
+   * @param postId ID do post relacionado ao comentário.
+   * @param timestamp Timestamp do comentário.
+   */
   async delete(postId: string, timestamp: string): Promise<void> {
     const params = {
       TableName: this.TABLE_NAME,
@@ -52,6 +80,11 @@ export class CommentRepository {
     await this.dynamoDbService.delete(params);
   }
 
+  /**
+   * Busca todos os comentários de um post específico utilizando índice secundário (GSI_PostComments).
+   * @param postId ID do post para buscar os comentários.
+   * @returns Lista de comentários do post.
+   */
   async findCommentsByPost(postId: string): Promise<CommentEntity[]> {
     const params = {
       TableName: this.TABLE_NAME,
@@ -67,6 +100,11 @@ export class CommentRepository {
     return result.data.Items?.map((item: Record<string, unknown>) => new CommentEntity(item)) ?? [];
   }
 
+  /**
+   * Busca todos os comentários de um usuário específico utilizando índice secundário (GSI_UserComments).
+   * @param userId ID do usuário para buscar os comentários.
+   * @returns Lista de comentários do usuário.
+   */
   async findCommentsByUser(userId: string): Promise<CommentEntity[]> {
     const params = {
       TableName: this.TABLE_NAME,
