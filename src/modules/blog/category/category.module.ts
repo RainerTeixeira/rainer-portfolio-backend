@@ -1,9 +1,8 @@
 import { Module } from '@nestjs/common';
 import { CacheModule } from '@nestjs/cache-manager';
 
-import { CategoryController } from './category.controller'; // Nome corrigido
-import { CategoryService } from './category.service'; // Importação corrigida
-import { CategoryRepository } from './category.repository';
+import { CategoryController } from '@src/modules/blog/category/category.controller'; // Nome corrigido
+import { CategoryService } from '@src/modules/blog/category/category.service'; // Importação corrigida
 
 /**
  * Responsabilidades:
@@ -14,7 +13,6 @@ import { CategoryRepository } from './category.repository';
  * Estrutura:
  * - Controller: CategoryController 
  * - Service: CategoryService
- * - Repository: CategoryRepository
  * - Integração com DynamoDbService (global) e CacheModule
  *
  * @module CategoryModule
@@ -27,14 +25,14 @@ import { CategoryRepository } from './category.repository';
  */
 @Module({
     imports: [
-        // Cache local (se você quiser uma config diferente da global)
+        // Configuração do CacheModule com TTL de 5 minutos e tamanho máximo de 100 itens
         CacheModule.register({
-            ttl: 300,
-            max: 100,
+            ttl: 300,  // Tempo de vida do cache em segundos (5 minutos)
+            max: 100,  // Número máximo de itens no cache
         }),
     ],
-    controllers: [CategoryController],
-    providers: [CategoryService, CategoryRepository],
-    exports: [CategoryService],
+    controllers: [CategoryController],  // Injeção do Controller
+    providers: [CategoryService],  // Injeção do Service
+    exports: [CategoryService],  // Permite que o CategoryService seja utilizado em outros módulos
 })
 export class CategoryModule { }

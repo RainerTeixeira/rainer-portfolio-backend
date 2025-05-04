@@ -10,7 +10,7 @@ provider:
     NODE_ENV: ${self:provider.stage}
     DYNAMO_TABLE_NAME_POSTS: Posts
     DYNAMO_TABLE_NAME_AUTHORS: Authors
-    DYNAMO_TABLE_NAME_CATEGORIES: Categories
+    DYNAMO_TABLE_NAME_CATEGORIES: category
     DYNAMO_TABLE_NAME_COMMENTS: Comments
     DYNAMO_TABLE_NAME_SUBCATEGORY: Subcategory
   iamRoleStatements:

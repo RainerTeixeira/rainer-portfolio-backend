@@ -220,7 +220,7 @@ export class DynamoDbService {
 
       this.logOperationSuccess(operation, table, duration);
 
-      const consumed = (result as any)?.ConsumedCapacity;
+      const consumed = (result as { ConsumedCapacity?: unknown })?.ConsumedCapacity;
       this.logger.debug(`[${operation}] Resultado: duration=${duration}ms${consumed ? `, ConsumedCapacity=${JSON.stringify(consumed)}` : ''}`);
 
       return this.formatSuccessResponse(operation, table, duration, result);

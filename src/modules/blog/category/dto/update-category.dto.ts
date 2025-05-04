@@ -1,9 +1,15 @@
-// src/modules/blog/categories/dto/update-category.dto.ts
-import { PartialType } from '@nestjs/mapped-types';
+import { PartialType, OmitType } from '@nestjs/swagger';
 import { BaseCategoryDto } from './base-category.dto';
-import { IsNotEmpty } from 'class-validator';
 
-export class UpdateCategoryDto extends PartialType(BaseCategoryDto) {
-  @IsNotEmpty()
-  updated_at!: string;
-}
+/**
+ * DTO para atualização de categorias no módulo de blog.
+ * 
+ * Esta classe estende `PartialType` aplicado ao `OmitType` de `BaseCategoryDto`,
+ * excluindo os campos 'pk', 'sk', 'created_at' e 'type', tornando todos os demais campos opcionais.
+ * 
+ * Utilizada para operações de atualização parcial de categorias, garantindo que apenas
+ * os campos permitidos possam ser modificados.
+ */
+export class UpdateCategoryDto extends PartialType(
+  OmitType(BaseCategoryDto, ['pk', 'sk', 'created_at', 'type'] as const),
+) { }

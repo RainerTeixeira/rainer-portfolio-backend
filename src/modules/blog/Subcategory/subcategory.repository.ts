@@ -1,17 +1,4 @@
-/**
- * @file subcategory.repository.ts
- * @description
- * Repositório responsável por gerenciar as operações de acesso a dados da entidade Subcategory no DynamoDB.
- * Fornece métodos para criar, buscar, atualizar, remover e listar subcategorias, além de buscar por slug e listar por categoria pai.
- * Utiliza índices secundários globais (GSI) para otimizar buscas por slug e por categoria pai.
- * 
- * Observações:
- * - O mapeamento entre o formato do DynamoDB e a entidade SubcategoryEntity é realizado no próprio repositório.
- * - O repositório utiliza o serviço DynamoDbService para abstrair operações de baixo nível com o banco.
- * - Exceções são lançadas para casos de não encontrados ou falhas em operações críticas.
- */
-// src/modules/blog/subcategory/subcategory.repository.ts
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common';
 import { DynamoDbService } from '@src/services/dynamoDb.service';
 import { SubcategoryEntity } from './subcategory.entity';
 import { CreateSubcategoryDto } from './dto/create-subcategory.dto';
@@ -35,7 +22,15 @@ export class SubcategoryRepository {
      */
     async create(dto: CreateSubcategoryDto): Promise<SubcategoryEntity> {
         const entity = new SubcategoryEntity(dto);
-        await this.dynamoDbService.put({ TableName: this.TABLE_NAME, Item: entity });
+        const params = {
+            TableName: this.TABLE_NAME,
+            Item: entity,
+        };
+        try {
+            await this.dynamoDbService.put(params);
+        } catch (error) {
+            throw new InternalServerErrorException('Failed to create subcategory', error);
+        }
         return entity;
     }
 
@@ -46,10 +41,11 @@ export class SubcategoryRepository {
      * @throws NotFoundException se a subcategoria não for encontrada.
      */
     async findById(id: string): Promise<SubcategoryEntity> {
-        const result = await this.dynamoDbService.get({
+        const params = {
             TableName: this.TABLE_NAME,
             Key: { 'SUBCAT#id': id, METADATA: 'METADATA' },
-        });
+        };
+        const result = await this.dynamoDbService.get(params);
         if (!result?.data?.Item) {
             throw new NotFoundException(`Subcategory with id ${id} not found`);
         }
@@ -61,23 +57,39 @@ export class SubcategoryRepository {
      * @param id Identificador da subcategoria.
      * @param dto Dados para atualização.
      * @returns Entidade da subcategoria atualizada.
+     * @throws NotFoundException se a subcategoria não for encontrada.
+     * @throws InternalServerErrorException se ocorrer um erro durante a atualização.
      */
     async update(id: string, dto: UpdateSubcategoryDto): Promise<SubcategoryEntity> {
         const existing = await this.findById(id);
         const updated = { ...existing, ...dto };
-        await this.dynamoDbService.put({ TableName: this.TABLE_NAME, Item: updated });
+        const params = {
+            TableName: this.TABLE_NAME,
+            Item: updated,
+        };
+        try {
+            await this.dynamoDbService.put(params);
+        } catch (error) {
+            throw new InternalServerErrorException('Failed to update subcategory', error);
+        }
         return new SubcategoryEntity(updated);
     }
 
     /**
      * Remove uma subcategoria do banco de dados.
      * @param id Identificador da subcategoria.
+     * @throws NotFoundException se a subcategoria não for encontrada.
+     * @throws InternalServerErrorException se ocorrer um erro durante a remoção.
      */
     async delete(id: string): Promise<void> {
-        await this.dynamoDbService.delete({
-            TableName: this.TABLE_NAME,
-            Key: { 'SUBCAT#id': id, METADATA: 'METADATA' },
-        });
+        try {
+            await this.dynamoDbService.delete({
+                TableName: this.TABLE_NAME,
+                Key: { 'SUBCAT#id': id, METADATA: 'METADATA' },
+            });
+        } catch (error) {
+            throw new InternalServerErrorException('Failed to delete subcategory', error);
+        }
     }
 
     /**
@@ -86,13 +98,14 @@ export class SubcategoryRepository {
      * @returns Lista de subcategorias.
      */
     async findByParentCategory(parentCategoryId: string): Promise<SubcategoryEntity[]> {
-        const result = await this.dynamoDbService.query({
+        const params = {
             TableName: this.TABLE_NAME,
             IndexName: 'GSI_ParentCategory',
             KeyConditionExpression: 'parent_category_id = :pid',
             ExpressionAttributeValues: { ':pid': parentCategoryId },
             ScanIndexForward: true,
-        });
+        };
+        const result = await this.dynamoDbService.query(params);
         const items = result.data?.Items || [];
         return items.map((i: any) => new SubcategoryEntity(i));
     }
@@ -104,13 +117,14 @@ export class SubcategoryRepository {
      * @throws NotFoundException se a subcategoria não for encontrada.
      */
     async findBySlug(slug: string): Promise<SubcategoryEntity> {
-        const result = await this.dynamoDbService.query({
+        const params = {
             TableName: this.TABLE_NAME,
             IndexName: 'GSI_Slug',
             KeyConditionExpression: 'slug = :s and #t = :type',
             ExpressionAttributeNames: { '#t': 'type' },
             ExpressionAttributeValues: { ':s': slug, ':type': 'SUBCATEGORY' },
-        });
+        };
+        const result = await this.dynamoDbService.query(params);
         const items = result.data?.Items || [];
         if (!items.length) {
             throw new NotFoundException(`Subcategory with slug ${slug} not found`);
