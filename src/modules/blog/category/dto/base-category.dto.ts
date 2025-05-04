@@ -19,20 +19,18 @@ import { ApiProperty } from '@nestjs/swagger';
 export class BaseCategoryDto {
   @ApiProperty({ example: 'yjb9rz-801', description: 'Partition key: CATEGORY#<id>' })
   @IsString()
-  @IsNotEmpty()
+  //@IsNotEmpty()
   ['CATEGORY#id']!: string;
 
   @ApiProperty({ example: 'METADATA', description: 'Sort key' })
   @IsString()
-  @IsNotEmpty()
+  //@IsNotEmpty()
   METADATA!: string;
 
-  @ApiProperty({ example: '2024-04-15T14:30:00Z', type: String, format: 'date-time' })
-  @IsISO8601()
+  @ApiProperty({ example: '2024-06-01 15:23:45', type: String, description: 'Data de criação (YYYY-MM-DD HH:mm:ss)' })
   created_at!: string;
 
-  @ApiProperty({ example: '2024-04-15T14:30:00Z', type: String, format: 'date-time' })
-  @IsISO8601()
+  @ApiProperty({ example: '2024-06-01 15:23:45', type: String, description: 'Data de atualização (YYYY-MM-DD HH:mm:ss)' })
   updated_at!: string;
 
   @ApiProperty({ example: 'arquitetura' })

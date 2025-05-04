@@ -6,6 +6,8 @@ import { BaseCategoryDto } from './base-category.dto';
  * Data Transfer Object (DTO) para criação de uma nova categoria de blog.
  *
  * Esta classe estende a `BaseCategoryDto`, omitindo as seguintes propriedades:
+ * - `CATEGORY#id`: Chave primária, gerenciada internamente.
+ * - `METADATA`: Metadados, gerenciados internamente.
  * - `pk`: Chave primária, gerenciada internamente.
  * - `sk`: Chave de ordenação, gerenciada internamente.
  * - `created_at`: Data de criação da categoria.
@@ -16,6 +18,8 @@ import { BaseCategoryDto } from './base-category.dto';
  * garantindo que apenas os campos necessários sejam fornecidos pelo cliente.
  */
 export class CreateCategoryDto extends OmitType(BaseCategoryDto, [
+  'CATEGORY#id',
+  'METADATA',
   'pk',
   'sk',
   'created_at',
