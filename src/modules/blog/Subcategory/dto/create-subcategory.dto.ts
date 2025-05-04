@@ -1,17 +1,17 @@
-/**
- * @file create-subcategory.dto.ts
- * @description
- * DTO utilizado para validação e transferência de dados na criação de uma nova subcategoria.
- * Estende o DTO base e adiciona campos obrigatórios para identificação e data de criação.
- */
 // create-subcategory.dto.ts
+import { OmitType } from '@nestjs/swagger';
 import { BaseSubcategoryDto } from './base-subcategory.dto';
-import { IsNotEmpty } from 'class-validator';
 
-export class CreateSubcategoryDto extends BaseSubcategoryDto {
-  @IsNotEmpty()
-  id!: string;
-
-  @IsNotEmpty()
-  created_at!: string;
-}
+/**
+ * DTO utilizado para a criação de uma nova subcategoria.
+ * 
+ * Herda do DTO base, omitindo campos que são gerenciados internamente pelo sistema,
+ * como identificadores, metadados e timestamps.
+ * 
+ * Deve ser utilizado nos endpoints de criação, garantindo que apenas os campos
+ * necessários sejam fornecidos pelo usuário.
+ */
+export class CreateSubcategoryDto extends OmitType(
+  BaseSubcategoryDto,
+  ['SUBCAT#id', 'METADATA', 'created_at', 'updated_at', 'type'] as const,
+) { }

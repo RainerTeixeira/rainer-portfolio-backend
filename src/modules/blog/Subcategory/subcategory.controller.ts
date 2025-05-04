@@ -16,16 +16,13 @@
 
 import { Controller, Get, Post, Put, Delete, Body, Param } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
+
 import { SubcategoryService } from './subcategory.service';
+
 import { CreateSubcategoryDto } from './dto/create-subcategory.dto';
 import { UpdateSubcategoryDto } from './dto/update-subcategory.dto';
-import { SubcategoryEntity } from './subcategory.entity';
+import { BaseSubcategoryDto } from './dto/base-subcategory.dto';
 
-/**
- * Controller responsável por expor endpoints REST para operações de subcategoria.
- * Recebe requisições HTTP, valida dados e delega a lógica de negócio ao serviço de subcategorias.
- * Utiliza decorators do Swagger para documentação automática da API.
- */
 @ApiTags('Subcategorias')
 @Controller('subcategories')
 export class SubcategoryController {
@@ -40,8 +37,8 @@ export class SubcategoryController {
   @Post()
   @ApiOperation({ summary: 'Cria uma nova subcategoria' })
   @ApiBody({ type: CreateSubcategoryDto })
-  @ApiResponse({ status: 201, description: 'Subcategoria criada com sucesso', type: SubcategoryEntity })
-  async create(@Body() createDto: CreateSubcategoryDto): Promise<SubcategoryEntity> {
+  @ApiResponse({ status: 201, description: 'Subcategoria criada com sucesso', type: BaseSubcategoryDto })
+  async create(@Body() createDto: CreateSubcategoryDto): Promise<BaseSubcategoryDto> {
     return await this.subcategoryService.create(createDto);
   }
 
@@ -54,9 +51,9 @@ export class SubcategoryController {
   @Get(':id')
   @ApiOperation({ summary: 'Busca uma subcategoria pelo ID' })
   @ApiParam({ name: 'id', description: 'ID da subcategoria' })
-  @ApiResponse({ status: 200, description: 'Subcategoria encontrada', type: SubcategoryEntity })
+  @ApiResponse({ status: 200, description: 'Subcategoria encontrada', type: BaseSubcategoryDto })
   @ApiResponse({ status: 404, description: 'Subcategoria não encontrada' })
-  async findById(@Param('id') id: string): Promise<SubcategoryEntity> {
+  async findById(@Param('id') id: string): Promise<BaseSubcategoryDto> {
     return await this.subcategoryService.findById(id);
   }
 
@@ -71,12 +68,12 @@ export class SubcategoryController {
   @ApiOperation({ summary: 'Atualiza uma subcategoria existente' })
   @ApiParam({ name: 'id', description: 'ID da subcategoria' })
   @ApiBody({ type: UpdateSubcategoryDto })
-  @ApiResponse({ status: 200, description: 'Subcategoria atualizada', type: SubcategoryEntity })
+  @ApiResponse({ status: 200, description: 'Subcategoria atualizada', type: BaseSubcategoryDto })
   @ApiResponse({ status: 404, description: 'Subcategoria não encontrada' })
   async update(
     @Param('id') id: string,
     @Body() updateDto: UpdateSubcategoryDto,
-  ): Promise<SubcategoryEntity> {
+  ): Promise<BaseSubcategoryDto> {
     return await this.subcategoryService.update(id, updateDto);
   }
 
@@ -103,8 +100,8 @@ export class SubcategoryController {
   @Get('parent/:parentCategoryId')
   @ApiOperation({ summary: 'Lista subcategorias por categoria pai' })
   @ApiParam({ name: 'parentCategoryId', description: 'ID da categoria pai' })
-  @ApiResponse({ status: 200, description: 'Lista de subcategorias', type: [SubcategoryEntity] })
-  async findByParentCategory(@Param('parentCategoryId') parentCategoryId: string): Promise<SubcategoryEntity[]> {
+  @ApiResponse({ status: 200, description: 'Lista de subcategorias', type: [BaseSubcategoryDto] })
+  async findByParentCategory(@Param('parentCategoryId') parentCategoryId: string): Promise<BaseSubcategoryDto[]> {
     return await this.subcategoryService.findByParentCategory(parentCategoryId);
   }
 
@@ -117,9 +114,9 @@ export class SubcategoryController {
   @Get('slug/:slug')
   @ApiOperation({ summary: 'Busca subcategoria pelo slug' })
   @ApiParam({ name: 'slug', description: 'Slug da subcategoria' })
-  @ApiResponse({ status: 200, description: 'Subcategoria encontrada', type: SubcategoryEntity })
+  @ApiResponse({ status: 200, description: 'Subcategoria encontrada', type: BaseSubcategoryDto })
   @ApiResponse({ status: 404, description: 'Subcategoria não encontrada' })
-  async findBySlug(@Param('slug') slug: string): Promise<SubcategoryEntity> {
+  async findBySlug(@Param('slug') slug: string): Promise<BaseSubcategoryDto> {
     return await this.subcategoryService.findBySlug(slug);
   }
 }

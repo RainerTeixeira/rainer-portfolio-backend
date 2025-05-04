@@ -3,6 +3,7 @@
    ==================================================================== */
 import { Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common';
 import { DynamoDbService } from '@src/services/dynamoDb.service';
+import { AttributeValue } from '@aws-sdk/client-dynamodb';
 
 import { BaseCategoryDto } from './dto/base-category.dto';
 import { CreateCategoryDto } from './dto/create-category.dto';
@@ -12,7 +13,6 @@ import { generateId } from '@src/common/utils/generate-id';
 import { formatDate } from '@src/common/utils/format-date';
 
 // Se não quiser importar do SDK, use 'any' para AttributeValue
-import { AttributeValue } from '@aws-sdk/client-dynamodb';
 
 interface CategoryDynamoItem {
     'CATEGORY#id': string;
