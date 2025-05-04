@@ -18,7 +18,6 @@ import { CacheModule } from '@nestjs/cache-manager';
 
 import { SubcategoryController } from './subcategory.controller';
 import { SubcategoryService } from './subcategory.service';
-import { SubcategoryRepository } from './subcategory.repository';
 
 /**
  * Módulo responsável por agrupar todos os componentes relacionados à subcategoria.
@@ -34,7 +33,7 @@ import { SubcategoryRepository } from './subcategory.repository';
         }),
     ],
     controllers: [SubcategoryController], // Controlador responsável pelos endpoints REST
-    providers: [SubcategoryService, SubcategoryRepository], // Serviços e repositórios
+    providers: [SubcategoryService], // Serviços e repositórios
     exports: [SubcategoryService], // Serviço exportado para uso em outros módulos
 })
 export class SubcategoryModule { }

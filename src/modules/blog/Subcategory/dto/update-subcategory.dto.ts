@@ -1,15 +1,22 @@
-/**
- * @file update-subcategory.dto.ts
- * @description
- * DTO utilizado para validação e transferência de dados na atualização de uma subcategoria existente.
- * Estende o DTO base e adiciona campo obrigatório para data de atualização.
- */
 // update-subcategory.dto.ts
-import { PartialType } from '@nestjs/mapped-types';
+import { PartialType, OmitType } from '@nestjs/swagger';
 import { BaseSubcategoryDto } from './base-subcategory.dto';
-import { IsNotEmpty } from 'class-validator';
 
-export class UpdateSubcategoryDto extends PartialType(BaseSubcategoryDto) {
-  @IsNotEmpty()
-  updated_at!: string;
-}
+/**
+ * DTO utilizado para atualização parcial de subcategorias.
+ * 
+ * Permite que apenas campos modificáveis sejam atualizados, excluindo identificadores,
+ * metadados e campos de controle interno.
+ * 
+ * Utiliza PartialType para tornar todos os campos opcionais, facilitando atualizações parciais.
+ */
+
+/**
+ * DTO para atualização parcial de subcategorias no módulo de blog.
+ *
+ * Estende `PartialType` aplicado ao `OmitType` de `BaseSubcategoryDto`, excluindo
+ * campos não modificáveis internamente: ['SUBCAT#id', 'METADATA', 'created_at', 'type']
+ */
+export class UpdateSubcategoryDto extends PartialType(
+  OmitType(BaseSubcategoryDto, ['SUBCAT#id', 'METADATA', 'created_at', 'type'] as const),
+) { }
