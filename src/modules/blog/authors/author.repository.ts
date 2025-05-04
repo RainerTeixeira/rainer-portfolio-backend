@@ -25,34 +25,44 @@ import { CreateAuthorDto } from './dto/create-author.dto';
 import { UpdateAuthorDto } from './dto/update-author.dto';
 
 /**
- * @repository AuthorRepository
- * @description Gerencia operações de acesso a dados para entidades Author no DynamoDB
- * @method create - Cria um novo autor
- * @method findById - Busca autor por ID
- * @method update - Atualiza autor existente
- * @method delete - Remove autor
- * @method findBySlug - Busca autor por slug usando GSI_Slug
- * @method listRecentAuthors - Lista autores recentes usando GSI_RecentAuthors
+ * @class AuthorRepository
+ * @description Gerencia operações de acesso a dados para entidades Author no DynamoDB.
  */
 @Injectable()
 export class AuthorRepository {
+    /**
+     * @description Nome da tabela no DynamoDB.
+     */
     private readonly TABLE_NAME = 'Authors';
+
+    /**
+     * @description Índices secundários globais (GSI) usados para otimizar consultas.
+     */
     private readonly INDEXES = {
         SLUG: 'GSI_Slug',
         RECENT_AUTHORS: 'GSI_RecentAuthors',
     };
+
+    /**
+     * @description Atributos usados nas consultas e operações.
+     */
     private readonly ATTRIBUTES = {
         SLUG: 'slug',
         TYPE: 'type',
         CREATED_AT: 'created_at',
     };
 
+    /**
+     * @constructor
+     * @param dynamoDb Serviço para interagir com o DynamoDB.
+     */
     constructor(private readonly dynamoDb: DynamoDbService) {}
 
     /**
-     * @description Cria um novo autor na tabela Authors
-     * @param createDto DTO com dados para criação do autor
-     * @returns AuthorEntity criada
+     * @method create
+     * @description Cria um novo autor na tabela Authors.
+     * @param createDto DTO com dados para criação do autor.
+     * @returns AuthorEntity criada.
      */
     async create(createDto: CreateAuthorDto): Promise<AuthorEntity> {
         const author = new AuthorEntity(createDto);
@@ -64,15 +74,16 @@ export class AuthorRepository {
     }
 
     /**
-     * @description Busca autor por chave primária (ID)
-     * @param id ID do autor (ex: "yjb8rx-240")
-     * @returns AuthorEntity encontrada ou null se não existir
+     * @method findById
+     * @description Busca autor por chave primária (ID).
+     * @param id ID do autor (ex: "yjb8rx-240").
+     * @returns AuthorEntity encontrada ou null se não existir.
      */
     async findById(id: string): Promise<AuthorEntity | null> {
         const result = await this.dynamoDb.get({
             TableName: this.TABLE_NAME,
             Key: {
-                'AUTHOR#id': id, // id puro, ex: 'yjb8rx-240'
+                'AUTHOR#id': id,
                 'PROFILE': 'PROFILE',
             },
         });
@@ -85,13 +96,13 @@ export class AuthorRepository {
     }
 
     /**
-     * @description Atualiza autor existente
-     * @param id ID do autor
-     * @param updateDto DTO com dados para atualização
-     * @returns AuthorEntity atualizada
+     * @method update
+     * @description Atualiza autor existente.
+     * @param id ID do autor.
+     * @param updateDto DTO com dados para atualização.
+     * @returns AuthorEntity atualizada.
      */
     async update(id: string, updateDto: UpdateAuthorDto): Promise<AuthorEntity> {
-        // Busca o autor existente para garantir que ele existe
         await this.findById(id);
 
         const result = await this.dynamoDb.update({
@@ -125,27 +136,28 @@ export class AuthorRepository {
     }
 
     /**
-     * @description Remove autor da base de dados
-     * @param id ID do autor a ser removido
+     * @method delete
+     * @description Remove autor da base de dados.
+     * @param id ID do autor a ser removido.
      */
     async delete(id: string): Promise<void> {
-        // Garante que o autor existe antes de deletar
         await this.findById(id);
 
         await this.dynamoDb.delete({
             TableName: this.TABLE_NAME,
             Key: {
-                'AUTHOR#id': id, // id puro, igual ao findById
+                'AUTHOR#id': id,
                 'PROFILE': 'PROFILE',
             },
         });
     }
 
     /**
-     * @description Busca autor por slug usando índice GSI_Slug
-     * @param slug Slug único do autor
-     * @throws NotFoundException se nenhum autor for encontrado
-     * @returns AuthorEntity encontrada
+     * @method findBySlug
+     * @description Busca autor por slug usando índice GSI_Slug.
+     * @param slug Slug único do autor.
+     * @throws NotFoundException se nenhum autor for encontrado.
+     * @returns AuthorEntity encontrada.
      */
     async findBySlug(slug: string): Promise<AuthorEntity> {
         const result = await this.dynamoDb.query({
@@ -170,9 +182,10 @@ export class AuthorRepository {
     }
 
     /**
-     * @description Lista autores mais recentes usando índice GSI_RecentAuthors
-     * @param limit Limite de autores a retornar (default: 10)
-     * @returns Lista de AuthorEntity ordenadas por data de criação
+     * @method listRecentAuthors
+     * @description Lista autores mais recentes usando índice GSI_RecentAuthors.
+     * @param limit Limite de autores a retornar (default: 10).
+     * @returns Lista de AuthorEntity ordenadas por data de criação.
      */
     async listRecentAuthors(limit: number = 10): Promise<AuthorEntity[]> {
         const result = await this.dynamoDb.query({
@@ -193,9 +206,10 @@ export class AuthorRepository {
     }
 
     /**
-     * @description Mapeia resultados do DynamoDB para entidades Author
-     * @param result Resultado da consulta DynamoDB
-     * @returns Array de AuthorEntity
+     * @method mapItemsToEntities
+     * @description Mapeia resultados do DynamoDB para entidades Author.
+     * @param result Resultado da consulta DynamoDB.
+     * @returns Array de AuthorEntity.
      */
     private mapItemsToEntities(result: { data?: { Items?: Record<string, unknown>[] } }): AuthorEntity[] {
         return result.data?.Items?.map((item: Record<string, unknown>) =>
@@ -204,13 +218,15 @@ export class AuthorRepository {
     }
 
     /**
-     * Converte um item do formato AttributeValue do DynamoDB para objeto plano.
+     * @method fromDynamo
+     * @description Converte um item do formato AttributeValue do DynamoDB para objeto plano.
      * Compatível com registros aninhados em "AUTHOR#id".
+     * @param item Item no formato AttributeValue do DynamoDB.
+     * @returns Objeto plano ou null.
      */
     private static fromDynamo(item: Record<string, unknown>): Record<string, unknown> | null {
         if (!item) return null;
 
-        // Se o item está aninhado dentro de "AUTHOR#id", descompacta todos os campos
         if (item['AUTHOR#id'] && typeof item['AUTHOR#id'] === 'object' && (item['AUTHOR#id'] as any).S === undefined) {
             const inner = item['AUTHOR#id'] as Record<string, unknown>;
             for (const key of Object.keys(inner)) {

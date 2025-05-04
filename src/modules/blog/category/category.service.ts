@@ -1,92 +1,186 @@
-import { Injectable, Inject } from '@nestjs/common';
-import { CACHE_MANAGER } from '@nestjs/cache-manager'; // Import corrigido
-import { Cache } from 'cache-manager';
-import { CategoryRepository } from './category.repository';
+/* ====================================================================
+   src/modules/blog/category/category.service.ts
+   ==================================================================== */
+import { Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common';
+import { DynamoDbService } from '@src/services/dynamoDb.service';
+
+import { BaseCategoryDto } from './dto/base-category.dto';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
-import { CategoryEntity } from './category.entity';
 
-/**
- * Serviço responsável por gerenciar as operações relacionadas às categorias do blog.
- * Utiliza repositório para persistência e cache para otimização de consultas.
- */
+import { generateId } from '@src/common/utils/generateId';
+
+// Se não quiser importar do SDK, use 'any' para AttributeValue
+import { AttributeValue } from '@aws-sdk/client-dynamodb';
+
+interface CategoryDynamoItem {
+    'CATEGORY#id': string;
+    'METADATA': string;
+    created_at: string;
+    updated_at: string;
+    name: string;
+    slug: string;
+    description?: string;
+    meta_description?: string;
+    post_count?: number;
+    keywords?: string[];
+    type: string;
+}
+
+function fromDynamo(item: Record<string, AttributeValue>): CategoryDynamoItem {
+    return {
+        'CATEGORY#id': item['CATEGORY#id']?.S,
+        'METADATA': item['METADATA']?.S,
+        created_at: item['created_at']?.S,
+        updated_at: item['updated_at']?.S,
+        name: item['name']?.S,
+        slug: item['slug']?.S,
+        description: item['description']?.S,
+        meta_description: item['meta_description']?.S,
+        post_count: item['post_count'] ? Number(item['post_count'].N) : 0,
+        keywords: item['keywords']?.L ? item['keywords'].L.map((k: any) => k.S) : [],
+        type: item['type']?.S,
+    };
+}
+
 @Injectable()
 export class CategoryService {
-    /**
-     * Injeta o repositório de categorias e o gerenciador de cache.
-     * @param categoryRepository Repositório para operações de banco de dados de categorias.
-     * @param cacheManager Gerenciador de cache para otimizar buscas.
-     */
-    constructor(
-        private readonly categoryRepository: CategoryRepository,
-        @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
-    ) { }
+    private readonly tableName = 'Category';
 
-    /**
-     * Cria uma nova categoria.
-     * Após a criação, remove o cache relacionado à categoria criada (caso exista).
-     * @param createDto Dados para criação da categoria.
-     * @returns A entidade da categoria criada.
-     */
-    async create(createDto: CreateCategoryDto): Promise<CategoryEntity> {
-        const category = await this.categoryRepository.create(createDto);
-        await this.cacheManager.del(`category_${category.id}`);
-        return category;
+    constructor(private readonly dynamo: DynamoDbService) { }
+
+    async create(dto: CreateCategoryDto): Promise<BaseCategoryDto> {
+        const id = dto.slug || generateId();
+        const now = new Date().toISOString();
+        const itemRecord: CategoryDynamoItem = {
+            'CATEGORY#id': id, // Salva o id puro, sem prefixo
+            'METADATA': 'METADATA',
+            created_at: now,
+            updated_at: now,
+            name: dto.name,
+            slug: dto.slug,
+            description: dto.description,
+            meta_description: dto.meta_description,
+            post_count: 0,
+            keywords: dto.keywords || [],
+            type: 'CATEGORY',
+        };
+        await this.dynamo.put({ TableName: this.tableName, Item: itemRecord });
+        return this.map(itemRecord);
     }
 
-    /**
-     * Busca uma categoria pelo seu ID.
-     * Utiliza cache para otimizar a consulta. Caso não encontre no cache, busca no banco e armazena no cache.
-     * @param id Identificador da categoria.
-     * @returns A entidade da categoria encontrada.
-     */
-    async findById(id: string): Promise<CategoryEntity> {
-        const cacheKey = `category_${id}`;
-        let category: CategoryEntity | null = await this.cacheManager.get(cacheKey); // Tipo ajustado
-        if (!category) {
-            category = await this.categoryRepository.findById(id);
-            await this.cacheManager.set(cacheKey, category);
+    private map(item: CategoryDynamoItem | Partial<CategoryDynamoItem>): BaseCategoryDto {
+        // Se vier no formato DynamoDB AttributeValue, converte
+        if ((item as Record<string, AttributeValue>)['CATEGORY#id']?.S) {
+            item = fromDynamo(item as Record<string, AttributeValue>);
         }
-        return category; // TypeScript entende que agora não é null
+        return {
+            'CATEGORY#id': item['CATEGORY#id'],
+            METADATA: item['METADATA'],
+            name: item.name,
+            description: item.description,
+            slug: item.slug,
+            meta_description: item.meta_description,
+            post_count: Number(item.post_count),
+            created_at: item.created_at,
+            updated_at: item.updated_at,
+            type: item.type,
+            keywords: item.keywords || []
+        } as BaseCategoryDto;
+        
     }
 
-    /**
-     * Atualiza uma categoria existente.
-     * Após a atualização, atualiza o cache correspondente.
-     * @param id Identificador da categoria.
-     * @param updateDto Dados para atualização da categoria.
-     * @returns A entidade da categoria atualizada.
-     */
-    async update(id: string, updateDto: UpdateCategoryDto): Promise<CategoryEntity> {
-        const category = await this.categoryRepository.update(id, updateDto);
-        await this.cacheManager.set(`category_${id}`, category);
-        return category;
+    async findOne(id: string): Promise<BaseCategoryDto> {
+        const key = {
+            'CATEGORY#id': id, // Usa o id puro
+            'METADATA': 'METADATA',
+        };
+        try {
+            const { data } = await this.dynamo.get({ TableName: this.tableName, Key: key });
+            const item = (data as { Item?: CategoryDynamoItem }).Item;
+            if (!item) throw new NotFoundException(`Category ${id} not found`);
+            return this.map(item);
+        } catch (err) {
+            throw new InternalServerErrorException('Falha na operação get', { cause: err });
+        }
     }
 
-    /**
-     * Remove uma categoria pelo seu ID.
-     * Após a remoção, exclui o cache correspondente.
-     * @param id Identificador da categoria.
-     */
-    async delete(id: string): Promise<void> {
-        await this.categoryRepository.delete(id);
-        await this.cacheManager.del(`category_${id}`);
+    async findBySlug(slug: string): Promise<BaseCategoryDto> {
+        const { data } = await this.dynamo.query({
+            TableName: this.tableName,
+            IndexName: 'GSI_Slug',
+            KeyConditionExpression: '#slug = :slug AND #type = :type',
+            ExpressionAttributeNames: {
+                '#slug': 'slug',
+                '#type': 'type',
+            },
+            ExpressionAttributeValues: {
+                ':slug': slug,
+                ':type': 'CATEGORY',
+            },
+            Limit: 1,
+        });
+        const items = (data as { Items?: CategoryDynamoItem[] }).Items || [];
+        if (!items.length) throw new NotFoundException(`Category with slug "${slug}" not found`);
+        return this.map(items[0]);
     }
 
-    /**
-     * Busca uma categoria pelo seu slug.
-     * @param slug Slug da categoria.
-     * @returns A entidade da categoria encontrada.
-     */
-    async findBySlug(slug: string): Promise<CategoryEntity> {
-        return await this.categoryRepository.findBySlug(slug);
+    async update(id: string, dto: UpdateCategoryDto): Promise<BaseCategoryDto> {
+        await this.findOne(id);
+        const updates: string[] = [];
+        const exprNames: Record<string, string> = {};
+        const exprValues: Record<string, unknown> = {};
+
+        Object.entries(dto).forEach(([key, value], idx) => {
+            const attr = key.replace(/([A-Z])/g, '_$1').toLowerCase();
+            const nameKey = `#f${idx}`;
+            const valKey = `:v${idx}`;
+            updates.push(`${nameKey} = ${valKey}`);
+            exprNames[nameKey] = attr;
+            exprValues[valKey] = value;
+        });
+        // always update updated_at
+        const nowKey = Object.keys(exprValues).length;
+        updates.push(`#f${nowKey} = :v${nowKey}`);
+        exprNames[`#f${nowKey}`] = 'updated_at';
+        exprValues[`:v${nowKey}`] = new Date().toISOString();
+
+        const key = {
+            'CATEGORY#id': id, // Usa o id puro
+            'METADATA': 'METADATA',
+        };
+
+        const { data } = await this.dynamo.update({
+            TableName: this.tableName,
+            Key: key,
+            UpdateExpression: 'SET ' + updates.join(', '),
+            ExpressionAttributeNames: exprNames,
+            ExpressionAttributeValues: exprValues,
+            ReturnValues: 'ALL_NEW',
+        });
+
+        return this.map((data as { Attributes: CategoryDynamoItem }).Attributes);
     }
 
-    /**
-     * Retorna uma lista das categorias mais populares.
-     * @returns Lista de entidades de categorias populares.
-     */
-    async findPopularCategories(): Promise<CategoryEntity[]> {
-        return await this.categoryRepository.findPopularCategories();
+    async remove(id: string): Promise<void> {
+        const key = {
+            'CATEGORY#id': id, // Usa o id puro
+            'METADATA': 'METADATA',
+        };
+        await this.dynamo.delete({ TableName: this.tableName, Key: key });
+    }
+
+    async listPopular(limit = 10): Promise<BaseCategoryDto[]> {
+        const { data } = await this.dynamo.query({
+            TableName: this.tableName,
+            IndexName: 'GSI_Popular',
+            KeyConditionExpression: '#type = :type',
+            ExpressionAttributeNames: { '#type': 'type' },
+            ExpressionAttributeValues: { ':type': 'CATEGORY' },
+            ScanIndexForward: false,
+            Limit: limit,
+        });
+        const items = (data as { Items?: CategoryDynamoItem[] }).Items || [];
+        return items.map(item => this.map(item));
     }
 }

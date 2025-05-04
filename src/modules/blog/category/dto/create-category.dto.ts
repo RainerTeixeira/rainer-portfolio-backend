@@ -1,11 +1,24 @@
-// src/modules/blog/categories/dto/create-category.dto.ts
+// create-category.dto.ts
+import { OmitType } from '@nestjs/swagger';
 import { BaseCategoryDto } from './base-category.dto';
-import { IsNotEmpty } from 'class-validator';
 
-export class CreateCategoryDto extends BaseCategoryDto {
-  @IsNotEmpty()
-  id!: string;
-
-  @IsNotEmpty()
-  created_at!: string;
-}
+/**
+ * Data Transfer Object (DTO) para criação de uma nova categoria de blog.
+ *
+ * Esta classe estende a `BaseCategoryDto`, omitindo as seguintes propriedades:
+ * - `pk`: Chave primária, gerenciada internamente.
+ * - `sk`: Chave de ordenação, gerenciada internamente.
+ * - `created_at`: Data de criação da categoria.
+ * - `updated_at`: Data da última atualização da categoria.
+ * - `type`: Tipo da categoria, gerenciado internamente.
+ *
+ * Utilize este DTO para validar e transferir dados ao criar uma nova categoria,
+ * garantindo que apenas os campos necessários sejam fornecidos pelo cliente.
+ */
+export class CreateCategoryDto extends OmitType(BaseCategoryDto, [
+  'pk',
+  'sk',
+  'created_at',
+  'updated_at',
+  'type',
+] as const) { }

@@ -1,104 +1,63 @@
-import { Controller, Get, Post, Put, Delete, Body, Param } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBody, ApiResponse, ApiParam } from '@nestjs/swagger';
-import { CategoryService } from './category.service';
-import { CreateCategoryDto } from './dto/create-category.dto';
-import { UpdateCategoryDto } from './dto/update-category.dto';
-import { CategoryEntity } from './category.entity';
+// src/modules/category/category.controller.ts
+import { Controller, Post, Get, Put, Delete, Param, Body, Query, HttpCode, HttpStatus } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
-/**
- * Controller responsável por expor endpoints REST para operações de categoria.
- * Recebe requisições HTTP, valida dados e delega a lógica de negócio ao serviço de categorias.
- * Utiliza decorators do Swagger para documentação automática da API.
- */
-@ApiTags('Categories')
-@Controller('categories')
+import { CategoryService } from '@src/modules/blog/category/category.service';
+
+import { CreateCategoryDto } from '@src/modules/blog/category/dto/create-category.dto';
+import { UpdateCategoryDto } from '@src/modules/blog/category/dto/update-category.dto';
+import { BaseCategoryDto } from '@src/modules/blog/category/dto/base-category.dto';
+
+@ApiTags('category')
+@Controller('category')
 export class CategoryController {
-    constructor(private readonly categoryService: CategoryService) { }
+    constructor(private readonly service: CategoryService) { }
 
-    /**
-     * Endpoint para criar uma nova categoria.
-     * Recebe dados via DTO e retorna a entidade criada.
-     * @param createDto - Dados da categoria a ser criada (DTO).
-     * @returns Uma Promise que resolve para a entidade CategoryEntity recém-criada.
-     */
     @Post()
     @ApiOperation({ summary: 'Cria uma nova categoria' })
-    @ApiBody({ type: CreateCategoryDto })
-    @ApiResponse({ status: 201, description: 'Categoria criada', type: CategoryEntity })
-    async create(@Body() createDto: CreateCategoryDto): Promise<CategoryEntity> {
-        return await this.categoryService.create(createDto);
+    @ApiResponse({ status: 201, type: BaseCategoryDto })
+    async create(@Body() dto: CreateCategoryDto): Promise<BaseCategoryDto> {
+        return this.service.create(dto);
     }
 
-    /**
-     * Endpoint para buscar uma categoria pelo ID.
-     * Retorna a entidade correspondente ao ID informado.
-     * @param id - ID da categoria a ser buscada (parâmetro da rota).
-     * @returns Uma Promise que resolve para a entidade CategoryEntity encontrada.
-     */
     @Get(':id')
     @ApiOperation({ summary: 'Busca categoria por ID' })
-    @ApiParam({ name: 'id', description: 'ID da categoria' })
-    @ApiResponse({ status: 200, description: 'Categoria encontrada', type: CategoryEntity })
-    async findById(@Param('id') id: string): Promise<CategoryEntity> {
-        return await this.categoryService.findById(id);
+    @ApiResponse({ status: 200, type: BaseCategoryDto })
+    async findOne(@Param('id') id: string): Promise<BaseCategoryDto> {
+        return this.service.findOne(id);
     }
 
-    /**
-     * Endpoint para atualizar uma categoria existente.
-     * Recebe dados via DTO e retorna a entidade atualizada.
-     * @param id - ID da categoria a ser atualizada (parâmetro da rota).
-     * @param updateDto - Dados da categoria a serem atualizados (DTO).
-     * @returns Uma Promise que resolve para a entidade CategoryEntity atualizada.
-     */
+    @Get('slug/:slug')
+    @ApiOperation({ summary: 'Busca categoria por slug' })
+    @ApiResponse({ status: 200, type: BaseCategoryDto })
+    async findBySlug(@Param('slug') slug: string): Promise<BaseCategoryDto> {
+        return this.service.findBySlug(slug);
+    }
+
     @Put(':id')
     @ApiOperation({ summary: 'Atualiza uma categoria existente' })
-    @ApiParam({ name: 'id', description: 'ID da categoria' })
-    @ApiBody({ type: UpdateCategoryDto })
-    @ApiResponse({ status: 200, description: 'Categoria atualizada', type: CategoryEntity })
+    @ApiResponse({ status: 200, type: BaseCategoryDto })
     async update(
         @Param('id') id: string,
-        @Body() updateDto: UpdateCategoryDto,
-    ): Promise<CategoryEntity> {
-        return await this.categoryService.update(id, updateDto);
+        @Body() dto: UpdateCategoryDto,
+    ): Promise<BaseCategoryDto> {
+        return this.service.update(id, dto);
     }
 
-    /**
-     * Endpoint para remover uma categoria pelo ID.
-     * Não retorna conteúdo em caso de sucesso.
-     * @param id - ID da categoria a ser removida (parâmetro da rota).
-     * @returns Uma Promise que resolve quando a categoria é removida.
-     */
     @Delete(':id')
+    @HttpCode(HttpStatus.NO_CONTENT)
     @ApiOperation({ summary: 'Remove uma categoria' })
-    @ApiParam({ name: 'id', description: 'ID da categoria' })
-    @ApiResponse({ status: 204, description: 'Categoria removida' })
-    async delete(@Param('id') id: string): Promise<void> {
-        return await this.categoryService.delete(id);
+    async remove(@Param('id') id: string): Promise<void> {
+        return this.service.remove(id);
     }
 
-    /**
-     * Endpoint para buscar uma categoria pelo slug.
-     * Retorna a entidade correspondente ao slug informado.
-     * @param slug - Slug da categoria a ser buscada (parâmetro da rota).
-     * @returns Uma Promise que resolve para a entidade CategoryEntity encontrada.
-     */
-    @Get('/slug/:slug')
-    @ApiOperation({ summary: 'Busca categoria por slug' })
-    @ApiParam({ name: 'slug', description: 'Slug da categoria' })
-    @ApiResponse({ status: 200, description: 'Categoria encontrada', type: CategoryEntity })
-    async findBySlug(@Param('slug') slug: string): Promise<CategoryEntity> {
-        return await this.categoryService.findBySlug(slug);
-    }
-
-    /**
-     * Endpoint para listar as categorias populares.
-     * Retorna um array de entidades de categorias populares.
-     * @returns Uma Promise que resolve para um array de entidades CategoryEntity representando as categorias populares.
-     */
     @Get('popular/list')
     @ApiOperation({ summary: 'Lista categorias populares' })
-    @ApiResponse({ status: 200, description: 'Lista de categorias populares', type: [CategoryEntity] })
-    async findPopularCategories(): Promise<CategoryEntity[]> {
-        return await this.categoryService.findPopularCategories();
+    @ApiResponse({ status: 200, type: [BaseCategoryDto] })
+    async listPopular(
+        @Query('limit') limit?: string,
+    ): Promise<BaseCategoryDto[]> {
+        const lmt = limit ? parseInt(limit, 10) : undefined;
+        return this.service.listPopular(lmt);
     }
 }
