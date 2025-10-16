@@ -20,9 +20,28 @@
 
 ## ⚡ Quick Start (3 Passos)
 
+### Opção 1: Usando Script Automatizado (Recomendado)
+
+```powershell
+# Iniciar MongoDB
+.\scripts\docker-ambiente-completo.ps1 start
+
+# Gerar Prisma Client e criar schema
+npm run prisma:generate
+npm run prisma:push
+
+# Executar seed
+npm run seed
+```
+
+### Opção 2: Comandos Manuais
+
 ```bash
 # 1. Garantir MongoDB rodando
-npm run docker:up
+docker-compose up -d mongodb
+
+# Aguardar 10 segundos
+Start-Sleep -Seconds 10
 
 # 2. Gerar Prisma Client e criar schema
 npm run prisma:generate
@@ -251,6 +270,27 @@ Isso vai:
 
 ---
 
+## 🔄 Alternar Entre MongoDB e DynamoDB
+
+Você pode usar o script para alternar facilmente:
+
+```powershell
+# Ver qual banco está ativo
+.\scripts\alternar-banco.ps1 status
+
+# Usar MongoDB (Prisma)
+.\scripts\alternar-banco.ps1 PRISMA
+npm run prisma:seed
+
+# Usar DynamoDB Local
+.\scripts\alternar-banco.ps1 DYNAMODB
+npm run dynamodb:seed
+```
+
+**Nota:** O seed do Prisma funciona apenas com MongoDB. Para DynamoDB, use `npm run dynamodb:seed`.
+
+---
+
 ## 🐛 Troubleshooting
 
 ### "Cannot connect to database"
@@ -349,6 +389,36 @@ Após executar o seed:
 
 ---
 
+---
+
+## 🆕 Novos Scripts de Gerenciamento
+
+### Scripts PowerShell Disponíveis
+
+```powershell
+# Gerenciar ambiente completo
+.\scripts\docker-ambiente-completo.ps1 start    # Iniciar MongoDB + DynamoDB
+.\scripts\docker-ambiente-completo.ps1 status   # Ver status
+.\scripts\docker-ambiente-completo.ps1 stop     # Parar tudo
+
+# Alternar entre bancos
+.\scripts\alternar-banco.ps1 PRISMA    # MongoDB
+.\scripts\alternar-banco.ps1 DYNAMODB  # DynamoDB
+.\scripts\alternar-banco.ps1 status    # Ver atual
+
+# Atualizar credenciais AWS
+.\scripts\update-aws-credentials.ps1
+```
+
+### Documentação Adicional
+
+- **[COMECE_AQUI.txt](../../COMECE_AQUI.txt)** - Início rápido
+- **[INICIO_RAPIDO_OLD.md](../../INICIO_RAPIDO_OLD.md)** - Comandos principais
+- **[GUIA_AMBIENTE_LOCAL_OLD.md](../../GUIA_AMBIENTE_LOCAL_OLD.md)** - Guia completo
+
+---
+
 **Criado em:** 16/10/2025  
+**Atualizado em:** 16/10/2025  
 **Tipo:** Guia Prático  
-**Status:** ✅ Completo
+**Status:** ✅ Completo e Atualizado
