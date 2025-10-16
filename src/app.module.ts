@@ -1,46 +1,59 @@
-import { Global, Module } from '@nestjs/common';
-import { APP_FILTER } from '@nestjs/core';
-import { ConfigModule } from '@nestjs/config';
-import { CacheModule } from '@nestjs/cache-manager';
+/**
+ * App Module - Módulo Raiz NestJS
+ * 
+ * Módulo principal que importa todos os outros módulos da aplicação.
+ * 
+ * @module app.module
+ */
 
-import { HttpExceptionFilter } from '@src/common/filters/http-exception.filter';
-import { BlogModule } from '@src/modules/blog.module';
-import { AuthModule } from '@src/auth/auth.module';
-import { DynamoDbService } from '@src/services/dynamoDb.service';
+import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { PrismaModule } from './prisma/prisma.module.js';
+import { DatabaseProviderModule } from './utils/database-provider/index.js';
+import { HealthModule } from './modules/health/health.module.js';
+import { AuthModule } from './modules/auth/auth.module.js';
+import { UsersModule } from './modules/users/users.module.js';
+import { PostsModule } from './modules/posts/posts.module.js';
+import { CategoriesModule } from './modules/categories/categories.module.js';
+import { CommentsModule } from './modules/comments/comments.module.js';
+import { LikesModule } from './modules/likes/likes.module.js';
+import { BookmarksModule } from './modules/bookmarks/bookmarks.module.js';
+import { NotificationsModule } from './modules/notifications/notifications.module.js';
 
 /**
- * AppModule
+ * Módulo raiz da aplicação
  * 
- * Módulo principal da aplicação:
- * - Configura as variáveis de ambiente e o cache global.
- * - Importa os módulos principais (Blog e Auth).
- * - Registra providers globais, como o DynamoDbService e o filtro de exceção.
+ * Importa:
+ * - ConfigModule: Gerenciamento de variáveis de ambiente
+ * - DatabaseProviderModule: Seleção dinâmica de banco de dados
+ * - PrismaModule: Cliente Prisma compartilhado
+ * - Módulos de domínio: users, posts, categories, etc.
  */
-@Global()
 @Module({
   imports: [
-    // Configuração global de variáveis de ambiente
+    // Config global
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: [`.env.${process.env.NODE_ENV || 'development'}`, '.env'],
-      validationOptions: { allowUnknown: false, abortEarly: true },
+      envFilePath: '.env',
     }),
-    // Registro global do cache com TTL de 60 segundos
-    CacheModule.register({
-      isGlobal: true,
-      ttl: 60,
-    }),
-    // Importa os módulos de domínio
-    BlogModule,
+    
+    // Database Provider Selector (global)
+    DatabaseProviderModule,
+    
+    // Prisma global
+    PrismaModule,
+    
+    // Módulos de domínio (ordenados por lógica de uso)
+    HealthModule,
     AuthModule,
+    UsersModule,
+    PostsModule,
+    CategoriesModule,
+    CommentsModule,
+    LikesModule,
+    BookmarksModule,
+    NotificationsModule,
   ],
-  providers: [
-    // Registra o DynamoDbService como singleton global
-    { provide: DynamoDbService, useClass: DynamoDbService },
-    // Filtro global para tratamento de exceções HTTP
-    { provide: APP_FILTER, useClass: HttpExceptionFilter },
-  ],
-  // Exporta o DynamoDbService para que outros módulos o utilizem, se necessário
-  exports: [DynamoDbService],
 })
-export class AppModule { }
+export class AppModule {}
+

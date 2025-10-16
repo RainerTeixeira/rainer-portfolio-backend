@@ -1,0 +1,534 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Blog Backend API
+  
+  API de backend para blog usando NestJS + Fastify rodando em AWS Lambda
+  com DynamoDB como banco de dados NoSQL serverless.
+
+# ═══════════════════════════════════════════════════════════════════════════
+# PARÂMETROS GLOBAIS
+# ═══════════════════════════════════════════════════════════════════════════
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - staging
+      - prod
+    Description: Ambiente de deployment (dev, staging ou prod)
+
+# ═══════════════════════════════════════════════════════════════════════════
+# VARIÁVEIS GLOBAIS
+# ═══════════════════════════════════════════════════════════════════════════
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 512
+    Runtime: nodejs18.x
+    Architectures:
+      - x86_64
+    Environment:
+      Variables:
+        NODE_ENV: !Ref Environment
+        DATABASE_PROVIDER: DYNAMODB
+        AWS_REGION: !Ref AWS::Region
+        DYNAMODB_TABLE_PREFIX: !Sub '${AWS::StackName}-${Environment}'
+        LOG_LEVEL: !If [IsProduction, warn, debug]
+    Tracing: Active
+    Tags:
+      Environment: !Ref Environment
+      Application: blog-backend-api
+      ManagedBy: SAM
+
+# ═══════════════════════════════════════════════════════════════════════════
+# CONDITIONS
+# ═══════════════════════════════════════════════════════════════════════════
+Conditions:
+  IsProduction: !Equals [!Ref Environment, prod]
+  IsDevelopment: !Equals [!Ref Environment, dev]
+
+# ═══════════════════════════════════════════════════════════════════════════
+# RECURSOS
+# ═══════════════════════════════════════════════════════════════════════════
+Resources:
+  # ─────────────────────────────────────────────────────────────────────────
+  # FUNÇÃO LAMBDA - API PRINCIPAL
+  # ─────────────────────────────────────────────────────────────────────────
+  BlogApiFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2020
+        Sourcemap: true
+        EntryPoints:
+          - handler.ts
+    Properties:
+      FunctionName: !Sub '${AWS::StackName}-api-${Environment}'
+      Description: API principal do blog usando NestJS + Fastify
+      Handler: dist/lambda/handler.lambdaHandler
+      CodeUri: ../../
+      
+      # Function URL (alternativa gratuita ao API Gateway)
+      FunctionUrlConfig:
+        AuthType: NONE
+        Cors:
+          AllowOrigins:
+            - '*'
+          AllowHeaders:
+            - Content-Type
+            - Authorization
+            - X-Requested-With
+          AllowMethods:
+            - GET
+            - POST
+            - PUT
+            - PATCH
+            - DELETE
+            - OPTIONS
+          MaxAge: 86400
+      
+      # Permissões IAM
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UsersTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref PostsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CategoriesTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CommentsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref LikesTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref BookmarksTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref NotificationsTable
+        - Statement:
+            - Effect: Allow
+              Action:
+                - logs:CreateLogGroup
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+              Resource: '*'
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # TABELAS DYNAMODB
+  # ─────────────────────────────────────────────────────────────────────────
+  
+  # Tabela de Usuários
+  UsersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${AWS::StackName}-${Environment}-users'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: email
+          AttributeType: S
+        - AttributeName: username
+          AttributeType: S
+        - AttributeName: cognitoId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: email-index
+          KeySchema:
+            - AttributeName: email
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+        - IndexName: username-index
+          KeySchema:
+            - AttributeName: username
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+        - IndexName: cognito-index
+          KeySchema:
+            - AttributeName: cognitoId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: !If [IsProduction, true, false]
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Resource
+          Value: Users
+
+  # Tabela de Posts
+  PostsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${AWS::StackName}-${Environment}-posts'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: slug
+          AttributeType: S
+        - AttributeName: authorId
+          AttributeType: S
+        - AttributeName: categoryId
+          AttributeType: S
+        - AttributeName: status
+          AttributeType: S
+        - AttributeName: createdAt
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: slug-index
+          KeySchema:
+            - AttributeName: slug
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+        - IndexName: author-index
+          KeySchema:
+            - AttributeName: authorId
+              KeyType: HASH
+            - AttributeName: createdAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+        - IndexName: category-index
+          KeySchema:
+            - AttributeName: categoryId
+              KeyType: HASH
+            - AttributeName: createdAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+        - IndexName: status-index
+          KeySchema:
+            - AttributeName: status
+              KeyType: HASH
+            - AttributeName: createdAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: !If [IsProduction, true, false]
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Resource
+          Value: Posts
+
+  # Tabela de Categorias
+  CategoriesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${AWS::StackName}-${Environment}-categories'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: slug
+          AttributeType: S
+        - AttributeName: parentId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: slug-index
+          KeySchema:
+            - AttributeName: slug
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+        - IndexName: parent-index
+          KeySchema:
+            - AttributeName: parentId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: !If [IsProduction, true, false]
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Resource
+          Value: Categories
+
+  # Tabela de Comentários
+  CommentsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${AWS::StackName}-${Environment}-comments'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: postId
+          AttributeType: S
+        - AttributeName: authorId
+          AttributeType: S
+        - AttributeName: parentId
+          AttributeType: S
+        - AttributeName: createdAt
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: post-index
+          KeySchema:
+            - AttributeName: postId
+              KeyType: HASH
+            - AttributeName: createdAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+        - IndexName: author-index
+          KeySchema:
+            - AttributeName: authorId
+              KeyType: HASH
+            - AttributeName: createdAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+        - IndexName: parent-index
+          KeySchema:
+            - AttributeName: parentId
+              KeyType: HASH
+            - AttributeName: createdAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: !If [IsProduction, true, false]
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Resource
+          Value: Comments
+
+  # Tabela de Likes
+  LikesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${AWS::StackName}-${Environment}-likes'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: postId
+          AttributeType: S
+        - AttributeName: userId
+          AttributeType: S
+        - AttributeName: userPost
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: post-index
+          KeySchema:
+            - AttributeName: postId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+        - IndexName: user-index
+          KeySchema:
+            - AttributeName: userId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+        - IndexName: user-post-index
+          KeySchema:
+            - AttributeName: userPost
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Resource
+          Value: Likes
+
+  # Tabela de Bookmarks
+  BookmarksTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${AWS::StackName}-${Environment}-bookmarks'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: postId
+          AttributeType: S
+        - AttributeName: userId
+          AttributeType: S
+        - AttributeName: userPost
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: post-index
+          KeySchema:
+            - AttributeName: postId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+        - IndexName: user-index
+          KeySchema:
+            - AttributeName: userId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+        - IndexName: user-post-index
+          KeySchema:
+            - AttributeName: userPost
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Resource
+          Value: Bookmarks
+
+  # Tabela de Notificações
+  NotificationsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${AWS::StackName}-${Environment}-notifications'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: userId
+          AttributeType: S
+        - AttributeName: createdAt
+          AttributeType: S
+        - AttributeName: read
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: user-index
+          KeySchema:
+            - AttributeName: userId
+              KeyType: HASH
+            - AttributeName: createdAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+        - IndexName: user-read-index
+          KeySchema:
+            - AttributeName: userId
+              KeyType: HASH
+            - AttributeName: read
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Resource
+          Value: Notifications
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # LOGS
+  # ─────────────────────────────────────────────────────────────────────────
+  BlogApiLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${BlogApiFunction}'
+      RetentionInDays: !If [IsProduction, 30, 7]
+
+# ═══════════════════════════════════════════════════════════════════════════
+# OUTPUTS
+# ═══════════════════════════════════════════════════════════════════════════
+Outputs:
+  # API
+  BlogApiFunctionUrl:
+    Description: URL da Function URL (endpoint HTTP da API)
+    Value: !GetAtt BlogApiFunctionUrl.FunctionUrl
+    Export:
+      Name: !Sub '${AWS::StackName}-api-url'
+
+  BlogApiFunctionArn:
+    Description: ARN da função Lambda
+    Value: !GetAtt BlogApiFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-api-arn'
+
+  # Tabelas DynamoDB
+  UsersTableName:
+    Description: Nome da tabela de usuários
+    Value: !Ref UsersTable
+    Export:
+      Name: !Sub '${AWS::StackName}-users-table'
+
+  PostsTableName:
+    Description: Nome da tabela de posts
+    Value: !Ref PostsTable
+    Export:
+      Name: !Sub '${AWS::StackName}-posts-table'
+
+  CategoriesTableName:
+    Description: Nome da tabela de categorias
+    Value: !Ref CategoriesTable
+    Export:
+      Name: !Sub '${AWS::StackName}-categories-table'
+
+  CommentsTableName:
+    Description: Nome da tabela de comentários
+    Value: !Ref CommentsTable
+    Export:
+      Name: !Sub '${AWS::StackName}-comments-table'
+
+  LikesTableName:
+    Description: Nome da tabela de likes
+    Value: !Ref LikesTable
+    Export:
+      Name: !Sub '${AWS::StackName}-likes-table'
+
+  BookmarksTableName:
+    Description: Nome da tabela de bookmarks
+    Value: !Ref BookmarksTable
+    Export:
+      Name: !Sub '${AWS::StackName}-bookmarks-table'
+
+  NotificationsTableName:
+    Description: Nome da tabela de notificações
+    Value: !Ref NotificationsTable
+    Export:
+      Name: !Sub '${AWS::StackName}-notifications-table'
+
+  # Informações de deployment
+  StackName:
+    Description: Nome da stack CloudFormation
+    Value: !Ref AWS::StackName
+
+  Region:
+    Description: Região AWS onde a stack foi deployada
+    Value: !Ref AWS::Region
+
+  Environment:
+    Description: Ambiente de deployment
+    Value: !Ref Environment
+

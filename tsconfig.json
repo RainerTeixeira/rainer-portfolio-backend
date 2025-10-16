@@ -1,42 +1,31 @@
 {
   "compilerOptions": {
-    "module": "CommonJS",
-    "target": "ES2020",
-    "lib": [
-      "es2020"
-    ],
-    "sourceMap": true,
-    "declaration": false,
-    "rootDir": "./src",
+    "target": "ES2022",
+    "module": "ESNext",
+    "lib": ["ES2022"],
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "allowJs": true,
     "outDir": "./dist",
-    "baseUrl": "./src",
-    "paths": {
-      "@src/*": [
-        "./*"
-      ]
-    },
-    "incremental": true,
-    "tsBuildInfoFile": "./dist/.tsbuildinfo",
-    "skipLibCheck": true,
+    "rootDir": "./src",
+    "strict": true,
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
-    "strict": true,
-    "noImplicitAny": false,
-    "strictNullChecks": true,
-    "strictPropertyInitialization": false,
-    "noImplicitThis": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "typeRoots": ["./node_modules/@types", "src/common/compression"]
+    "strictPropertyInitialization": false,
+    "baseUrl": "./",
+    "incremental": true,
+    "removeComments": true
   },
-  "include": [
-    "src/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "tests"]
 }
