@@ -1,0 +1,691 @@
+// ═══════════════════════════════════════════════════════════════════════════
+// PRISMA SCHEMA - Blog API Profissional com Amazon Cognito
+// ═══════════════════════════════════════════════════════════════════════════
+// 
+// Database: MongoDB (Prisma ORM)
+// Auth: Amazon Cognito (AWS)
+// Pattern: Repository Pattern + NestJS + Dependency Injection
+// 
+// Arquitetura de Autenticação:
+// - Cognito: Gerencia credenciais, senha, MFA, verificação de email
+// - MongoDB: Armazena perfil complementar, dados de domínio, estatísticas
+// - Sincronização: cognitoSub é a chave única entre Cognito ⇄ MongoDB
+// 
+// Estrutura:
+// - 7 Models principais (User, Post, Category, Comment, Like, Bookmark, Notification)
+// - 3 Enums (UserRole, PostStatus, NotificationType)
+// - Hierarquia: Post → Subcategory → Category Principal
+// 
+// ═══════════════════════════════════════════════════════════════════════════
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ENUMS - Definições de Tipos Fixos
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// Papel/permissão do usuário no sistema
+enum UserRole {
+  ADMIN // Administrador total do sistema
+  EDITOR // Editor de conteúdo (aprova posts)
+  AUTHOR // Autor de posts (cria conteúdo)
+  SUBSCRIBER // Assinante (apenas lê e comenta)
+}
+
+/// Status de publicação do post
+enum PostStatus {
+  DRAFT // Rascunho (não visível publicamente)
+  PUBLISHED // Publicado (visível)
+  ARCHIVED // Arquivado (não editável)
+  SCHEDULED // Agendado para publicação futura
+  TRASH // Lixeira (soft delete)
+}
+
+/// Tipo de notificação enviada ao usuário
+enum NotificationType {
+  NEW_COMMENT // Novo comentário em post do usuário
+  NEW_LIKE // Novo like em post do usuário
+  NEW_FOLLOWER // Novo seguidor
+  POST_PUBLISHED // Post foi publicado
+  MENTION // Menção @usuario em comentário
+  SYSTEM // Notificação administrativa do sistema
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MODEL: USER
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// Usuário do sistema (autor, editor, admin, assinante)
+/// Autenticação gerenciada por Amazon Cognito
+model User {
+  // ─────────────────────────────────────────────────────────────────────────
+  // IDENTIFICAÇÃO
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// ID interno do MongoDB (ObjectId)
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  /// ID único do usuário no Amazon Cognito (sub claim do JWT)
+  /// Este é o identificador global que conecta Cognito ⇄ MongoDB
+  cognitoSub String @unique
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // PERFIL BÁSICO (Sincronizado com Cognito)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// Email do usuário (sincronizado do Cognito)
+  email String @unique
+
+  /// Nome de usuário único para identificação pública (@username)
+  username String @unique
+
+  /// Nome completo ou nome de exibição (sincronizado do Cognito)
+  name String
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // PERFIL COMPLEMENTAR (Gerenciado pela aplicação)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// URL do avatar (CDN, S3, ou upload local)
+  avatar String?
+
+  /// Biografia curta do usuário (recomendado: max 500 caracteres)
+  bio String?
+
+  /// Website pessoal, portfólio ou blog
+  website String?
+
+  /// Links de redes sociais em JSON
+  /// Formato: { "twitter": "url", "github": "url", "linkedin": "url" }
+  socialLinks Json?
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // PERMISSÕES & STATUS (Gerenciado pela aplicação)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// Papel do usuário (define permissões na aplicação)
+  /// ADMIN: acesso total | EDITOR: aprova posts | AUTHOR: cria posts | SUBSCRIBER: lê
+  role UserRole @default(AUTHOR)
+
+  /// Usuário ativo no sistema (false = desativado pelo admin)
+  isActive Boolean @default(true)
+
+  /// Usuário banido (moderação interna)
+  isBanned Boolean @default(false)
+
+  /// Motivo do banimento interno (se aplicável)
+  banReason String?
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // ESTATÍSTICAS (Calculadas pela aplicação)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// Contador de posts criados (incrementado ao criar post)
+  postsCount Int @default(0)
+
+  /// Contador de comentários feitos (incrementado ao comentar)
+  commentsCount Int @default(0)
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // AUDITORIA
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// Data de criação do perfil na aplicação (não é o registro no Cognito)
+  createdAt DateTime @default(now())
+
+  /// Última atualização do perfil
+  updatedAt DateTime @updatedAt
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // RELAÇÕES
+  // ─────────────────────────────────────────────────────────────────────────
+
+  posts         Post[]
+  comments      Comment[]
+  likes         Like[]
+  bookmarks     Bookmark[]
+  notifications Notification[]
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // METADATA & ÍNDICES
+  // ─────────────────────────────────────────────────────────────────────────
+
+  @@index([role])
+  @@index([isActive])
+  @@index([createdAt])
+  @@index([isActive, role])
+  @@map("users")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MODEL: POST
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// Post/Artigo do blog
+/// Sempre pertence a uma SUBCATEGORIA (hierarquia de 2 níveis)
+model Post {
+  // ─────────────────────────────────────────────────────────────────────────
+  // IDENTIFICAÇÃO
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// ID único do post (MongoDB ObjectId)
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // CONTEÚDO PRINCIPAL
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// Título do post
+  title String
+
+  /// Slug único para URL SEO-friendly (ex: meu-primeiro-post)
+  slug String @unique
+
+  /// Conteúdo do post em JSON (Tiptap, Editor.js, Lexical)
+  /// Formato esperado: { type: "doc", content: [...] }
+  content Json
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // CLASSIFICAÇÃO & AUTORIA
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// ID da SUBCATEGORIA (não categoria principal!)
+  /// Exemplo: "Frontend" (subcategoria de "Tecnologia")
+  subcategoryId String @db.ObjectId
+
+  /// ID do autor (referência ao User)
+  authorId String @db.ObjectId
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // STATUS & PUBLICAÇÃO
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// Status atual do post
+  status PostStatus @default(DRAFT)
+
+  /// Post em destaque na homepage
+  featured Boolean @default(false)
+
+  /// Permite comentários neste post
+  allowComments Boolean @default(true)
+
+  /// Post fixado no topo da listagem
+  pinned Boolean @default(false)
+
+  /// Prioridade para ordenação (maior número = maior prioridade)
+  priority Int @default(0)
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // DATAS
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// Data de publicação (null se ainda não publicado)
+  publishedAt DateTime?
+
+  /// Data de criação (rascunho)
+  createdAt DateTime @default(now())
+
+  /// Última atualização do post
+  updatedAt DateTime @updatedAt
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // ESTATÍSTICAS (Calculadas/Mantidas por triggers ou jobs)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// Contador de visualizações únicas
+  views Int @default(0)
+
+  /// Contador de likes (sincronizado com tabela Like)
+  likesCount Int @default(0)
+
+  /// Contador de comentários (sincronizado com tabela Comment)
+  commentsCount Int @default(0)
+
+  /// Contador de bookmarks/salvamentos (sincronizado com tabela Bookmark)
+  bookmarksCount Int @default(0)
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // RELAÇÕES
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// Autor do post (usuário que criou)
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  /// Subcategoria do post (IMPORTANTE: sempre subcategoria, nunca categoria principal)
+  /// Exemplo: Post "Intro ao React" → Subcategoria "Frontend" → Categoria "Tecnologia"
+  subcategory Category @relation(name: "SubcategoryPosts", fields: [subcategoryId], references: [id], onDelete: Restrict)
+
+  /// Comentários no post
+  comments Comment[]
+
+  /// Likes no post
+  likes Like[]
+
+  /// Bookmarks (posts salvos por usuários)
+  bookmarks Bookmark[]
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // METADATA & ÍNDICES
+  // ─────────────────────────────────────────────────────────────────────────
+
+  @@index([status])
+  @@index([authorId])
+  @@index([subcategoryId])
+  @@index([publishedAt])
+  @@index([createdAt])
+  @@index([featured])
+  @@index([status, publishedAt])
+  @@index([authorId, status])
+  @@index([subcategoryId, status, publishedAt])
+  @@map("posts")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MODEL: CATEGORY
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// Categoria ou Subcategoria de posts (estrutura hierárquica de 2 níveis)
+/// 
+/// Hierarquia:
+/// - Categoria Principal (parentId = null): "Tecnologia", "Culinária", "Viagens"
+/// - Subcategoria (parentId != null): "Frontend", "Backend", "Doces", "Salgados"
+/// 
+/// Posts sempre pertencem a uma SUBCATEGORIA, nunca à categoria principal diretamente
+model Category {
+  // ─────────────────────────────────────────────────────────────────────────
+  // IDENTIFICAÇÃO
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// ID único da categoria (MongoDB ObjectId)
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  /// Nome único da categoria/subcategoria
+  name String @unique
+
+  /// Slug SEO-friendly único (ex: tecnologia, frontend)
+  slug String @unique
+
+  /// Descrição curta da categoria (recomendado: 100-200 caracteres)
+  description String?
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // PERSONALIZAÇÃO VISUAL
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// Cor em hexadecimal para UI (ex: #FF5733, #3498DB)
+  color String?
+
+  /// Nome do ícone (ex: code, design, food)
+  /// Compatível com: FontAwesome, Material Icons, Lucide
+  icon String?
+
+  /// URL da imagem de capa da categoria (banner)
+  coverImage String?
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // HIERARQUIA (2 Níveis)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// ID da categoria pai (null = categoria principal, não-null = subcategoria)
+  /// Exemplo: null = "Tecnologia", "abc123" = "Frontend" (filho de "Tecnologia")
+  parentId String? @db.ObjectId
+
+  /// Ordem de exibição (menor número = aparece primeiro)
+  order Int @default(0)
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // SEO & METADATA
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// Meta description para SEO (recomendado: 50-160 caracteres)
+  metaDescription String?
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // STATUS & ESTATÍSTICAS
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// Categoria ativa ou desativada (false oculta da UI)
+  isActive Boolean @default(true)
+
+  /// Contagem de posts (calculada - incrementada ao criar post)
+  postsCount Int @default(0)
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // AUDITORIA
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// Data de criação da categoria
+  createdAt DateTime @default(now())
+
+  /// Última atualização da categoria
+  updatedAt DateTime @updatedAt
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // RELAÇÕES HIERÁRQUICAS
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// Posts que pertencem a esta subcategoria (quando esta é subcategoria)
+  /// Um post SEMPRE pertence a uma subcategoria, nunca à categoria principal
+  posts Post[] @relation(name: "SubcategoryPosts")
+
+  /// Categoria pai (quando esta é uma subcategoria)
+  /// Exemplo: "Frontend" → parent = "Tecnologia"
+  parent Category? @relation(name: "CategoryHierarchy", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  /// Subcategorias filhas (quando esta é uma categoria principal)
+  /// Exemplo: "Tecnologia" → children = ["Frontend", "Backend", "DevOps"]
+  children Category[] @relation(name: "CategoryHierarchy")
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // METADATA & ÍNDICES
+  // ─────────────────────────────────────────────────────────────────────────
+
+  @@index([isActive])
+  @@index([order])
+  @@index([parentId])
+  @@index([parentId, isActive, order])
+  @@map("categories")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MODEL: COMMENT
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// Comentário em post (suporta threads via parentId)
+model Comment {
+  // ─────────────────────────────────────────────────────────────────────────
+  // IDENTIFICAÇÃO
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// ID único do comentário (MongoDB ObjectId)
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // CONTEÚDO
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// Conteúdo do comentário em texto puro
+  content String
+
+  /// Conteúdo em JSON (opcional, para rich text/formatação)
+  contentJson Json?
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // RELAÇÕES
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// ID do autor do comentário
+  authorId String @db.ObjectId
+
+  /// ID do post comentado
+  postId String @db.ObjectId
+
+  /// ID do comentário pai (para threads/respostas)
+  /// null = comentário raiz, não-null = resposta a outro comentário
+  parentId String? @db.ObjectId
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // MODERAÇÃO
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// Comentário aprovado por moderador (ADMIN/EDITOR)
+  isApproved Boolean @default(false)
+
+  /// Comentário reportado por usuários como spam/abuso
+  isReported Boolean @default(false)
+
+  /// Motivo do report (se isReported = true)
+  reportReason String?
+
+  /// Comentário foi editado pelo autor
+  isEdited Boolean @default(false)
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // ESTATÍSTICAS
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// Contador de likes no comentário
+  likesCount Int @default(0)
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // AUDITORIA
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// Data de criação do comentário
+  createdAt DateTime @default(now())
+
+  /// Última atualização
+  updatedAt DateTime @updatedAt
+
+  /// Data da última edição (se isEdited = true)
+  editedAt DateTime?
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // RELAÇÕES
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// Autor do comentário
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  /// Post comentado
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // METADATA & ÍNDICES
+  // ─────────────────────────────────────────────────────────────────────────
+
+  @@index([postId])
+  @@index([authorId])
+  @@index([parentId])
+  @@index([isApproved])
+  @@index([createdAt])
+  @@index([postId, isApproved, createdAt])
+  @@index([postId, parentId])
+  @@map("comments")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MODEL: LIKE
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// Curtida em post (relação N:N entre User e Post)
+/// Um usuário pode curtir um post apenas uma vez
+model Like {
+  // ─────────────────────────────────────────────────────────────────────────
+  // IDENTIFICAÇÃO
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// ID único do like (MongoDB ObjectId)
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // RELAÇÕES (Chave Composta: userId + postId)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// ID do usuário que curtiu
+  userId String @db.ObjectId
+
+  /// ID do post curtido
+  postId String @db.ObjectId
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // AUDITORIA
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// Data em que o like foi dado
+  createdAt DateTime @default(now())
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // RELAÇÕES
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// Usuário que curtiu
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// Post curtido
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // METADATA & ÍNDICES
+  // ─────────────────────────────────────────────────────────────────────────
+
+  @@unique([userId, postId], name: "unique_user_post_like")
+  @@index([postId])
+  @@index([userId])
+  @@index([createdAt])
+  @@index([postId, createdAt])
+  @@map("likes")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MODEL: BOOKMARK
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// Post salvo pelo usuário para leitura posterior
+/// Suporta coleções personalizadas e notas privadas
+model Bookmark {
+  // ─────────────────────────────────────────────────────────────────────────
+  // IDENTIFICAÇÃO
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// ID único do bookmark (MongoDB ObjectId)
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // RELAÇÕES (Chave Composta: userId + postId)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// ID do usuário que salvou o post
+  userId String @db.ObjectId
+
+  /// ID do post salvo
+  postId String @db.ObjectId
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // ORGANIZAÇÃO PERSONALIZADA
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// Nome da coleção/pasta personalizada
+  /// Exemplos: "Para ler depois", "Favoritos", "Estudar React"
+  collection String?
+
+  /// Notas privadas do usuário sobre o post
+  notes String?
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // AUDITORIA
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// Data em que o post foi salvo
+  createdAt DateTime @default(now())
+
+  /// Última atualização (alteração de notas ou coleção)
+  updatedAt DateTime @updatedAt
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // RELAÇÕES
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// Usuário que salvou
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// Post salvo
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // METADATA & ÍNDICES
+  // ─────────────────────────────────────────────────────────────────────────
+
+  @@unique([userId, postId], name: "unique_user_post_bookmark")
+  @@index([userId])
+  @@index([postId])
+  @@index([collection])
+  @@index([createdAt])
+  @@index([userId, collection])
+  @@map("bookmarks")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MODEL: NOTIFICATION
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// Notificação do sistema enviada ao usuário
+/// Tipos: novo comentário, like, seguidor, menção, publicação de post, sistema
+model Notification {
+  // ─────────────────────────────────────────────────────────────────────────
+  // IDENTIFICAÇÃO
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// ID único da notificação (MongoDB ObjectId)
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // CONTEÚDO
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// Tipo da notificação
+  type NotificationType
+
+  /// Título da notificação (ex: "Novo comentário no seu post")
+  title String
+
+  /// Mensagem detalhada da notificação
+  message String
+
+  /// Link relacionado (ex: /posts/slug-do-post, /comments/123)
+  link String?
+
+  /// Dados adicionais em JSON (contexto específico do tipo)
+  /// Exemplo: { "postId": "abc", "commentId": "xyz", "authorName": "João" }
+  metadata Json?
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // STATUS
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// Notificação já foi lida pelo usuário
+  isRead Boolean @default(false)
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // RELAÇÕES
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// ID do usuário destinatário da notificação
+  userId String @db.ObjectId
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // AUDITORIA
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// Data de criação/envio da notificação
+  createdAt DateTime @default(now())
+
+  /// Data em que foi marcada como lida (null se ainda não lida)
+  readAt DateTime?
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // RELAÇÕES
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// Usuário destinatário
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // METADATA & ÍNDICES
+  // ─────────────────────────────────────────────────────────────────────────
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([type])
+  @@index([createdAt])
+  @@index([userId, isRead, createdAt])
+  @@map("notifications")
+}
