@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guia de Desenvolvimento - Rainer Portfolio Backend</title>
+    <style>
+        @page {
+            margin: 2cm;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        
+        .container {
+            background: white;
+            padding: 50px;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        
+        .header {
+            text-align: center;
+            border-bottom: 4px solid #2563eb;
+            padding-bottom: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
+            color: #1e40af;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header .subtitle {
+            color: #64748b;
+            font-size: 1.2em;
+        }
+        
+        .date {
+            text-align: center;
+            color: #64748b;
+            font-style: italic;
+            margin-bottom: 30px;
+        }
+        
+        .section {
+            margin-bottom: 40px;
+        }
+        
+        .section-title {
+            color: #1e40af;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            padding-left: 15px;
+            border-left: 5px solid #2563eb;
+        }
+        
+        .status-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        
+        .status-box h2 {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 0;
+            font-size: 1.1em;
+        }
+        
+        .check {
+            color: #10b981;
+            font-weight: bold;
+            font-size: 1.3em;
+        }
+        
+        .info-box {
+            background: #f0f9ff;
+            border-left: 5px solid #3b82f6;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        
+        .success-box {
+            background: #f0fdf4;
+            border-left: 5px solid #10b981;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        
+        .code-box {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        
+        .code-box pre {
+            margin: 0;
+            white-space: pre-wrap;
+        }
+        
+        .command {
+            color: #22d3ee;
+        }
+        
+        .comment {
+            color: #94a3b8;
+        }
+        
+        ul {
+            margin-left: 30px;
+            margin-top: 15px;
+        }
+        
+        li {
+            margin-bottom: 12px;
+            font-size: 1.05em;
+        }
+        
+        .highlight {
+            background: #fef3c7;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-weight: 600;
+        }
+        
+        .rocket {
+            font-size: 2em;
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        .footer {
+            margin-top: 50px;
+            padding-top: 30px;
+            border-top: 2px solid #e2e8f0;
+            text-align: center;
+            color: #64748b;
+        }
+        
+        .workflow-step {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            transition: all 0.3s;
+        }
+        
+        .workflow-step:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+        }
+        
+        .step-number {
+            background: #2563eb;
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        @media print {
+            body {
+                background: white;
+            }
+            
+            .container {
+                box-shadow: none;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Guia de Desenvolvimento</h1>
+            <div class="subtitle">Rainer Portfolio Backend - Sistema de Branches</div>
+        </div>
+        
+        <div class="date">
+            📅 Criado em: 16 de Outubro de 2025
+        </div>
+        
+        <!-- STATUS ATUAL -->
+        <div class="section">
+            <div class="status-box">
+                <h2>📍 Status Atual do Projeto</h2>
+                
+                <div class="status-item">
+                    <span class="check">✅</span>
+                    <strong>Branch ativa:</strong> <code>development</code>
+                </div>
+                
+                <div class="status-item">
+                    <span class="check">✅</span>
+                    <strong>Working tree:</strong> limpo (sem alterações pendentes)
+                </div>
+                
+                <div class="status-item">
+                    <span class="check">✅</span>
+                    <strong>Master atualizada:</strong> com todas as suas alterações
+                </div>
+                
+                <div class="status-item">
+                    <span class="check">✅</span>
+                    <strong>Histórico preservado:</strong> tudo salvo
+                </div>
+            </div>
+        </div>
+        
+        <!-- PODE CONTINUAR TRABALHANDO -->
+        <div class="section">
+            <h2 class="section-title">🎯 Pode Continuar Trabalhando Normalmente!</h2>
+            
+            <div class="success-box">
+                <p style="font-size: 1.1em; margin-bottom: 15px;">
+                    <strong>Você está pronto para desenvolver!</strong> A branch <span class="highlight">development</span> 
+                    está configurada e limpa para novas implementações.
+                </p>
+            </div>
+            
+            <h3 style="color: #1e40af; margin: 25px 0 15px 0;">Agora você pode:</h3>
+            
+            <ul>
+                <li><strong>Fazer novas alterações</strong> - Desenvolva novos recursos sem medo</li>
+                <li><strong>Criar novos recursos</strong> - Implemente funcionalidades do sistema</li>
+                <li><strong>Testar funcionalidades</strong> - Valide suas implementações</li>
+                <li><strong>Fazer commits normalmente</strong> - Salve seu progresso regularmente</li>
+            </ul>
+        </div>
+        
+        <!-- FLUXO DE TRABALHO -->
+        <div class="section">
+            <h2 class="section-title">🔄 Fluxo de Trabalho - Atualizar a Master</h2>
+            
+            <p style="margin-bottom: 20px; font-size: 1.05em;">
+                Quando terminar uma etapa e quiser atualizar a <strong>master</strong> novamente, 
+                é só repetir o seguinte processo:
+            </p>
+            
+            <div class="workflow-step">
+                <div style="margin-bottom: 10px;">
+                    <span class="step-number">1</span>
+                    <strong style="font-size: 1.1em;">Adicionar as alterações</strong>
+                </div>
+                <div class="code-box">
+                    <pre><span class="command">git add -A</span>
+<span class="comment"># Adiciona TODOS os arquivos modificados, novos e deletados</span></pre>
+                </div>
+            </div>
+            
+            <div class="workflow-step">
+                <div style="margin-bottom: 10px;">
+                    <span class="step-number">2</span>
+                    <strong style="font-size: 1.1em;">Fazer o commit</strong>
+                </div>
+                <div class="code-box">
+                    <pre><span class="command">git commit -m "feat: sua mensagem descritiva aqui"</span>
+<span class="comment"># Salva as alterações com uma mensagem clara</span></pre>
+                </div>
+            </div>
+            
+            <div class="workflow-step">
+                <div style="margin-bottom: 10px;">
+                    <span class="step-number">3</span>
+                    <strong style="font-size: 1.1em;">Ir para a branch master</strong>
+                </div>
+                <div class="code-box">
+                    <pre><span class="command">git checkout master</span>
+<span class="comment"># Muda para a branch principal</span></pre>
+                </div>
+            </div>
+            
+            <div class="workflow-step">
+                <div style="margin-bottom: 10px;">
+                    <span class="step-number">4</span>
+                    <strong style="font-size: 1.1em;">Fazer o merge (preservando histórico)</strong>
+                </div>
+                <div class="code-box">
+                    <pre><span class="command">git merge development --no-ff</span>
+<span class="comment"># Integra as alterações da development na master
+# O --no-ff preserva todo o histórico</span></pre>
+                </div>
+            </div>
+            
+            <div class="workflow-step">
+                <div style="margin-bottom: 10px;">
+                    <span class="step-number">5</span>
+                    <strong style="font-size: 1.1em;">Voltar para development</strong>
+                </div>
+                <div class="code-box">
+                    <pre><span class="command">git checkout development</span>
+<span class="comment"># Retorna para continuar desenvolvendo</span></pre>
+                </div>
+            </div>
+        </div>
+        
+        <!-- COMANDO RÁPIDO -->
+        <div class="section">
+            <h2 class="section-title">⚡ Comando Rápido (Tudo de Uma Vez)</h2>
+            
+            <div class="info-box">
+                <p style="margin-bottom: 15px;">
+                    Para executar todo o processo de uma só vez, use:
+                </p>
+                <div class="code-box">
+                    <pre><span class="command">git add -A && git commit -m "feat: sua mensagem" && git checkout master && git merge development --no-ff && git checkout development</span></pre>
+                </div>
+            </div>
+        </div>
+        
+        <!-- DICAS IMPORTANTES -->
+        <div class="section">
+            <h2 class="section-title">💡 Dicas Importantes</h2>
+            
+            <div style="background: #fffbeb; border-left: 5px solid #f59e0b; padding: 20px; border-radius: 5px; margin: 15px 0;">
+                <h3 style="color: #92400e; margin-bottom: 15px;">⚠️ Lembre-se:</h3>
+                <ul style="color: #78350f;">
+                    <li>Sempre trabalhe na branch <strong>development</strong></li>
+                    <li>A <strong>master</strong> deve receber apenas código testado e funcional</li>
+                    <li>Faça commits frequentes com mensagens claras</li>
+                    <li>Use o padrão de commit: <code>feat:</code>, <code>fix:</code>, <code>refactor:</code>, etc.</li>
+                    <li>O histórico está sendo preservado em cada merge</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- CONFIGURAÇÃO GIT -->
+        <div class="section">
+            <h2 class="section-title">⚙️ Configuração Git</h2>
+            
+            <div class="info-box">
+                <p><strong>Seu Git está configurado como:</strong></p>
+                <div class="code-box" style="margin-top: 15px;">
+                    <pre>👤 Nome: Rainer Teixeira
+📧 Email: raineroliveira94@hotmail.com</pre>
+                </div>
+            </div>
+        </div>
+        
+        <div class="rocket">
+            🎯💻 Bora continuar o desenvolvimento! 🚀✨
+        </div>
+        
+        <div class="footer">
+            <p><strong>Rainer Portfolio Backend</strong></p>
+            <p>Sistema de gerenciamento de branches configurado com sucesso</p>
+            <p style="margin-top: 10px; font-size: 0.9em;">
+                Para salvar como PDF: <strong>Ctrl + P</strong> → Salvar como PDF
+            </p>
+        </div>
+    </div>
+</body>
+</html>
