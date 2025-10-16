@@ -110,6 +110,16 @@ export class UsersService {
 
 ### Exemplo 1: Health Check
 
+**Pré-requisitos:**
+```powershell
+# Garantir que ambos os bancos estão rodando
+.\scripts\docker-ambiente-completo.ps1 start
+
+# Ou apenas o que você quer testar
+docker-compose up -d mongodb        # Para PRISMA
+docker-compose up -d dynamodb-local # Para DYNAMODB
+```
+
 **Teste:**
 1. Acesse: `http://localhost:4000/docs`
 2. Abra `GET /health`
@@ -262,7 +272,30 @@ Se **não** enviar o header, usa o valor do `.env`:
 DATABASE_PROVIDER=PRISMA  # Padrão
 ```
 
-Você pode mudar o padrão editando o `.env` e **cada requisição pode sobrescrever** com o header.
+Você pode mudar o padrão de três formas:
+
+### 1. Usando Script (Recomendado)
+
+```powershell
+# Ver configuração atual
+.\scripts\alternar-banco.ps1 status
+
+# Mudar para MongoDB (Prisma)
+.\scripts\alternar-banco.ps1 PRISMA
+
+# Mudar para DynamoDB
+.\scripts\alternar-banco.ps1 DYNAMODB
+```
+
+### 2. Editando .env Manualmente
+
+```env
+DATABASE_PROVIDER=DYNAMODB
+```
+
+### 3. Via Header (Temporário)
+
+Cada requisição pode sobrescrever com o header `X-Database-Provider` sem alterar o `.env`.
 
 ---
 
@@ -430,4 +463,46 @@ Remova o decorator `@DatabaseProviderHeader()` dos endpoints e o provider será 
 **Pronto!** 🎉 Agora você pode escolher dinamicamente entre MongoDB e DynamoDB diretamente no Swagger!
 
 **Teste agora:** http://localhost:4000/docs → `GET /health` → Try it out → Selecione o provider → Execute
+
+---
+
+## 🆕 Recursos Adicionais
+
+### Scripts de Gerenciamento
+
+```powershell
+# Gerenciar ambiente completo
+.\scripts\docker-ambiente-completo.ps1 start
+.\scripts\docker-ambiente-completo.ps1 status
+.\scripts\docker-ambiente-completo.ps1 stop
+
+# Alternar bancos facilmente
+.\scripts\alternar-banco.ps1 PRISMA
+.\scripts\alternar-banco.ps1 DYNAMODB
+.\scripts\alternar-banco.ps1 status
+```
+
+### Documentação Relacionada
+
+- **[COMECE_AQUI.txt](../../COMECE_AQUI.txt)** - Guia de início rápido
+- **[INICIO_RAPIDO_OLD.md](../../INICIO_RAPIDO_OLD.md)** - Comandos essenciais
+- **[GUIA_AMBIENTE_LOCAL_OLD.md](../../GUIA_AMBIENTE_LOCAL_OLD.md)** - Guia completo
+- **[GUIA_SEED_BANCO_DADOS.md](GUIA_SEED_BANCO_DADOS.md)** - Popular dados
+- **[GUIA_DYNAMODB_LOCAL.md](GUIA_DYNAMODB_LOCAL.md)** - DynamoDB detalhado
+
+### Configuração Atual
+
+O projeto está configurado com:
+- ✅ **AWS Cognito** (RainerSoftCognito)
+  - User Pool ID: `us-east-1_wryiyhbWC`
+  - Client ID: `3ueos5ofu499je6ebc5u98n35h`
+- ✅ **JWT Secret** gerado automaticamente
+- ✅ **MongoDB** + **DynamoDB Local** prontos via Docker
+- ✅ **Prisma Studio** (porta 5555)
+- ✅ **DynamoDB Admin** (porta 8001)
+
+---
+
+**Última atualização:** 16/10/2025  
+**Versão:** 2.0.0 (Atualizado com scripts e configurações)
 

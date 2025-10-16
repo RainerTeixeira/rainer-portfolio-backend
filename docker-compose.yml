@@ -54,8 +54,8 @@ services:
       - "com.blogapi.port=8000"
       - "com.blogapi.environment=development"
     healthcheck:
-      # Verifica se a API DynamoDB está respondendo (usando wget do Alpine)
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8000 || exit 1"]
+      # Verifica se o processo DynamoDB está rodando
+      test: ["CMD-SHELL", "ps aux | grep DynamoDBLocal.jar | grep -v grep || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -176,11 +176,12 @@ services:
       AWS_ACCESS_KEY_ID: local
       AWS_SECRET_ACCESS_KEY: local
       
-      # 🔐 Configuração AWS Cognito (Exemplo - substitua com valores reais)
-      COGNITO_USER_POOL_ID: us-east-1_XXXXXXXXX
-      COGNITO_CLIENT_ID: xxxxxxxxxxxxxxxxxxxxxxxxxx
+      # 🔐 Configuração AWS Cognito (RainerSoftCognito)
+      COGNITO_USER_POOL_ID: us-east-1_wryiyhbWC
+      COGNITO_CLIENT_ID: 3ueos5ofu499je6ebc5u98n35h
       COGNITO_REGION: us-east-1
-      COGNITO_ISSUER: https://cognito-idp.us-east-1.amazonaws.com/us-east-1_XXXXXXXXX
+      COGNITO_ISSUER: https://cognito-idp.us-east-1.amazonaws.com/us-east-1_wryiyhbWC
+      JWT_SECRET: 1vLG1UVpIFyhWLWubWc4Vuo3S3ritN9t/B9arxjKRL2aMGeiZM2gOx22Z+czY1amLEbvxCoMbH9x1G1ufpA+yg==
       
       # 🎯 Configurações adicionais para desenvolvimento
       SWAGGER_ENABLED: "true"

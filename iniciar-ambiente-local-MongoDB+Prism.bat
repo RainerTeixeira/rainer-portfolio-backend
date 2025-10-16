@@ -1,6 +1,5 @@
 @echo off
 chcp 65001 > nul
-setlocal enabledelayedexpansion
 cls
 
 :: =============================================================================
@@ -22,16 +21,15 @@ set "WHITE=%DEL%%DEL%[97m"
 set "BG_BLUE=%DEL%%DEL%[44m"
 set "BG_GREEN=%DEL%%DEL%[42m"
 set "BG_CYAN=%DEL%%DEL%[46m"
-set "BG_PURPLE=%DEL%%DEL%[45m"
 
 :: =============================================================================
-:: Banner Principal - AMBIENTE COMPLETO
+:: Banner Principal
 :: =============================================================================
 echo.
-echo %BOLD%%BG_CYAN%%WHITE% ╔══════════════════════════════════════════════════════════════════════════╗ %RESET%
-echo %BOLD%%BG_CYAN%%WHITE% ║                       🚀 INICIANDO AMBIENTE COMPLETO                     ║ %RESET%
-echo %BOLD%%BG_CYAN%%WHITE% ║              MONGODB + DYNAMODB + PRISMA + SERVIDOR                      ║ %RESET%
-echo %BOLD%%BG_CYAN%%WHITE% ╚══════════════════════════════════════════════════════════════════════════╝ %RESET%
+echo %BOLD%%BG_BLUE%%WHITE% ╔══════════════════════════════════════════════════════════════════════════╗ %RESET%
+echo %BOLD%%BG_BLUE%%WHITE% ║                            🚀 INICIANDO AMBIENTE LOCAL                    ║ %RESET%
+echo %BOLD%%BG_BLUE%%WHITE% ║                        PRISMA + MONGODB + EXPRESS                        ║ %RESET%
+echo %BOLD%%BG_BLUE%%WHITE% ╚══════════════════════════════════════════════════════════════════════════╝ %RESET%
 echo.
 
 :: =============================================================================
@@ -52,13 +50,10 @@ if errorlevel 1 (
 
 echo %GREEN%✅ %BOLD%Docker detectado e funcionando%RESET%
 
-:: Verificar e criar .env se necessário
 if not exist .env (
     echo %YELLOW%📝 %BOLD%Criando arquivo .env...%RESET%
     copy env.example .env >nul
     echo %GREEN%✅ Arquivo .env criado com sucesso%RESET%
-) else (
-    echo %GREEN%✅ %BOLD%Arquivo .env encontrado%RESET%
 )
 echo.
 
@@ -66,7 +61,7 @@ echo.
 :: Seção MongoDB
 :: =============================================================================
 echo %BOLD%%CYAN%╔══════════════════════════════════════════════════════════════════════════╗%RESET%
-echo %BOLD%%CYAN%║                         🐳 INICIANDO MONGODB                             ║%RESET%
+echo %BOLD%%CYAN%║                            🐳 INICIANDO MONGODB                          ║%RESET%
 echo %BOLD%%CYAN%╚══════════════════════════════════════════════════════════════════════════╝%RESET%
 echo.
 
@@ -84,10 +79,10 @@ echo %GREEN%✅ %BOLD%MongoDB iniciado com sucesso%RESET%
 echo.
 
 echo %YELLOW%⏳ %BOLD%Aguardando inicialização do Replica Set...%RESET%
-echo %WHITE%   Aguardando 15 segundos para inicialização completa%RESET%
+echo %WHITE%   Aguardando 30 segundos para inicialização completa%RESET%
 
-:: Barra de progresso MongoDB
-set "steps=15"
+:: Barra de progresso animada
+set "steps=30"
 for /L %%i in (1,1,%steps%) do (
     set /a "percent=%%i*100/steps"
     set "bar="
@@ -99,49 +94,17 @@ for /L %%i in (1,1,%steps%) do (
     if %%i lss %steps% echo %DEL%%DEL%[1A%DEL%%DEL%[K
 )
 
-echo %GREEN%   [■■■■■■■■■■■■■■■] 100%%%RESET%
-echo %GREEN%✅ %BOLD%MongoDB Replica Set pronto!%RESET%
+echo %GREEN%   [■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■] 100%%%RESET%
 echo.
 
-:: =============================================================================
-:: Seção DynamoDB Local
-:: =============================================================================
-echo %BOLD%%CYAN%╔══════════════════════════════════════════════════════════════════════════╗%RESET%
-echo %BOLD%%CYAN%║                      🗄️  INICIANDO DYNAMODB LOCAL                         ║%RESET%
-echo %BOLD%%CYAN%╚══════════════════════════════════════════════════════════════════════════╝%RESET%
-echo.
-
-echo %YELLOW%🔄 %BOLD%Iniciando container DynamoDB Local...%RESET%
-docker-compose up -d dynamodb-local
-
+echo %YELLOW%🔍 %BOLD%Verificando status do Replica Set...%RESET%
+docker exec -it blogapi-mongodb mongosh --eval "rs.status().ok" --quiet 2>nul | findstr "1" >nul
 if errorlevel 1 (
-    echo %RED%❌ %BOLD%Erro ao iniciar DynamoDB Local%RESET%
-    echo %YELLOW%💡 Verifique se a porta 8000 está disponível%RESET%
-    pause
-    exit /b 1
+    echo %YELLOW%⚠️  %BOLD%Replica Set ainda não está pronto, aguardando mais 10 segundos...%RESET%
+    timeout /t 10 /nobreak >nul
 )
 
-echo %GREEN%✅ %BOLD%DynamoDB Local iniciado com sucesso%RESET%
-echo.
-
-echo %YELLOW%⏳ %BOLD%Aguardando inicialização do DynamoDB...%RESET%
-echo %WHITE%   Aguardando 5 segundos%RESET%
-
-:: Barra de progresso DynamoDB
-set "steps=5"
-for /L %%i in (1,1,%steps%) do (
-    set /a "percent=%%i*100/steps"
-    set "bar="
-    for /L %%j in (1,1,%%i) do set "bar=!bar!█"
-    set "empty="
-    for /L %%j in (%%i,1,%steps%) do set "empty=!empty!░"
-    echo %CYAN%   [!bar!!empty!] !percent!%%%RESET%
-    timeout /t 1 /nobreak >nul
-    if %%i lss %steps% echo %DEL%%DEL%[1A%DEL%%DEL%[K
-)
-
-echo %GREEN%   [█████] 100%%%RESET%
-echo %GREEN%✅ %BOLD%DynamoDB pronto!%RESET%
+echo %GREEN%✅ %BOLD%MongoDB Replica Set pronto!%RESET%
 echo.
 
 :: =============================================================================
@@ -181,15 +144,7 @@ if errorlevel 1 (
 echo %GREEN%✅ %BOLD%Schema sincronizado com sucesso%RESET%
 echo.
 
-:: =============================================================================
-:: Seção População de Dados
-:: =============================================================================
-echo %BOLD%%CYAN%╔══════════════════════════════════════════════════════════════════════════╗%RESET%
-echo %BOLD%%CYAN%║                         🌱 POPULANDO BANCO DE DADOS                      ║%RESET%
-echo %BOLD%%CYAN%╚══════════════════════════════════════════════════════════════════════════╝%RESET%
-echo.
-
-echo %YELLOW%🌱 %BOLD%Populando MongoDB com dados de teste...%RESET%
+echo %YELLOW%🌱 %BOLD%Populando banco de dados...%RESET%
 call npm run seed
 
 if errorlevel 1 (
@@ -202,39 +157,14 @@ echo %GREEN%✅ %BOLD%Banco de dados populado com sucesso%RESET%
 echo.
 
 :: =============================================================================
-:: Seção DynamoDB - Criação de Tabelas
-:: =============================================================================
-echo %BOLD%%CYAN%╔══════════════════════════════════════════════════════════════════════════╗%RESET%
-echo %BOLD%%CYAN%║                      📊 CONFIGURANDO DYNAMODB                            ║%RESET%
-echo %BOLD%%CYAN%╚══════════════════════════════════════════════════════════════════════════╝%RESET%
-echo.
-
-echo %YELLOW%🏗️  %BOLD%Criando tabelas no DynamoDB...%RESET%
-call npm run dynamodb:create-tables
-
-if errorlevel 1 (
-    echo %YELLOW%⚠️  %BOLD%Aviso: Erro ao criar tabelas no DynamoDB (isso é opcional)%RESET%
-    echo %WHITE%   DynamoDB está disponível mas sem dados%RESET%
-    echo %WHITE%   Execute depois: %CYAN%npm run dynamodb:create-tables%RESET%
-) else (
-    echo %GREEN%✅ %BOLD%Tabelas DynamoDB criadas com sucesso%RESET%
-)
-echo.
-
-:: =============================================================================
 :: Resumo Final
 :: =============================================================================
 echo %BOLD%%BG_GREEN%%WHITE%╔══════════════════════════════════════════════════════════════════════════╗%RESET%
-echo %BOLD%%BG_GREEN%%WHITE%║                 ✨ AMBIENTE COMPLETO CONFIGURADO COM SUCESSO!            ║%RESET%
+echo %BOLD%%BG_GREEN%%WHITE%║                  ✨ AMBIENTE CONFIGURADO COM SUCESSO!                   ║%RESET%
 echo %BOLD%%BG_GREEN%%WHITE%╚══════════════════════════════════════════════════════════════════════════╝%RESET%
 echo.
 
-echo %BOLD%%CYAN%🗄️  BANCOS DE DADOS ATIVOS:%RESET%
-echo %WHITE%   ┌─ %GREEN%MongoDB%RESET%           mongodb://localhost:27017 (PRINCIPAL)%RESET%
-echo %WHITE%   └─ %YELLOW%DynamoDB Local%RESET%    http://localhost:8000 (DISPONÍVEL)%RESET%
-echo.
-
-echo %BOLD%%CYAN%📊 DADOS CRIADOS NO MONGODB:%RESET%
+echo %BOLD%%CYAN%📊 DADOS CRIADOS NO BANCO:%RESET%
 echo %WHITE%   ┌─ %GREEN%5 usuários%WHITE% (admin, editor, 2 authors, 1 subscriber)%RESET%
 echo %WHITE%   ├─ %GREEN%9 categorias%WHITE% (3 principais + 6 subcategorias)%RESET%
 echo %WHITE%   ├─ %GREEN%9 posts%WHITE% (8 publicados, 1 rascunho)%RESET%
@@ -243,22 +173,16 @@ echo.
 
 echo %BOLD%%MAGENTA%🌐 URLS DO SISTEMA:%RESET%
 echo %WHITE%   ┌─ %CYAN%API Principal%RESET%       http://localhost:4000%RESET%
-echo %WHITE%   ├─ %GREEN%Documentação%RESET%        http://localhost:4000/docs%RESET%
-echo %WHITE%   ├─ %RED%Health Check%RESET%         http://localhost:4000/health%RESET%
-echo %WHITE%   ├─ %YELLOW%Prisma Studio%RESET%      http://localhost:5555%RESET%
-echo %WHITE%   ├─ %BLUE%MongoDB%RESET%             mongodb://localhost:27017%RESET%
-echo %WHITE%   └─ %MAGENTA%DynamoDB%RESET%            http://localhost:8000%RESET%
+echo %WHITE%   ├─ %GREEN%Documentação%RESET%       http://localhost:4000/docs%RESET%
+echo %WHITE%   ├─ %RED%Health Check%RESET%        http://localhost:4000/health%RESET%
+echo %WHITE%   └─ %YELLOW%Prisma Studio%RESET%      http://localhost:5555%RESET%
 echo.
 
 echo %BOLD%%YELLOW%⚡ COMANDOS RÁPIDOS:%RESET%
-echo %WHITE%   ┌─ %GREEN%npm run prisma:studio%RESET%           Abrir Prisma Studio (MongoDB)%RESET%
-echo %WHITE%   ├─ %CYAN%npm run dynamodb:list-tables%RESET%    Listar tabelas DynamoDB%RESET%
-echo %WHITE%   ├─ %BLUE%docker-compose logs -f%RESET%          Ver logs dos containers%RESET%
-echo %WHITE%   └─ %RED%docker-compose down%RESET%             Parar todos os containers%RESET%
-echo.
-
-echo %BOLD%%CYAN%🔄 ALTERNAR BANCO DE DADOS:%RESET%
-echo %WHITE%   Use: %YELLOW%alternar-banco.bat%RESET% para alternar entre MongoDB e DynamoDB%RESET%
+echo %WHITE%   ┌─ %GREEN%npm run dev%RESET%              Iniciar servidor%RESET%
+echo %WHITE%   ├─ %BLUE%npm run prisma:studio%RESET%    Abrir Prisma Studio%RESET%
+echo %WHITE%   ├─ %YELLOW%npm run docker:logs%RESET%      Ver logs do MongoDB%RESET%
+echo %WHITE%   └─ %RED%npm run docker:down%RESET%       Parar containers%RESET%
 echo.
 
 :: =============================================================================
@@ -273,8 +197,7 @@ echo %YELLOW%⏰ %BOLD%Iniciando servidor em 3 segundos...%RESET%
 timeout /t 3 /nobreak >nul
 
 echo %GREEN%🎯 %BOLD%Servidor iniciado! Use Ctrl+C para parar%RESET%
-echo %WHITE%   API: %CYAN%http://localhost:4000%RESET%
-echo %WHITE%   Swagger: %GREEN%http://localhost:4000/docs%RESET%
+echo %WHITE%   Acesse: %CYAN%http://localhost:4000%RESET%
 echo.
 
 :: =============================================================================

@@ -57,7 +57,26 @@ Este guia completo mostra como configurar e usar o DynamoDB Local para desenvolv
 
 ## 🚀 Início Rápido
 
-### Opção 1: Script Automático (Recomendado)
+### Opção 1: Script PowerShell Automatizado (Recomendado)
+
+```powershell
+# Iniciar DynamoDB Local
+.\scripts\docker-ambiente-completo.ps1 start
+
+# Alternar para DynamoDB
+.\scripts\alternar-banco.ps1 DYNAMODB
+
+# Criar tabelas
+npm run dynamodb:create-tables
+
+# Popular com dados de teste (opcional)
+npm run dynamodb:seed
+
+# Iniciar servidor
+npm run start:dev
+```
+
+### Opção 2: Script Batch (Windows)
 
 ```bash
 # Windows
@@ -72,7 +91,7 @@ iniciar-ambiente-dynamodb.bat
 # 6. Iniciar o servidor de desenvolvimento
 ```
 
-### Opção 2: Passo a Passo Manual
+### Opção 3: Passo a Passo Manual
 
 ```bash
 # 1. Criar arquivo .env
@@ -101,7 +120,14 @@ npm run dev
 
 ### 1. Variáveis de Ambiente
 
-Edite o arquivo `.env`:
+Edite o arquivo `.env` ou use o script de alternância:
+
+```powershell
+# Usar script (recomendado)
+.\scripts\alternar-banco.ps1 DYNAMODB
+```
+
+Ou edite manualmente o arquivo `.env`:
 
 ```env
 # Escolha o provider
@@ -113,6 +139,13 @@ AWS_ACCESS_KEY_ID=fakeAccessKeyId
 AWS_SECRET_ACCESS_KEY=fakeSecretAccessKey
 DYNAMODB_ENDPOINT=http://localhost:8000
 DYNAMODB_TABLE_PREFIX=blog
+
+# AWS Cognito (Configurado)
+COGNITO_USER_POOL_ID=us-east-1_wryiyhbWC
+COGNITO_CLIENT_ID=3ueos5ofu499je6ebc5u98n35h
+COGNITO_REGION=us-east-1
+COGNITO_ISSUER=https://cognito-idp.us-east-1.amazonaws.com/us-east-1_wryiyhbWC
+JWT_SECRET=<gerado_automaticamente>
 ```
 
 ### 2. Docker Compose
@@ -186,6 +219,26 @@ iniciar-ambiente-dynamodb.bat
 
 # Iniciar servidor completo (híbrido)
 iniciar-servidor-completo.bat
+```
+
+### Scripts PowerShell (Novos)
+
+```powershell
+# Gerenciar ambiente Docker completo
+.\scripts\docker-ambiente-completo.ps1 start    # Iniciar tudo
+.\scripts\docker-ambiente-completo.ps1 status   # Ver status
+.\scripts\docker-ambiente-completo.ps1 stop     # Parar tudo
+.\scripts\docker-ambiente-completo.ps1 logs     # Ver logs
+.\scripts\docker-ambiente-completo.ps1 restart  # Reiniciar
+.\scripts\docker-ambiente-completo.ps1 clean    # Limpar volumes
+
+# Alternar entre bancos de dados
+.\scripts\alternar-banco.ps1 status    # Ver banco atual
+.\scripts\alternar-banco.ps1 PRISMA    # Mudar para MongoDB
+.\scripts\alternar-banco.ps1 DYNAMODB  # Mudar para DynamoDB
+
+# Atualizar credenciais AWS
+.\scripts\update-aws-credentials.ps1
 ```
 
 ---
@@ -667,6 +720,31 @@ Antes de fazer deploy para produção, verifique:
 
 ---
 
-**Última atualização:** 16/10/2024  
-**Versão:** 1.0.0
+---
+
+## 🆕 Atualizações Recentes
+
+### Novos Scripts PowerShell
+
+- ✅ **docker-ambiente-completo.ps1** - Gerenciamento completo do ambiente
+- ✅ **alternar-banco.ps1** - Troca rápida entre MongoDB e DynamoDB
+- ✅ **update-aws-credentials.ps1** - Atualização de credenciais AWS
+
+### Configurações Atualizadas
+
+- ✅ **AWS Cognito** configurado (RainerSoftCognito)
+- ✅ **JWT Secret** gerado automaticamente
+- ✅ **Docker Compose** atualizado com todas as interfaces
+
+### Documentação Adicional
+
+- **[COMECE_AQUI.txt](../../COMECE_AQUI.txt)** - Início rápido visual
+- **[INICIO_RAPIDO_OLD.md](../../INICIO_RAPIDO_OLD.md)** - Comandos principais
+- **[GUIA_AMBIENTE_LOCAL_OLD.md](../../GUIA_AMBIENTE_LOCAL_OLD.md)** - Guia detalhado
+
+---
+
+**Criado em:** 16/10/2024  
+**Última atualização:** 16/10/2025  
+**Versão:** 2.0.0 (Atualizado com novos scripts e configurações)
 
