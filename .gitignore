@@ -1,53 +1,64 @@
-# dependencies
-/node_modules
+# Dependencies
 node_modules/
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+.pnp
+.pnp.js
 
-# testing
-/coverage
+# Testing
+coverage/
+*.lcov
 
-# next.js
-/.next/
-/out/
+# Production
+dist/
+build/
 
-# production
-/build
+# Environment
+.env
+.env.local
+.env.*.local
 
-# misc
-.DS_Store
-*.pem
-
-# debug
+# Logs
+logs/
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+# Manter documentação e scripts na pasta logs
+!logs/README.md
+!logs/scripts/
+!logs/scripts/*.ps1
+!logs/scripts/*.md
 
-# env files (can opt-in for committing if needed)
-.env*
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 
-# vercel
-.vercel
+# OS
+.DS_Store
+Thumbs.db
 
-# typescript
-*.tsbuildinfo
-next-env.d.ts
+# SonarQube
+.scannerwork/
 
-Zone.Identifier
-# package directories
-node_modules
-jspm_packages
+# AWS SAM
+.aws-sam/
+samconfig.toml
+*.zip
 
-# Serverless directories
-.serverless
+# DynamoDB Local Data
+dynamodb-data/
 
-.vscode
+# Backend temporary folder (if exists)
+backend/
 
-dist
-jwks.mock.json
-.vscode
+# Build artifacts
+*.zip
+
+# Local testing
+events/
+
+# Ignora a pasta FUTURO na raiz e tudo dentro dela
+/FUTURO/
