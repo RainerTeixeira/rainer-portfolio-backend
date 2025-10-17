@@ -111,10 +111,24 @@ export class DatabaseProviderContextService {
   /**
    * Verifica se DynamoDB é local ou AWS
    * 
-   * Local = tem DYNAMODB_ENDPOINT definido (http://localhost:8000)
-   * AWS = não tem DYNAMODB_ENDPOINT (usa AWS SDK padrão)
+   * Detecção Automática:
+   * 1. Se está na Lambda (AWS_LAMBDA_FUNCTION_NAME existe) → AWS
+   * 2. Se tem DYNAMODB_ENDPOINT definido → LOCAL
+   * 3. Caso contrário → AWS
    */
   getDynamoDBEnvironment(): DynamoDBEnvironment {
+    // Detecta se está na Lambda
+    const isLambda = !!(
+      process.env.AWS_LAMBDA_FUNCTION_NAME ||
+      process.env.AWS_EXECUTION_ENV
+    );
+    
+    // Lambda sempre usa AWS
+    if (isLambda) {
+      return 'AWS';
+    }
+    
+    // Local: verifica DYNAMODB_ENDPOINT
     return process.env.DYNAMODB_ENDPOINT ? 'LOCAL' : 'AWS';
   }
 

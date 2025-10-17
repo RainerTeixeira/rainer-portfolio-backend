@@ -163,7 +163,7 @@ npm run start:dev               # Reiniciar aplicação
 
 ### MongoDB - Prisma Studio
 
-- **URL:** http://localhost:5555
+- **URL:** <http://localhost:5555>
 - **Descrição:** Interface visual para visualizar e editar dados do MongoDB
 - **Recursos:**
   - Visualizar coleções
@@ -178,7 +178,7 @@ npm run prisma:studio
 
 ### DynamoDB - DynamoDB Admin
 
-- **URL:** http://localhost:8001
+- **URL:** <http://localhost:8001>
 - **Descrição:** Interface visual para DynamoDB Local
 - **Recursos:**
   - Visualizar tabelas
@@ -420,4 +420,3 @@ docker volume prune -f
 ---
 
 **Criado com ❤️ para facilitar seu desenvolvimento!**
-

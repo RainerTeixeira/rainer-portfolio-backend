@@ -133,7 +133,7 @@ export class UsersService {
 
 ### Via Swagger (Visual)
 
-1. Acesse: http://localhost:4000/docs
+1. Acesse: <http://localhost:4000/docs>
 2. Endpoint: **GET /health**
 3. Try it out
 4. Selecione **PRISMA** → Execute
@@ -300,12 +300,12 @@ Para usar em outros endpoints:
 
 ---
 
-## 🎉 Pronto para Usar!
+## 🎉 Pronto para Usar
 
-### Teste Agora:
+### Teste Agora
 
 1. Execute: `npm run dev`
-2. Acesse: http://localhost:4000/docs
+2. Acesse: <http://localhost:4000/docs>
 3. Endpoint: **GET /health**
 4. Selecione o provider no dropdown
 5. Execute e veja o resultado!
@@ -336,5 +336,4 @@ Para usar em outros endpoints:
 
 **Funcionalidade 100% implementada e testada!** 🚀
 
-**Próximo passo:** Abra o Swagger e teste! 👉 http://localhost:4000/docs
-
+**Próximo passo:** Abra o Swagger e teste! 👉 <http://localhost:4000/docs>

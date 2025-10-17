@@ -96,19 +96,22 @@
 
 ## 🎯 Como Navegar na Nova Estrutura
 
-### Quero modificar USERS:
+### Quero modificar USERS
+
 ```
 📁 src/modules/users/
   → Tudo sobre users aqui!
 ```
 
-### Quero adicionar funcionalidade em POSTS:
+### Quero adicionar funcionalidade em POSTS
+
 ```
 📁 src/modules/posts/
   → Tudo sobre posts aqui!
 ```
 
-### Quero entender como funciona o DATABASE:
+### Quero entender como funciona o DATABASE
+
 ```
 📁 src/config/
   ├── database.ts      → Leia aqui!
@@ -116,7 +119,8 @@
   └── dynamo-client.ts → DynamoDB
 ```
 
-### Quero ver todas as ROTAS:
+### Quero ver todas as ROTAS
+
 ```
 📁 src/routes/index.ts
   → Veja registro de todos os módulos
@@ -127,6 +131,7 @@
 ## 📊 Comparação Visual
 
 ### ❌ ANTES (Estrutura Tradicional)
+
 ```
 Para modificar "users":
 1. Abrir routes/users.routes.ts
@@ -139,6 +144,7 @@ Para modificar "users":
 ```
 
 ### ✅ DEPOIS (Estrutura Modular)
+
 ```
 Para modificar "users":
 1. Abrir modules/users/
@@ -151,6 +157,7 @@ Para modificar "users":
 ## 🚀 Uso da Nova Estrutura
 
 ### Desenvolvimento Local
+
 ```bash
 # 1. Configurar
 DATABASE_PROVIDER=PRISMA
@@ -165,6 +172,7 @@ npm run dev
 ```
 
 ### Produção AWS
+
 ```bash
 # 1. Configurar
 DATABASE_PROVIDER=DYNAMODB
@@ -183,31 +191,37 @@ serverless deploy
 ## ✅ Arquivos ATIVOS (Usar)
 
 ### Core (4)
+
 - ✅ app.ts
 - ✅ env.ts  
 - ✅ server.ts
 - ✅ lambda.ts
 
 ### Config (3)
+
 - ✅ database.ts
 - ✅ prisma.ts
 - ✅ dynamo-client.ts
 
 ### Modules (40)
+
 - ✅ 7 módulos × 5 arquivos = 35
 - ✅ health × 3 arquivos = 3
 - ✅ subcategories embutido em categories
 
 ### Routes (2)
+
 - ✅ index.ts
 - ✅ health.ts
 
 ### Utils (3)
+
 - ✅ logger.ts
 - ✅ error-handler.ts
 - ✅ pagination.ts
 
 ### Lambda (2)
+
 - ✅ handler.ts
 - ✅ serverless.yml
 
@@ -252,4 +266,3 @@ npm run dev
 **Versão:** 4.0.0 - Estrutura Modular DDD  
 **Data:** 14 de Outubro de 2025  
 **Status:** ✅ **REFATORAÇÃO COMPLETA!** 🎊
-

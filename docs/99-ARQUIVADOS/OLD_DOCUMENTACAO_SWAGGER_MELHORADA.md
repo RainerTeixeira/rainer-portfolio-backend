@@ -59,6 +59,7 @@ PATCH  → Ciano (#50e3c2)   → Atualização parcial
 ### ⚙️ Funcionalidades Avançadas
 
 #### **Opções do Swagger UI**
+
 ```typescript
 {
   persistAuthorization: true,    // Mantém tokens entre reloads
@@ -113,16 +114,19 @@ Cada seção agora funciona como um **módulo independente** com seus próprios 
 ## 🚀 Como Usar
 
 ### 1. **Acessar a Documentação**
+
 ```bash
 http://localhost:3000/docs
 ```
 
 ### 2. **Navegar pelas Seções**
+
 - Clique em qualquer seção (tag) para expandir/colapsar
 - Todos os endpoints da seção ficam agrupados juntos
 - Use a barra de pesquisa para filtrar endpoints
 
 ### 3. **Testar Endpoints**
+
 1. Clique em qualquer endpoint
 2. Clique em "Try it out"
 3. Preencha os parâmetros necessários
@@ -131,6 +135,7 @@ http://localhost:3000/docs
 6. Veja a resposta em tempo real
 
 ### 4. **Autenticação**
+
 1. Clique no botão "Authorize" (verde)
 2. Insira o token JWT no campo Bearer
 3. Todos os endpoints autenticados usarão esse token
@@ -138,6 +143,7 @@ http://localhost:3000/docs
 ## 🎯 Benefícios
 
 ### **Para Desenvolvedores**
+
 - ✅ Navegação intuitiva por funcionalidade
 - ✅ Endpoints agrupados logicamente
 - ✅ Descrições claras e em português
@@ -145,12 +151,14 @@ http://localhost:3000/docs
 - ✅ Testes rápidos direto na interface
 
 ### **Para a Documentação**
+
 - ✅ Organização por módulos de negócio
 - ✅ Fácil localização de endpoints
 - ✅ Identificação visual rápida (emojis)
 - ✅ Hierarquia clara de funcionalidades
 
 ### **Para o Time**
+
 - ✅ Onboarding mais rápido
 - ✅ Menos dúvidas sobre APIs
 - ✅ Padrão consistente
@@ -198,4 +206,3 @@ const customCss = `
 **Criado em:** 16/10/2025  
 **Versão:** 4.0.0  
 **Status:** ✅ Implementado e Testado
-

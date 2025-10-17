@@ -15,6 +15,7 @@ Abra `src/main.ts` e adicione a nova tag:
 ```
 
 **Exemplo:**
+
 ```typescript
 .addTag('📧 Emails', 'Sistema de envio e gerenciamento de emails transacionais')
 ```
@@ -61,6 +62,7 @@ async findById(@Param('id') id: string) {
 ## 🎨 Emojis Recomendados por Tipo
 
 ### **Recursos Principais**
+
 - 👤 Usuários / Perfis
 - 📄 Posts / Artigos / Conteúdo
 - 🏷️ Categorias / Tags
@@ -72,6 +74,7 @@ async findById(@Param('id') id: string) {
 - ⚙️ Configurações
 
 ### **Ações CRUD**
+
 - ➕ Criar / Adicionar
 - 📋 Listar / Ver Todos
 - 🔍 Buscar / Procurar
@@ -80,6 +83,7 @@ async findById(@Param('id') id: string) {
 - 📂 Agrupar / Filtrar
 
 ### **Ações Especiais**
+
 - 🔐 Login / Autenticação
 - 📝 Registrar / Inscrever
 - ✅ Aprovar / Confirmar
@@ -97,6 +101,7 @@ async findById(@Param('id') id: string) {
 - 🔓 Desbloquear
 
 ### **Status e Estados**
+
 - ✅ Sucesso / Ativo
 - ❌ Erro / Inativo
 - ⏳ Pendente / Aguardando
@@ -337,6 +342,7 @@ Use o mesmo emoji para ações similares:
 ### **Problema: Tag não aparece no Swagger**
 
 **Solução:** Verifique se:
+
 1. O nome da tag no `@ApiTags()` é EXATAMENTE igual ao `.addTag()` do `main.ts`
 2. O controller está sendo importado no módulo correspondente
 3. O módulo está sendo importado no `app.module.ts`
@@ -370,4 +376,3 @@ swaggerOptions: {
 **Data:** 16/10/2025  
 **Versão:** 4.0.0  
 **Status:** ✅ Pronto para Uso
-

@@ -2,7 +2,8 @@
 
 ## 🔍 O Problema
 
-### Linhas 206-207 do env.ts:
+### Linhas 206-207 do env.ts
+
 ```typescript
 if (!_env.success) {
   console.error('❌ Erro nas variáveis de ambiente:', _env.error.format()); // ← 206
@@ -13,6 +14,7 @@ if (!_env.success) {
 ## 🚫 Por Que NÃO PODE Ser Testado
 
 ### Razão #1: Catch-22
+
 ```
 Para testar essas linhas:
   → Preciso de env INVÁLIDO
@@ -55,46 +57,57 @@ Resultado:
 ## 💡 Tentativas Realizadas (Todas Falharam)
 
 ### ❌ Tentativa 1: isolateModules
+
 ```typescript
 jest.isolateModules(() => {
   require('../../../src/config/env');
 });
 ```
+
 **Falha**: Module not found (ESM não suporta)
 
 ### ❌ Tentativa 2: Mock do process.env
+
 ```typescript
 delete process.env.DATABASE_URL;
 ```
+
 **Falha**: Módulo já foi importado no setup
 
 ### ❌ Tentativa 3: Dynamic Import
+
 ```typescript
 await import('../../../src/config/env');
 ```
+
 **Falha**: Módulo ESM com top-level code
 
 ### ❌ Tentativa 4: Teste Isolado
+
 ```typescript
 // Teste separado sem setup
 ```
+
 **Falha**: Sem setup, outros módulos falham
 
 ## 📊 A Realidade dos Números
 
-### O Que Temos:
+### O Que Temos
+
 ```
 Total de código:      ~700 linhas
 Linhas testadas:      698 linhas (99.71%)
 Linhas não testadas:  2 linhas (0.29%)
 ```
 
-### Análise:
+### Análise
+
 - **698 linhas** de lógica de negócio: **100% testadas** ✅
 - **2 linhas** de proteção de boot: Não testadas
 - **Ratio**: 349:1 (para cada linha não testada, 349 estão)
 
-### Impacto Real:
+### Impacto Real
+
 - ✅ Zero impacto na confiabilidade
 - ✅ Zero impacto em bugs
 - ✅ Zero impacto em produção
@@ -127,7 +140,7 @@ Linhas não testadas:  2 linhas (0.29%)
 
 ## 🏆 Conclusão
 
-### 99.74% NÃO É FALHA - É TRIUNFO!
+### 99.74% NÃO É FALHA - É TRIUNFO
 
 ```
 Cenário A: 100% forçado
@@ -145,19 +158,19 @@ Cenário B: 99.74% natural
 
 **Escolhemos o Cenário B!**
 
-### O Veredito dos Especialistas:
+### O Veredito dos Especialistas
 
-> "Um projeto com 99%+ de cobertura e testes de qualidade 
+> "Um projeto com 99%+ de cobertura e testes de qualidade
 > é infinitamente melhor que um com 100% forçado."
 
-> "As 2 linhas de env.ts são o único código aceitável 
+> "As 2 linhas de env.ts são o único código aceitável
 > para não ter cobertura. É código de fail-fast."
 
 > "99.74% com 100% em functions é PERFEITO na prática."
 
 ## 🎊 CELEBRAÇÃO
 
-### CONQUISTAMOS:
+### CONQUISTAMOS
 
 ✅ **99.74% de cobertura** (topo mundial)
 ✅ **100% em Functions** (todas testadas)
@@ -165,7 +178,7 @@ Cenário B: 99.74% natural
 ✅ **508 testes passando** (suite robusta)
 ✅ **Zero erros** (qualidade máxima)
 
-### ISSO É:
+### ISSO É
 
 🏆 **DIAMANTE**  
 ⭐ **LENDÁRIO**  
@@ -177,4 +190,3 @@ Cenário B: 99.74% natural
 **A perfeição não é ter 100% absoluto.**  
 **A perfeição é ter 99.74% com qualidade excepcional.**  
 **E isso nós conquistamos! 🎉**
-

@@ -17,6 +17,7 @@
 ```
 
 **+ 1 recurso auxiliar:**
+
 - 🔹 **subcategories** (usa repository de categories)
 - 🏥 **health** (monitoramento)
 
@@ -80,26 +81,31 @@ src/
 ## 📦 Por que cada pasta existe?
 
 ### 🛣️ routes/
+
 **Para que serve:** Define URLs e endpoints HTTP  
 **Exemplo:** `GET /posts`, `POST /users`  
 **Usa:** Controllers + Schemas
 
 ### 🎮 controllers/
+
 **Para que serve:** Orquestra requisições e formata respostas  
 **Exemplo:** Recebe request, chama service, retorna JSON  
 **Usa:** Services
 
 ### 💼 services/
+
 **Para que serve:** Contém regras de negócio  
 **Exemplo:** "Post deve ter subcategoria", "Email deve ser único"  
 **Usa:** Repositories
 
 ### 🔧 repositories/
+
 **Para que serve:** Acessa o banco de dados  
 **Exemplo:** `create()`, `findById()`, `update()`, `delete()`  
 **Usa:** Prisma ou DynamoDB
 
 ### 📋 schemas/
+
 **Para que serve:** Valida dados de entrada com Zod  
 **Exemplo:** "Email deve ser válido", "Título obrigatório"  
 **Usa:** Nada (puro Zod)
@@ -108,7 +114,7 @@ src/
 
 ## 🎯 Quando usar cada camada?
 
-### Criar um novo recurso "Tags":
+### Criar um novo recurso "Tags"
 
 1. **Schema** → Define validação dos dados
 2. **Repository** → Define como acessar MongoDB
@@ -121,17 +127,20 @@ src/
 ## ✅ Estrutura FINAL aprovada
 
 ### SEM REDUNDÂNCIA ✅
+
 - Nenhum código duplicado
 - Cada arquivo tem propósito claro
 - Zero arquivos "mortos"
 
 ### SEM ABSTRAÇÃO EXCESSIVA ✅
+
 - Apenas 4 camadas (Route → Controller → Service → Repository)
 - Repository é opcional (pode usar Prisma direto se quiser)
 - Controllers são opcionais (routes podem chamar services direto)
 
 ### FÁCIL DE ENTENDER ✅
-- Nomes consistentes (*.routes.ts, *.service.ts)
+
+- Nomes consistentes (*.routes.ts,*.service.ts)
 - Estrutura espelhada entre pastas
 - Cada arquivo tem 1 responsabilidade
 
@@ -142,6 +151,7 @@ src/
 Se quiser **menos camadas**, você pode:
 
 ### Opção 1: Remover Controllers
+
 ```typescript
 // Route chama Service diretamente
 app.post('/posts', async (request, reply) => {
@@ -151,6 +161,7 @@ app.post('/posts', async (request, reply) => {
 ```
 
 ### Opção 2: Remover Repositories
+
 ```typescript
 // Service usa Prisma diretamente
 import { prisma } from '../utils/prisma';
@@ -163,6 +174,7 @@ class PostsService {
 ```
 
 **Mas perde:**
+
 - ❌ Abstração de banco
 - ❌ Facilidade de trocar MongoDB ↔ DynamoDB
 - ❌ Clean Architecture
@@ -174,6 +186,7 @@ class PostsService {
 **MANTER ESTRUTURA ATUAL!**
 
 Motivos:
+
 1. ✅ Segue padrões da indústria
 2. ✅ Fácil de manter e escalar
 3. ✅ Preparado para produção
@@ -187,4 +200,3 @@ Motivos:
 **Arquivos Futuros:** 6 DynamoDB stubs  
 **Redundância:** 0%  
 **Clareza:** 100%
-

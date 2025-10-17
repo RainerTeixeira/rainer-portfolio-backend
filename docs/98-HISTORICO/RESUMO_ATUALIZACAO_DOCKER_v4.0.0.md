@@ -42,6 +42,7 @@ Implementar ambiente Docker **profissional e completo** com nomenclatura consist
 Adicionadas **40+ labels** em todos os recursos:
 
 #### Containers
+
 ```yaml
 com.blogapi.description: "Descrição clara do serviço"
 com.blogapi.service: "database | gui | application"
@@ -52,6 +53,7 @@ com.blogapi.url: "URL de acesso"
 ```
 
 #### Volumes
+
 ```yaml
 com.blogapi.description: "O que está armazenado"
 com.blogapi.type: "data | config | cache"
@@ -59,6 +61,7 @@ com.blogapi.service: "serviço relacionado"
 ```
 
 #### Networks
+
 ```yaml
 com.blogapi.description: "Finalidade da rede"
 com.blogapi.type: "network"
@@ -193,11 +196,11 @@ Com `docker-compose up -d`, você terá acesso a:
 
 | Serviço | URL | Descrição |
 |---------|-----|-----------|
-| **API NestJS** | http://localhost:4000 | Aplicação principal |
-| **Swagger** | http://localhost:4000/docs | Documentação interativa |
-| **Health** | http://localhost:4000/health | Status da API |
-| **Prisma Studio** | http://localhost:5555 | GUI do MongoDB |
-| **DynamoDB Admin** | http://localhost:8001 | GUI do DynamoDB |
+| **API NestJS** | <http://localhost:4000> | Aplicação principal |
+| **Swagger** | <http://localhost:4000/docs> | Documentação interativa |
+| **Health** | <http://localhost:4000/health> | Status da API |
+| **Prisma Studio** | <http://localhost:5555> | GUI do MongoDB |
+| **DynamoDB Admin** | <http://localhost:8001> | GUI do DynamoDB |
 | **MongoDB** | localhost:27017 | Banco de dados |
 | **DynamoDB** | localhost:8000 | DynamoDB Local |
 
@@ -482,16 +485,18 @@ Agora no Docker Desktop você verá:
 ## 🚀 Próximos Passos
 
 1. **Testar o Ambiente**
+
    ```bash
    docker-compose up -d
    docker-compose ps
    ```
 
 2. **Acessar as GUIs**
-   - Prisma Studio: http://localhost:5555
-   - DynamoDB Admin: http://localhost:8001
+   - Prisma Studio: <http://localhost:5555>
+   - DynamoDB Admin: <http://localhost:8001>
 
 3. **Verificar Health Checks**
+
    ```bash
    docker ps
    # Veja a coluna STATUS com "(healthy)"
@@ -505,4 +510,3 @@ Agora no Docker Desktop você verá:
 **Versão:** 4.0.0  
 **Status:** ✅ Concluído e Documentado  
 **Data:** 16 de Outubro de 2025
-

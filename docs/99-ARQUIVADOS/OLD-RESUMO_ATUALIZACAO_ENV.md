@@ -18,12 +18,14 @@ Arquivos de configuração atualizados para refletir **corretamente** a arquitet
 
 ### 1. `src/config/env.ts`
 
-**Antes:** 
+**Antes:**
+
 - ❌ Mencionava PostgreSQL (incorreto)
 - ❌ DATABASE_PROVIDER sem padrão
 - ❌ Documentação confusa
 
 **Depois:**
+
 - ✅ Documenta arquitetura MongoDB via Prisma
 - ✅ DATABASE_PROVIDER padrão = `'PRISMA'`
 - ✅ Explica quando usar PRISMA vs DYNAMODB
@@ -33,10 +35,12 @@ Arquivos de configuração atualizados para refletir **corretamente** a arquitet
 ### 2. `env.example`
 
 **Antes:**
+
 - ❌ Comentários básicos
 - ❌ Sem explicação sobre Replica Set
 
 **Depois:**
+
 - ✅ Comentários detalhados e didáticos
 - ✅ Vantagens de cada provider
 - ✅ Comandos Docker para MongoDB
@@ -153,6 +157,7 @@ npm run dev
 ## ✅ O Que Mudou na Prática
 
 ### Antes
+
 ```typescript
 // env.ts
 DATABASE_PROVIDER: z.enum(['PRISMA', 'DYNAMODB']).optional()
@@ -160,6 +165,7 @@ DATABASE_PROVIDER: z.enum(['PRISMA', 'DYNAMODB']).optional()
 ```
 
 ### Depois
+
 ```typescript
 // env.ts
 DATABASE_PROVIDER: z.enum(['PRISMA', 'DYNAMODB']).default('PRISMA')
@@ -167,6 +173,7 @@ DATABASE_PROVIDER: z.enum(['PRISMA', 'DYNAMODB']).default('PRISMA')
 ```
 
 ### Antes
+
 ```bash
 # env.example
 # Provider de banco de dados (PRISMA ou DYNAMODB)
@@ -174,6 +181,7 @@ DATABASE_PROVIDER=PRISMA
 ```
 
 ### Depois
+
 ```bash
 # env.example
 # Provider de banco de dados
@@ -196,21 +204,25 @@ DATABASE_PROVIDER=PRISMA
 ## 💡 Principais Benefícios
 
 ### 1. Documentação Clara
+
 - ✅ Não há mais confusão sobre qual banco usar
 - ✅ Exemplos práticos para cada cenário
 - ✅ Comentários explicativos em todos os lugares
 
 ### 2. Configuração Inteligente
+
 - ✅ Padrão sensato (PRISMA para dev)
 - ✅ Validação robusta de variáveis
 - ✅ Mensagens de erro claras
 
 ### 3. Experiência do Desenvolvedor
+
 - ✅ Setup mais rápido
 - ✅ Menos decisões a tomar
 - ✅ Guias completos disponíveis
 
 ### 4. Flexibilidade
+
 - ✅ Suporta MongoDB (dev) e DynamoDB (prod)
 - ✅ Fácil trocar entre providers
 - ✅ Mesma API, bancos diferentes
@@ -230,16 +242,20 @@ DATABASE_PROVIDER=PRISMA
 ## 🎯 Recomendação
 
 ### Para Desenvolvimento Local
+
 ```bash
 ✅ USE: DATABASE_PROVIDER=PRISMA
 ```
+
 **Por quê?**
+
 - Mais rápido para desenvolver
 - Prisma Studio para visualizar dados
 - Type-safe queries (autocomplete)
 - Fácil de debugar
 
 ### Para Produção
+
 ```bash
 ✅ AWS Lambda: DATABASE_PROVIDER=DYNAMODB
 ✅ Servidor Tradicional: DATABASE_PROVIDER=PRISMA (MongoDB Atlas)
@@ -281,4 +297,3 @@ http://localhost:4000/docs  # Swagger
 
 **Documentação Completa:** [`docs/ATUALIZACAO_ENV_CONFIG.md`](ATUALIZACAO_ENV_CONFIG.md)  
 **Versão:** 2.0.0 | **Data:** 16/10/2025
-

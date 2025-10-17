@@ -1,10 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: >
-  Blog Backend API
-  
-  API de backend para blog usando NestJS + Fastify rodando em AWS Lambda
-  com DynamoDB como banco de dados NoSQL serverless.
+Description: Blog API - Lambda + DynamoDB + Cognito (Free Tier)
 
 # ═══════════════════════════════════════════════════════════════════════════
 # PARÂMETROS GLOBAIS
@@ -24,11 +20,12 @@ Parameters:
 # ═══════════════════════════════════════════════════════════════════════════
 Globals:
   Function:
-    Timeout: 30
-    MemorySize: 512
-    Runtime: nodejs18.x
+    # ⚡ Lambda Free Tier: 1M requests + 400k GB-segundos/mês GRÁTIS
+    Timeout: 30  # Máximo recomendado para API
+    MemorySize: 512  # 512 MB = boa performance sem custo extra
+    Runtime: nodejs20.x  # Node.js 20 (mais recente)
     Architectures:
-      - x86_64
+      - x86_64  # x86 tem Free Tier maior que ARM64
     Environment:
       Variables:
         NODE_ENV: !Ref Environment
@@ -36,18 +33,12 @@ Globals:
         AWS_REGION: !Ref AWS::Region
         DYNAMODB_TABLE_PREFIX: !Sub '${AWS::StackName}-${Environment}'
         LOG_LEVEL: !If [IsProduction, warn, debug]
-    Tracing: Active
+    Tracing: Active  # X-Ray grátis (1M traces/mês)
     Tags:
       Environment: !Ref Environment
       Application: blog-backend-api
       ManagedBy: SAM
-
-# ═══════════════════════════════════════════════════════════════════════════
-# CONDITIONS
-# ═══════════════════════════════════════════════════════════════════════════
-Conditions:
-  IsProduction: !Equals [!Ref Environment, prod]
-  IsDevelopment: !Equals [!Ref Environment, dev]
+      CostCenter: FreeTier
 
 # ═══════════════════════════════════════════════════════════════════════════
 # RECURSOS
@@ -76,20 +67,10 @@ Resources:
       FunctionUrlConfig:
         AuthType: NONE
         Cors:
-          AllowOrigins:
-            - '*'
-          AllowHeaders:
-            - Content-Type
-            - Authorization
-            - X-Requested-With
-          AllowMethods:
-            - GET
-            - POST
-            - PUT
-            - PATCH
-            - DELETE
-            - OPTIONS
-          MaxAge: 86400
+          AllowOrigin: '*'
+          AllowHeaders: 'Content-Type,Authorization,X-Requested-With'
+          AllowMethods: 'GET,POST,PUT,PATCH,DELETE,OPTIONS'
+          MaxAge: '86400'
       
       # Permissões IAM
       Policies:
@@ -119,12 +100,20 @@ Resources:
   # TABELAS DYNAMODB
   # ─────────────────────────────────────────────────────────────────────────
   
-  # Tabela de Usuários
+  # ═══════════════════════════════════════════════════════════════════════════
+  # TABELA: USERS (⭐ 5 RCU/WCU - Mais Acessada)
+  # ═══════════════════════════════════════════════════════════════════════════
   UsersTable:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: !Sub '${AWS::StackName}-${Environment}-users'
-      BillingMode: PAY_PER_REQUEST
+      
+      # 💰 FREE TIER PERMANENTE: Provisioned (não On-Demand!)
+      BillingMode: PROVISIONED
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5  # ⭐ Mais acessado (auth)
+        WriteCapacityUnits: 5
+      
       AttributeDefinitions:
         - AttributeName: id
           AttributeType: S
@@ -132,46 +121,70 @@ Resources:
           AttributeType: S
         - AttributeName: username
           AttributeType: S
-        - AttributeName: cognitoId
+        - AttributeName: cognitoSub
           AttributeType: S
+      
       KeySchema:
         - AttributeName: id
           KeyType: HASH
+      
       GlobalSecondaryIndexes:
-        - IndexName: email-index
+        - IndexName: EmailIndex
           KeySchema:
             - AttributeName: email
               KeyType: HASH
           Projection:
             ProjectionType: ALL
-        - IndexName: username-index
+          ProvisionedThroughput:
+            ReadCapacityUnits: 5
+            WriteCapacityUnits: 5
+        
+        - IndexName: UsernameIndex
           KeySchema:
             - AttributeName: username
               KeyType: HASH
           Projection:
             ProjectionType: ALL
-        - IndexName: cognito-index
+          ProvisionedThroughput:
+            ReadCapacityUnits: 5
+            WriteCapacityUnits: 5
+        
+        - IndexName: CognitoSubIndex
           KeySchema:
-            - AttributeName: cognitoId
+            - AttributeName: cognitoSub
               KeyType: HASH
           Projection:
             ProjectionType: ALL
-      StreamSpecification:
-        StreamViewType: NEW_AND_OLD_IMAGES
+          ProvisionedThroughput:
+            ReadCapacityUnits: 5
+            WriteCapacityUnits: 5
+      
+      # Backup: grátis até 10 GB (sempre habilitado)
       PointInTimeRecoverySpecification:
-        PointInTimeRecoveryEnabled: !If [IsProduction, true, false]
+        PointInTimeRecoveryEnabled: false
+      
       Tags:
         - Key: Environment
           Value: !Ref Environment
         - Key: Resource
           Value: Users
+        - Key: CostOptimization
+          Value: FreeTierProvisioned
 
-  # Tabela de Posts
+  # ═══════════════════════════════════════════════════════════════════════════
+  # TABELA: POSTS (⭐ 5 RCU/WCU - Mais Acessada)
+  # ═══════════════════════════════════════════════════════════════════════════
   PostsTable:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: !Sub '${AWS::StackName}-${Environment}-posts'
-      BillingMode: PAY_PER_REQUEST
+      
+      # 💰 FREE TIER PERMANENTE
+      BillingMode: PROVISIONED
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5  # ⭐ Mais acessado (feed, listagens)
+        WriteCapacityUnits: 5
+      
       AttributeDefinitions:
         - AttributeName: id
           AttributeType: S
@@ -179,23 +192,29 @@ Resources:
           AttributeType: S
         - AttributeName: authorId
           AttributeType: S
-        - AttributeName: categoryId
+        - AttributeName: subcategoryId
           AttributeType: S
         - AttributeName: status
           AttributeType: S
         - AttributeName: createdAt
           AttributeType: S
+      
       KeySchema:
         - AttributeName: id
           KeyType: HASH
+      
       GlobalSecondaryIndexes:
-        - IndexName: slug-index
+        - IndexName: SlugIndex
           KeySchema:
             - AttributeName: slug
               KeyType: HASH
           Projection:
             ProjectionType: ALL
-        - IndexName: author-index
+          ProvisionedThroughput:
+            ReadCapacityUnits: 5
+            WriteCapacityUnits: 5
+        
+        - IndexName: AuthorIndex
           KeySchema:
             - AttributeName: authorId
               KeyType: HASH
@@ -203,15 +222,23 @@ Resources:
               KeyType: RANGE
           Projection:
             ProjectionType: ALL
-        - IndexName: category-index
+          ProvisionedThroughput:
+            ReadCapacityUnits: 5
+            WriteCapacityUnits: 5
+        
+        - IndexName: SubcategoryIndex
           KeySchema:
-            - AttributeName: categoryId
+            - AttributeName: subcategoryId
               KeyType: HASH
             - AttributeName: createdAt
               KeyType: RANGE
           Projection:
             ProjectionType: ALL
-        - IndexName: status-index
+          ProvisionedThroughput:
+            ReadCapacityUnits: 5
+            WriteCapacityUnits: 5
+        
+        - IndexName: StatusIndex
           KeySchema:
             - AttributeName: status
               KeyType: HASH
@@ -219,22 +246,37 @@ Resources:
               KeyType: RANGE
           Projection:
             ProjectionType: ALL
-      StreamSpecification:
-        StreamViewType: NEW_AND_OLD_IMAGES
+          ProvisionedThroughput:
+            ReadCapacityUnits: 5
+            WriteCapacityUnits: 5
+      
+      
+      # Backup: apenas produção
       PointInTimeRecoverySpecification:
-        PointInTimeRecoveryEnabled: !If [IsProduction, true, false]
+        PointInTimeRecoveryEnabled: false
+      
       Tags:
         - Key: Environment
           Value: !Ref Environment
         - Key: Resource
           Value: Posts
+        - Key: CostOptimization
+          Value: FreeTierProvisioned
 
-  # Tabela de Categorias
+  # ═══════════════════════════════════════════════════════════════════════════
+  # TABELA: CATEGORIES (3 RCU/WCU)
+  # ═══════════════════════════════════════════════════════════════════════════
   CategoriesTable:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: !Sub '${AWS::StackName}-${Environment}-categories'
-      BillingMode: PAY_PER_REQUEST
+      
+      # 💰 FREE TIER PERMANENTE
+      BillingMode: PROVISIONED
+      ProvisionedThroughput:
+        ReadCapacityUnits: 3  # Navegação frequente
+        WriteCapacityUnits: 3
+      
       AttributeDefinitions:
         - AttributeName: id
           AttributeType: S
@@ -242,36 +284,57 @@ Resources:
           AttributeType: S
         - AttributeName: parentId
           AttributeType: S
+      
       KeySchema:
         - AttributeName: id
           KeyType: HASH
+      
       GlobalSecondaryIndexes:
-        - IndexName: slug-index
+        - IndexName: SlugIndex
           KeySchema:
             - AttributeName: slug
               KeyType: HASH
           Projection:
             ProjectionType: ALL
-        - IndexName: parent-index
+          ProvisionedThroughput:
+            ReadCapacityUnits: 3
+            WriteCapacityUnits: 3
+        
+        - IndexName: ParentIdIndex
           KeySchema:
             - AttributeName: parentId
               KeyType: HASH
           Projection:
             ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 3
+            WriteCapacityUnits: 3
+      
       PointInTimeRecoverySpecification:
-        PointInTimeRecoveryEnabled: !If [IsProduction, true, false]
+        PointInTimeRecoveryEnabled: false
+      
       Tags:
         - Key: Environment
           Value: !Ref Environment
         - Key: Resource
           Value: Categories
+        - Key: CostOptimization
+          Value: FreeTierProvisioned
 
-  # Tabela de Comentários
+  # ═══════════════════════════════════════════════════════════════════════════
+  # TABELA: COMMENTS (3 RCU/WCU)
+  # ═══════════════════════════════════════════════════════════════════════════
   CommentsTable:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: !Sub '${AWS::StackName}-${Environment}-comments'
-      BillingMode: PAY_PER_REQUEST
+      
+      # 💰 FREE TIER PERMANENTE
+      BillingMode: PROVISIONED
+      ProvisionedThroughput:
+        ReadCapacityUnits: 3  # Interações médias
+        WriteCapacityUnits: 3
+      
       AttributeDefinitions:
         - AttributeName: id
           AttributeType: S
@@ -279,15 +342,15 @@ Resources:
           AttributeType: S
         - AttributeName: authorId
           AttributeType: S
-        - AttributeName: parentId
-          AttributeType: S
         - AttributeName: createdAt
           AttributeType: S
+      
       KeySchema:
         - AttributeName: id
           KeyType: HASH
+      
       GlobalSecondaryIndexes:
-        - IndexName: post-index
+        - IndexName: PostIndex
           KeySchema:
             - AttributeName: postId
               KeyType: HASH
@@ -295,7 +358,11 @@ Resources:
               KeyType: RANGE
           Projection:
             ProjectionType: ALL
-        - IndexName: author-index
+          ProvisionedThroughput:
+            ReadCapacityUnits: 3
+            WriteCapacityUnits: 3
+        
+        - IndexName: AuthorIndex
           KeySchema:
             - AttributeName: authorId
               KeyType: HASH
@@ -303,30 +370,33 @@ Resources:
               KeyType: RANGE
           Projection:
             ProjectionType: ALL
-        - IndexName: parent-index
-          KeySchema:
-            - AttributeName: parentId
-              KeyType: HASH
-            - AttributeName: createdAt
-              KeyType: RANGE
-          Projection:
-            ProjectionType: ALL
-      StreamSpecification:
-        StreamViewType: NEW_AND_OLD_IMAGES
+          ProvisionedThroughput:
+            ReadCapacityUnits: 3
+            WriteCapacityUnits: 3
+      
       PointInTimeRecoverySpecification:
-        PointInTimeRecoveryEnabled: !If [IsProduction, true, false]
+        PointInTimeRecoveryEnabled: false
+      
       Tags:
         - Key: Environment
           Value: !Ref Environment
         - Key: Resource
           Value: Comments
 
-  # Tabela de Likes
+  # ═══════════════════════════════════════════════════════════════════════════
+  # TABELA: LIKES (3 RCU/WCU)
+  # ═══════════════════════════════════════════════════════════════════════════
   LikesTable:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: !Sub '${AWS::StackName}-${Environment}-likes'
-      BillingMode: PAY_PER_REQUEST
+      
+      # 💰 FREE TIER PERMANENTE
+      BillingMode: PROVISIONED
+      ProvisionedThroughput:
+        ReadCapacityUnits: 3  # Curtidas frequentes
+        WriteCapacityUnits: 3
+      
       AttributeDefinitions:
         - AttributeName: id
           AttributeType: S
@@ -334,42 +404,54 @@ Resources:
           AttributeType: S
         - AttributeName: userId
           AttributeType: S
-        - AttributeName: userPost
-          AttributeType: S
+      
       KeySchema:
         - AttributeName: id
           KeyType: HASH
+      
       GlobalSecondaryIndexes:
-        - IndexName: post-index
+        - IndexName: PostIndex
           KeySchema:
             - AttributeName: postId
               KeyType: HASH
           Projection:
             ProjectionType: ALL
-        - IndexName: user-index
+          ProvisionedThroughput:
+            ReadCapacityUnits: 3
+            WriteCapacityUnits: 3
+        
+        - IndexName: UserIndex
           KeySchema:
             - AttributeName: userId
               KeyType: HASH
           Projection:
             ProjectionType: ALL
-        - IndexName: user-post-index
-          KeySchema:
-            - AttributeName: userPost
-              KeyType: HASH
-          Projection:
-            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 3
+            WriteCapacityUnits: 3
+      
       Tags:
         - Key: Environment
           Value: !Ref Environment
         - Key: Resource
           Value: Likes
+        - Key: CostOptimization
+          Value: FreeTierProvisioned
 
-  # Tabela de Bookmarks
+  # ═══════════════════════════════════════════════════════════════════════════
+  # TABELA: BOOKMARKS (3 RCU/WCU)
+  # ═══════════════════════════════════════════════════════════════════════════
   BookmarksTable:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: !Sub '${AWS::StackName}-${Environment}-bookmarks'
-      BillingMode: PAY_PER_REQUEST
+      
+      # 💰 FREE TIER PERMANENTE
+      BillingMode: PROVISIONED
+      ProvisionedThroughput:
+        ReadCapacityUnits: 3  # Salvamentos médios
+        WriteCapacityUnits: 3
+      
       AttributeDefinitions:
         - AttributeName: id
           AttributeType: S
@@ -377,42 +459,53 @@ Resources:
           AttributeType: S
         - AttributeName: userId
           AttributeType: S
-        - AttributeName: userPost
-          AttributeType: S
+      
       KeySchema:
         - AttributeName: id
           KeyType: HASH
       GlobalSecondaryIndexes:
-        - IndexName: post-index
+        - IndexName: PostIndex
           KeySchema:
             - AttributeName: postId
               KeyType: HASH
           Projection:
             ProjectionType: ALL
-        - IndexName: user-index
+          ProvisionedThroughput:
+            ReadCapacityUnits: 3
+            WriteCapacityUnits: 3
+        
+        - IndexName: UserIndex
           KeySchema:
             - AttributeName: userId
               KeyType: HASH
           Projection:
             ProjectionType: ALL
-        - IndexName: user-post-index
-          KeySchema:
-            - AttributeName: userPost
-              KeyType: HASH
-          Projection:
-            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 3
+            WriteCapacityUnits: 3
+      
       Tags:
         - Key: Environment
           Value: !Ref Environment
         - Key: Resource
           Value: Bookmarks
+        - Key: CostOptimization
+          Value: FreeTierProvisioned
 
-  # Tabela de Notificações
+  # ═══════════════════════════════════════════════════════════════════════════
+  # TABELA: NOTIFICATIONS (3 RCU/WCU)
+  # ═══════════════════════════════════════════════════════════════════════════
   NotificationsTable:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: !Sub '${AWS::StackName}-${Environment}-notifications'
-      BillingMode: PAY_PER_REQUEST
+      
+      # 💰 FREE TIER PERMANENTE
+      BillingMode: PROVISIONED
+      ProvisionedThroughput:
+        ReadCapacityUnits: 3  # Notificações médias
+        WriteCapacityUnits: 3
+      
       AttributeDefinitions:
         - AttributeName: id
           AttributeType: S
@@ -420,13 +513,13 @@ Resources:
           AttributeType: S
         - AttributeName: createdAt
           AttributeType: S
-        - AttributeName: read
-          AttributeType: S
+      
       KeySchema:
         - AttributeName: id
           KeyType: HASH
+      
       GlobalSecondaryIndexes:
-        - IndexName: user-index
+        - IndexName: UserIndex
           KeySchema:
             - AttributeName: userId
               KeyType: HASH
@@ -434,21 +527,18 @@ Resources:
               KeyType: RANGE
           Projection:
             ProjectionType: ALL
-        - IndexName: user-read-index
-          KeySchema:
-            - AttributeName: userId
-              KeyType: HASH
-            - AttributeName: read
-              KeyType: RANGE
-          Projection:
-            ProjectionType: ALL
-      StreamSpecification:
-        StreamViewType: NEW_AND_OLD_IMAGES
+          ProvisionedThroughput:
+            ReadCapacityUnits: 3
+            WriteCapacityUnits: 3
+      
+      
       Tags:
         - Key: Environment
           Value: !Ref Environment
         - Key: Resource
           Value: Notifications
+        - Key: CostOptimization
+          Value: FreeTierProvisioned
 
   # ─────────────────────────────────────────────────────────────────────────
   # LOGS
@@ -457,7 +547,7 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub '/aws/lambda/${BlogApiFunction}'
-      RetentionInDays: !If [IsProduction, 30, 7]
+      RetentionInDays: 7
 
 # ═══════════════════════════════════════════════════════════════════════════
 # OUTPUTS
@@ -527,6 +617,48 @@ Outputs:
   Region:
     Description: Região AWS onde a stack foi deployada
     Value: !Ref AWS::Region
+  
+  # 💰 Resumo de Custos (FREE TIER PERMANENTE)
+  FreeTierSummary:
+    Description: Resumo do Free Tier AWS (Custo ZERO Permanente)
+    Value: !Sub |
+      ═══════════════════════════════════════════════════════════════
+      💰 FREE TIER PERMANENTE - CUSTO R$ 0,00 PARA SEMPRE!
+      ═══════════════════════════════════════════════════════════════
+      
+      📊 DynamoDB Provisioned (7 tabelas):
+         ⭐ Users: 5 RCU + 5 WCU (autenticação)
+         ⭐ Posts: 5 RCU + 5 WCU (feed principal)
+         📄 Categories: 3 RCU + 3 WCU (navegação)
+         💬 Comments: 3 RCU + 3 WCU (interações)
+         ❤️  Likes: 3 RCU + 3 WCU (curtidas)
+         🔖 Bookmarks: 3 RCU + 3 WCU (salvamentos)
+         🔔 Notifications: 3 RCU + 3 WCU (notificações)
+         ────────────────────────────────────────────
+         TOTAL: 25 RCU + 25 WCU = GRÁTIS SEMPRE! ✅
+      
+      ⚡ Lambda:
+         • 1 milhão de requests/mês = GRÁTIS
+         • 400k GB-segundos compute = GRÁTIS
+         • Runtime: Node.js 20.x (x86_64)
+      
+      🔐 Cognito User Pool:
+         • 50.000 MAU (usuários ativos) = GRÁTIS
+      
+      📝 CloudWatch Logs:
+         • 5 GB ingest/mês = GRÁTIS
+         • Retenção: 7 dias (dev), 30 dias (prod)
+      
+      🌐 Lambda Function URL:
+         • 100% GRÁTIS (sem API Gateway)
+      
+      🛡️ Para NÃO Ultrapassar Free Tier:
+         1. Use CloudFront/cache (reduz leituras)
+         2. Itens ≤ 1 KB (escrita), ≤ 4 KB (leitura)
+         3. Mídia no S3, metadados no DynamoDB
+         4. Configure CloudWatch Alarms
+      
+      ═══════════════════════════════════════════════════════════════
 
   Environment:
     Description: Ambiente de deployment

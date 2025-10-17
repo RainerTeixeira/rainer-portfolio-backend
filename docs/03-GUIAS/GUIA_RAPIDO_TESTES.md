@@ -1,4 +1,4 @@
-# ⚡ GUIA RÁPIDO - COMEÇAR AGORA!
+# ⚡ GUIA RÁPIDO - COMEÇAR AGORA
 
 ## 🚀 INÍCIO EM 3 PASSOS
 
@@ -21,6 +21,7 @@ npm run test:coverage
 O navegador abrirá automaticamente com o relatório de cobertura.
 
 **OU abra manualmente:**
+
 ```
 coverage/lcov-report/index.html
 ```
@@ -28,6 +29,7 @@ coverage/lcov-report/index.html
 ### 3️⃣ Pronto! ✅
 
 Você agora tem:
+
 - ✅ 120+ testes executados
 - ✅ Relatório de cobertura completo
 - ✅ Garantia de qualidade do código
@@ -209,6 +211,7 @@ npm test -- nome-do-teste --verbose
 ### Exemplos no Código
 
 Todos os testes têm exemplos claros. Procure por:
+
 - `tests/modules/users/` - Exemplos de CRUD
 - `tests/modules/auth/` - Exemplos de autenticação
 - `tests/helpers/mocks.ts` - Como criar mocks
@@ -278,7 +281,7 @@ Você deve ver:
 
 ---
 
-## 🎉 SUCESSO!
+## 🎉 SUCESSO
 
 Você agora tem uma **suite de testes profissional completa**!
 
@@ -311,4 +314,3 @@ executar-testes.bat
 **Dúvidas?** Leia `tests/README.md`
 
 **Boa sorte! 🍀**
-

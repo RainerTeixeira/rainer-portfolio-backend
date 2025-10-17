@@ -11,6 +11,7 @@
 ## 📚 O Que Você Vai Aprender
 
 Neste guia, você aprenderá:
+
 - ✅ Como funciona a sincronização Cognito ↔ MongoDB
 - ✅ Fluxo completo de registro de usuário
 - ✅ Fluxo completo de login
@@ -301,6 +302,7 @@ curl -X POST http://localhost:4000/auth/register \
 ```
 
 **Resposta esperada:**
+
 ```json
 {
   "success": true,
@@ -321,6 +323,7 @@ curl http://localhost:4000/users/username/usuarioteste
 ```
 
 **Deve retornar:**
+
 ```json
 {
   "success": true,
@@ -348,6 +351,7 @@ curl -X POST http://localhost:4000/auth/login \
 ```
 
 **Deve retornar:**
+
 ```json
 {
   "success": true,
@@ -548,6 +552,7 @@ export const registerSchema = z.object({
 ```
 
 **Validações:**
+
 - ✅ Email único (Cognito + MongoDB)
 - ✅ Username único (MongoDB)
 - ✅ Senha forte (Cognito)
@@ -597,6 +602,7 @@ const user = await prisma.user.findUnique({
 **Causa:** Usuário já existe no Cognito
 
 **Solução:**
+
 1. Use `/auth/login` em vez de register
 2. Ou delete o usuário no Cognito Console
 
@@ -605,6 +611,7 @@ const user = await prisma.user.findUnique({
 **Causa:** Perfil já existe no MongoDB
 
 **Solução:**
+
 ```typescript
 // Verificar se username está disponível
 const exists = await prisma.user.findUnique({
@@ -621,6 +628,7 @@ if (exists) {
 **Causa:** MongoDB não acessível ou schema inválido
 
 **Solução:**
+
 ```bash
 # Verificar MongoDB
 docker ps | grep mongodb
@@ -824,4 +832,3 @@ A integração Auth ↔ Users está **completa e funcional**!
 **Atualizado em:** 16/10/2025  
 **Tipo:** Guia de Integração  
 **Status:** ✅ Implementado e Testado
-

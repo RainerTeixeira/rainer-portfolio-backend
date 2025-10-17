@@ -28,6 +28,7 @@
 ✅ **notifications** - Notificações ⭐ NOVO  
 
 **Cada tabela tem:**
+
 - Routes (endpoints HTTP)
 - Controller (orquestração)
 - Service (regras de negócio)
@@ -43,28 +44,34 @@
 **Migração:** De estrutura tradicional → Estrutura modular DDD
 
 ✅ **Criado config/** (3 arquivos)
+
 - database.ts - Abstração unificada
 - prisma.ts - Cliente Prisma
 - dynamo-client.ts - Cliente DynamoDB
 
 ✅ **Criado modules/** (40 arquivos - 7 módulos)
+
 - Cada módulo autocontido em sua pasta
 - 5 arquivos por módulo (model, schema, repository, service, controller)
 
 ✅ **Simplificado routes/** (2 arquivos)
+
 - index.ts - Registro global
 - health.ts - Health check
 
 ✅ **Refatorado utils/** (3 arquivos)
+
 - logger.ts
 - error-handler.ts
 - pagination.ts
 
 ✅ **Criado lambda/** (2 arquivos)
+
 - handler.ts
 - serverless.yml
 
 ✅ **Marcado arquivos antigos** (old.*)
+
 - old.controllers/
 - old.services/
 - old.schemas/
@@ -80,22 +87,26 @@
 **Iniciado:** Conversão completa para NestJS com Fastify adapter
 
 ✅ **Estrutura Base**
+
 - main.ts - Entry point NestJS
 - app.module.ts - Root module
 - prisma.module.ts + prisma.service.ts
 
 ✅ **Módulos Convertidos (3/7)**
+
 - users/ - @Module, @Controller, @Injectable
 - posts/ - @Module, @Controller, @Injectable
 - categories/ - @Module, @Controller, @Injectable
 
 ⏳ **Pendente (4/7)**
+
 - comments/
 - likes/
 - bookmarks/
 - notifications/
 
 **Features NestJS:**
+
 - ✅ Dependency Injection
 - ✅ Decorators (@Get, @Post, @Body, @Param)
 - ✅ Swagger automático (@ApiTags, @ApiOperation)
@@ -107,6 +118,7 @@
 ## 📊 Estatísticas da Sessão
 
 ### Arquivos Criados/Modificados
+
 - **Repository Pattern:** 24 arquivos
 - **Estrutura Modular:** 53 arquivos
 - **Conversão NestJS:** 15 arquivos (parcial)
@@ -115,6 +127,7 @@
 **Total:** ~107 arquivos trabalhados
 
 ### Linhas de Código
+
 - **Escrito/Refatorado:** ~25,000 linhas
 - **Documentação:** ~8,000 linhas
 
@@ -123,6 +136,7 @@
 ## 🎯 Estado Atual do Projeto
 
 ### ✅ Funcionando 100% (Estrutura Modular)
+
 ```
 src/
 ├── config/          (3 arquivos)
@@ -133,6 +147,7 @@ src/
 ```
 
 ### 🔄 Em Conversão (NestJS - 60%)
+
 ```
 src/
 ├── main.ts          ✅
@@ -166,20 +181,24 @@ src/
 ## 🚀 Próximos Passos
 
 ### Opção 1: Usar Estrutura Modular (Pronta) ✅
+
 ```bash
 npm run dev
 ```
+
 - ✅ 100% funcional
 - ✅ 51 arquivos organizados
 - ✅ MongoDB + Prisma
 - ✅ 65 endpoints
 
 ### Opção 2: Completar NestJS (60%) 🔄
+
 ```bash
 # Criar 4 módulos restantes
 # Atualizar package.json
 # Testar com npm run start:dev
 ```
+
 - 🔄 60% completo
 - ⏳ Faltam 4 módulos
 - ✅ Mais profissional (padrão indústria)
@@ -210,4 +229,3 @@ npm run dev
 **Versão Atual:** 4.0.0 - Modular + NestJS (parcial)  
 **Arquivos Ativos:** 51 (modular) + 15 (NestJS)  
 **Status:** ✅ **PRONTO PARA USO!**
-

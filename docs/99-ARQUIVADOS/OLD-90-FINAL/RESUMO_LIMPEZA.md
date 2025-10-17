@@ -41,6 +41,7 @@
 ### Arquivos Ativos na Raiz (18 arquivos)
 
 #### Configuração Core (5)
+
 - ✅ `package.json` - Dependências e scripts
 - ✅ `package-lock.json` - Lock de versões
 - ✅ `tsconfig.json` - TypeScript
@@ -48,16 +49,19 @@
 - ✅ `nest-cli.json` - NestJS CLI
 
 #### Qualidade de Código (4)
+
 - ✅ `.eslintrc.cjs` - Linting
 - ✅ `.prettierrc` - Formatação
 - ✅ `.prettierignore` - Ignorar formatação
 - ✅ `.gitignore` - Controle de versão
 
 #### Ambiente (2)
+
 - ✅ `env.example` - Template de variáveis
 - ✅ `docker-compose.yml` - MongoDB local
 
 #### Scripts (5)
+
 - ✅ `iniciar-servidor-completo.bat` - Setup completo
 - ✅ `executar-testes.bat` - Testes com cobertura
 - ✅ `check-coverage.ps1` - Verificação rápida
@@ -65,15 +69,18 @@
 - ✅ `seed-simplificado.cjs` - Popular banco
 
 #### Deploy & Qualidade (2)
+
 - ✅ `serverless.yml` - Deploy Serverless Framework
 - ✅ `sonar-project.properties` - SonarQube
 
 #### Documentação (1)
+
 - ✅ `README.md` - Documentação principal
 
 ---
 
 ### Arquivos OLD- (5 arquivos)
+
 ```
 OLD-deploy-lambda.sh
 OLD-run-tests-loop.bat
@@ -89,6 +96,7 @@ OLD-test-prisma.cjs
 ### Diretórios Principais
 
 #### Código-fonte
+
 ```
 src/
 ├── main.ts
@@ -103,6 +111,7 @@ Total: 77 arquivos TypeScript
 ```
 
 #### Testes
+
 ```
 tests/
 ├── setup.ts
@@ -118,6 +127,7 @@ Total: 45 arquivos de teste
 ```
 
 #### Documentação
+
 ```
 docs/
 ├── guias/ (8 arquivos)
@@ -130,6 +140,7 @@ Total: 90 arquivos .md
 ```
 
 #### Pastas Geradas (não versionadas)
+
 ```
 coverage/ - Relatórios de cobertura (125KB)
 logs/ - Logs de execução (múltiplos arquivos)
@@ -158,6 +169,7 @@ node_modules/ - Dependências npm
 **Arquivo**: `serverless.yml`
 
 **Comandos Disponíveis**:
+
 ```bash
 # Deploy dev
 npm run deploy:serverless
@@ -172,6 +184,7 @@ serverless deploy --stage prod
 ```
 
 **Por que Serverless Framework?**
+
 - ✅ Mais popular (comunidade maior)
 - ✅ Mais plugins disponíveis
 - ✅ Multi-cloud (AWS, Azure, GCP)
@@ -179,6 +192,7 @@ serverless deploy --stage prod
 - ✅ Já configurado no `package.json`
 
 **Alternativas Marcadas como OLD-**:
+
 - ❌ AWS SAM (`template.yaml`, `samconfig.toml`)
 - ❌ Script Bash manual (`deploy-lambda.sh`)
 
@@ -187,30 +201,38 @@ serverless deploy --stage prod
 ## 🔧 Scripts de Teste Mantidos
 
 ### ✅ executar-testes.bat (Windows - Completo)
+
 ```batch
 npm install
 npm run test:coverage
 start coverage\lcov-report\index.html
 ```
+
 **Uso**: Testes completos + relatório visual
 
 ### ✅ check-tests.ps1 (PowerShell - Rápido)
+
 ```powershell
 npm test 2>&1 | Tee-Object -FilePath "test-final-results.txt"
 ```
+
 **Uso**: Testes rápidos com resumo
 
 ### ✅ check-coverage.ps1 (PowerShell - Verificação)
+
 ```powershell
 # Lê resultado dos testes sem rodar novamente
 ```
+
 **Uso**: Verificar última cobertura
 
 ### ❌ OLD-run-tests-loop.bat (Redundante)
+
 ```batch
 npx prisma generate
 npm test
 ```
+
 **Problema**: Duplica funcionalidade dos outros scripts
 
 ---
@@ -218,24 +240,28 @@ npm test
 ## 📊 Estatísticas Finais
 
 ### Código
+
 - **Arquivos TypeScript (src/)**: 77 arquivos
 - **Linhas de Código**: ~4.000 linhas
 - **Módulos NestJS**: 9 módulos
 - **Endpoints REST**: 65 endpoints
 
 ### Testes
+
 - **Arquivos de Teste**: 45 arquivos
 - **Casos de Teste**: 478+ testes
 - **Cobertura**: **99.9%** 🎉
 - **Tempo de Execução**: ~35 segundos
 
 ### Documentação
+
 - **Arquivos .md**: 90 arquivos
 - **Guias Técnicos**: 8 guias
 - **Análises**: 10 análises
 - **Histórico**: 64 documentos
 
 ### Estrutura
+
 - **Pastas principais**: 7 (src, tests, docs, coverage, logs, node_modules, .vscode)
 - **Arquivos na raiz**: 18 úteis + 5 OLD-
 - **Total de arquivos**: ~300+ arquivos
@@ -269,12 +295,14 @@ npm test
 ## 🗑️ Próximos Passos Opcionais
 
 ### Opção 1: Deletar OLD- (após 1-2 semanas)
+
 ```powershell
 # Se confirmar que não precisa mais
 Remove-Item OLD-*.* -Force
 ```
 
 ### Opção 2: Inicializar Git (se ainda não for repo)
+
 ```bash
 git init
 git add .
@@ -282,6 +310,7 @@ git commit -m "Projeto limpo e organizado - 99.9% coverage"
 ```
 
 ### Opção 3: Garantir .gitignore
+
 ```bash
 # Verificar se coverage/ e logs/ não serão versionados
 git check-ignore coverage/
@@ -293,16 +322,21 @@ git check-ignore logs/
 ## 📌 Notas Importantes
 
 ### Arquivos OLD- são seguros para deletar?
+
 ✅ **SIM**, mas recomendo aguardar 1-2 semanas para garantir que não são necessários.
 
 ### Posso restaurar um arquivo OLD-?
+
 ✅ **SIM**, basta renomear de volta:
+
 ```powershell
 Rename-Item "OLD-template.yaml" "template.yaml"
 ```
 
 ### E se eu quiser usar AWS SAM em vez de Serverless?
+
 ✅ **Sem problema**, renomeie de volta:
+
 ```powershell
 Rename-Item "OLD-template.yaml" "template.yaml"
 Rename-Item "OLD-samconfig.toml" "samconfig.toml"
@@ -310,6 +344,7 @@ Rename-Item "serverless.yml" "OLD-serverless.yml"
 ```
 
 ### As pastas coverage/ e logs/ devem ser commitadas?
+
 ❌ **NÃO** - São geradas automaticamente. Devem estar apenas no .gitignore.
 
 ---
@@ -331,4 +366,3 @@ Rename-Item "serverless.yml" "OLD-serverless.yml"
 
 **Criado em**: 15 de Outubro de 2025  
 **Análise Completa**: `ANALISE_ARQUIVOS_PROJETO.md`
-

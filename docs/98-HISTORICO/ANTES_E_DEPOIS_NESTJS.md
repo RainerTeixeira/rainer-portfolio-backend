@@ -25,6 +25,7 @@ src/
 ```
 
 **Código Antes:**
+
 ```typescript
 // user.controller.ts (ANTES)
 import { FastifyInstance } from 'fastify';
@@ -69,6 +70,7 @@ src/
 ```
 
 **Código Depois:**
+
 ```typescript
 // users.module.ts (DEPOIS)
 @Module({
@@ -119,6 +121,7 @@ export class UsersRepository {
 ### 1. Dependency Injection
 
 **❌ ANTES:**
+
 ```typescript
 import { prisma } from '../../config/prisma.js';
 import { usersRepository } from './user.repository.js';
@@ -131,6 +134,7 @@ export const usersService = {
 ```
 
 **✅ DEPOIS:**
+
 ```typescript
 @Injectable()
 export class UsersService {
@@ -147,6 +151,7 @@ export class UsersService {
 ### 2. Controllers/Routes
 
 **❌ ANTES:**
+
 ```typescript
 export async function userRoutes(app: FastifyInstance) {
   app.post('/users', async (request, reply) => {
@@ -157,6 +162,7 @@ export async function userRoutes(app: FastifyInstance) {
 ```
 
 **✅ DEPOIS:**
+
 ```typescript
 @Controller('users')
 export class UsersController {
@@ -176,6 +182,7 @@ export class UsersController {
 ### 3. Swagger Documentation
 
 **❌ ANTES:**
+
 ```typescript
 // No routes/users.routes.ts
 app.post('/users', {
@@ -189,6 +196,7 @@ app.post('/users', {
 ```
 
 **✅ DEPOIS:**
+
 ```typescript
 @ApiTags('users')
 @Controller('users')
@@ -205,6 +213,7 @@ export class UsersController {
 ### 4. Módulos
 
 **❌ ANTES:**
+
 ```typescript
 // routes/index.ts
 export async function registerRoutes(app: FastifyInstance) {
@@ -216,6 +225,7 @@ export async function registerRoutes(app: FastifyInstance) {
 ```
 
 **✅ DEPOIS:**
+
 ```typescript
 // app.module.ts
 @Module({
@@ -239,6 +249,7 @@ export class AppModule {}
 ### 5. Entry Point
 
 **❌ ANTES:**
+
 ```typescript
 // server.ts
 import { buildApp } from './app.js';
@@ -248,6 +259,7 @@ await app.listen({ port: env.PORT, host: env.HOST });
 ```
 
 **✅ DEPOIS:**
+
 ```typescript
 // main.ts
 import { NestFactory } from '@nestjs/core';
@@ -266,22 +278,27 @@ await app.listen(env.PORT, env.HOST);
 ## 📈 Ganhos com NestJS
 
 ### 1. Dependency Injection Automática ✅
+
 - Antes: Import manual em cada arquivo
 - Depois: Injeção automática via `constructor()`
 
 ### 2. Decorators Limpos ✅
+
 - Antes: `app.post('/users', { schema: {...}, handler: ... })`
 - Depois: `@Post()` `@ApiOperation()` `@Body()`
 
 ### 3. Type-Safe Completo ✅
+
 - Antes: `any` em vários lugares
 - Depois: TypeScript strict end-to-end
 
 ### 4. Testabilidade ✅
+
 - Antes: Difícil mockar imports manuais
 - Depois: DI permite mocks perfeitos
 
 ### 5. Padrão Indústria ✅
+
 - Antes: Estrutura customizada
 - Depois: NestJS (usado globalmente)
 
@@ -306,6 +323,7 @@ await app.listen(env.PORT, env.HOST);
 ## ✅ Arquivos Criados/Modificados
 
 ### Criados (35 arquivos)
+
 - ✅ `main.ts` - Entry point NestJS
 - ✅ `app.module.ts` - Root module
 - ✅ `nest-cli.json` - Config NestJS
@@ -314,6 +332,7 @@ await app.listen(env.PORT, env.HOST);
 - ✅ 30 arquivos de módulos NestJS (8 módulos × 3-4 arquivos)
 
 ### Renomeados (34 arquivos)
+
 - ⚠️ `app.ts` → `old.app.ts`
 - ⚠️ `server.ts` → `old.server.ts`
 - ⚠️ `lambda.ts` → `old.lambda.ts`
@@ -321,6 +340,7 @@ await app.listen(env.PORT, env.HOST);
 - ⚠️ 30 arquivos de módulos antigos → `old.*`
 
 ### Mantidos (Reutilizados)
+
 - ✅ `*.model.ts` - Interfaces TypeScript
 - ✅ `*.schema.ts` - Zod validation
 - ✅ `env.ts` - Environment config
@@ -349,4 +369,3 @@ npm run start:dev
 **Versão Antes:** 4.0.0 - Fastify + Modular  
 **Versão Depois:** 5.0.0 - NestJS + Fastify + Modular  
 **Status:** ✅ **CONVERSÃO 100% COMPLETA!**
-

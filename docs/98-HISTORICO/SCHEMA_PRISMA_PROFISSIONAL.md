@@ -19,14 +19,16 @@
 
 ## ✅ 1. Generator Profissional
 
-### Antes:
+### Antes
+
 ```prisma
 generator client {
   provider = "prisma-client-js"
 }
 ```
 
-### Depois:
+### Depois
+
 ```prisma
 generator client {
   provider        = "prisma-client-js"
@@ -36,6 +38,7 @@ generator client {
 ```
 
 **Benefícios:**
+
 - ✅ Full-text search habilitado (para busca de conteúdo)
 - ✅ Binários para diferentes ambientes (Docker, AWS Lambda)
 - ✅ Preparado para features experimentais
@@ -44,24 +47,28 @@ generator client {
 
 ## ✅ 2. Documentação Tripla Barra (///)
 
-### Antes:
+### Antes
+
 ```prisma
 // --- Identificação ---
 id String @id @default(auto()) @map("_id") @db.ObjectId
 ```
 
-### Depois:
+### Depois
+
 ```prisma
 /// ID único do usuário (MongoDB ObjectId)
 id String @id @default(auto()) @map("_id") @db.ObjectId
 ```
 
 **Benefícios:**
+
 - ✅ Comentários triplos (`///`) geram documentação no Prisma Client
 - ✅ IntelliSense mostra descrições ao usar types
 - ✅ Documentação automática para toda equipe
 
 **Exemplo de uso:**
+
 ```typescript
 // Ao usar Prisma Client:
 const user = await prisma.user.create({
@@ -75,7 +82,8 @@ const user = await prisma.user.create({
 
 ## ✅ 3. Organização com Seções Visuais
 
-### Estrutura Aplicada:
+### Estrutura Aplicada
+
 ```prisma
 model User {
   // ─────────────────────────────────────────────────────────────
@@ -96,6 +104,7 @@ model User {
 ```
 
 **Benefícios:**
+
 - ✅ Fácil navegação visual no arquivo
 - ✅ Campos agrupados por contexto
 - ✅ Manutenção mais rápida
@@ -104,14 +113,16 @@ model User {
 
 ## ✅ 4. Índices Compostos Otimizados
 
-### Antes (Índices Simples):
+### Antes (Índices Simples)
+
 ```prisma
 @@index([status])
 @@index([authorId])
 @@index([publishedAt])
 ```
 
-### Depois (Índices Compostos):
+### Depois (Índices Compostos)
+
 ```prisma
 // Índices simples
 @@index([slug])
@@ -125,11 +136,13 @@ model User {
 ```
 
 **Benefícios:**
+
 - ✅ Queries comuns até 10x mais rápidas
 - ✅ Menos overhead de memória
 - ✅ Otimizado para casos de uso reais
 
 **Queries Otimizadas:**
+
 ```typescript
 // Query 1: Posts publicados ordenados por data
 prisma.post.findMany({
@@ -159,22 +172,26 @@ prisma.post.findMany({
 
 ## ✅ 5. Unique Constraints Nomeados
 
-### Antes:
+### Antes
+
 ```prisma
 @@unique([userId, postId])
 ```
 
-### Depois:
+### Depois
+
 ```prisma
 @@unique([userId, postId], name: "unique_user_post_like")
 ```
 
 **Benefícios:**
+
 - ✅ Erros mais claros (mostra nome do constraint)
 - ✅ Migrations mais controláveis
 - ✅ Debugging facilitado
 
 **Exemplo de erro:**
+
 ```
 Antes:
 Unique constraint failed on the fields: (`userId`,`postId`)
@@ -187,7 +204,7 @@ Unique constraint failed: `unique_user_post_like`
 
 ## ✅ 6. Comentários Descritivos Completos
 
-### Exemplos Profissionais:
+### Exemplos Profissionais
 
 ```prisma
 /// Hash da senha (bcrypt/argon2 - nunca armazenar senha plain)
@@ -208,6 +225,7 @@ collection String?
 ```
 
 **Benefícios:**
+
 - ✅ Contexto imediato ao ler código
 - ✅ Boas práticas documentadas
 - ✅ Exemplos de uso incluídos
@@ -217,6 +235,7 @@ collection String?
 ## ✅ 7. Índices por Model
 
 ### User (6 índices)
+
 ```prisma
 @@index([email])                    // Busca por email
 @@index([username])                 // Busca por username
@@ -227,6 +246,7 @@ collection String?
 ```
 
 ### Post (10 índices)
+
 ```prisma
 @@index([slug])                                    // Busca por slug (único)
 @@index([status])                                  // Filtrar por status
@@ -241,6 +261,7 @@ collection String?
 ```
 
 ### Category (5 índices)
+
 ```prisma
 @@index([slug])                           // Busca por slug
 @@index([isActive])                       // Categorias ativas
@@ -250,6 +271,7 @@ collection String?
 ```
 
 ### Comment (6 índices)
+
 ```prisma
 @@index([postId])                            // Comentários de um post
 @@index([authorId])                          // Comentários de um autor
@@ -261,6 +283,7 @@ collection String?
 ```
 
 ### Like (4 índices)
+
 ```prisma
 @@index([postId])                // Likes de um post
 @@index([userId])                // Likes de um usuário
@@ -269,6 +292,7 @@ collection String?
 ```
 
 ### Bookmark (5 índices)
+
 ```prisma
 @@index([userId])                 // Bookmarks de um usuário
 @@index([postId])                 // Quem salvou um post
@@ -278,6 +302,7 @@ collection String?
 ```
 
 ### Notification (5 índices)
+
 ```prisma
 @@index([userId])                          // Notificações de um usuário
 @@index([isRead])                          // Filtrar lidas/não lidas
@@ -290,7 +315,8 @@ collection String?
 
 ## ✅ 8. Enums Documentados e Organizados
 
-### Antes:
+### Antes
+
 ```prisma
 enum UserRole {
   ADMIN
@@ -300,7 +326,8 @@ enum UserRole {
 }
 ```
 
-### Depois:
+### Depois
+
 ```prisma
 /// Papel do usuário no sistema
 enum UserRole {
@@ -315,7 +342,7 @@ enum UserRole {
 
 ## ✅ 9. Campos com Contexto de Uso
 
-### Exemplos:
+### Exemplos
 
 ```prisma
 /// Nome do ícone (ex: code, design, food - FontAwesome, Material Icons)
@@ -335,7 +362,7 @@ avatar String?
 
 ## 📊 Performance Estimada
 
-### Queries Comuns (antes vs depois):
+### Queries Comuns (antes vs depois)
 
 | Query | Antes | Depois | Melhoria |
 |---|---|---|---|
@@ -350,6 +377,7 @@ avatar String?
 ## ✅ Checklist de Qualidade
 
 ### Documentação
+
 - [x] Comentários triplos (///) em todos models
 - [x] Comentários em todos os campos
 - [x] Descrição de enums
@@ -357,18 +385,21 @@ avatar String?
 - [x] Seções visuais organizadas
 
 ### Performance
+
 - [x] Índices simples para campos frequentes
 - [x] Índices compostos para queries comuns
 - [x] Unique constraints nomeados
 - [x] OnDelete strategies apropriadas
 
 ### Manutenibilidade
+
 - [x] Campos agrupados por contexto
 - [x] Nomenclatura consistente
 - [x] Relações claramente documentadas
 - [x] Defaults explícitos
 
 ### Features Avançadas
+
 - [x] Full-text search habilitado
 - [x] Binary targets para deploy
 - [x] Preview features ativadas
@@ -380,12 +411,14 @@ avatar String?
 **Schema Prisma:** ✅ **Nível Enterprise!**
 
 **Métricas:**
+
 - 📄 Linhas: 314 → 705 (+124%)
 - 📝 Comentários: ~50 → ~200 (+300%)
 - 🔍 Índices: 24 → 41 (+71%)
 - 🏷️ Índices compostos: 0 → 10 (+10 novos)
 
 **Qualidade:**
+
 - ✅ Production-ready
 - ✅ Performance otimizada
 - ✅ Documentação completa
@@ -397,4 +430,3 @@ avatar String?
 **Criado em:** 14 de Outubro de 2025  
 **Versão:** 5.0.0 - Enterprise Schema  
 **Status:** ✅ **PRONTO PARA PRODUÇÃO!** 🚀
-

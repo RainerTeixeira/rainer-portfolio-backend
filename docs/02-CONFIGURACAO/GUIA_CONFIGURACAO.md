@@ -30,6 +30,7 @@ cp env.example .env
 ### Passo 2: Escolher e Configurar Banco
 
 **Desenvolvimento Local (RECOMENDADO):**
+
 ```bash
 # 1. Subir MongoDB
 docker run -d --name blogapi-mongodb -p 27017:27017 mongo:7 --replSet rs0
@@ -40,6 +41,7 @@ docker exec blogapi-mongodb mongosh --eval "rs.initiate()"
 ```
 
 **Ou use Docker Compose:**
+
 ```bash
 docker-compose up -d mongodb
 ```
@@ -52,7 +54,7 @@ npm run prisma:push
 npm run dev
 ```
 
-**✅ Pronto!** Acesse http://localhost:4000
+**✅ Pronto!** Acesse <http://localhost:4000>
 
 ---
 
@@ -98,6 +100,7 @@ npm run dev
 ### ✅ Use PRISMA (MongoDB)
 
 **Quando:**
+
 - ✅ Desenvolvimento local
 - ✅ Testes unitários/integração
 - ✅ Staging/Homologação
@@ -105,6 +108,7 @@ npm run dev
 - ✅ Quer Prisma Studio (GUI)
 
 **Vantagens:**
+
 - Desenvolvimento rápido e produtivo
 - Type-safe queries (autocomplete)
 - Prisma Studio para visualizar dados
@@ -114,6 +118,7 @@ npm run dev
 ### ✅ Use DYNAMODB
 
 **Quando:**
+
 - ✅ Produção AWS Lambda
 - ✅ Arquitetura 100% serverless
 - ✅ Alta escalabilidade necessária
@@ -121,6 +126,7 @@ npm run dev
 - ✅ Teste de pré-deploy (DynamoDB Local)
 
 **Vantagens:**
+
 - Serverless (zero gerenciamento)
 - Escalabilidade automática
 - Alta disponibilidade (99.99% SLA)
@@ -173,9 +179,10 @@ npm run dev
 ```
 
 **URLs:**
-- API: http://localhost:4000
-- Swagger: http://localhost:4000/docs
-- Prisma Studio: http://localhost:5555 (após `npm run prisma:studio`)
+
+- API: <http://localhost:4000>
+- Swagger: <http://localhost:4000/docs>
+- Prisma Studio: <http://localhost:5555> (após `npm run prisma:studio`)
 
 ---
 
@@ -410,6 +417,7 @@ Independente do provider, o projeto mantém **7 modelos**:
 ```
 
 **Por quê?**
+
 - Mais rápido para desenvolver
 - Prisma Studio (visualizar dados)
 - Type-safe (autocomplete completo)
@@ -423,6 +431,7 @@ Independente do provider, o projeto mantém **7 modelos**:
 ```
 
 **Por quê?**
+
 - Testar com DynamoDB antes do deploy
 - Validar queries e estrutura
 - Identificar problemas cedo
@@ -431,11 +440,13 @@ Independente do provider, o projeto mantém **7 modelos**:
 ### Produção
 
 **AWS Lambda:**
+
 ```bash
 ✅ DATABASE_PROVIDER=DYNAMODB
 ```
 
 **Servidor Tradicional:**
+
 ```bash
 ✅ DATABASE_PROVIDER=PRISMA (MongoDB Atlas)
 ```
@@ -449,6 +460,7 @@ Independente do provider, o projeto mantém **7 modelos**:
 **Erro:** `MongoServerError: connection refused`
 
 **Solução:**
+
 ```bash
 # Verificar se está rodando
 docker ps | grep blogapi-mongodb
@@ -465,6 +477,7 @@ docker restart blogapi-mongodb
 **Erro:** `Cannot find module '@prisma/client'`
 
 **Solução:**
+
 ```bash
 npm run prisma:generate
 rm -rf node_modules/.prisma
@@ -476,6 +489,7 @@ npm install
 **Erro:** `ResourceNotFoundException: Cannot do operations on a non-existent table`
 
 **Solução:**
+
 ```bash
 # Verificar container
 docker ps | grep blogapi-dynamodb
@@ -492,6 +506,7 @@ npm run dynamodb:list-tables
 **Erro:** `ZodError: Validation failed`
 
 **Solução:**
+
 ```bash
 # Verificar .env
 cat .env
@@ -532,6 +547,7 @@ diff .env env.example
 ### 1. Use PRISMA para Desenvolvimento
 
 **Por quê?**
+
 - Prisma Studio mostra todos os dados visualmente
 - Type-safe queries evitam erros
 - Migrations são automáticas
@@ -557,6 +573,7 @@ docker-compose up -d  # Sobe MongoDB + DynamoDB + GUIs
 ```
 
 Você terá disponível:
+
 - MongoDB (porta 27017)
 - DynamoDB (porta 8000)
 - Prisma Studio (porta 5555)
@@ -582,4 +599,3 @@ Após seguir este guia, você terá:
 **Criado em:** 16/10/2025  
 **Tipo:** Guia Completo de Configuração  
 **Status:** ✅ Consolidado (v4.1.1)
-

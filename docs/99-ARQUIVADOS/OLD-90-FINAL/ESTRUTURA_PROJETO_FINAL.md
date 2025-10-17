@@ -1,4 +1,5 @@
 # 📁 Estrutura Final do Projeto
+
 **Projeto**: Blog Backend NestJS  
 **Cobertura**: 99.9%  
 **Status**: ✅ Limpo e Organizado
@@ -347,30 +348,35 @@ module-name/
 ## 🧹 Arquivos Marcados OLD- (Detalhamento)
 
 ### 1. OLD-run-tests-loop.bat (19 linhas)
+
 ```batch
 # Fazia: prisma generate + npm test
 # Redundante com: executar-testes.bat, check-tests.ps1
 ```
 
 ### 2. OLD-test-prisma.cjs (32 linhas)
+
 ```javascript
 // Script de debug de conexão Prisma
 // Uso: Apenas troubleshooting
 ```
 
 ### 3. OLD-template.yaml (198 linhas)
+
 ```yaml
 # AWS SAM template
 # Alternativa: serverless.yml (mantido)
 ```
 
 ### 4. OLD-samconfig.toml (33 linhas)
+
 ```toml
 # AWS SAM config
 # Alternativa: serverless.yml
 ```
 
 ### 5. OLD-deploy-lambda.sh (90 linhas)
+
 ```bash
 # Deploy manual bash
 # Alternativa: npm run deploy:serverless
@@ -418,6 +424,7 @@ Total Scripts:       5 arquivos
 ## 🚀 Comandos Principais
 
 ### Desenvolvimento
+
 ```bash
 npm run dev                          # Servidor com hot reload
 npm run prisma:generate              # Gerar Prisma Client
@@ -426,6 +433,7 @@ node seed-simplificado.cjs           # Popular banco
 ```
 
 ### Testes
+
 ```bash
 npm test                             # Todos os testes
 npm run test:coverage                # Com cobertura
@@ -434,12 +442,14 @@ npm run test:coverage                # Com cobertura
 ```
 
 ### Deploy
+
 ```bash
 npm run deploy:serverless            # Deploy Serverless Framework
 serverless deploy --stage prod       # Deploy produção
 ```
 
 ### Qualidade
+
 ```bash
 npm run lint                         # ESLint
 npm run format                       # Prettier
@@ -467,7 +477,7 @@ npm run sonar                        # SonarQube
 
 **Criado em**: 15 de Outubro de 2025  
 **Documentos Relacionados**:
+
 - `ANALISE_ARQUIVOS_PROJETO.md` - Análise detalhada
 - `RESUMO_LIMPEZA.md` - Resumo das ações
 - `README.md` - Documentação principal
-

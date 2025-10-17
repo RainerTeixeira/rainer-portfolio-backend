@@ -1,4 +1,4 @@
-# ✅ Módulo de Autenticação AWS Cognito - Criado com Sucesso!
+# ✅ Módulo de Autenticação AWS Cognito - Criado com Sucesso
 
 ## 📊 Resumo da Implementação
 
@@ -215,6 +215,7 @@ curl -X GET http://localhost:4000/auth/me \
 ## 🎨 Decorators Disponíveis
 
 ### @Public()
+
 Marca uma rota como pública (sem autenticação).
 
 ```typescript
@@ -226,6 +227,7 @@ publicRoute() {
 ```
 
 ### @CurrentUser()
+
 Extrai dados do usuário autenticado.
 
 ```typescript
@@ -257,6 +259,7 @@ interface AuthenticatedUser {
 ## 🔐 Segurança
 
 ### Validação JWT
+
 - Assinatura verificada com chaves públicas (JWKS)
 - Issuer validado
 - Audience validada
@@ -264,6 +267,7 @@ interface AuthenticatedUser {
 - Algoritmo RS256
 
 ### Validação de Senha
+
 - Mínimo 8 caracteres
 - Letras maiúsculas e minúsculas
 - Números obrigatórios
@@ -277,9 +281,9 @@ interface AuthenticatedUser {
 4. **Integre com seus módulos** usando `@CurrentUser()`
 5. **Teste os endpoints** via Swagger ou Postman
 
-## 🎉 Pronto para Produção!
+## 🎉 Pronto para Produção
 
-O módulo está completo e pronto para ser usado. Todos os arquivos foram criados, 
+O módulo está completo e pronto para ser usado. Todos os arquivos foram criados,
 dependências instaladas e documentação completa está disponível.
 
 **Boa sorte com seu projeto!** 🚀
@@ -290,4 +294,3 @@ dependências instaladas e documentação completa está disponível.
 **Framework:** NestJS + AWS Cognito + Passport.js  
 **Total de arquivos:** 16 arquivos  
 **Status:** ✅ Completo
-

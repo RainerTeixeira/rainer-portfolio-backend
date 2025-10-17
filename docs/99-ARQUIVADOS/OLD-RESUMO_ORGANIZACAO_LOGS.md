@@ -16,11 +16,13 @@ Remover prefixo "OLD" do README de logs e garantir que a documentação sobre lo
 ### 1. 📝 Arquivo Renomeado
 
 **Antes:**
+
 ```
 logs/OLD-README.md  ❌ Nome inadequado com prefixo "OLD"
 ```
 
 **Depois:**
+
 ```
 logs/README.md  ✅ Nome correto sem prefixo
 ```
@@ -30,6 +32,7 @@ logs/README.md  ✅ Nome correto sem prefixo
 Adicionadas duas novas seções:
 
 #### **Seção "Logs" em Scripts Disponíveis** (linha ~642)
+
 ```bash
 ### Logs
 npm run logs:view        # Ver logs em tempo real (app.log)
@@ -45,6 +48,7 @@ npm run logs:clean       # Limpar todos os arquivos .log
 ```
 
 #### **Seção "Logs e Monitoramento" em Documentação Adicional** (linha ~1127)
+
 ```markdown
 ### 📋 Logs e Monitoramento
 - 📁 Pasta logs/: logs/README.md - Configuração automática de logs
@@ -147,6 +151,7 @@ raiz/
 ### 📖 No logs/README.md (antigo OLD-README.md)
 
 Documentação completa e detalhada:
+
 - Configuração automática global
 - 15+ scripts com logs automáticos
 - 3 scripts PowerShell utilitários
@@ -193,4 +198,3 @@ Documentação completa e detalhada:
 **Data**: 16 de Outubro de 2025  
 **Versão**: 3.0.1  
 **Status**: ✅ **Organização Concluída**
-

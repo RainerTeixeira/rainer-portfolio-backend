@@ -206,6 +206,7 @@ model Notification {
 ## 🎯 Endpoints Disponíveis (56 total)
 
 ### Auth (6 endpoints)
+
 ```
 POST   /auth/register        - Registrar usuário
 POST   /auth/confirm-email   - Confirmar email
@@ -216,6 +217,7 @@ POST   /auth/reset-password  - Redefinir senha
 ```
 
 ### Users (10 endpoints)
+
 ```
 POST   /users                - Criar usuário
 GET    /users                - Listar (paginado)
@@ -230,6 +232,7 @@ PATCH  /users/:id/role       - Alterar role
 ```
 
 ### Posts (10 endpoints)
+
 ```
 POST   /posts                     - Criar post
 GET    /posts                     - Listar (paginado + filtros)
@@ -244,6 +247,7 @@ PATCH  /posts/:id/unpublish       - Despublicar
 ```
 
 ### Categories (6 endpoints)
+
 ```
 POST   /categories            - Criar categoria
 GET    /categories            - Listar
@@ -254,6 +258,7 @@ DELETE /categories/:id        - Deletar
 ```
 
 ### Comments (6 endpoints)
+
 ```
 POST   /comments              - Criar comentário
 GET    /comments/post/:id     - Por post
@@ -264,6 +269,7 @@ PATCH  /comments/:id/approve  - Aprovar
 ```
 
 ### Likes (5 endpoints)
+
 ```
 POST   /likes                 - Dar like
 GET    /likes/post/:id        - Por post
@@ -273,6 +279,7 @@ DELETE /likes/toggle          - Toggle like/unlike
 ```
 
 ### Bookmarks (6 endpoints)
+
 ```
 POST   /bookmarks                      - Salvar post
 GET    /bookmarks/:id                  - Buscar
@@ -283,6 +290,7 @@ DELETE /bookmarks/:id                  - Deletar
 ```
 
 ### Notifications (6 endpoints)
+
 ```
 POST   /notifications         - Criar notificação
 GET    /notifications/user/:id- Por usuário
@@ -293,6 +301,7 @@ DELETE /notifications/:id     - Deletar
 ```
 
 ### Health (1 endpoint)
+
 ```
 GET    /health                - Health check
 ```
@@ -302,6 +311,7 @@ GET    /health                - Health check
 ## 🔐 Segurança Implementada
 
 ### Autenticação
+
 - ✅ AWS Cognito (gerencia credenciais)
 - ✅ JWT tokens (AccessToken + RefreshToken)
 - ✅ Senha forte (regex obrigatório)
@@ -310,6 +320,7 @@ GET    /health                - Health check
 - ✅ Secret Hash (Cognito Client Secret)
 
 ### Validação
+
 - ✅ Schemas Zod em todos os módulos
 - ✅ Email único (Cognito + MongoDB)
 - ✅ Username único (MongoDB)
@@ -317,6 +328,7 @@ GET    /health                - Health check
 - ✅ Tratamento de exceções
 
 ### Autorização
+
 - ✅ Enums de roles (ADMIN, EDITOR, AUTHOR, SUBSCRIBER)
 - ✅ isActive (ativar/desativar usuário)
 - ✅ isBanned (banir usuário)
@@ -327,6 +339,7 @@ GET    /health                - Health check
 ## 📊 Estatísticas do Sistema
 
 ### Código
+
 - **Arquivos TypeScript:** 52
 - **Linhas de Código:** ~3500
 - **Interfaces:** 30+
@@ -334,6 +347,7 @@ GET    /health                - Health check
 - **Endpoints REST:** 56
 
 ### Database
+
 - **Models Prisma:** 7
 - **Campos Total:** 85
 - **Relações:** 12
@@ -341,6 +355,7 @@ GET    /health                - Health check
 - **Unique Constraints:** 8
 
 ### Conformidade
+
 - **Erros TypeScript:** 0 ✅
 - **Erros de Lint:** 0 ✅
 - **Warnings:** Apenas Markdown (formatação)
@@ -352,6 +367,7 @@ GET    /health                - Health check
 ## 🔄 Sincronização Cognito ↔ MongoDB
 
 ### Chave de Integração
+
 ```
 Cognito.sub  ←→  MongoDB.cognitoSub (unique)
 ```
@@ -384,6 +400,7 @@ Cognito.sub  ←→  MongoDB.cognitoSub (unique)
 ## 📋 Arquivos Modificados (Última Sessão)
 
 ### Criados
+
 1. `src/modules/auth/auth.controller.ts` - 6 endpoints
 2. `src/modules/auth/auth.service.ts` - Lógica + sync
 3. `src/modules/auth/auth.repository.ts` - Cognito SDK
@@ -393,6 +410,7 @@ Cognito.sub  ←→  MongoDB.cognitoSub (unique)
 7. `src/modules/auth/index.ts` - Exports
 
 ### Modificados
+
 1. `src/config/env.ts` - Variáveis Cognito
 2. `src/config/cognito.config.ts` - Config Cognito
 3. `src/modules/users/users.service.ts` - getUserByCognitoSub (ajustado)
@@ -400,6 +418,7 @@ Cognito.sub  ←→  MongoDB.cognitoSub (unique)
 5. `tsconfig.json` - Decorators habilitados
 
 ### Removidos
+
 1. DTOs do class-validator (substituído por Zod)
 2. Guards customizados (não no padrão)
 3. Strategies Passport (não no padrão)
@@ -490,6 +509,7 @@ curl -X POST http://localhost:4000/posts \
 ## 📚 Documentação Gerada
 
 ### Documentação Técnica
+
 1. **RELATORIO_FINAL_CONFORMIDADE.md** - Análise completa de todos módulos
 2. **INTEGRACAO_AUTH_USERS_CONCLUIDA.md** - Detalhes da integração Auth ↔ Users
 3. **ANALISE_CONFORMIDADE_COMPLETA.md** - Problemas e soluções
@@ -497,7 +517,8 @@ curl -X POST http://localhost:4000/posts \
 5. **SISTEMA_COMPLETO_INTEGRADO.md** - Este arquivo
 
 ### Documentação de Uso
-- **Swagger UI:** http://localhost:4000/api/docs
+
+- **Swagger UI:** <http://localhost:4000/api/docs>
 - **Prisma Schema:** src/prisma/schema.prisma (692 linhas, documentado)
 
 ---
@@ -505,6 +526,7 @@ curl -X POST http://localhost:4000/posts \
 ## ✅ Checklist de Produção
 
 ### Código
+
 - [x] TypeScript strict mode
 - [x] 0 erros de lint
 - [x] 100% tipado
@@ -513,6 +535,7 @@ curl -X POST http://localhost:4000/posts \
 - [x] Logging estruturado
 
 ### Arquitetura
+
 - [x] Modular (9 módulos)
 - [x] Dependency Injection
 - [x] Repository Pattern
@@ -520,6 +543,7 @@ curl -X POST http://localhost:4000/posts \
 - [x] Padrão uniforme
 
 ### Database
+
 - [x] Prisma ORM
 - [x] MongoDB configurado
 - [x] Schemas validados
@@ -527,6 +551,7 @@ curl -X POST http://localhost:4000/posts \
 - [x] Índices otimizados
 
 ### Autenticação
+
 - [x] AWS Cognito integrado
 - [x] JWT tokens
 - [x] Sincronização automática
@@ -534,6 +559,7 @@ curl -X POST http://localhost:4000/posts \
 - [x] Confirmação de email
 
 ### API
+
 - [x] 56 endpoints REST
 - [x] Documentação Swagger
 - [x] Validação de entrada
@@ -575,6 +601,7 @@ curl -X POST http://localhost:4000/posts \
 O sistema de Blog API está **100% completo**, **totalmente integrado** e **pronto para produção**!
 
 ### Características
+
 ✅ **Modular** - 9 módulos independentes  
 ✅ **Escalável** - Arquitetura preparada para crescimento  
 ✅ **Seguro** - AWS Cognito + validações  
@@ -596,4 +623,3 @@ O sistema de Blog API está **100% completo**, **totalmente integrado** e **pron
 **Arquitetura:** Modular + Repository Pattern + DI  
 **Status:** ✅ **PRODUCTION READY**  
 **Qualidade:** 🏆 **A+**
-

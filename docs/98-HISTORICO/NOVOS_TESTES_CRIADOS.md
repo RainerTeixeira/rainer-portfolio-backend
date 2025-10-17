@@ -7,6 +7,7 @@ Foram criados **8 novos arquivos de teste** para aumentar a cobertura de código
 ## ✅ Testes Criados
 
 ### 1. **Testes de Schema - User** (`tests/modules/users/user.schema.test.ts`)
+
 - ✓ Validação de dados de criação de usuário
 - ✓ Validação de formato de email
 - ✓ Validação de username (sem espaços)
@@ -17,6 +18,7 @@ Foram criados **8 novos arquivos de teste** para aumentar a cobertura de código
 **Total**: 11 testes
 
 ### 2. **Testes de Schema - Post** (`tests/modules/posts/post.schema.test.ts`)
+
 - ✓ Validação de dados de criação de post
 - ✓ Validação de formato de slug (URL-friendly)
 - ✓ Validação de status (DRAFT, PUBLISHED, ARCHIVED)
@@ -27,6 +29,7 @@ Foram criados **8 novos arquivos de teste** para aumentar a cobertura de código
 **Total**: 11 testes
 
 ### 3. **Integração Posts + Categories** (`tests/integration/posts-categories.integration.test.ts`)
+
 - ✓ Criar post associado a subcategoria
 - ✓ Buscar posts por subcategoria
 - ✓ Buscar subcategorias de uma categoria
@@ -36,6 +39,7 @@ Foram criados **8 novos arquivos de teste** para aumentar a cobertura de código
 **Total**: 7 testes
 
 ### 4. **Integração Users + Posts + Comments** (`tests/integration/users-posts-comments.integration.test.ts`)
+
 - ✓ Fluxo completo: criar usuário → post → comentário
 - ✓ Buscar posts por autor
 - ✓ Buscar comentários por post
@@ -45,6 +49,7 @@ Foram criados **8 novos arquivos de teste** para aumentar a cobertura de código
 **Total**: 7 testes
 
 ### 5. **Casos Edge - Likes** (`tests/modules/likes/likes.edge-cases.test.ts`)
+
 - ✓ Prevenir duplo like
 - ✓ Like após unlike
 - ✓ Contagem de likes (zero, grandes números)
@@ -55,6 +60,7 @@ Foram criados **8 novos arquivos de teste** para aumentar a cobertura de código
 **Total**: 13 testes
 
 ### 6. **Casos Edge - Bookmarks** (`tests/modules/bookmarks/bookmarks.edge-cases.test.ts`)
+
 - ✓ Prevenir bookmark duplicado
 - ✓ Criar bookmark sem coleção
 - ✓ Criar bookmark com coleção personalizada
@@ -66,6 +72,7 @@ Foram criados **8 novos arquivos de teste** para aumentar a cobertura de código
 **Total**: 14 testes
 
 ### 7. **Utilitário - Gerador de Slugs** (`tests/utils/slug-generator.test.ts`)
+
 - ✓ Conversão de texto para slug
 - ✓ Remoção de acentos
 - ✓ Remoção de caracteres especiais
@@ -78,6 +85,7 @@ Foram criados **8 novos arquivos de teste** para aumentar a cobertura de código
 **Total**: 15 testes
 
 ### 8. **Utilitário - Formatador de Datas** (`tests/utils/date-formatter.test.ts`)
+
 - ✓ Formatação em português brasileiro
 - ✓ Formatação de data e hora
 - ✓ Tempo relativo ("há X minutos/horas/dias")
@@ -100,16 +108,19 @@ Foram criados **8 novos arquivos de teste** para aumentar a cobertura de código
 ## 🎯 Objetivos Alcançados
 
 ### ✅ Cobertura Aumentada
+
 - Validações de schema para modelos principais
 - Casos edge para funcionalidades críticas
 - Testes de integração entre módulos
 
 ### ✅ Qualidade do Código
+
 - Testes de validação de dados
 - Verificação de regras de negócio
 - Prevenção de duplicações e conflitos
 
 ### ✅ Utilitários Testados
+
 - Geração de slugs para URLs amigáveis
 - Formatação de datas em português
 - Cálculo de tempo relativo
@@ -132,6 +143,7 @@ Foram criados **8 novos arquivos de teste** para aumentar a cobertura de código
 ## 🎉 Impacto
 
 Com estes novos testes, o projeto agora tem:
+
 - **Maior confiabilidade** nos módulos críticos
 - **Melhor documentação** através dos testes
 - **Detecção precoce** de bugs e regressões
@@ -144,4 +156,3 @@ Com estes novos testes, o projeto agora tem:
 **Testes Anteriores**: 390 testes  
 **Novos Testes Adicionados**: ~93 testes  
 **Total Esperado**: ~483 testes
-

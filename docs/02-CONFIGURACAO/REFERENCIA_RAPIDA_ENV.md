@@ -11,6 +11,7 @@ DATABASE_URL="mongodb://localhost:27017/blog?replicaSet=rs0&directConnection=tru
 ```
 
 **Setup:**
+
 ```bash
 docker run -d --name mongodb -p 27017:27017 mongo:7 --replSet rs0
 docker exec mongodb mongosh --eval "rs.initiate()"
@@ -30,6 +31,7 @@ DYNAMODB_TABLE_PREFIX=blog-prod
 ```
 
 **Deploy:**
+
 ```bash
 serverless deploy --stage prod
 ```
@@ -44,6 +46,7 @@ DYNAMODB_TABLE_PREFIX=blog-test
 ```
 
 **Setup:**
+
 ```bash
 npm run docker:dynamodb
 npm run dynamodb:create-tables
@@ -55,6 +58,7 @@ npm run dev
 ## 📋 Variáveis Essenciais
 
 ### Sempre Necessárias
+
 ```bash
 NODE_ENV=development|production|test
 PORT=4000
@@ -62,11 +66,13 @@ DATABASE_PROVIDER=PRISMA|DYNAMODB
 ```
 
 ### Se DATABASE_PROVIDER=PRISMA
+
 ```bash
 DATABASE_URL="mongodb://localhost:27017/blog?replicaSet=rs0&directConnection=true"
 ```
 
 ### Se DATABASE_PROVIDER=DYNAMODB
+
 ```bash
 AWS_REGION=us-east-1
 DYNAMODB_TABLE_PREFIX=blog
@@ -74,6 +80,7 @@ DYNAMODB_ENDPOINT=http://localhost:8000  # Apenas dev/test
 ```
 
 ### Cognito (Autenticação)
+
 ```bash
 COGNITO_USER_POOL_ID=us-east-1_XXXXXXXXX
 COGNITO_CLIENT_ID=xxxxxxxxxxxxxxxxxxxxxxxxxx
@@ -85,12 +92,14 @@ COGNITO_REGION=us-east-1
 ## 🚀 Comandos Rápidos
 
 ### Setup Inicial
+
 ```bash
 cp env.example .env    # Copiar configuração
 npm install            # Instalar dependências
 ```
 
 ### Prisma (MongoDB)
+
 ```bash
 npm run prisma:generate    # Gerar Prisma Client
 npm run prisma:push        # Sincronizar schema
@@ -99,6 +108,7 @@ npm run seed               # Popular banco
 ```
 
 ### DynamoDB
+
 ```bash
 npm run docker:dynamodb           # Subir DynamoDB Local
 npm run dynamodb:create-tables    # Criar tabelas
@@ -107,6 +117,7 @@ npm run dynamodb:list-tables      # Listar tabelas
 ```
 
 ### Desenvolvimento
+
 ```bash
 npm run dev           # Servidor com hot reload
 npm test              # Rodar testes
@@ -132,17 +143,20 @@ Independente do provider, o projeto tem **7 modelos**:
 ## ✅ Checklist Rápido
 
 ### MongoDB (PRISMA)
+
 - [ ] MongoDB rodando
 - [ ] Replica Set iniciado
 - [ ] `DATABASE_URL` configurada
 - [ ] Prisma Client gerado
 
 ### DynamoDB
+
 - [ ] DynamoDB Local ou AWS configurado
 - [ ] Tabelas criadas
 - [ ] `DYNAMODB_TABLE_PREFIX` definido
 
 ### Geral
+
 - [ ] `.env` criado
 - [ ] `DATABASE_PROVIDER` definido
 - [ ] Cognito configurado
@@ -153,6 +167,7 @@ Independente do provider, o projeto tem **7 modelos**:
 ## 🆘 Problemas Comuns
 
 ### MongoDB não conecta
+
 ```bash
 # Verificar replica set
 docker exec mongodb mongosh --eval "rs.status()"
@@ -162,6 +177,7 @@ docker restart mongodb
 ```
 
 ### Prisma Client não gerado
+
 ```bash
 npm run prisma:generate
 rm -rf node_modules/.prisma
@@ -169,6 +185,7 @@ npm install
 ```
 
 ### DynamoDB não conecta
+
 ```bash
 # Verificar container
 docker ps | grep blogapi-dynamodb
@@ -200,4 +217,3 @@ DATABASE_PROVIDER=DYNAMODB
 ```
 
 **Melhor dos dois mundos!** 🚀
-

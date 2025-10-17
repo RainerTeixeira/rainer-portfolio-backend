@@ -61,11 +61,11 @@ npm run seed
 
 | Username | Email | Role | Descrição |
 |----------|-------|------|-----------|
-| `admin` | admin@blog.com | ADMIN | Administrador do sistema |
-| `editor` | editor@blog.com | EDITOR | Editora de conteúdo |
-| `joaodev` | joao@blog.com | AUTHOR | Desenvolvedor Full Stack |
-| `anadesigner` | ana@blog.com | AUTHOR | Designer UX/UI |
-| `carlosleitor` | carlos@example.com | SUBSCRIBER | Leitor do blog |
+| `admin` | <admin@blog.com> | ADMIN | Administrador do sistema |
+| `editor` | <editor@blog.com> | EDITOR | Editora de conteúdo |
+| `joaodev` | <joao@blog.com> | AUTHOR | Desenvolvedor Full Stack |
+| `anadesigner` | <ana@blog.com> | AUTHOR | Designer UX/UI |
+| `carlosleitor` | <carlos@example.com> | SUBSCRIBER | Leitor do blog |
 
 **⚠️ Importante:** Usuários **não têm senha no Cognito**. Para login real, use `/auth/register`.
 
@@ -99,6 +99,7 @@ npm run seed
 | AWS Lambda: Serverless | DevOps | João | 0 | 0 | DRAFT |
 
 **Características:**
+
 - 7 publicados, 1 rascunho
 - 3 em destaque (featured)
 - Conteúdo Tiptap JSON válido
@@ -112,6 +113,7 @@ npm run seed
 - ✅ 1 comentário aguardando moderação
 
 **Threads:**
+
 ```
 Post "React 18"
 └── Carlos: "Excelente artigo! O Concurrent Rendering..."
@@ -121,11 +123,13 @@ Post "React 18"
 ### ❤️ Likes (11) | 🔖 Bookmarks (5) | 🔔 Notificações (5)
 
 **Bookmarks com coleções:**
+
 - Carlos: "Para Ler Depois", "Estudar"
 - Ana: "Favoritos", "Aprender Backend"
 - João: "Design Inspiration"
 
 **Notificações:**
+
 - João: 3 notificações (1 não lida)
 - Ana: 1 notificação (não lida)
 - Carlos: 1 notificação (sistema)
@@ -196,11 +200,11 @@ curl http://localhost:4000/categories
 npm run prisma:studio
 ```
 
-Abre em: **http://localhost:5555**
+Abre em: **<http://localhost:5555>**
 
 ### Opção 3: Swagger UI
 
-1. Acesse: **http://localhost:4000/docs**
+1. Acesse: **<http://localhost:4000/docs>**
 2. Teste qualquer endpoint GET
 3. Veja os dados retornados
 
@@ -211,7 +215,7 @@ Abre em: **http://localhost:5555**
 ### Adicionar Mais Usuários
 
 ```typescript
-// src/prisma/seed.ts
+// src/prisma/mongodb.seed.ts
 const users = [
   // ... usuários existentes
   {
@@ -256,13 +260,14 @@ npm run seed  # Limpa e recria tudo
 
 ## 🔄 Re-executar o Seed
 
-### ⚠️ Atenção: Seed LIMPA o banco antes!
+### ⚠️ Atenção: Seed LIMPA o banco antes
 
 ```bash
 npm run seed
 ```
 
 Isso vai:
+
 1. ✅ Deletar **todos** os dados existentes
 2. ✅ Criar dados novos do zero
 
@@ -373,7 +378,7 @@ Após executar o seed:
 
 ## 🎯 Próximos Passos
 
-1. ✅ **Explorar Swagger:** http://localhost:4000/docs
+1. ✅ **Explorar Swagger:** <http://localhost:4000/docs>
 2. ✅ **Testar CRUD** com dados reais
 3. ✅ **Ver hierarquia** de categorias
 4. ✅ **Testar threads** de comentários

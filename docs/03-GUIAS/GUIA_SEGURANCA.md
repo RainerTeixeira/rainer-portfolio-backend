@@ -116,6 +116,7 @@ contentSecurityPolicy: {
 ```
 
 **⚠️ Nota sobre Swagger:**
+
 - `unsafe-inline` e `unsafe-eval` são necessários para o Swagger UI funcionar
 - Em produção, considere servir Swagger em subdomínio separado com CSP mais rigoroso
 
@@ -206,6 +207,7 @@ email: z
 ```
 
 **Validações:**
+
 - ✅ Email único e formato válido
 - ✅ Bloqueio de emails temporários (tempmail, guerrillamail, etc)
 - ✅ Username sem espaços ou caracteres especiais
@@ -226,6 +228,7 @@ title: z
 ```
 
 **Validações:**
+
 - ✅ Título: 10-100 caracteres
 - ✅ Slug: formato kebab-case
 - ✅ Conteúdo: estrutura JSON Tiptap válida
@@ -253,6 +256,7 @@ function isLikelySpam(content: string): boolean {
 ```
 
 **Validações:**
+
 - ✅ Conteúdo não vazio (3+ caracteres)
 - ✅ Anti-spam automático (keywords, padrões, URLs)
 - ✅ Máximo 30% de maiúsculas
@@ -269,6 +273,7 @@ function isLikelySpam(content: string): boolean {
 A aplicação **não gerencia senhas diretamente**. Todas as credenciais são gerenciadas pelo AWS Cognito.
 
 **Benefícios:**
+
 - ✅ Senhas nunca tocam a aplicação
 - ✅ Hashing seguro (bcrypt) gerenciado pela AWS
 - ✅ MFA (Multi-Factor Authentication) disponível
@@ -421,6 +426,7 @@ export const logger = pino({
 #### Dados que NUNCA são logados
 
 ❌ **PROIBIDO:**
+
 - Senhas (plain text)
 - Tokens JWT completos
 - Números de cartão de crédito
@@ -428,6 +434,7 @@ export const logger = pino({
 - Chaves de API
 
 ✅ **PERMITIDO:**
+
 - User IDs (MongoDB ObjectId)
 - Email (apenas em logs de debug)
 - IP Address (GDPR compliant)
@@ -455,6 +462,7 @@ logger.info({
 #### Prisma (MongoDB)
 
 **Proteções automáticas:**
+
 - ✅ Prepared statements (SQL Injection impossível)
 - ✅ Type-safe queries (TypeScript)
 - ✅ Unique constraints (email, username, slug)
@@ -470,6 +478,7 @@ const user = await prisma.user.findUnique({
 #### DynamoDB
 
 **Proteções:**
+
 - ✅ IAM Roles (acesso via credenciais AWS)
 - ✅ DocumentClient (sanitização automática)
 - ✅ Condition expressions (operações atômicas)
@@ -621,4 +630,3 @@ logger.audit({
 **Última Atualização:** 16/10/2025  
 **Versão:** 4.1.0  
 **Status:** ✅ Implementado
-

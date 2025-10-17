@@ -3,25 +3,30 @@
 ## ✅ O QUE FOI FEITO
 
 ### 1. Instalação de Dependências
+
 ✅ Tentou instalar `@nestjs/testing` (já estava instalado)
 
 ### 2. Correções nos Mocks (tests/helpers/mocks.ts)
 
 ✅ **Imports Adicionados:**
+
 ```typescript
 import { UserRole } from '../../src/modules/users/user.model';
 import { PostStatus } from '../../src/modules/posts/post.model';
 ```
 
 ✅ **createMockUser** atualizado:
+
 - `role: UserRole.AUTHOR` (enum correto)
 - Removido `isVerified` (campo não existe)
 
 ✅ **createMockPost** atualizado:
+
 - `status: PostStatus.PUBLISHED` (enum correto)
 - Adicionados campos: `allowComments`, `pinned`, `priority`
 
 ✅ **createMockCognitoAuthResponse** atualizado:
+
 ```typescript
 $metadata: {
   httpStatusCode: 200,
@@ -32,21 +37,25 @@ $metadata: {
 ```
 
 ✅ **createMockCognitoSignUpResponse** atualizado:
+
 - Adicionado `$metadata`
 
 ### 3. Correções em Auth Tests
 
 ✅ **auth.service.test.ts:**
+
 - Mocks vazios agora têm `{ $metadata: {} } as any`
 - 4 correções aplicadas
 
 ✅ **auth.repository.test.ts:**
+
 - Mocks vazios agora têm `{ $metadata: {} }`
 - 3 correções aplicadas
 
 ### 4. Correções em Users Tests
 
 ✅ **users.service.test.ts:**
+
 - Estrutura corrigida: `users` e `pagination`
 - Adicionado `email_verified: true` ao CognitoTokenPayload
 - `delete()` retorna `true` ao invés de `undefined`
@@ -54,11 +63,13 @@ $metadata: {
 - 6 correções aplicadas
 
 ✅ **users.controller.test.ts:**
+
 - Estrutura corrigida: `users` e `pagination`
 - Removido método `verifyUserEmail` que não existe
 - 3 correções aplicadas
 
 ✅ **users.repository.test.ts:**
+
 - Uso correto de `UserRole.ADMIN` com require dinâmico
 - 2 correções aplicadas
 
@@ -108,6 +119,7 @@ $metadata: {
 ### 1. Imports de Módulos ❌
 
 **Problema:** Alguns arquivos não encontram módulos
+
 ```
 Cannot find module '@nestjs/testing'
 Cannot find module '../../../src/prisma/prisma.service'
@@ -124,6 +136,7 @@ Cannot find module '../../../src/prisma/prisma.service'
 ### 3. Métodos que Não Existem ❌
 
 **Problemas:**
+
 - `CategoriesService.listCategories()` → deve ser `listSubcategories(parentId)`
 - `LikesService.likeTarget()` → verificar nome real
 - `BookmarksService.removeBookmark()` → verificar nome real
@@ -142,6 +155,7 @@ Cannot find module '../../../src/prisma/prisma.service'
 ## 💡 ESTATÍSTICAS
 
 ### Arquivos Editados
+
 - ✅ `tests/helpers/mocks.ts` - 5 alterações
 - ✅ `tests/modules/auth/auth.service.test.ts` - 4 alterações
 - ✅ `tests/modules/auth/auth.repository.test.ts` - 3 alterações
@@ -165,6 +179,7 @@ Cannot find module '../../../src/prisma/prisma.service'
 ## 🚀 PRÓXIMOS PASSOS RECOMENDADOS
 
 ### Opção 1: Correção Completa (2-3 horas)
+
 1. Corrigir imports faltantes
 2. Ajustar estrutura de Posts
 3. Verificar e corrigir métodos inexistentes
@@ -172,11 +187,13 @@ Cannot find module '../../../src/prisma/prisma.service'
 5. Executar e verificar todos os testes
 
 ### Opção 2: Simplificação (30 minutos)
+
 1. Manter apenas testes que passam
 2. Deletar testes problemáticos temporariamente
 3. Adicionar testes gradualmente conforme código evolui
 
 ### Opção 3: Status Quo (Agora)
+
 - **22 testes funcionando** ✅
 - **Infraestrutura completa** ✅
 - **Padrões profissionais** ✅
@@ -230,4 +247,3 @@ Mesmo com 30% de cobertura atual:
 aestrutura:** ⭐⭐⭐⭐⭐ (5/5)  
 **Cobertura Atual:** ⭐⭐⭐☆☆ (3/5)  
 **Potencial Futuro:** ⭐⭐⭐⭐⭐ (5/5)
-

@@ -65,6 +65,7 @@ modules/<nome>/
 ### Decorators Utilizados
 
 #### Controllers
+
 - ✅ `@Controller()` - Define rota base
 - ✅ `@ApiTags()` - Agrupamento Swagger
 - ✅ `@Post()`, `@Get()`, `@Put()`, `@Delete()`, `@Patch()` - HTTP methods
@@ -74,12 +75,14 @@ modules/<nome>/
 - ✅ `@Body()`, `@Param()`, `@Query()` - Extração de dados
 
 #### Services
+
 - ✅ `@Injectable()` - Habilita DI
 - ✅ Constructor injection
 - ✅ Métodos async/await
 - ✅ Tratamento de exceções
 
 #### Modules
+
 - ✅ `@Module()` - Configuração de módulo
 - ✅ `@Global()` (PrismaModule) - Módulo global
 - ✅ imports, controllers, providers, exports
@@ -87,6 +90,7 @@ modules/<nome>/
 ### Dependency Injection
 
 **Exemplo (PostsService):**
+
 ```typescript
 @Injectable()
 export class PostsService {
@@ -131,6 +135,7 @@ export class PostsRepository {
 | **Notification** | 9 | 1 | 5 | ✅ 100% |
 
 **Total:**
+
 - 7 models
 - 75+ campos
 - 19 relações
@@ -207,6 +212,7 @@ src/                          tests/
 ```
 
 **Total:**
+
 - **Arquivos testáveis:** 36
 - **Testes criados:** 36
 - **Conformidade:** 100% ✅
@@ -214,12 +220,13 @@ src/                          tests/
 ### Arquivos Corretamente NÃO Testados
 
 ✅ **41 arquivos** que não precisam de testes unitários:
+
 - 9× `*.model.ts` - Apenas interfaces TypeScript
 - 9× `*.schema.ts` - Schemas Zod (testados indiretamente)
 - 9× `*.module.ts` - Configuração NestJS (testados E2E)
 - 9× `index.ts` - Barrel exports
 - 2× Arquivos de configuração (schema.prisma, serverless.yml)
-- 2× Scripts (seed.ts, main.ts)
+- 4× Scripts (mongodb.seed.ts, dynamodb.seed.ts, dynamodb.tables.ts, main.ts)
 - 1× app.module.ts
 
 ### Tipos de Teste
@@ -271,20 +278,24 @@ tests/
 ### Módulos por Categoria
 
 **Autenticação (2):**
+
 - auth - Autenticação Cognito
 - users - Gerenciamento de usuários
 
 **Conteúdo (4):**
+
 - posts - Artigos do blog
 - categories - Categorias hierárquicas
 - comments - Sistema de comentários
 - notifications - Sistema de notificações
 
 **Interações (2):**
+
 - likes - Curtidas em posts
 - bookmarks - Posts salvos
 
 **Sistema (1):**
+
 - health - Monitoramento e health checks
 
 ---
@@ -329,6 +340,7 @@ tests/
 ## ✅ 7. Validações Implementadas
 
 ### Users
+
 - ✅ Email único e formato válido
 - ✅ Username único (regex, sem espaços)
 - ✅ Senha forte (8+ chars, maiúscula, minúscula, número, especial)
@@ -337,6 +349,7 @@ tests/
 - ✅ Validação de roles (enum)
 
 ### Posts
+
 - ✅ Título: 10-100 caracteres
 - ✅ Slug: formato kebab-case
 - ✅ Conteúdo: estrutura JSON Tiptap válida
@@ -346,6 +359,7 @@ tests/
 - ✅ Status enum válido
 
 ### Comments
+
 - ✅ Conteúdo não vazio (3+ caracteres)
 - ✅ Anti-spam (keywords, padrões, URLs)
 - ✅ Máximo 30% de maiúsculas
@@ -387,6 +401,7 @@ tests/
 ## 🎯 9. Features Completas
 
 ### Autenticação (6 features)
+
 - ✅ Amazon Cognito integrado
 - ✅ Sincronização Cognito ↔ MongoDB
 - ✅ JWT tokens
@@ -395,6 +410,7 @@ tests/
 - ✅ Refresh tokens
 
 ### Gerenciamento de Posts (8 features)
+
 - ✅ Editor rich text (Tiptap JSON)
 - ✅ Categorização hierárquica (2 níveis)
 - ✅ Estatísticas em tempo real
@@ -405,6 +421,7 @@ tests/
 - ✅ Paginação
 
 ### Sistema de Comentários (6 features)
+
 - ✅ Comentários em posts
 - ✅ Threads (respostas aninhadas)
 - ✅ Sistema de moderação
@@ -413,6 +430,7 @@ tests/
 - ✅ Reportar comentários
 
 ### Categorização (6 features)
+
 - ✅ 2 níveis (Categoria → Subcategoria)
 - ✅ Posts sempre em subcategorias
 - ✅ Cores e ícones personalizados
@@ -421,12 +439,14 @@ tests/
 - ✅ Contador de posts
 
 ### Interações Sociais (4 features)
+
 - ✅ Likes com validação de duplicação
 - ✅ Bookmarks com coleções
 - ✅ Notas privadas em bookmarks
 - ✅ Contadores em tempo real
 
 ### Notificações (5 features)
+
 - ✅ 6 tipos de notificações
 - ✅ Marcar como lida
 - ✅ Contador de não lidas
@@ -537,6 +557,7 @@ tests/
 ## ✅ Checklist de Qualidade
 
 ### Arquitetura
+
 - [x] Modular (9 módulos independentes)
 - [x] Repository Pattern implementado
 - [x] Dependency Injection em todos os services
@@ -544,6 +565,7 @@ tests/
 - [x] Single Responsibility Principle
 
 ### Código
+
 - [x] TypeScript Strict Mode ativo
 - [x] 0 erros de compilação
 - [x] 0 erros de lint
@@ -551,6 +573,7 @@ tests/
 - [x] Código limpo e legível
 
 ### Testes
+
 - [x] ~99% de cobertura
 - [x] 478+ casos de teste
 - [x] 100% test suites passando
@@ -558,6 +581,7 @@ tests/
 - [x] Mocks apropriados
 
 ### Documentação
+
 - [x] README consolidado e completo
 - [x] Swagger UI configurado
 - [x] JSDoc em todos os métodos
@@ -565,6 +589,7 @@ tests/
 - [x] Diagramas e exemplos
 
 ### Segurança
+
 - [x] Helmet implementado
 - [x] CORS configurado
 - [x] Zod validation em todos endpoints
@@ -574,6 +599,7 @@ tests/
 - [x] OWASP Top 10 compliance
 
 ### Performance
+
 - [x] Fastify (alta performance)
 - [x] Índices otimizados (37)
 - [x] Queries otimizadas
@@ -608,4 +634,3 @@ O projeto está em **excelente estado técnico** e pode ser usado em ambiente de
 **Versão analisada:** 4.1.1  
 **Metodologia:** Análise de código, testes, documentação e segurança  
 **Status:** ✅ Aprovado com Excelência
-

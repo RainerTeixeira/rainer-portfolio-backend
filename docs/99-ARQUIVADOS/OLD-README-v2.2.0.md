@@ -3,6 +3,7 @@
 API RESTful completa para blog com **arquitetura híbrida**: desenvolvimento local com **NestJS + MongoDB + Prisma** e produção serverless na **AWS com Lambda + DynamoDB + Cognito**.
 
 ### 💻 Desenvolvimento Local
+
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
 [![NestJS](https://img.shields.io/badge/NestJS-11-red?style=flat-square&logo=nestjs)](https://nestjs.com/)
 [![Prisma](https://img.shields.io/badge/Prisma-6.17-teal?style=flat-square&logo=prisma)](https://www.prisma.io/)
@@ -11,6 +12,7 @@ API RESTful completa para blog com **arquitetura híbrida**: desenvolvimento loc
 [![Coverage](https://img.shields.io/badge/Coverage-~99%25-brightgreen?style=flat-square)]()
 
 ### ☁️ Produção AWS
+
 [![AWS Lambda](https://img.shields.io/badge/AWS%20Lambda-Node.js%2020-orange?style=flat-square&logo=awslambda)](https://aws.amazon.com/lambda/)
 [![DynamoDB](https://img.shields.io/badge/DynamoDB-NoSQL-blue?style=flat-square&logo=amazondynamodb)](https://aws.amazon.com/dynamodb/)
 [![Cognito](https://img.shields.io/badge/Cognito-Auth-red?style=flat-square&logo=amazonaws)](https://aws.amazon.com/cognito/)
@@ -32,9 +34,10 @@ npm run dev
 ```
 
 **🎉 Pronto!**
-- 📝 **API**: http://localhost:4000
-- 📚 **Swagger**: http://localhost:4000/docs
-- 💚 **Health**: http://localhost:4000/health
+
+- 📝 **API**: <http://localhost:4000>
+- 📚 **Swagger**: <http://localhost:4000/docs>
+- 💚 **Health**: <http://localhost:4000/health>
 
 ---
 
@@ -43,6 +46,7 @@ npm run dev
 ### Stack Tecnológica
 
 #### Desenvolvimento Local
+
 | Camada | Tecnologia | Versão |
 |--------|-----------|--------|
 | **Framework** | NestJS + Fastify | 11.x + 4.28 |
@@ -56,6 +60,7 @@ npm run dev
 | **Docs** | Swagger/OpenAPI | 3.0 |
 
 #### Produção AWS (Serverless)
+
 | Camada | Tecnologia | Descrição |
 |--------|-----------|-----------|
 | **Autenticação** | Amazon Cognito | User Pool para login, cadastro, recuperação de senha |
@@ -66,6 +71,7 @@ npm run dev
 | **Runtime** | Node.js 20 | Runtime das funções Lambda |
 
 **💡 Estratégia Híbrida:**
+
 - **Dev**: MongoDB + Prisma (rápido, produtivo)
 - **Prod**: DynamoDB + AWS SDK (escalável, serverless)
 
@@ -162,12 +168,14 @@ POST   /auth/reset-password    # Redefinir senha
 ## 📡 API Endpoints (65 endpoints)
 
 ### 💚 Health Check (2)
+
 ```
 GET    /health              # Status básico
 GET    /health/detailed     # Status detalhado (memory, uptime, DB)
 ```
 
 ### 👤 Users (7)
+
 ```
 POST   /users               # Criar usuário
 GET    /users               # Listar (paginado)
@@ -179,6 +187,7 @@ PATCH  /users/:id/ban       # Banir/Desbanir
 ```
 
 ### 📄 Posts (10)
+
 ```
 POST   /posts                    # Criar post
 GET    /posts                    # Listar (filtros: status, subcategory, author, featured)
@@ -193,6 +202,7 @@ PATCH  /posts/:id/unpublish      # Despublicar
 ```
 
 ### 🏷️ Categories (7)
+
 ```
 POST   /categories                      # Criar categoria/subcategoria
 GET    /categories                      # Listar principais
@@ -204,6 +214,7 @@ DELETE /categories/:id                  # Deletar
 ```
 
 ### 💬 Comments (8)
+
 ```
 POST   /comments                        # Criar comentário
 GET    /comments/:id                    # Buscar por ID
@@ -216,6 +227,7 @@ PATCH  /comments/:id/disapprove         # Reprovar
 ```
 
 ### ❤️ Likes (6)
+
 ```
 POST   /likes                      # Curtir post
 DELETE /likes/:userId/:postId     # Descurtir
@@ -226,6 +238,7 @@ GET    /likes/:userId/:postId      # Verificar se curtiu
 ```
 
 ### 🔖 Bookmarks (7)
+
 ```
 POST   /bookmarks                      # Salvar post
 GET    /bookmarks/:id                  # Buscar por ID
@@ -237,6 +250,7 @@ DELETE /bookmarks/:userId/:postId     # Remover favorito
 ```
 
 ### 🔔 Notifications (9)
+
 ```
 POST   /notifications                      # Criar notificação
 GET    /notifications/:id                  # Buscar por ID
@@ -249,13 +263,14 @@ PATCH  /notifications/user/:userId/read-all  # Marcar todas
 GET    /notifications/user/:userId?unread=true  # Apenas não lidas
 ```
 
-📖 **Documentação Completa Interativa**: http://localhost:4000/docs
+📖 **Documentação Completa Interativa**: <http://localhost:4000/docs>
 
 ---
 
 ## 🗄️ Modelos de Dados (7 Models)
 
 ### User
+
 ```typescript
 interface User {
   id: string;                    // MongoDB ObjectId
@@ -279,6 +294,7 @@ interface User {
 ```
 
 ### Post
+
 ```typescript
 interface Post {
   id: string;
@@ -303,6 +319,7 @@ interface Post {
 ```
 
 ### Category (Hierárquica - 2 níveis)
+
 ```typescript
 interface Category {
   id: string;
@@ -329,6 +346,7 @@ interface Category {
 ## 🔧 Instalação
 
 ### Pré-requisitos
+
 - Node.js 18+ (recomendado: 20.x)
 - Docker Desktop (para MongoDB)
 - npm ou yarn
@@ -412,6 +430,7 @@ docker exec mongodb mongosh --eval "rs.status()"
 ## 💻 Scripts Disponíveis
 
 ### Desenvolvimento
+
 ```bash
 npm run dev              # Servidor com hot reload (tsx)
 npm run start:dev        # NestJS CLI watch mode
@@ -419,12 +438,14 @@ npm run start:debug      # Debug mode (port 9229)
 ```
 
 ### Build & Produção
+
 ```bash
 npm run build            # Build com NestJS CLI
 npm run start:prod       # Produção (dist/main.js)
 ```
 
 ### Database (Prisma)
+
 ```bash
 npm run prisma:generate  # Gerar Prisma Client
 npm run prisma:push      # Sync schema → MongoDB
@@ -434,6 +455,7 @@ npm run seed             # Popular banco
 ```
 
 ### Testes
+
 ```bash
 npm test                 # Rodar todos os testes
 npm run test:watch       # Watch mode
@@ -441,6 +463,7 @@ npm run test:coverage    # Cobertura de código
 ```
 
 ### Qualidade
+
 ```bash
 npm run lint             # ESLint
 npm run lint:fix         # Fix automático
@@ -448,6 +471,7 @@ npm run format           # Prettier
 ```
 
 ### Docker
+
 ```bash
 npm run docker:up        # Subir containers
 npm run docker:down      # Parar containers
@@ -459,7 +483,9 @@ npm run docker:logs      # Ver logs
 ## 🎯 Módulos NestJS (9 módulos)
 
 ### 1. 🔐 Auth Module
+
 **Responsabilidade**: Autenticação via AWS Cognito
+
 - Login/Registro
 - Verificação de email
 - Recuperação de senha
@@ -469,7 +495,9 @@ npm run docker:logs      # Ver logs
 **Arquivos**: 7 (controller, service, repository, module, model, schema, index)
 
 ### 2. 👤 Users Module
+
 **Responsabilidade**: Gerenciamento de usuários
+
 - CRUD de usuários
 - Perfis complementares
 - Roles (ADMIN, EDITOR, AUTHOR, SUBSCRIBER)
@@ -479,7 +507,9 @@ npm run docker:logs      # Ver logs
 **Arquivos**: 7
 
 ### 3. 📄 Posts Module
+
 **Responsabilidade**: Artigos do blog
+
 - CRUD de posts
 - Rich text (Tiptap JSON)
 - Status workflow (DRAFT → PUBLISHED)
@@ -489,7 +519,9 @@ npm run docker:logs      # Ver logs
 **Arquivos**: 7
 
 ### 4. 🏷️ Categories Module
+
 **Responsabilidade**: Organização hierárquica (2 níveis)
+
 - Categorias principais (parentId = null)
 - Subcategorias (parentId != null)
 - **Regra**: Posts sempre pertencem a SUBCATEGORIAS
@@ -498,7 +530,9 @@ npm run docker:logs      # Ver logs
 **Arquivos**: 7
 
 ### 5. 💬 Comments Module
+
 **Responsabilidade**: Sistema de comentários
+
 - Comentários em posts
 - Threads (respostas via parentId)
 - Moderação (approve/disapprove)
@@ -507,7 +541,9 @@ npm run docker:logs      # Ver logs
 **Arquivos**: 7
 
 ### 6. ❤️ Likes Module
+
 **Responsabilidade**: Curtidas em posts
+
 - Like/Unlike
 - Contador de likes
 - Validação de duplicação
@@ -516,7 +552,9 @@ npm run docker:logs      # Ver logs
 **Arquivos**: 7
 
 ### 7. 🔖 Bookmarks Module
+
 **Responsabilidade**: Posts salvos
+
 - Salvar/Remover posts
 - Coleções personalizadas
 - Notas privadas
@@ -524,7 +562,9 @@ npm run docker:logs      # Ver logs
 **Arquivos**: 7
 
 ### 8. 🔔 Notifications Module
+
 **Responsabilidade**: Sistema de notificações
+
 - Notificações (NEW_COMMENT, NEW_LIKE, etc)
 - Marcar como lida
 - Contador de não lidas
@@ -532,7 +572,9 @@ npm run docker:logs      # Ver logs
 **Arquivos**: 7
 
 ### 9. 💚 Health Module
+
 **Responsabilidade**: Monitoramento
+
 - Status da API
 - Métricas (memory, uptime, DB status)
 
@@ -695,6 +737,7 @@ export class PostsRepository {
 ## ✨ Features Principais
 
 ### ✅ Autenticação Completa
+
 - 🔐 Amazon Cognito (gerenciamento de credenciais)
 - 🔄 Sincronização automática Cognito ↔ MongoDB
 - 🔑 JWT tokens
@@ -703,6 +746,7 @@ export class PostsRepository {
 - 🔄 Refresh tokens
 
 ### ✅ Gerenciamento de Posts
+
 - 📝 Editor rich text (Tiptap JSON)
 - 🏷️ Categorização hierárquica (2 níveis)
 - 📊 Estatísticas em tempo real (views, likes, comments)
@@ -713,6 +757,7 @@ export class PostsRepository {
 - 📄 Paginação em todas as listagens
 
 ### ✅ Sistema de Comentários
+
 - 💬 Comentários em posts
 - 🔗 Threads (respostas aninhadas)
 - ✅ Sistema de moderação (aprovar/reprovar)
@@ -721,6 +766,7 @@ export class PostsRepository {
 - 🚫 Reportar comentários
 
 ### ✅ Categorização Hierárquica
+
 - 🌳 2 níveis (Categoria Principal → Subcategoria)
 - **Regra de negócio**: Posts sempre em subcategorias
 - 🎨 Cores e ícones personalizados
@@ -729,12 +775,14 @@ export class PostsRepository {
 - 📊 Contador de posts
 
 ### ✅ Interações Sociais
+
 - ❤️ Likes em posts (validação de duplicação)
 - 🔖 Bookmarks com coleções personalizadas
 - 📝 Notas privadas em bookmarks
 - 📊 Contadores em tempo real
 
 ### ✅ Sistema de Notificações
+
 - 🔔 6 tipos (NEW_COMMENT, NEW_LIKE, NEW_FOLLOWER, POST_PUBLISHED, MENTION, SYSTEM)
 - 📨 Marcar como lida
 - 🔢 Contador de não lidas
@@ -742,6 +790,7 @@ export class PostsRepository {
 - 📦 Metadata customizável
 
 ### ✅ Observabilidade
+
 - 💚 Health checks (básico + detalhado)
 - 📊 Métricas de sistema (memory, uptime)
 - 📝 Logger estruturado (Pino)
@@ -754,11 +803,13 @@ export class PostsRepository {
 ### Validações Implementadas
 
 #### Users
+
 - ✅ Email único e formato válido
 - ✅ Username único (sem espaços, caracteres especiais)
 - ✅ Validação de roles (enum)
 
 #### Posts
+
 - ✅ Título: 10-100 caracteres
 - ✅ Slug: formato kebab-case
 - ✅ Conteúdo: estrutura JSON válida
@@ -766,6 +817,7 @@ export class PostsRepository {
 - ✅ Subcategoria obrigatória
 
 #### Comments
+
 - ✅ Conteúdo não vazio
 - ✅ Moderação (isApproved)
 - ✅ Validação de parentId (threads)
@@ -785,6 +837,7 @@ export class PostsRepository {
 ## 📊 Métricas do Projeto
 
 ### Código
+
 - **Arquivos TypeScript**: 63 (src)
 - **Linhas de Código**: ~4.000
 - **Módulos NestJS**: 9
@@ -793,6 +846,7 @@ export class PostsRepository {
 - **Enums**: 3
 
 ### Testes
+
 - **Arquivos de Teste**: 41
 - **Casos de Teste**: 478+
 - **Cobertura**: ~99%
@@ -800,6 +854,7 @@ export class PostsRepository {
 - **Tempo de Execução**: ~35 segundos
 
 ### Qualidade
+
 - **TypeScript Strict**: ✅ Habilitado
 - **ESLint**: 0 erros
 - **Prettier**: Formatado
@@ -826,6 +881,7 @@ sam deploy --config-env prod
 ```
 
 **Recursos criados automaticamente** (via template.yaml):
+
 - ✅ **Lambda Functions** (Node.js 20) - Lógica da aplicação
 - ✅ **Lambda Function URLs** - Endpoints HTTPS públicos (sem API Gateway)
 - ✅ **Amazon Cognito User Pool** - Autenticação de usuários
@@ -838,6 +894,7 @@ sam deploy --config-env prod
 ### 🔒 Autenticação em Produção
 
 **Lambda Function URLs + Cognito JWT:**
+
 1. Usuário faz login via Cognito → recebe JWT token
 2. Frontend envia token no header: `Authorization: Bearer <token>`
 3. Lambda valida JWT antes de processar requisição
@@ -855,6 +912,7 @@ sam deploy --config-env prod
 | **TOTAL** | - | **R$ 0,00/mês** 🎉 |
 
 **💡 Observações:**
+
 - DynamoDB: Use modo **on-demand** (PAY_PER_REQUEST) para evitar custos de capacidade provisionada
 - MongoDB Atlas: Apenas para desenvolvimento local (não usado em produção AWS)
 - Lambda Function URLs: Mais econômico que API Gateway ($1/milhão vs $3.50/milhão)
@@ -864,20 +922,23 @@ sam deploy --config-env prod
 ## 📚 Documentação Adicional
 
 ### Guias Técnicos
+
 - `COMECE_AQUI_NESTJS.md` - Guia inicial NestJS
 - `RELATORIO_100_COBERTURA.md` - Relatório de testes
 - `INTEGRACAO_AUTH_USERS_CONCLUIDA.md` - Integração Auth ↔ Users
 - `ANALISE_COMPATIBILIDADE_PRISMA_FINAL.md` - Compatibilidade Prisma
 
 ### Documentação de Arquitetura
+
 - `CONFORMIDADE_100_PORCENTO.md` - Conformidade dos módulos
 - `COMPARACAO_ESTRUTURAS_MODULOS.md` - Padrões dos módulos
 - `BARREL_EXPORTS_COMPLETO.md` - Barrel exports (index.ts)
 
 ### Swagger UI
-- **URL**: http://localhost:4000/docs
-- **JSON**: http://localhost:4000/docs/json
-- **YAML**: http://localhost:4000/docs/yaml
+
+- **URL**: <http://localhost:4000/docs>
+- **JSON**: <http://localhost:4000/docs/json>
+- **YAML**: <http://localhost:4000/docs/yaml>
 
 ---
 
@@ -942,6 +1003,7 @@ PORT=3000
 ## 🎯 Características Técnicas
 
 ### Arquitetura NestJS
+
 - ✅ **Modular**: 9 módulos independentes
 - ✅ **Dependency Injection**: DI automático
 - ✅ **Decorators**: Código limpo e declarativo
@@ -950,6 +1012,7 @@ PORT=3000
 - ✅ **Exception Filters**: Tratamento global de erros
 
 ### Padrões Implementados
+
 - ✅ **Repository Pattern**: Camada de acesso a dados
 - ✅ **Service Layer**: Lógica de negócio isolada
 - ✅ **DTO Pattern**: Data Transfer Objects
@@ -958,6 +1021,7 @@ PORT=3000
 - ✅ **Factory Pattern**: Criação de instâncias
 
 ### Type-Safety
+
 - ✅ TypeScript strict mode
 - ✅ Prisma Client (types automáticos)
 - ✅ Zod runtime validation
@@ -965,6 +1029,7 @@ PORT=3000
 - ✅ Enum TypeScript sincronizados com Prisma
 
 ### Performance
+
 - ✅ Fastify (65k req/s - 2x mais rápido que Express)
 - ✅ Pino logger (assíncrono)
 - ✅ Índices otimizados no Prisma (32 índices)
@@ -976,30 +1041,35 @@ PORT=3000
 ## 🌟 Destaques do Projeto
 
 ### 1. 🏆 Arquitetura Enterprise
+
 - NestJS com padrões da indústria
 - Repository Pattern para abstração de dados
 - Dependency Injection nativo
 - Modularização completa (9 módulos)
 
 ### 2. 🔐 Autenticação Robusta
+
 - AWS Cognito (gerenciamento profissional)
 - Sincronização Cognito ↔ MongoDB
 - JWT tokens seguros
 - Fluxo completo de autenticação
 
 ### 3. 🧪 Qualidade Excepcional
+
 - ~99% de cobertura de testes
 - 478+ casos de teste
 - 100% das funções testadas
 - 0 erros de lint
 
 ### 4. 📚 Documentação Completa
+
 - Swagger UI interativo
 - JSDoc em todos os métodos
 - README consolidado
 - Guias técnicos detalhados
 
 ### 5. 🎯 Features Completas
+
 - 65 endpoints REST
 - 7 models de dados
 - Sistema de autenticação
@@ -1009,6 +1079,7 @@ PORT=3000
 - Categorização hierárquica
 
 ### 6. 🔷 100% Type-Safe
+
 - TypeScript strict mode
 - Prisma types automáticos
 - Zod runtime validation
@@ -1019,6 +1090,7 @@ PORT=3000
 ## 💡 Decisões Técnicas
 
 ### Por que NestJS?
+
 - ✅ Padrão da indústria (usado por empresas globais)
 - ✅ Dependency Injection nativo
 - ✅ Arquitetura modular escalável
@@ -1026,12 +1098,14 @@ PORT=3000
 - ✅ Compatível com Fastify (performance)
 
 ### Por que Fastify em vez de Express?
+
 - ✅ 2x mais rápido (65k vs 30k req/s)
 - ✅ Schema-based validation nativo
 - ✅ Async/await first-class
 - ✅ Plugin system robusto
 
 ### Por que Prisma?
+
 - ✅ Type-safe (autocomplete completo)
 - ✅ Schema declarativo
 - ✅ Migrations automáticas
@@ -1039,12 +1113,14 @@ PORT=3000
 - ✅ Suporte MongoDB + Postgres + MySQL
 
 ### Por que Zod?
+
 - ✅ Runtime validation
 - ✅ Type inference automática
 - ✅ Mensagens de erro customizáveis
 - ✅ Composição de schemas
 
 ### Por que MongoDB?
+
 - ✅ Flexível (schema-less)
 - ✅ JSON nativo (posts, metadata)
 - ✅ Hierarquias (categories)
@@ -1052,6 +1128,7 @@ PORT=3000
 - ✅ Atlas (free tier 512MB)
 
 ### Por que AWS Cognito?
+
 - ✅ Gerenciamento completo de autenticação
 - ✅ MFA, verificação de email, recuperação de senha
 - ✅ Escalável e seguro
@@ -1059,6 +1136,7 @@ PORT=3000
 - ✅ Sem preocupação com armazenamento de senhas
 
 ### Por que Lambda Function URLs (sem API Gateway)?
+
 - ✅ **Custo menor**: $1/milhão requisições vs $3.50/milhão (API Gateway)
 - ✅ **Configuração simples**: Uma URL por função
 - ✅ **Autenticação JWT**: Integra direto com Cognito
@@ -1067,6 +1145,7 @@ PORT=3000
 - ✅ **Ideal para**: MVPs, microsserviços, APIs REST simples
 
 ### Por que AWS SAM (vs Serverless Framework)?
+
 - ✅ **Oficial AWS**: Ferramenta nativa da Amazon
 - ✅ **CloudFormation nativo**: Deploy robusto
 - ✅ **Local testing**: `sam local start-api`
@@ -1075,6 +1154,7 @@ PORT=3000
 - ✅ **Sem vendor lock-in**: Pode migrar para CloudFormation puro
 
 ### Por que Estratégia Híbrida (Prisma Dev + DynamoDB Prod)?
+
 - ✅ **Desenvolvimento rápido**: MongoDB + Prisma = produtividade máxima
 - ✅ **Produção escalável**: DynamoDB = zero manutenção + auto-scaling
 - ✅ **Custos otimizados**: MongoDB Atlas grátis (dev) + DynamoDB Free Tier (prod)
@@ -1181,6 +1261,7 @@ POST /posts
 Pull requests são bem-vindos! Para mudanças maiores, abra uma issue primeiro.
 
 ### Processo
+
 1. Fork o projeto
 2. Crie uma branch (`git checkout -b feature/MinhaFeature`)
 3. Commit suas mudanças (`git commit -m 'Adiciona MinhaFeature'`)
@@ -1188,6 +1269,7 @@ Pull requests são bem-vindos! Para mudanças maiores, abra uma issue primeiro.
 5. Abra um Pull Request
 
 ### Padrões de Código
+
 - ✅ Seguir estrutura de módulos existente
 - ✅ Adicionar testes para novas features
 - ✅ Manter cobertura >95%
@@ -1204,13 +1286,13 @@ MIT
 
 ## 📞 Links Úteis
 
-- **API Local**: http://localhost:4000
-- **Swagger UI**: http://localhost:4000/docs
-- **Health Check**: http://localhost:4000/health
-- **Prisma Studio**: http://localhost:5555 (após `npm run prisma:studio`)
-- **NestJS Docs**: https://docs.nestjs.com
-- **Prisma Docs**: https://www.prisma.io/docs
-- **Fastify Docs**: https://www.fastify.io/docs
+- **API Local**: <http://localhost:4000>
+- **Swagger UI**: <http://localhost:4000/docs>
+- **Health Check**: <http://localhost:4000/health>
+- **Prisma Studio**: <http://localhost:5555> (após `npm run prisma:studio`)
+- **NestJS Docs**: <https://docs.nestjs.com>
+- **Prisma Docs**: <https://www.prisma.io/docs>
+- **Fastify Docs**: <https://www.fastify.io/docs>
 
 ---
 
@@ -1232,6 +1314,7 @@ MIT
 ## 🎉 Histórico de Alterações
 
 ### Versão 2.2.0 (16/10/2025)
+
 **Atualização da Stack AWS - Arquitetura Serverless Completa**
 
 #### ✅ Mudanças Aplicadas
@@ -1243,7 +1326,7 @@ MIT
 1. **Arquitetura Separada por Ambiente**
    - ✅ **Desenvolvimento Local**: MongoDB + Prisma (produtividade)
    - ✅ **Produção AWS**: DynamoDB + Lambda (escalabilidade)
-   
+
 2. **Produção AWS (Serverless)**
    - ✅ **Amazon Cognito**: User Pool para autenticação completa
    - ✅ **AWS Lambda**: Funções serverless com NestJS (Node.js 20)
@@ -1280,6 +1363,7 @@ MIT
 ---
 
 ### Versão 2.1.1 (16/10/2025)
+
 **Melhoria da Documentação JSDoc dos Arquivos de Configuração**
 
 #### ✅ Mudanças Aplicadas
@@ -1329,6 +1413,7 @@ MIT
 ---
 
 ### Versão 2.1.0 (15/10/2025)
+
 **Organização Completa da Documentação (.md)**
 
 #### ✅ Mudanças Aplicadas
@@ -1391,6 +1476,7 @@ MIT
 #### 🎯 Objetivo Alcançado
 
 ✅ Documentação totalmente organizada em estrutura profissional, com separação clara entre:
+
 - **Raiz**: README.md principal (único ponto de entrada)
 - **docs/guias/**: Guias técnicos úteis
 - **docs/analises/**: Análises técnicas de compatibilidade
@@ -1400,6 +1486,7 @@ MIT
 ---
 
 ### Versão 2.0.0 (15/10/2025)
+
 **Reestruturação Completa do README Principal**
 
 #### ✅ Mudanças Aplicadas

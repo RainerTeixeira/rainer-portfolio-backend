@@ -27,7 +27,7 @@ async function bootstrap() {
 
   // Helmet - Security Headers
   // Configurado para permitir Swagger UI funcionar corretamente
-  await app.register(helmet, {
+  await app.register(helmet as any, {
     contentSecurityPolicy: {
       directives: {
         defaultSrc: [`'self'`],

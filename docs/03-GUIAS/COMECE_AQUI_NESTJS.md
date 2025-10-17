@@ -1,6 +1,6 @@
 # 🚀 COMECE AQUI - NestJS 5.0
 
-## 🎯 Você Tem um Projeto NestJS 100% Pronto!
+## 🎯 Você Tem um Projeto NestJS 100% Pronto
 
 ---
 
@@ -19,8 +19,9 @@ npm run dev
 ```
 
 **✅ PRONTO!**  
-- API: http://localhost:4000  
-- Swagger: http://localhost:4000/docs  
+
+- API: <http://localhost:4000>  
+- Swagger: <http://localhost:4000/docs>  
 
 ---
 
@@ -107,13 +108,14 @@ npm run test:coverage    # Coverage
 | **CONVERSAO_NESTJS_COMPLETA.md** | Conversão detalhada |
 | **ANTES_E_DEPOIS_NESTJS.md** | Fastify vs NestJS |
 | **README_NESTJS.md** | README completo |
-| **Swagger UI** | http://localhost:4000/docs |
+| **Swagger UI** | <http://localhost:4000/docs> |
 
 ---
 
 ## 🏗️ Arquitetura
 
 ### NestJS Decorators
+
 ```typescript
 @Module({
   controllers: [UsersController],
@@ -123,6 +125,7 @@ export class UsersModule {}
 ```
 
 ### Dependency Injection
+
 ```typescript
 @Injectable()
 export class UsersService {
@@ -133,6 +136,7 @@ export class UsersService {
 ```
 
 ### Controllers
+
 ```typescript
 @Controller('users')
 export class UsersController {
@@ -165,16 +169,19 @@ export class UsersController {
 ## 🎯 Próximos Passos
 
 ### 1. Rodar Agora
+
 ```bash
 npm run prisma:generate && npm run dev
 ```
 
 ### 2. Acessar Swagger
+
 ```
 http://localhost:4000/docs
 ```
 
 ### 3. Testar Endpoints
+
 ```bash
 # Health check
 curl http://localhost:4000/health
@@ -184,6 +191,7 @@ curl http://localhost:4000/users
 ```
 
 ### 4. Desenvolver
+
 - Abra qualquer módulo em `src/modules/`
 - Modifique controller/service/repository
 - Hot reload automático! ✅
@@ -218,11 +226,11 @@ A: Nos controllers de cada módulo (`*.controller.ts`).
 A: Adicione método no controller com decorators `@Get()`, `@Post()`, etc.
 
 **Q: Swagger funciona?**  
-A: Sim! Acesse http://localhost:4000/docs.
+A: Sim! Acesse <http://localhost:4000/docs>.
 
 ---
 
-## ✅ TUDO PRONTO!
+## ✅ TUDO PRONTO
 
 ```bash
 # Rodar agora:
@@ -236,4 +244,3 @@ npm run dev
 **Versão:** 5.0.0 - NestJS + Fastify + Prisma + Zod  
 **Status:** ✅ **PRONTO PARA PRODUÇÃO!** 🚀  
 **Criado:** 14 de Outubro de 2025
-

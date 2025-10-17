@@ -33,10 +33,10 @@ Depois de rodar o script, acesse:
 
 | URL | Descrição |
 |-----|-----------|
-| http://localhost:4000 | API Backend |
-| http://localhost:4000/api/docs | Swagger (Documentação interativa) |
-| http://localhost:4000/health | Health Check |
-| http://localhost:8000 | DynamoDB Local |
+| <http://localhost:4000> | API Backend |
+| <http://localhost:4000/api/docs> | Swagger (Documentação interativa) |
+| <http://localhost:4000/health> | Health Check |
+| <http://localhost:8000> | DynamoDB Local |
 
 ---
 
@@ -44,14 +44,16 @@ Depois de rodar o script, acesse:
 
 Se você escolheu popular o banco, terá:
 
-### Usuários criados:
+### Usuários criados
+
 - `admin@blog.com` - **ADMIN**
 - `editor@blog.com` - **EDITOR**
 - `maria@blog.com` - **AUTHOR**
 - `joao@blog.com` - **AUTHOR**
 - `ana@blog.com` - **SUBSCRIBER**
 
-### Conteúdo:
+### Conteúdo
+
 - ✅ 3 categorias
 - ✅ 5 posts (4 publicados, 1 rascunho)
 - ✅ Comentários, likes e bookmarks
@@ -179,8 +181,8 @@ npm run dev
 
 - [ ] Docker Desktop rodando?
 - [ ] Script executado com sucesso?
-- [ ] API respondendo em http://localhost:4000/health ?
-- [ ] Swagger acessível em http://localhost:4000/api/docs ?
+- [ ] API respondendo em <http://localhost:4000/health> ?
+- [ ] Swagger acessível em <http://localhost:4000/api/docs> ?
 - [ ] Tabelas criadas? (`npm run dynamodb:list-tables`)
 
 **Tudo OK?** 🎉 **Você está pronto para desenvolver!**
@@ -191,7 +193,7 @@ npm run dev
 
 Abra o Swagger e comece a testar a API:
 
-👉 **http://localhost:4000/api/docs**
+👉 **<http://localhost:4000/api/docs>**
 
 ---
 
@@ -202,4 +204,3 @@ Use **MongoDB** para desenvolvimento diário (mais rápido) e **DynamoDB** para 
 ---
 
 **Dúvidas?** Consulte a [documentação completa](guias/GUIA_DYNAMODB_LOCAL.md) 📖
-

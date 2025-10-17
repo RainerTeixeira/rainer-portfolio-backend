@@ -15,6 +15,7 @@
 **👉 `/README.md`** - Ponto de entrada único do projeto
 
 Contém tudo que você precisa:
+
 - ⚡ Quick Start (3 comandos)
 - 🏗️ Arquitetura completa
 - 📡 65 endpoints REST
@@ -359,6 +360,7 @@ Contém tudo que você precisa:
 ### 👨‍💻 Desenvolvedor Novo
 
 **Roteiro:**
+
 1. `/README.md` (10 min)
 2. `docs/03-GUIAS/COMECE_AQUI_NESTJS.md` (15 min)
 3. `docs/03-GUIAS/GUIA_SEED_BANCO_DADOS.md` (5 min)
@@ -367,6 +369,7 @@ Contém tudo que você precisa:
 ### 🏢 Tech Lead
 
 **Roteiro:**
+
 1. `/README.md` → Arquitetura (15 min)
 2. `docs/04-ANALISES/ANALISE_TECNICA_COMPLETA.md` (20 min)
 3. `docs/03-GUIAS/GUIA_SEGURANCA.md` (15 min)
@@ -375,6 +378,7 @@ Contém tudo que você precisa:
 ### 🧪 QA / Tester
 
 **Roteiro:**
+
 1. `/README.md` → Testes (5 min)
 2. `docs/03-GUIAS/GUIA_RAPIDO_TESTES.md` (10 min)
 3. `docs/03-GUIAS/GUIA_SEED_BANCO_DADOS.md` (5 min)
@@ -383,6 +387,7 @@ Contém tudo que você precisa:
 ### 📝 DevOps
 
 **Roteiro:**
+
 1. `/README.md` → Deploy (10 min)
 2. `docs/05-INFRAESTRUTURA/GUIA_DEPLOY_AWS.md` (20 min)
 3. `docs/07-DOCKER/GUIA_DOCKER_COMPOSE.md` (15 min)
@@ -396,7 +401,7 @@ Contém tudo que você precisa:
 
 - [ ] Ler `/README.md` completo
 - [ ] Executar Quick Start (3 comandos)
-- [ ] Acessar Swagger (http://localhost:4000/docs)
+- [ ] Acessar Swagger (<http://localhost:4000/docs>)
 - [ ] Ler `COMECE_AQUI_NESTJS.md`
 - [ ] Executar seed (`npm run seed`)
 - [ ] Rodar testes (`npm test`)
@@ -421,21 +426,25 @@ Contém tudo que você precisa:
 ## 🗂️ Índices Disponíveis
 
 ### 1. `/README.md`
+
 - Índice principal consolidado
 - Quick start
 - Documentação completa inline
 
 ### 2. `docs/README.md`
+
 - Índice da pasta docs/
 - Organização por categoria
 - Links para todos os documentos
 
 ### 3. `docs/INDEX.md`
+
 - Navegação por perfil
 - Roteiros personalizados
 - Guias por objetivo
 
 ### 4. Este arquivo
+
 - Busca rápida
 - Ajuda por categoria
 - Fluxos recomendados
@@ -448,11 +457,11 @@ Contém tudo que você precisa:
 
 | Recurso | URL |
 |---------|-----|
-| **API** | http://localhost:4000 |
-| **Swagger** | http://localhost:4000/docs |
-| **Health** | http://localhost:4000/health |
-| **Prisma Studio** | http://localhost:5555 |
-| **DynamoDB Admin** | http://localhost:8001 |
+| **API** | <http://localhost:4000> |
+| **Swagger** | <http://localhost:4000/docs> |
+| **Health** | <http://localhost:4000/health> |
+| **Prisma Studio** | <http://localhost:5555> |
+| **DynamoDB Admin** | <http://localhost:8001> |
 
 ### Comandos Úteis
 
@@ -522,4 +531,3 @@ code README.md
 **Criado em:** 16/10/2025  
 **Tipo:** Guia de Navegação  
 **Status:** ✅ Atualizado (v4.1.1)
-
