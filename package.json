@@ -17,6 +17,11 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage > logs/coverage.log 2>&1",
     "test:log": "jest > logs/test.log 2>&1",
+    "test:mongodb": "pwsh -File scripts/test-mongodb.ps1",
+    "test:mongodb:quick": "pwsh -File scripts/test-mongodb.ps1 -Quick",
+    "test:mongodb:e2e": "pwsh -File scripts/test-mongodb.ps1 -E2E",
+    "test:mongodb:integration": "jest tests/integration/mongodb-prisma.integration.test.ts",
+    "test:mongodb:coverage": "pwsh -File scripts/test-mongodb.ps1 -Coverage",
     "test:local-aws": "pwsh -File testar-local-antes-deploy.ps1",
     "lint": "eslint src --ext .ts > logs/lint.log 2>&1",
     "lint:fix": "eslint src --ext .ts --fix > logs/lint-fix.log 2>&1",
@@ -63,7 +68,9 @@
     "blog",
     "api"
   ],
-  "author": "",
+  "author": "Rainer Teixeira",
+  "email": "rainerteixeira@hotmail.com.br",
+  "website": "https://rainerteixeira.com.br",
   "license": "MIT",
   "engines": {
     "node": ">=18.0.0"

@@ -14,8 +14,8 @@ export class HealthController {
     summary: '❤️ Health Check',
     description: 'Health check básico. Use o header X-Database-Provider para testar a seleção de banco.',
   })
-  async getHealth() {
-    const health = await this.healthService.getBasicHealth();
+  getHealth() {
+    const health = this.healthService.getBasicHealth();
     return { success: true, data: health };
   }
 
@@ -25,8 +25,8 @@ export class HealthController {
     summary: '🔍 Health Check Detalhado',
     description: 'Health check com informações detalhadas incluindo qual banco está sendo usado.',
   })
-  async getDetailedHealth() {
-    const health = await this.healthService.getDetailedHealth();
+  getDetailedHealth() {
+    const health = this.healthService.getDetailedHealth();
     return { success: true, data: health };
   }
 }

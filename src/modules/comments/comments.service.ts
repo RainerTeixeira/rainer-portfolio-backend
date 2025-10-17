@@ -10,6 +10,14 @@ export class CommentsService {
     return await this.commentsRepository.create(data);
   }
 
+  async listComments(options?: { limit?: number; page?: number }) {
+    const limit = options?.limit ? Number(options.limit) : 10;
+    const page = options?.page ? Number(options.page) : 1;
+    const skip = (page - 1) * limit;
+    
+    return await this.commentsRepository.findAll({ limit, skip });
+  }
+
   async getCommentById(id: string) {
     const comment = await this.commentsRepository.findById(id);
     if (!comment) throw new NotFoundException('Comentário não encontrado');

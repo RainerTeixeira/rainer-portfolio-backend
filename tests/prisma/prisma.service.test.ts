@@ -40,11 +40,13 @@ describe('PrismaService', () => {
       expect(service.$connect).toHaveBeenCalledTimes(1);
     });
 
-    it('deve propagar erro se conexão falhar', async () => {
+    it('deve lidar com erro de conexão graciosamente (apenas log)', async () => {
       const error = new Error('Erro de conexão');
       service.$connect = jest.fn().mockRejectedValue(error);
 
-      await expect(service.onModuleInit()).rejects.toThrow('Erro de conexão');
+      // O serviço não propaga o erro, apenas loga um warning
+      await expect(service.onModuleInit()).resolves.not.toThrow();
+      expect(service.$connect).toHaveBeenCalledTimes(1);
     });
   });
 

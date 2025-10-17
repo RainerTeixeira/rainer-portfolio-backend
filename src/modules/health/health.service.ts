@@ -26,7 +26,7 @@ export class HealthService {
       status: 'ok',
       timestamp: new Date().toISOString(),
       service: 'Blog API NestJS',
-      version: '5.0.0',
+      version: '5.0.0', 
       database: {
         provider: provider,
         description: description,
