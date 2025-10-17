@@ -22,9 +22,22 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
    * Conecta ao banco quando o módulo é inicializado
    */
   async onModuleInit() {
-    this.logger.log('Conectando ao banco de dados...');
-    await this.$connect();
-    this.logger.log('✅ Conectado ao banco de dados!');
+    const provider = process.env.DATABASE_PROVIDER || 'PRISMA';
+    
+    // Apenas tenta conectar se estiver usando PRISMA
+    if (provider === 'PRISMA') {
+      try {
+        this.logger.log('Conectando ao banco de dados (Prisma/MongoDB)...');
+        await this.$connect();
+        this.logger.log('✅ Conectado ao banco de dados!');
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        this.logger.warn(`⚠️  Não foi possível conectar ao MongoDB: ${errorMessage}`);
+        this.logger.warn('💡 Se você não está usando PRISMA, defina DATABASE_PROVIDER=DYNAMODB no .env');
+      }
+    } else {
+      this.logger.log(`ℹ️  PrismaService disponível mas não ativo (DATABASE_PROVIDER=${provider})`);
+    }
   }
 
   /**

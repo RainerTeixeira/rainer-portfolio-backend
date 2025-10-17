@@ -1144,14 +1144,16 @@ tests/
 │   ├── notifications/           # 🔔 Notificações (3 testes)
 │   └── health/                  # 💚 Health (3 testes)
 │
-├── integration/                 # 🔗 Testes de Integração (3 arquivos)
+├── integration/                 # 🔗 Testes de Integração (4 arquivos)
 │   │                            #    Testam fluxos completos entre módulos
-│   ├── auth.integration.test.ts              #    Login → Criação de usuário
-│   ├── users-posts-comments.integration.ts   #    Criar user → post → comentário
-│   └── database-provider.integration.ts      #    Alternar banco por requisição
+│   ├── auth.integration.test.ts                 #    Login → Criação de usuário
+│   ├── users-posts-comments.integration.ts      #    Criar user → post → comentário
+│   ├── database-provider.integration.ts         #    Alternar banco por requisição
+│   └── mongodb-prisma.integration.test.ts       #    🆕 MongoDB/Prisma CRUD completo (18 testes)
 │
-├── e2e/                        # 🌐 Testes End-to-End (1 arquivo)
-│   └── api.e2e.test.ts          #    Testa API completa (todos endpoints)
+├── e2e/                        # 🌐 Testes End-to-End (2 arquivos)
+│   ├── api.e2e.test.ts                          #    Testa API completa (todos endpoints)
+│   └── mongodb-backend.e2e.test.ts              #    🆕 Backend MongoDB E2E (18+ testes)
 │
 ├── helpers/                     # 🎭 Mocks e Utilitários de Teste (2 arquivos)
 │   ├── mocks.ts                 #    Mocks de Prisma, Cognito, DynamoDB
@@ -1164,12 +1166,12 @@ tests/
 
 **📊 Totais:**
 
-- **41 arquivos** de teste
-- **478+ casos** de teste (100% passando)
+- **43 arquivos** de teste (🆕 +2)
+- **514+ casos** de teste (🆕 +36) - 100% passando
 - **~99% cobertura** de código
 - **27 testes unitários** (9 módulos × 3 arquivos)
-- **3 testes de integração**
-- **1 teste E2E**
+- **4 testes de integração** (🆕 +1 MongoDB/Prisma completo)
+- **2 testes E2E** (🆕 +1 Backend MongoDB E2E)
 
 ### Estatísticas de Testes
 
@@ -1201,7 +1203,15 @@ npm run test:watch
 npm test -- auth
 npm test -- users
 npm test -- posts
+
+# 🆕 Testes MongoDB/Prisma (validação completa)
+npm run test:mongodb              # Todos os testes MongoDB (automático)
+npm run test:mongodb:quick        # Apenas integração (~13s)
+npm run test:mongodb:e2e          # Apenas E2E (requer servidor)
+npm run test:mongodb:coverage     # Com cobertura de código
 ```
+
+**📚 Documentação**: Ver [Guia de Testes MongoDB/Prisma](tests/GUIA_TESTES_MONGODB_PRISMA.md)
 
 ---
 

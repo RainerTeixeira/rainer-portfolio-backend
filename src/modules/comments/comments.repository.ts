@@ -14,6 +14,14 @@ export class CommentsRepository {
     return await this.prisma.comment.findUnique({ where: { id } }) as any;
   }
 
+  async findAll(options: { limit: number; skip: number }): Promise<Comment[]> {
+    return await this.prisma.comment.findMany({
+      take: options.limit,
+      skip: options.skip,
+      orderBy: { createdAt: 'desc' },
+    }) as any;
+  }
+
   async findByPost(postId: string): Promise<Comment[]> {
     return await this.prisma.comment.findMany({
       where: { postId },

@@ -10,13 +10,13 @@
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
-import * as request from 'supertest';
+import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
+import request from 'supertest';
 import { AppModule } from '../../src/app.module';
 import { PrismaService } from '../../src/prisma/prisma.service';
 
 describe('Backend E2E - MongoDB/Prisma', () => {
-  let app: INestApplication;
+  let app: NestFastifyApplication;
   let prisma: PrismaService;
   let server: any;
 
@@ -25,8 +25,11 @@ describe('Backend E2E - MongoDB/Prisma', () => {
       imports: [AppModule],
     }).compile();
 
-    app = moduleFixture.createNestApplication();
+    app = moduleFixture.createNestApplication<NestFastifyApplication>(
+      new FastifyAdapter()
+    );
     await app.init();
+    await app.getHttpAdapter().getInstance().ready();
     
     prisma = app.get<PrismaService>(PrismaService);
     server = app.getHttpServer();
@@ -44,7 +47,15 @@ describe('Backend E2E - MongoDB/Prisma', () => {
     await prisma.like.deleteMany({});
     await prisma.comment.deleteMany({});
     await prisma.post.deleteMany({});
-    await prisma.category.deleteMany({});
+    
+    // Deletar categorias: primeiro subcategorias (com parentId), depois principais
+    await prisma.category.deleteMany({
+      where: { parentId: { not: null } },
+    });
+    await prisma.category.deleteMany({
+      where: { parentId: null },
+    });
+    
     await prisma.user.deleteMany({});
   });
 
@@ -54,8 +65,9 @@ describe('Backend E2E - MongoDB/Prisma', () => {
         .get('/health')
         .expect(200)
         .expect((res) => {
-          expect(res.body).toHaveProperty('status', 'ok');
-          expect(res.body).toHaveProperty('database');
+          expect(res.body).toHaveProperty('success', true);
+          expect(res.body.data).toHaveProperty('status', 'ok');
+          expect(res.body.data).toHaveProperty('database');
         });
     });
 
@@ -64,23 +76,22 @@ describe('Backend E2E - MongoDB/Prisma', () => {
         .get('/health')
         .expect(200)
         .expect((res) => {
-          expect(res.body.database).toHaveProperty('prisma');
-          expect(res.body.database.prisma).toHaveProperty('status');
+          expect(res.body.data.database).toHaveProperty('provider', 'PRISMA');
         });
     });
   });
 
   describe('📚 Swagger Documentation', () => {
-    it('GET /api - deve retornar página Swagger', () => {
+    it('GET /docs - deve retornar página Swagger', () => {
       return request(server)
-        .get('/api')
+        .get('/docs')
         .expect(200)
         .expect('Content-Type', /html/);
     });
 
-    it('GET /api-json - deve retornar OpenAPI JSON', () => {
+    it('GET /docs-json - deve retornar OpenAPI JSON', () => {
       return request(server)
-        .get('/api-json')
+        .get('/docs-json')
         .expect(200)
         .expect((res) => {
           expect(res.body).toHaveProperty('openapi');
@@ -102,8 +113,9 @@ describe('Backend E2E - MongoDB/Prisma', () => {
         })
         .expect(201)
         .expect((res) => {
-          expect(res.body).toHaveProperty('id');
-          expect(res.body.email).toBe('e2e@example.com');
+          expect(res.body).toHaveProperty('success', true);
+          expect(res.body.data).toHaveProperty('id');
+          expect(res.body.data.email).toBe('e2e@example.com');
         });
     });
 
@@ -122,8 +134,9 @@ describe('Backend E2E - MongoDB/Prisma', () => {
         .get('/users')
         .expect(200)
         .expect((res) => {
-          expect(Array.isArray(res.body.data || res.body)).toBe(true);
-          expect((res.body.data || res.body).length).toBeGreaterThan(0);
+          expect(res.body).toHaveProperty('success', true);
+          expect(Array.isArray(res.body.data.data)).toBe(true);
+          expect(res.body.data.data.length).toBeGreaterThan(0);
         });
     });
 
@@ -141,8 +154,9 @@ describe('Backend E2E - MongoDB/Prisma', () => {
         .get(`/users/${user.id}`)
         .expect(200)
         .expect((res) => {
-          expect(res.body.id).toBe(user.id);
-          expect(res.body.email).toBe('find@example.com');
+          expect(res.body).toHaveProperty('success', true);
+          expect(res.body.data.id).toBe(user.id);
+          expect(res.body.data.email).toBe('find@example.com');
         });
     });
   });
@@ -158,8 +172,9 @@ describe('Backend E2E - MongoDB/Prisma', () => {
         })
         .expect(201)
         .expect((res) => {
-          expect(res.body).toHaveProperty('id');
-          expect(res.body.name).toBe('E2E Category');
+          expect(res.body).toHaveProperty('success', true);
+          expect(res.body.data).toHaveProperty('id');
+          expect(res.body.data.name).toBe('E2E Category');
         });
     });
 
@@ -175,7 +190,8 @@ describe('Backend E2E - MongoDB/Prisma', () => {
         .get('/categories')
         .expect(200)
         .expect((res) => {
-          expect(Array.isArray(res.body.data || res.body)).toBe(true);
+          expect(res.body).toHaveProperty('success', true);
+          expect(Array.isArray(res.body.data)).toBe(true);
         });
     });
   });
@@ -219,8 +235,9 @@ describe('Backend E2E - MongoDB/Prisma', () => {
         })
         .expect(201)
         .expect((res) => {
-          expect(res.body).toHaveProperty('id');
-          expect(res.body.title).toBe('Post E2E Test');
+          expect(res.body).toHaveProperty('success', true);
+          expect(res.body.data).toHaveProperty('id');
+          expect(res.body.data.title).toBe('Post E2E Test');
         });
     });
 
@@ -254,7 +271,8 @@ describe('Backend E2E - MongoDB/Prisma', () => {
         .get('/posts')
         .expect(200)
         .expect((res) => {
-          expect(Array.isArray(res.body.data || res.body)).toBe(true);
+          expect(res.body).toHaveProperty('success', true);
+          expect(Array.isArray(res.body.data.data)).toBe(true);
         });
     });
   });
@@ -293,8 +311,9 @@ describe('Backend E2E - MongoDB/Prisma', () => {
         })
         .expect(201)
         .expect((res) => {
-          expect(res.body).toHaveProperty('id');
-          expect(res.body.content).toBe('Comentário E2E');
+          expect(res.body).toHaveProperty('success', true);
+          expect(res.body.data).toHaveProperty('id');
+          expect(res.body.data.content).toBe('Comentário E2E');
         });
     });
   });
@@ -332,7 +351,8 @@ describe('Backend E2E - MongoDB/Prisma', () => {
         })
         .expect(201)
         .expect((res) => {
-          expect(res.body).toHaveProperty('id');
+          expect(res.body).toHaveProperty('success', true);
+          expect(res.body.data).toHaveProperty('id');
         });
     });
   });
@@ -350,7 +370,7 @@ describe('Backend E2E - MongoDB/Prisma', () => {
         })
         .expect(201);
 
-      const userId = userRes.body.id;
+      const userId = userRes.body.data.id;
 
       // 2. Criar categoria
       const categoryRes = await request(server)
@@ -361,7 +381,7 @@ describe('Backend E2E - MongoDB/Prisma', () => {
         })
         .expect(201);
 
-      const categoryId = categoryRes.body.id;
+      const categoryId = categoryRes.body.data.id;
 
       // 3. Criar post
       const postRes = await request(server)
@@ -376,7 +396,7 @@ describe('Backend E2E - MongoDB/Prisma', () => {
         })
         .expect(201);
 
-      const postId = postRes.body.id;
+      const postId = postRes.body.data.id;
 
       // 4. Criar comentário
       await request(server)

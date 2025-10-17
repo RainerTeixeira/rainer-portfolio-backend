@@ -1,5 +1,5 @@
-import { Controller, Get, Post, Put, Delete, Patch, Body, Param, HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger';
+import { Controller, Get, Post, Put, Delete, Patch, Body, Param, Query, HttpCode, HttpStatus } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { CommentsService } from './comments.service.js';
 import type { CreateCommentData, UpdateCommentData } from './comment.model.js';
 
@@ -14,6 +14,18 @@ export class CommentsController {
   async create(@Body() data: CreateCommentData) {
     const comment = await this.commentsService.createComment(data);
     return { success: true, data: comment };
+  }
+
+  @Get()
+  @ApiOperation({ summary: '📋 Listar Todos os Comentários' })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  async listAll(
+    @Query('limit') limit?: number,
+    @Query('page') page?: number,
+  ) {
+    const comments = await this.commentsService.listComments({ limit, page });
+    return { success: true, data: comments };
   }
 
   @Get(':id')
