@@ -64,6 +64,7 @@ npm run test:coverage
 ```
 
 **Checklist:**
+
 - [ ] Build sem erros
 - [ ] Testes passando (> 80% cobertura)
 - [ ] Sem erros de lint
@@ -469,4 +470,3 @@ Após deploy bem-sucedido:
 **Atualizado em:** 16/10/2025  
 **Versão:** 1.0.0  
 **Status:** ✅ Pronto para Deploy
-

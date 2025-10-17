@@ -34,6 +34,7 @@ O módulo `auth` foi completamente ajustado para seguir **exatamente** o mesmo p
 ## 📁 Estrutura Final
 
 ### Antes (Complexa - Não Padrão)
+
 ```
 src/modules/auth/
 ├── decorators/
@@ -57,6 +58,7 @@ src/modules/auth/
 ```
 
 ### Depois (Simples - Padrão dos Outros Módulos) ✅
+
 ```
 src/modules/auth/
 ├── auth.controller.ts    ✅
@@ -73,6 +75,7 @@ src/modules/auth/
 ## 📋 Comparação com Outros Módulos
 
 ### Módulo Bookmarks (Referência)
+
 ```
 bookmarks/
 ├── bookmarks.controller.ts
@@ -84,6 +87,7 @@ bookmarks/
 ```
 
 ### Módulo Auth (Agora Igual!) ✅
+
 ```
 auth/
 ├── auth.controller.ts
@@ -101,6 +105,7 @@ auth/
 ## 🎯 Padrão Aplicado
 
 ### 1. **Controller** (`*.controller.ts`)
+
 - Decorators simples: `@Post()`, `@Get()`, `@Body()`
 - Emojis nas operações: `@ApiOperation({ summary: '🔐 Login' })`
 - Retorno: `{ success: true, data: result }`
@@ -108,27 +113,32 @@ auth/
 - Sem decorators customizados
 
 ### 2. **Service** (`*.service.ts`)
+
 - `@Injectable()`
 - Usa Repository para acesso a dados
 - Lógica de negócio
 - Tratamento de exceções
 
 ### 3. **Repository** (`*.repository.ts`)
+
 - `@Injectable()`
 - Acesso direto a dados (Cognito, Prisma, DynamoDB)
 - Métodos puros de acesso
 
 ### 4. **Module** (`*.module.ts`)
+
 - Simples: `controllers`, `providers`, `exports`
 - Sem lifecycle hooks complexos
 - Sem configurações extras
 
 ### 5. **Model** (`*.model.ts`)
+
 - Interfaces TypeScript
 - Tipos de dados
 - Sem classes
 
 ### 6. **Schema** (`*.schema.ts`)
+
 - Schemas Zod para validação
 - Types inferidos
 - Sem class-validator
@@ -138,6 +148,7 @@ auth/
 ## 📦 Arquivos Principais
 
 ### `auth.model.ts`
+
 ```typescript
 export interface LoginData {
   email: string;
@@ -157,6 +168,7 @@ export interface LoginResponse {
 ```
 
 ### `auth.schema.ts`
+
 ```typescript
 export const loginSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -167,6 +179,7 @@ export type LoginInput = z.infer<typeof loginSchema>;
 ```
 
 ### `auth.repository.ts`
+
 ```typescript
 @Injectable()
 export class AuthRepository {
@@ -183,6 +196,7 @@ export class AuthRepository {
 ```
 
 ### `auth.service.ts`
+
 ```typescript
 @Injectable()
 export class AuthService {
@@ -197,6 +211,7 @@ export class AuthService {
 ```
 
 ### `auth.controller.ts`
+
 ```typescript
 @ApiTags('auth')
 @Controller('auth')
@@ -214,6 +229,7 @@ export class AuthController {
 ```
 
 ### `auth.module.ts`
+
 ```typescript
 @Module({
   controllers: [AuthController],
@@ -259,4 +275,3 @@ O módulo `auth` agora segue **exatamente** o mesmo padrão dos outros módulos:
 **Arquivos Removidos:** 11 arquivos  
 **Arquivos Criados:** 3 arquivos (repository, model, schema)  
 **Arquivos Ajustados:** 4 arquivos (controller, service, module, index)
-

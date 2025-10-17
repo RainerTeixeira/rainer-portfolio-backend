@@ -1,0 +1,5 @@
+# Ignorar arquivos arquivados
+docs/99-ARQUIVADOS/**
+docs/98-HISTORICO/**
+GUIA_TESTES_BUILD.md
+

@@ -34,7 +34,7 @@ Imagine frutas espalhadas em uma fazenda:
 
 ## 📊 Status do Projeto
 
-### ✅ TODOS os 9 Módulos Têm index.ts!
+### ✅ TODOS os 9 Módulos Têm index.ts
 
 | Módulo | index.ts | Status |
 |--------|----------|--------|
@@ -65,6 +65,7 @@ import { createUserSchema } from './modules/users/user.schema.js';
 ```
 
 **Problemas:**
+
 - 4 linhas de código
 - Caminho completo repetido 4 vezes
 - Verboso e cansativo
@@ -83,6 +84,7 @@ import {
 ```
 
 **Benefícios:**
+
 - 1 linha de código
 - Caminho simplificado
 - Limpo e elegante
@@ -297,14 +299,14 @@ from './modules/users'
 
 ## 🎯 Quando Usar?
 
-### ✅ USE em:
+### ✅ USE em
 
 1. **Bibliotecas NPM** - API pública limpa
 2. **Módulos compartilhados** - Usados por muitos arquivos
 3. **Projetos médios/grandes** - Melhor organização
 4. **Preferência da equipe** - Se todos concordam
 
-### ❌ NÃO USE em:
+### ❌ NÃO USE em
 
 1. **Projetos pequenos** - Overhead desnecessário
 2. **Performance crítica** - Se bundle size importa muito

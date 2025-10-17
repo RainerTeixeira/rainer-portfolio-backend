@@ -9,12 +9,14 @@
 ## 📚 Documentação Principal
 
 ### README e Guias
+
 - 📖 **[README.md](README.md)** - Documentação principal completa
 - 🔥 **[GUIA_SELECAO_BANCO_SWAGGER.md](docs/03-GUIAS/GUIA_SELECAO_BANCO_SWAGGER.md)** - Como usar no Swagger
 - 🔥 **[GUIA_DECISAO_DATABASE.md](docs/02-CONFIGURACAO/GUIA_DECISAO_DATABASE.md)** - Qual banco usar?
 - 📘 **[GUIA_DYNAMODB_LOCAL.md](docs/03-GUIAS/GUIA_DYNAMODB_LOCAL.md)** - Setup DynamoDB Local
 
 ### Atualização v3.0.0
+
 - 📄 **[ATUALIZACAO_v3.0.0.md](docs/ATUALIZACAO_v3.0.0.md)** - Documentação técnica completa
 - 📋 **[RESUMO_ATUALIZACAO_v3.0.0.md](docs/RESUMO_ATUALIZACAO_v3.0.0.md)** - Resumo executivo
 - ✅ **[RESULTADO_ATUALIZACAO_v3.0.0.md](RESULTADO_ATUALIZACAO_v3.0.0.md)** - Resultado final
@@ -24,12 +26,15 @@
 ## 🚀 Quick Start
 
 ### Testar no Swagger (2 minutos)
+
 ```bash
 npm run dev
 ```
-Abra: http://localhost:4000/docs
+
+Abra: <http://localhost:4000/docs>
 
 ### Cenário 1: MongoDB Local
+
 ```bash
 iniciar-ambiente-local.bat     # Windows
 # ou
@@ -39,6 +44,7 @@ npm run dev
 ```
 
 ### Cenário 2: DynamoDB Local
+
 ```bash
 iniciar-ambiente-dynamodb.bat  # Windows
 # ou
@@ -48,6 +54,7 @@ npm run dev
 ```
 
 ### Cenário 3: DynamoDB AWS
+
 ```bash
 npm run sam:deploy:prod
 ```
@@ -57,6 +64,7 @@ npm run sam:deploy:prod
 ## 🔧 Código da Feature
 
 ### Arquivos
+
 - `src/utils/database-provider/database-provider-context.service.ts`
 - `src/utils/database-provider/database-provider.decorator.ts`
 - `src/utils/database-provider/database-provider.interceptor.ts`
@@ -64,6 +72,7 @@ npm run sam:deploy:prod
 - `src/utils/database-provider/index.ts`
 
 ### Exemplo de Uso
+
 ```typescript
 // Controller
 @DatabaseProviderHeader()
@@ -82,10 +91,10 @@ if (this.databaseContext.isPrisma()) {
 
 ## 📡 URLs da Aplicação
 
-- **API:** http://localhost:4000
-- **Swagger:** http://localhost:4000/docs
-- **Health:** http://localhost:4000/health
-- **Prisma Studio:** http://localhost:5555 (após `npm run prisma:studio`)
+- **API:** <http://localhost:4000>
+- **Swagger:** <http://localhost:4000/docs>
+- **Health:** <http://localhost:4000/health>
+- **Prisma Studio:** <http://localhost:5555> (após `npm run prisma:studio`)
 
 ---
 
@@ -122,12 +131,14 @@ docs/
 ## 💻 Scripts NPM Principais
 
 ### Desenvolvimento
+
 ```bash
 npm run dev                    # Servidor com hot reload
 npm run prisma:studio          # GUI do Prisma
 ```
 
 ### Database (MongoDB)
+
 ```bash
 npm run prisma:generate        # Gerar Prisma Client
 npm run prisma:push            # Sync schema
@@ -135,6 +146,7 @@ npm run seed                   # Popular banco
 ```
 
 ### Database (DynamoDB)
+
 ```bash
 npm run docker:dynamodb        # Subir DynamoDB Local
 npm run dynamodb:create-tables # Criar tabelas
@@ -143,6 +155,7 @@ npm run dynamodb:list-tables   # Listar tabelas
 ```
 
 ### AWS SAM (Deploy)
+
 ```bash
 npm run sam:validate           # Validar template
 npm run sam:build              # Build
@@ -152,6 +165,7 @@ npm run sam:deploy:prod        # Deploy produção
 ```
 
 ### Testes
+
 ```bash
 npm test                       # Rodar testes
 npm run test:coverage          # Cobertura
@@ -172,18 +186,23 @@ npm run test:coverage          # Cobertura
 ## 🎯 Ações Rápidas
 
 ### Preciso decidir qual banco usar?
+
 👉 Leia: [GUIA_DECISAO_DATABASE.md](docs/02-CONFIGURACAO/GUIA_DECISAO_DATABASE.md)
 
 ### Como usar no Swagger?
+
 👉 Leia: [GUIA_SELECAO_BANCO_SWAGGER.md](docs/03-GUIAS/GUIA_SELECAO_BANCO_SWAGGER.md)
 
 ### Como configurar DynamoDB Local?
+
 👉 Leia: [GUIA_DYNAMODB_LOCAL.md](docs/03-GUIAS/GUIA_DYNAMODB_LOCAL.md)
 
 ### Como fazer deploy na AWS?
+
 👉 Leia: [GUIA_DEPLOY_AWS.md](docs/05-INFRAESTRUTURA/GUIA_DEPLOY_AWS.md)
 
 ### O que mudou na v3.0.0?
+
 👉 Leia: [RESUMO_ATUALIZACAO_v3.0.0.md](docs/RESUMO_ATUALIZACAO_v3.0.0.md)
 
 ---
@@ -200,4 +219,3 @@ npm run test:coverage          # Cobertura
 
 **Última Atualização:** 16/10/2025  
 **Versão:** 3.0.0
-

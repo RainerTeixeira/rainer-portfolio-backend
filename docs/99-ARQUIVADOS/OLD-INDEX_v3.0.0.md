@@ -9,13 +9,16 @@
 ## 🚀 Início Rápido
 
 ### 1️⃣ Primeira Vez Aqui?
+
 👉 Leia: **[README.md](README.md)** - Documentação principal completa
 
 ### 2️⃣ Quer Testar a Nova Feature?
-👉 Acesse: http://localhost:4000/docs  
+
+👉 Acesse: <http://localhost:4000/docs>  
 👉 Leia: **[GUIA_SELECAO_BANCO_SWAGGER.md](docs/03-GUIAS/GUIA_SELECAO_BANCO_SWAGGER.md)** 🔥
 
 ### 3️⃣ Qual Banco de Dados Usar?
+
 👉 Leia: **[GUIA_DECISAO_DATABASE.md](docs/02-CONFIGURACAO/GUIA_DECISAO_DATABASE.md)** 🔥
 
 ---
@@ -23,11 +26,13 @@
 ## 📚 Documentação Principal
 
 ### Essenciais
+
 - 📖 **[README.md](README.md)** - Documentação principal (v3.0.0)
 - 🔗 **[LINKS_RAPIDOS_v3.0.0.md](LINKS_RAPIDOS_v3.0.0.md)** - Atalhos rápidos
 - 📋 **[docs/INDEX.md](docs/INDEX.md)** - Índice completo da documentação
 
 ### Atualização v3.0.0
+
 - ✅ **[RESULTADO_ATUALIZACAO_v3.0.0.md](RESULTADO_ATUALIZACAO_v3.0.0.md)** - Consolidação completa
 - 📄 **[docs/ATUALIZACAO_v3.0.0.md](docs/ATUALIZACAO_v3.0.0.md)** - Documentação técnica
 - 📋 **[docs/RESUMO_ATUALIZACAO_v3.0.0.md](docs/RESUMO_ATUALIZACAO_v3.0.0.md)** - Resumo executivo
@@ -38,28 +43,36 @@
 ## 🎯 Por Objetivo
 
 ### Desenvolvimento
+
 ```bash
 npm run dev                    # Iniciar servidor
 ```
+
 👉 **[docs/02-CONFIGURACAO/COMECE_AQUI.md](docs/02-CONFIGURACAO/COMECE_AQUI.md)**
 
 ### Testar Feature de Seleção de Banco
+
 ```bash
 npm run dev
 # Abrir http://localhost:4000/docs
 ```
+
 👉 **[docs/03-GUIAS/GUIA_SELECAO_BANCO_SWAGGER.md](docs/03-GUIAS/GUIA_SELECAO_BANCO_SWAGGER.md)** 🔥
 
 ### Setup DynamoDB Local
+
 ```bash
 iniciar-ambiente-dynamodb.bat  # Windows
 ```
+
 👉 **[docs/03-GUIAS/GUIA_DYNAMODB_LOCAL.md](docs/03-GUIAS/GUIA_DYNAMODB_LOCAL.md)**
 
 ### Deploy AWS
+
 ```bash
 npm run sam:deploy:prod
 ```
+
 👉 **[docs/05-INFRAESTRUTURA/GUIA_DEPLOY_AWS.md](docs/05-INFRAESTRUTURA/GUIA_DEPLOY_AWS.md)** 🔥
 
 ---
@@ -106,6 +119,7 @@ yyyyyyyyy/
 ## 🔥 Documentos Mais Importantes
 
 ### Top 5 - Deve Ler
+
 1. **[README.md](README.md)** - Documentação principal
 2. **[GUIA_SELECAO_BANCO_SWAGGER.md](docs/03-GUIAS/GUIA_SELECAO_BANCO_SWAGGER.md)** - Nova feature 🔥
 3. **[GUIA_DECISAO_DATABASE.md](docs/02-CONFIGURACAO/GUIA_DECISAO_DATABASE.md)** - Qual banco usar 🔥
@@ -113,6 +127,7 @@ yyyyyyyyy/
 5. **[COMECE_AQUI_NESTJS.md](docs/03-GUIAS/COMECE_AQUI_NESTJS.md)** - Guia NestJS
 
 ### Atualização v3.0.0
+
 1. **[RESULTADO_ATUALIZACAO_v3.0.0.md](RESULTADO_ATUALIZACAO_v3.0.0.md)** - Consolidação completa
 2. **[docs/ATUALIZACAO_v3.0.0.md](docs/ATUALIZACAO_v3.0.0.md)** - Técnico
 3. **[docs/RESUMO_ATUALIZACAO_v3.0.0.md](docs/RESUMO_ATUALIZACAO_v3.0.0.md)** - Executivo
@@ -123,10 +138,10 @@ yyyyyyyyy/
 
 | Serviço | URL |
 |---------|-----|
-| **API** | http://localhost:4000 |
-| **Swagger** | http://localhost:4000/docs |
-| **Health** | http://localhost:4000/health |
-| **Prisma Studio** | http://localhost:5555 |
+| **API** | <http://localhost:4000> |
+| **Swagger** | <http://localhost:4000/docs> |
+| **Health** | <http://localhost:4000/health> |
+| **Prisma Studio** | <http://localhost:5555> |
 
 ---
 
@@ -144,7 +159,7 @@ yyyyyyyyy/
 
 ## 🎯 Ações Rápidas
 
-### Preciso de...
+### Preciso de
 
 **...começar do zero?**  
 👉 [README.md](README.md) → [COMECE_AQUI.md](docs/02-CONFIGURACAO/COMECE_AQUI.md)
@@ -192,11 +207,13 @@ yyyyyyyyy/
 ## 📞 Suporte
 
 **Dúvidas?**
+
 1. Consulte o [README.md](README.md)
 2. Navegue pelos [docs/](docs/)
 3. Veja exemplos nos guias
 
 **Problemas?**
+
 1. Veja Troubleshooting no [README.md](README.md)
 2. Verifique configuração (.env)
 3. Consulte logs da aplicação
@@ -211,7 +228,8 @@ yyyyyyyyy/
 Alterne entre MongoDB (Prisma) e DynamoDB por requisição usando header HTTP ou configuração global.
 
 **Como usar?**
-1. Abra: http://localhost:4000/docs
+
+1. Abra: <http://localhost:4000/docs>
 2. Veja o dropdown `X-Database-Provider` em cada endpoint
 3. Selecione: PRISMA ou DYNAMODB
 4. Execute e compare resultados
@@ -233,4 +251,3 @@ Alterne entre MongoDB (Prisma) e DynamoDB por requisição usando header HTTP ou
 **Última Atualização:** 16/10/2025  
 **Mantenedor:** Blog API Team  
 **Documentação:** 100% Completa
-

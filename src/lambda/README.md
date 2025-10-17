@@ -115,6 +115,7 @@ sam local invoke BlogApiFunction --event events/test-event.json
 O `template.yaml` cria automaticamente:
 
 ### Lambda Function
+
 - **Nome**: `{StackName}-api-{Environment}`
 - **Runtime**: Node.js 18.x
 - **Memória**: 512 MB
@@ -122,6 +123,7 @@ O `template.yaml` cria automaticamente:
 - **URL**: Function URL com CORS habilitado
 
 ### Tabelas DynamoDB (7 tabelas)
+
 1. **users** - Usuários e autores
 2. **posts** - Posts/artigos
 3. **categories** - Categorias
@@ -131,12 +133,14 @@ O `template.yaml` cria automaticamente:
 7. **notifications** - Notificações
 
 Todas com:
+
 - **Billing**: Pay-per-request (sem custos fixos)
 - **Indexes**: GSIs otimizados para queries
 - **Backup**: Point-in-time recovery (apenas prod)
 - **Streams**: Habilitados para auditoria
 
 ### IAM Roles
+
 - Permissões automáticas para DynamoDB
 - CloudWatch Logs
 - X-Ray Tracing
@@ -175,11 +179,13 @@ LOG_LEVEL: debug|info|warn
 ## 💰 Custos
 
 Camada gratuita AWS (12 meses):
+
 - **Lambda**: 1M requisições/mês + 400.000 GB-s compute
 - **DynamoDB**: 25 GB storage + 25 WCU + 25 RCU
 - **CloudWatch**: 5 GB logs + 10 métricas customizadas
 
 Custos estimados (após free tier):
+
 - **Dev**: ~$0.00 - $5.00/mês (uso mínimo)
 - **Prod**: ~$10 - $50/mês (uso moderado)
 
@@ -192,18 +198,21 @@ Custos estimados (após free tier):
 ## 🆘 Troubleshooting
 
 ### Erro: "Stack already exists"
+
 ```bash
 # Atualizar stack existente
 sam deploy --no-confirm-changeset
 ```
 
 ### Erro: "Insufficient permissions"
+
 ```bash
 # Verificar permissões IAM do usuário AWS
 aws iam get-user
 ```
 
 ### Function URL não funciona
+
 ```bash
 # Verificar URL criada
 aws cloudformation describe-stacks --stack-name blog-backend-api \
@@ -215,13 +224,14 @@ aws cloudformation describe-stacks --stack-name blog-backend-api \
 
 ### De Serverless Framework para SAM
 
-✅ **Concluído!** 
+✅ **Concluído!**
 
 - ❌ Removido: `serverless.yml` (raiz)
 - ❌ Removido: `src/lambda/serverless.yml`
 - ✅ Criado: `src/lambda/template.yaml`
 
 Benefícios:
+
 - Nativo AWS (melhor integração)
 - Sem dependências externas (serverless-framework)
 - CloudFormation puro (mais controle)
@@ -232,4 +242,3 @@ Benefícios:
 - **AWS Support**: [Console AWS](https://console.aws.amazon.com/support/)
 - **SAM Issues**: [GitHub](https://github.com/aws/aws-sam-cli/issues)
 - **Documentação do Projeto**: Ver `/docs`
-

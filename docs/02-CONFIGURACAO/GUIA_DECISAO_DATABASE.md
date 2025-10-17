@@ -38,9 +38,10 @@
 
 ---
 
-## ✅ Use PRISMA (MongoDB) Se...
+## ✅ Use PRISMA (MongoDB) Se
 
 ### ✅ Desenvolvimento Local
+
 - Você está desenvolvendo localmente
 - Quer desenvolvimento rápido e produtivo
 - Precisa de Prisma Studio (GUI visual)
@@ -48,16 +49,19 @@
 - Quer migrations automáticas
 
 ### ✅ Testes
+
 - Está executando testes
 - Precisa de dados fáceis de popular
 - Quer reset rápido do banco
 
 ### ✅ Staging
+
 - Ambiente de staging/homologação
 - Precisa de ambiente idêntico ao dev
 - Quer facilidade de debug
 
 ### ✅ Produção (Servidor Tradicional)
+
 - Você usa servidor tradicional (não Lambda)
 - Tem MongoDB Atlas (gerenciado)
 - Quer aproveitar recursos do MongoDB
@@ -65,27 +69,31 @@
 
 ---
 
-## ✅ Use DYNAMODB Se...
+## ✅ Use DYNAMODB Se
 
 ### ✅ Produção Serverless
+
 - Você usa AWS Lambda
 - Quer arquitetura serverless completa
 - Precisa de escalabilidade automática
 - Quer zero gerenciamento de servidor
 
 ### ✅ Alta Disponibilidade
+
 - Precisa de 99.99% SLA
 - Quer replicação automática multi-região
 - Necessita de backup automático
 - Quer disaster recovery built-in
 
 ### ✅ Pay-Per-Request
+
 - Quer pagar apenas pelo que usar
 - Tráfego variável/imprevisível
 - Não quer pagar por servidor ocioso
 - Custo é prioridade
 
 ### ✅ Integração AWS
+
 - Já usa AWS Lambda
 - Usa outros serviços AWS
 - Quer IAM Roles nativos
@@ -115,6 +123,7 @@
 ## 🎯 Recomendações por Perfil
 
 ### 👨‍💻 Desenvolvedor Solo / Startup
+
 ```
 ✅ DESENVOLVIMENTO: PRISMA
 ✅ PRODUÇÃO: PRISMA (MongoDB Atlas M0)
@@ -128,6 +137,7 @@ Por quê?
 ```
 
 ### 🏢 Empresa Médio Porte
+
 ```
 ✅ DESENVOLVIMENTO: PRISMA
 ✅ STAGING: PRISMA (Atlas)
@@ -140,6 +150,7 @@ Por quê?
 ```
 
 ### 🏗️ Enterprise / Alta Escala
+
 ```
 ✅ DESENVOLVIMENTO: PRISMA
 ✅ STAGING: DYNAMODB (testes pré-prod)
@@ -157,6 +168,7 @@ Por quê?
 ## 🚀 Cenários Práticos
 
 ### Cenário 1: Blog Pessoal
+
 ```
 Tráfego: 1K-10K visitas/mês
 Orçamento: R$ 0
@@ -168,6 +180,7 @@ RECOMENDAÇÃO: PRISMA + MongoDB Atlas M0
 ```
 
 ### Cenário 2: SaaS Pequeno
+
 ```
 Tráfego: 10K-100K req/mês
 Orçamento: Baixo
@@ -179,6 +192,7 @@ RECOMENDAÇÃO: PRISMA + MongoDB Atlas M0/M10
 ```
 
 ### Cenário 3: API Serverless
+
 ```
 Tráfego: Variável (1K-1M req/mês)
 Infraestrutura: AWS Lambda
@@ -191,6 +205,7 @@ RECOMENDAÇÃO: DYNAMODB
 ```
 
 ### Cenário 4: App Enterprise
+
 ```
 Tráfego: 1M+ req/mês
 Requisitos: SLA, compliance, HA
@@ -209,18 +224,21 @@ RECOMENDAÇÃO: DYNAMODB
 ### PRISMA (MongoDB Atlas)
 
 **Free Tier (M0):**
+
 - ✅ R$ 0/mês
 - ✅ 512MB storage
 - ✅ Conexões compartilhadas
 - ✅ Ideal para: dev, teste, projetos pequenos
 
 **M10 (Shared):**
+
 - 💵 ~R$ 30/mês
 - ✅ 2GB RAM
 - ✅ 10GB storage
 - ✅ Ideal para: pequenas empresas
 
 **M20+ (Dedicado):**
+
 - 💵 R$ 150+/mês
 - ✅ Servidor dedicado
 - ✅ Performance garantida
@@ -229,17 +247,20 @@ RECOMENDAÇÃO: DYNAMODB
 ### DYNAMODB
 
 **Free Tier (Permanente):**
+
 - ✅ 25GB storage
 - ✅ 25 unidades WCU
 - ✅ 25 unidades RCU
 - ✅ 2.5M stream reads/mês
 
 **Pay-per-Request:**
+
 - 💵 $1.25 por milhão de writes
 - 💵 $0.25 por milhão de reads
 - 💵 $0.25 por GB/mês storage
 
 **Exemplo (100K req/mês):**
+
 - Writes: ~10K = ~$0.01
 - Reads: ~90K = ~$0.02
 - Storage: 1GB = $0.25
@@ -270,16 +291,19 @@ PRODUÇÃO → DYNAMODB (AWS)
 ### Por Que Híbrido Funciona?
 
 ✅ **Mesma API**
+
 - Repositories abstraem o banco
 - Controllers não mudam
 - Business logic igual
 
 ✅ **Mesmos Modelos**
+
 - 7 modelos em ambos
 - Estrutura idêntica
 - Fácil migração
 
 ✅ **Flexibilidade**
+
 - Troca com 1 variável de ambiente
 - Sem mudança de código
 - Deploy independente
@@ -288,7 +312,8 @@ PRODUÇÃO → DYNAMODB (AWS)
 
 ## 📝 Checklist de Decisão
 
-### Use PRISMA se:
+### Use PRISMA se
+
 - [ ] Estou desenvolvendo localmente
 - [ ] Quero produtividade máxima
 - [ ] Gosto de type-safe queries
@@ -296,7 +321,8 @@ PRODUÇÃO → DYNAMODB (AWS)
 - [ ] Uso servidor tradicional em produção
 - [ ] Tenho MongoDB Atlas ou posso usar
 
-### Use DYNAMODB se:
+### Use DYNAMODB se
+
 - [ ] Uso AWS Lambda em produção
 - [ ] Quero arquitetura serverless
 - [ ] Preciso de escalabilidade ilimitada
@@ -325,11 +351,13 @@ DATABASE_URL="mongodb+srv://..."  # MongoDB Atlas
 ### 💡 Dica de Ouro
 
 **Comece com PRISMA** e migre para DynamoDB quando:
+
 1. Escalar muito (1M+ req/mês)
 2. Precisar de serverless total
 3. Custo de servidor ficar alto
 
 **Benefícios:**
+
 - ✅ Desenvolvimento rápido agora
 - ✅ Arquitetura preparada para escalar
 - ✅ Migração fácil quando necessário
@@ -388,4 +416,3 @@ serverless deploy --stage prod
 ---
 
 **Versão:** 1.0.0 | **Data:** 16/10/2025
-

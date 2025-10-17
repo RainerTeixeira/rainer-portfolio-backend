@@ -260,5 +260,4 @@ Para mais detalhes, veja:
 
 ---
 
-**Ambiente configurado?** Execute `npm run dev` e acesse http://localhost:4000/api/docs 🚀
-
+**Ambiente configurado?** Execute `npm run dev` e acesse <http://localhost:4000/api/docs> 🚀

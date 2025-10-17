@@ -247,43 +247,50 @@ iniciar-servidor-completo.bat
 
 ### Tabelas Criadas
 
-O script `create-dynamodb-tables.ts` cria as seguintes tabelas:
+O script `dynamodb.tables.ts` cria as seguintes tabelas:
 
 #### 1. **blog-users**
+
 - **Partition Key**: `id` (String)
 - **GSI**: `EmailIndex` (email)
 - **GSI**: `CognitoIdIndex` (cognitoId)
 - **Uso**: Armazenar usuários e autores
 
 #### 2. **blog-posts**
+
 - **Partition Key**: `id` (String)
 - **GSI**: `AuthorIndex` (authorId + createdAt)
 - **GSI**: `StatusIndex` (status + createdAt)
 - **Uso**: Armazenar posts/artigos
 
 #### 3. **blog-categories**
+
 - **Partition Key**: `id` (String)
 - **GSI**: `SlugIndex` (slug)
 - **Uso**: Armazenar categorias
 
 #### 4. **blog-comments**
+
 - **Partition Key**: `id` (String)
 - **GSI**: `PostIndex` (postId + createdAt)
 - **Uso**: Armazenar comentários
 
 #### 5. **blog-likes**
+
 - **Partition Key**: `id` (String)
 - **GSI**: `PostIndex` (postId)
 - **GSI**: `UserIndex` (userId)
 - **Uso**: Armazenar likes em posts
 
 #### 6. **blog-bookmarks**
+
 - **Partition Key**: `id` (String)
 - **GSI**: `PostIndex` (postId)
 - **GSI**: `UserIndex` (userId)
 - **Uso**: Armazenar bookmarks/favoritos
 
 #### 7. **blog-notifications**
+
 - **Partition Key**: `id` (String)
 - **GSI**: `UserIndex` (userId + createdAt)
 - **Uso**: Armazenar notificações
@@ -324,6 +331,7 @@ DYNAMO_ENDPOINT=http://localhost:8000 dynamodb-admin
 ```
 
 **Recursos:**
+
 - ✅ Visualizar todas as tabelas
 - ✅ Adicionar/editar/remover itens
 - ✅ Executar queries e scans
@@ -359,9 +367,10 @@ dynamodb-local query \
 
 ### 3. NoSQL Workbench (GUI Oficial AWS)
 
-Download: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/workbench.html
+Download: <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/workbench.html>
 
 **Recursos:**
+
 - ✅ Modelagem visual de dados
 - ✅ Editor de queries
 - ✅ Visualização de GSI/LSI
@@ -506,6 +515,7 @@ AWS_SECRET_ACCESS_KEY=fakeSecretAccessKey
 ### Problema: "Cannot connect to DynamoDB"
 
 **Sintomas:**
+
 ```
 ❌ Erro ao conectar com DynamoDB: NetworkingError: connect ECONNREFUSED 127.0.0.1:8000
 ```
@@ -529,6 +539,7 @@ curl http://localhost:8000
 ### Problema: "ResourceNotFoundException: Cannot do operations on a non-existent table"
 
 **Sintomas:**
+
 ```
 ❌ ResourceNotFoundException: Cannot do operations on a non-existent table
 ```
@@ -551,11 +562,13 @@ npm run dynamodb:create-tables
 ### Problema: "ValidationException: One or more parameter values were invalid"
 
 **Sintomas:**
+
 ```
 ❌ ValidationException: One or more parameter values were invalid
 ```
 
 **Possíveis causas:**
+
 - Formato de atributo incorreto (String vs Number)
 - Falta de atributos obrigatórios
 - GSI configurado incorretamente
@@ -569,12 +582,13 @@ aws dynamodb describe-table \
   --endpoint-url http://localhost:8000 \
   --region us-east-1
 
-# Comparar com a definição em create-dynamodb-tables.ts
+# Comparar com a definição em dynamodb.tables.ts
 ```
 
 ### Problema: Container DynamoDB não inicia
 
 **Sintomas:**
+
 ```
 Error starting userland proxy: listen tcp4 0.0.0.0:8000: bind: address already in use
 ```
@@ -596,6 +610,7 @@ Stop-Process -Id <PID> -Force
 ### Problema: Dados não persistem após reiniciar
 
 **Sintomas:**
+
 - Dados desaparecem ao reiniciar o container
 
 **Solução:**
@@ -613,6 +628,7 @@ volumes:
 ### Problema: Performance muito lenta
 
 **Possíveis causas:**
+
 - Container com poucos recursos
 - Muitos itens em scan (ao invés de query)
 - Falta de índices adequados
@@ -627,7 +643,7 @@ volumes:
 # Query é O(log n), Scan é O(n)
 
 # 3. Adicionar GSI para consultas frequentes
-# Editar create-dynamodb-tables.ts e adicionar índice
+# Editar dynamodb.tables.ts e adicionar índice
 ```
 
 ---
@@ -747,4 +763,3 @@ Antes de fazer deploy para produção, verifique:
 **Criado em:** 16/10/2024  
 **Última atualização:** 16/10/2025  
 **Versão:** 2.0.0 (Atualizado com novos scripts e configurações)
-

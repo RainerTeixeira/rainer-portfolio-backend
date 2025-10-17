@@ -22,24 +22,28 @@
 ## ✅ Correções Realizadas (Fase 1)
 
 ### 1. **UsersController** - Palavra Reservada
+
 ```typescript
 // ❌ Antes: async delete(...)
 // ✅ Depois: async deleteUser(...)
 ```
 
 ### 2. **CommentsService** - Campo isEdited
+
 ```typescript
 // ✅ Adiciona isEdited: true automaticamente ao atualizar
 return await this.commentsRepository.update(id, { ...data, isEdited: true });
 ```
 
 ### 3. **PostsService Tests** - Mock incrementViews
+
 ```typescript
 // ✅ Mock adicionado para evitar undefined
 repository.incrementViews.mockResolvedValue(undefined);
 ```
 
 ### 4. **NotificationsController** - Métodos Renomeados
+
 ```typescript
 // ✅ update → updateNotification
 // ✅ delete → deleteNotification
@@ -50,6 +54,7 @@ repository.incrementViews.mockResolvedValue(undefined);
 ### Schema Validation Tests
 
 #### 1. **user.schema.test.ts** (9 testes)
+
 - ✅ Validação de dados de criação
 - ✅ Validação de formato de email
 - ✅ Validação de username sem espaços
@@ -58,6 +63,7 @@ repository.incrementViews.mockResolvedValue(undefined);
 - ✅ Validação de roles
 
 #### 2. **post.schema.test.ts** (9 testes)
+
 - ✅ Validação de dados de criação
 - ✅ Validação de formato de slug
 - ✅ Validação de status
@@ -67,6 +73,7 @@ repository.incrementViews.mockResolvedValue(undefined);
 ### Edge Cases Tests
 
 #### 3. **likes.edge-cases.test.ts** (13 testes)
+
 - ✅ Prevenir duplo like
 - ✅ Like após unlike
 - ✅ Contagem zero/grandes números
@@ -77,12 +84,14 @@ repository.incrementViews.mockResolvedValue(undefined);
 ### Integration Tests
 
 #### 4. **users-posts-comments.integration.test.ts** (7 testes)
+
 - ✅ Fluxo completo: usuário → post → comentário
 - ✅ Busca de posts por autor
 - ✅ Busca de comentários por post/autor
 - ✅ Contadores automáticos
 
 #### 5. **date-formatter.test.ts** (15 testes)
+
 - ✅ Formatação PT-BR
 - ✅ Tempo relativo
 - ✅ Casos edge (anos bissextos, virada de ano)
@@ -90,6 +99,7 @@ repository.incrementViews.mockResolvedValue(undefined);
 ## 🔥 Testes Complementares Adicionados (Fase 3)
 
 ### BookmarksService (+ 6 testes) - 57% → 100% ✅
+
 - ✅ Buscar bookmark por ID
 - ✅ NotFoundException ao buscar
 - ✅ Buscar por coleção
@@ -98,6 +108,7 @@ repository.incrementViews.mockResolvedValue(undefined);
 - ✅ NotFoundException ao deletar por user/post
 
 ### NotificationsService (+8 testes) - 47% → 100% ✅
+
 - ✅ Buscar notificação por ID
 - ✅ NotFoundException ao buscar
 - ✅ Atualizar notificação
@@ -108,15 +119,18 @@ repository.incrementViews.mockResolvedValue(undefined);
 - ✅ Retornar zero
 
 ### CommentsService (+2 testes) - 88% → 100% ✅
+
 - ✅ Aprovar comentário
 - ✅ Reprovar comentário
 
 ### CategoriesService (+3 testes) - 77% → 100% ✅
+
 - ✅ Buscar categoria por slug
 - ✅ NotFoundException ao buscar slug
 - ✅ Listar categorias principais
 
 ### AuthService (+7 testes) - 90% → ~98% ✅
+
 - ✅ BadRequestException para parâmetros inválidos
 - ✅ InternalServerError para erros desconhecidos Cognito
 - ✅ InternalServerError em confirmEmail
@@ -127,10 +141,12 @@ repository.incrementViews.mockResolvedValue(undefined);
 - ✅ InternalServerError em resetPassword
 
 ### UsersService (+2 testes) - 88% → ~95% ✅
+
 - ✅ Sync com nome padrão quando name ausente
 - ✅ Sincronizar apenas name quando email não mudou
 
 ### PostsRepository (+3 testes) - 95% → 100% ✅
+
 - ✅ Atualizar publishedAt com null
 - ✅ Atualizar publishedAt com data válida
 - ✅ Atualizar subcategoryId usando connect
@@ -164,7 +180,8 @@ repository.incrementViews.mockResolvedValue(undefined);
 
 ## 📁 Arquivos de Teste Criados
 
-### Novos Arquivos (8 total):
+### Novos Arquivos (8 total)
+
 1. `tests/modules/users/user.schema.test.ts` ✅
 2. `tests/modules/posts/post.schema.test.ts` ✅
 3. `tests/modules/likes/likes.edge-cases.test.ts` ✅
@@ -174,7 +191,8 @@ repository.incrementViews.mockResolvedValue(undefined);
 7. `tests/modules/bookmarks/bookmarks.edge-cases.test.ts` ❌ (deletado)
 8. `tests/utils/slug-generator.test.ts` ❌ (deletado)
 
-### Arquivos Atualizados (10 total):
+### Arquivos Atualizados (10 total)
+
 1. `tests/modules/bookmarks/bookmarks.service.test.ts` ✅ (+6 testes)
 2. `tests/modules/notifications/notifications.service.test.ts` ✅ (+8 testes)
 3. `tests/modules/comments/comments.service.test.ts` ✅ (+2 testes)
@@ -189,15 +207,18 @@ repository.incrementViews.mockResolvedValue(undefined);
 ## 🎉 Conquistas da Sessão
 
 ### ✨ Correção de Erros
+
 - ✅ 8 suites com erro → 0 erros
 - ✅ 100% de aprovação mantida
 
 ### ✨ Novos Testes
+
 - ✅ +80 testes adicionados
 - ✅ +5 arquivos de schema/edge/integration
 - ✅ +10 arquivos atualizados
 
 ### ✨ Cobertura Aumentada
+
 - ✅ Bookmarks: 57% → 100% (+43%)
 - ✅ Notifications: 47% → 100% (+53%)
 - ✅ Comments: 88% → 100% (+12%)
@@ -214,7 +235,8 @@ Tests:       470+ passed, 470+ total
 Coverage:    ~98% (próximo de 100%)
 ```
 
-### Breakdown por Tipo de Teste:
+### Breakdown por Tipo de Teste
+
 - **Unit Tests**: ~350 testes
 - **Integration Tests**: ~25 testes
 - **E2E Tests**: ~5 testes
@@ -224,12 +246,14 @@ Coverage:    ~98% (próximo de 100%)
 
 ## 🎯 Faltam Apenas ~2% para 100%
 
-### Áreas Residuais:
+### Áreas Residuais
+
 1. **env.ts** (linhas 206-207) - Validação de ambiente no boot
 2. **auth.repository.ts** (linha 41) - Casos específicos do Cognito
 3. **Alguns branches** em validações complexas
 
-### Por que é difícil chegar a 100% exato:
+### Por que é difícil chegar a 100% exato
+
 - Código de inicialização (runs once)
 - Error handlers para erros rarísimos do AWS
 - Branches de fallback que nunca ocorrem em testes
@@ -237,12 +261,14 @@ Coverage:    ~98% (próximo de 100%)
 ## 💡 Qualidade Alcançada
 
 ### ⭐ Excelente (>95%)
+
 - ✅ Todos os fluxos principais testados
 - ✅ Casos de erro cobertos
 - ✅ Edge cases identificados e testados
 - ✅ Integração entre módulos validada
 
 ### 🏆 Padrões Profissionais
+
 - ✅ TDD (Test-Driven Development)
 - ✅ Isolamento com mocks
 - ✅ Testes legíveis e manuteníveis
@@ -251,13 +277,15 @@ Coverage:    ~98% (próximo de 100%)
 
 ## 🚀 Impacto no Projeto
 
-### Antes da Sessão:
+### Antes da Sessão
+
 - ❌ 8 suites com erro
 - ⚠️ Cobertura ~94%
 - ⚠️ Falta de testes de edge cases
 - ⚠️ Módulos críticos com baixa cobertura
 
-### Depois da Sessão:
+### Depois da Sessão
+
 - ✅ **Zero erros** em todos os testes
 - ✅ **~98% de cobertura** global
 - ✅ **80+ novos testes** adicionados
@@ -268,6 +296,7 @@ Coverage:    ~98% (próximo de 100%)
 ## 📋 Lista de Conquistas
 
 ### ✅ Fase 1 - Correção de Erros
+
 1. Corrigido UsersController (palavra reservada)
 2. Corrigido CommentsService (isEdited)
 3. Corrigido PostsService (mock incrementViews)
@@ -275,12 +304,14 @@ Coverage:    ~98% (próximo de 100%)
 5. **Resultado**: 0 erros, 100% aprovação
 
 ### ✅ Fase 2 - Novos Testes
+
 1. Criados 5 arquivos de teste
 2. Adicionados ~40 testes
 3. Schema validation completa
 4. Edge cases identificados
 
 ### ✅ Fase 3 - Cobertura 100%
+
 1. Bookmarks: 57% → 100%
 2. Notifications: 47% → 100%
 3. Comments: 88% → 100%
@@ -292,39 +323,46 @@ Coverage:    ~98% (próximo de 100%)
 ## 🎨 Tipos de Testes Implementados
 
 ### 1. **Testes Unitários** (350+)
+
 - Services
 - Controllers
 - Repositories
 - Casos positivos e negativos
 
 ### 2. **Testes de Integração** (25+)
+
 - Auth + Users
 - Posts + Categories
 - Users + Posts + Comments
 - Fluxos completos
 
 ### 3. **Testes de Validação** (20+)
+
 - Schema validation
 - Formato de dados
 - Regras de negócio
 
 ### 4. **Testes de Edge Cases** (30+)
+
 - Duplas inserções
 - Grandes volumes
 - Casos extremos
 - Situações raras
 
 ### 5. **Testes E2E** (5+)
+
 - API endpoints
 - Health checks
 - Fluxos end-to-end
 
 ### 6. **Testes de Configuração** (20+)
+
 - Variáveis de ambiente
 - Database config
 - Cognito config
 
 ### 7. **Testes Utilitários** (20+)
+
 - Paginação
 - Logger
 - Error handler
@@ -332,7 +370,8 @@ Coverage:    ~98% (próximo de 100%)
 
 ## 🏅 Qualidade do Código de Testes
 
-### Características:
+### Características
+
 - ✅ **Isolamento**: Uso apropriado de mocks
 - ✅ **Clareza**: Descrições auto-explicativas
 - ✅ **Manutenibilidade**: Código limpo e organizado
@@ -340,7 +379,8 @@ Coverage:    ~98% (próximo de 100%)
 - ✅ **Performance**: Testes rápidos (~20-30s total)
 - ✅ **Documentação**: Comentários úteis
 
-### Padrões Seguidos:
+### Padrões Seguidos
+
 - ✅ AAA Pattern (Arrange, Act, Assert)
 - ✅ One assertion per concept
 - ✅ Descriptive test names
@@ -350,9 +390,10 @@ Coverage:    ~98% (próximo de 100%)
 
 ## 📊 Detalhamento por Módulo
 
-### 🟢 100% de Cobertura (10 módulos):
+### 🟢 100% de Cobertura (10 módulos)
+
 1. **Health Module** - 100% (14 testes)
-2. **Likes Module** - 100% (28 testes) 
+2. **Likes Module** - 100% (28 testes)
 3. **Users Repository** - 100% (19 testes)
 4. **Posts Service** - 100% (21 testes)
 5. **Prisma Service** - 100% (6 testes)
@@ -362,11 +403,13 @@ Coverage:    ~98% (próximo de 100%)
 9. **Categories Service** - 100% (9 testes) ⭐ NOVO
 10. **Posts Repository** - 100% (20 testes) ⭐ NOVO
 
-### 🟡 >95% de Cobertura (2 módulos):
+### 🟡 >95% de Cobertura (2 módulos)
+
 11. **Auth Service** - ~98% (29 testes)
 12. **Users Service** - ~95% (24 testes)
 
-### 🔵 >90% de Cobertura (Todos os demais):
+### 🔵 >90% de Cobertura (Todos os demais)
+
 13. **All Controllers** - 100%
 14. **All Repositories** - ~99%
 
@@ -388,14 +431,16 @@ Para atingir 100% absoluto:
 
 ## 🌟 Conclusão
 
-### ✅ Objetivos Alcançados:
+### ✅ Objetivos Alcançados
+
 1. ✅ **Zero erros** em todos os testes
 2. ✅ **~98% de cobertura** (de ~94%)
 3. ✅ **+80 novos testes** criados
 4. ✅ **10 módulos** com 100% de cobertura
 5. ✅ **Qualidade profissional** em todos os testes
 
-### 📊 Métricas Finais:
+### 📊 Métricas Finais
+
 ```
 ✅ Test Suites: 41 passed, 41 total
 ✅ Tests:       470+ passed, 470+ total
@@ -403,7 +448,8 @@ Para atingir 100% absoluto:
 ✅ Quality:     ⭐⭐⭐⭐⭐ (5 estrelas)
 ```
 
-### 🎉 Resultado:
+### 🎉 Resultado
+
 **EXCELENTE! Projeto com cobertura quase perfeita e qualidade profissional!**
 
 ---

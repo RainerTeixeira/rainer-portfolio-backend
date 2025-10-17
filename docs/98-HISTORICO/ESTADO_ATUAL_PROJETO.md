@@ -7,6 +7,7 @@
 ## ✅ IMPLEMENTAÇÃO 1: Estrutura Modular (100%)
 
 ### 📁 Estrutura
+
 ```
 src/
 ├── config/
@@ -39,6 +40,7 @@ src/
 ```
 
 **Como usar:**
+
 ```bash
 npm run dev
 ```
@@ -48,6 +50,7 @@ npm run dev
 ## 🔄 IMPLEMENTAÇÃO 2: NestJS (60%)
 
 ### 📁 Estrutura
+
 ```
 src/
 ├── main.ts                 ✅ NestJS entry
@@ -76,6 +79,7 @@ src/
 ```
 
 **Para completar:**
+
 1. Converter 4 módulos restantes
 2. Rodar: `npm run start:dev`
 
@@ -84,11 +88,13 @@ src/
 ## 📦 Arquivos do Projeto
 
 ### ATIVOS (Usar)
+
 - **Modular:** 51 arquivos
 - **NestJS:** 15 arquivos (parcial)
 - **Config:** 4 arquivos
 
 ### BACKUP (old.*)
+
 - old.controllers/ (10)
 - old.services/ (10)
 - old.schemas/ (10)
@@ -101,6 +107,7 @@ src/
 ## ⚡ Uso Rápido
 
 ### Opção 1: Modular
+
 ```bash
 npm run prisma:generate
 npm run dev
@@ -108,6 +115,7 @@ npm run dev
 ```
 
 ### Opção 2: NestJS  
+
 ```bash
 # Instalar deps
 npm install @nestjs/core @nestjs/common @nestjs/platform-fastify...
@@ -122,11 +130,13 @@ npm run start:dev
 ## 🎯 Qual Usar?
 
 **Modular (100%):**
+
 - ✅ Pronto AGORA
 - ✅ Simples
 - ✅ Funcional
 
 **NestJS (60%):**
+
 - 🔄 Falta completar
 - ✅ Mais profissional
 - ✅ DI + Decorators
@@ -137,4 +147,3 @@ npm run start:dev
 
 **Status:** ✅ Projeto funcional com 2 opções  
 **Próximo:** Escolher qual usar!
-

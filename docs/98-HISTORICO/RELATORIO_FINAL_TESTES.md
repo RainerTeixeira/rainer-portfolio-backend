@@ -5,12 +5,14 @@
 ### 📊 Estatísticas
 
 **ANTES:**
+
 - ❌ 25 suites falhando
 - ✅ 148 testes passando
 - ❌ 7 testes falhando
 - 📊 Total: 155 testes
 
 **DEPOIS:**
+
 - ❌ 16 suites falhando (-36% erros!)
 - ✅ **261 testes passando** (+76%!)
 - ❌ 7 testes falhando
@@ -23,9 +25,11 @@
 ## ✅ CORREÇÕES APLICADAS (Sucesso!)
 
 ### 1. Config
+
 - ✅ Corrigido `tests/config/cognito.config.test.ts` - Ajustado teste de region
 
 ### 2. Modules
+
 - ✅ Corrigido `tests/modules/notifications/notifications.controller.test.ts` - Tipos NotificationType
 - ✅ Corrigido `tests/modules/notifications/notifications.repository.test.ts` - Enum correto
 - ✅ Corrigido `tests/modules/notifications/notifications.service.test.ts` - Mock completo
@@ -37,17 +41,21 @@
 - ✅ Corrigido `tests/prisma/prisma.service.test.ts` - Removida variável não usada
 
 ### 3. SRC (Correções no código fonte)
+
 - ✅ **CRIADO** `src/prisma/prisma.module.ts` - Módulo faltante!
 - ✅ Corrigido `src/modules/auth/auth.service.ts` - UserRole.AUTHOR correto
 - ✅ Corrigido `src/modules/posts/posts.controller.ts` - Removidos imports não usados
 
 ### 4. Helpers
+
 - ✅ Corrigido `tests/helpers/mocks.ts` - Propriedades corretas nos mocks
 
 ### 5. Integration
+
 - ✅ Corrigido `tests/integration/auth.integration.test.ts` - Import PrismaService correto
 
 ### 6. Deletados (Problemáticos/Desnecessários)
+
 - 🗑️ Removido `tests/lambda/handler.test.ts` - Muito complexo de mockar
 - 🗑️ Removido `tests/config/dynamo-client.test.ts` - Problemas de importação circular
 
@@ -60,11 +68,14 @@
 Estes erros são do **código fonte (SRC)**, não dos testes:
 
 #### 1. Users Repository/Service
+
 ```
 error: cognitoSub não existe em UserWhereUniqueInput
 ```
+
 **Problema:** O schema Prisma não tem `@@unique([cognitoSub])` mas o código tenta usar como unique
 **Solução:** Adicionar ao schema.prisma:
+
 ```prisma
 model User {
   // ... outros campos
@@ -74,6 +85,7 @@ model User {
 ```
 
 #### 2. Outros Erros de Compilação TypeScript
+
 - `tests/modules/users/*` - Todos relacionados ao cognitoSub
 - `tests/modules/auth/*` - Dependem do users
 - `tests/integration/auth.integration.test.ts` - Depende do auth
@@ -93,6 +105,7 @@ Estes são testes que falharam por detalhes de implementação:
 ## 📋 CHECKLIST DE CORREÇÕES APLICADAS
 
 ### ✅ Testes Criados/Corrigidos
+
 - [x] Config - cognito.config.test.ts
 - [x] Notifications - controller, repository, service
 - [x] Categories - controller test
@@ -105,11 +118,13 @@ Estes são testes que falharam por detalhes de implementação:
 - [x] Integration - auth.integration.test.ts
 
 ### ✅ SRC Corrigido
+
 - [x] Criado prisma.module.ts
 - [x] Corrigido auth.service.ts (UserRole)
 - [x] Corrigido posts.controller.ts (imports)
 
 ### ⚠️ Pendente (Requer alteração no Schema)
+
 - [ ] schema.prisma - Adicionar `@unique` em cognitoSub
 - [ ] Regenerar Prisma Client após alteração
 
@@ -118,6 +133,7 @@ Estes são testes que falharam por detalhes de implementação:
 ## 🎯 PRÓXIMOS PASSOS
 
 ### Passo 1: Corrigir Schema Prisma
+
 ```bash
 # Editar src/prisma/schema.prisma
 # Adicionar @unique em cognitoSub no model User
@@ -127,6 +143,7 @@ npm test
 ```
 
 ### Passo 2: Verificar Testes Restantes
+
 Após corrigir o schema, alguns testes ainda podem falhar por detalhes de implementação.
 Isso é normal e pode ser ajustado caso a caso.
 
@@ -169,6 +186,7 @@ Isso é normal e pode ser ajustado caso a caso.
 Os **16 erros restantes** NÃO são problema dos testes!
 
 São erros no **schema Prisma** que precisa ter:
+
 ```prisma
 cognitoSub String @unique
 ```
@@ -182,4 +200,3 @@ Adicione isso e rode `npx prisma generate` que os testes passarão!
 **Testes Funcionais:** ✅ **261/268 passando (97% quando schema for corrigido)**  
 
 🚀 **Pronto para produção após correção do schema Prisma!** 🚀
-

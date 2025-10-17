@@ -12,13 +12,9 @@ import pino from 'pino';
 import { env } from '../config/env.js';
 import * as fs from 'fs';
 import * as path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 // Garantir que a pasta logs/ existe
-const logsDir = path.join(__dirname, '..', '..', 'logs');
+const logsDir = path.join(process.cwd(), 'logs');
 if (!fs.existsSync(logsDir)) {
   fs.mkdirSync(logsDir, { recursive: true });
 }

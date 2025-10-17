@@ -22,11 +22,13 @@
 ### 1. ✅ Subcategoria vs Categoria (CRÍTICO!)
 
 **❌ Antes:**
+
 ```typescript
 categoryId: string;  // ← Campo não existe no schema!
 ```
 
 **✅ Depois:**
+
 ```typescript
 /** 
  * ID da subcategoria à qual o post pertence
@@ -40,11 +42,13 @@ subcategoryId: string;  // ← Campo correto!
 ### 2. ✅ Relações Prisma Explícitas
 
 **❌ Antes:**
+
 ```typescript
 return await this.prisma.post.create({ data });
 ```
 
 **✅ Depois:**
+
 ```typescript
 const postData: Prisma.PostCreateInput = {
   title: data.title,
@@ -60,6 +64,7 @@ return await this.prisma.post.create({ data: postData });
 ### 3. ✅ Include Hierárquico Completo
 
 **❌ Antes:**
+
 ```typescript
 include: {
   subcategory: true
@@ -67,6 +72,7 @@ include: {
 ```
 
 **✅ Depois:**
+
 ```typescript
 include: {
   subcategory: {
@@ -87,6 +93,7 @@ include: {
 ### 4. ✅ Tipagem Forte
 
 **❌ Antes:**
+
 ```typescript
 async findMany(params: any) {
   const where: any = {};
@@ -94,6 +101,7 @@ async findMany(params: any) {
 ```
 
 **✅ Depois:**
+
 ```typescript
 async findMany(params: {
   page?: number;
@@ -110,6 +118,7 @@ async findMany(params: {
 ### 5. ✅ Validações de Negócio
 
 **❌ Antes:**
+
 ```typescript
 async createPost(data) {
   return await this.repo.create(data);
@@ -117,6 +126,7 @@ async createPost(data) {
 ```
 
 **✅ Depois:**
+
 ```typescript
 async createPost(data: CreatePostData) {
   if (!data.content) {
@@ -134,6 +144,7 @@ async createPost(data: CreatePostData) {
 ### 6. ✅ Logging Profissional
 
 **✅ Adicionado:**
+
 ```typescript
 private readonly logger = new Logger(PostsRepository.name);
 
@@ -148,12 +159,14 @@ async create(data: CreatePostData) {
 ### 7. ✅ Documentação Swagger Completa
 
 **❌ Antes:**
+
 ```typescript
 @Get()
 async list() { ... }
 ```
 
 **✅ Depois:**
+
 ```typescript
 @Get()
 @ApiOperation({ 
@@ -174,6 +187,7 @@ async list(
 ### 8. ✅ Error Handling Apropriado
 
 **✅ Adicionado:**
+
 ```typescript
 async getPostById(id: string) {
   const post = await this.repo.findById(id);
@@ -191,6 +205,7 @@ async getPostById(id: string) {
 ### 9. ✅ Métodos de Negócio Específicos
 
 **✅ Adicionados:**
+
 ```typescript
 async publishPost(id: string)
 async unpublishPost(id: string)
@@ -203,6 +218,7 @@ async getPostsByAuthor(authorId: string)
 ### 10. ✅ Interface PostWithRelations
 
 **✅ Criada:**
+
 ```typescript
 export interface PostWithRelations extends Post {
   author?: {
@@ -245,11 +261,13 @@ export interface PostWithRelations extends Post {
 ## ✅ Padrões Profissionais Aplicados
 
 ### Architecture
+
 - ✅ Separation of Concerns (Repository/Service/Controller)
 - ✅ Dependency Injection (NestJS DI)
 - ✅ Single Responsibility Principle
 
 ### Code Quality
+
 - ✅ JSDoc em todos os métodos e interfaces
 - ✅ TypeScript strict mode
 - ✅ Prisma types nativos
@@ -257,6 +275,7 @@ export interface PostWithRelations extends Post {
 - ✅ Logging estruturado
 
 ### API Design
+
 - ✅ RESTful endpoints
 - ✅ Swagger/OpenAPI completo
 - ✅ Paginação implementada
@@ -264,6 +283,7 @@ export interface PostWithRelations extends Post {
 - ✅ Mensagens padronizadas
 
 ### Database
+
 - ✅ Relações explícitas (connect)
 - ✅ Include hierárquico
 - ✅ Queries otimizadas
@@ -274,21 +294,25 @@ export interface PostWithRelations extends Post {
 ## 🎯 Próximos Módulos a Corrigir
 
 ### ⏳ Categories (próximo)
+
 - [ ] Aplicar mesmo padrão
 - [ ] Validar hierarquia (parent/children)
 - [ ] Include recursivo se necessário
 
 ### ⏳ Users
+
 - [ ] Aplicar mesmo padrão
 - [ ] Hash de senha
 - [ ] Remover senha de respostas
 
 ### ⏳ Comments
+
 - [ ] Aplicar mesmo padrão
 - [ ] Threads (parentId)
 - [ ] Moderação
 
 ### ⏳ Likes, Bookmarks, Notifications
+
 - [ ] Aplicar mesmo padrão (mais simples)
 
 ---
@@ -298,6 +322,7 @@ export interface PostWithRelations extends Post {
 **Módulo Posts:** ✅ **100% Profissional!**
 
 **Padrão Atingido:**
+
 - ✅ Enterprise-grade code
 - ✅ Production-ready
 - ✅ Maintainable
@@ -313,4 +338,3 @@ export interface PostWithRelations extends Post {
 **Criado em:** 14 de Outubro de 2025  
 **Versão:** 5.0.0 - NestJS Enterprise  
 **Próximo:** Aplicar correções em Categories module
-

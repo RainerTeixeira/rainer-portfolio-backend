@@ -18,7 +18,8 @@ Atualização completa da documentação do projeto com foco na **nova arquitetu
 
 Criada pasta com **4 documentos completos** sobre infraestrutura AWS:
 
-#### Documentos Criados:
+#### Documentos Criados
+
 1. **AWS_SAM_COMPLETO.md** (25KB)
    - O que é AWS SAM
    - Recursos criados automaticamente
@@ -66,10 +67,12 @@ Criada pasta com **4 documentos completos** sobre infraestrutura AWS:
 
 ### 2. 📂 **Reestruturação de Pastas**
 
-#### Renomeações:
+#### Renomeações
+
 - `05-RESULTADOS` → `06-RESULTADOS`
 
-#### Arquivadas (movidas para 99-ARQUIVADOS):
+#### Arquivadas (movidas para 99-ARQUIVADOS)
+
 - `06-REORGANIZACAO` → `OLD-06-REORGANIZACAO`
 - `90-FINAL` → `OLD-90-FINAL`
 - `91-REESTRUTURACAO` → `OLD-91-REESTRUTURACAO`
@@ -82,7 +85,8 @@ Criada pasta com **4 documentos completos** sobre infraestrutura AWS:
 
 Todos os documentos principais foram atualizados com as novas informações:
 
-#### README.md Principal (Raiz):
+#### README.md Principal (Raiz)
+
 - ✅ Título atualizado: "Backend NestJS **Serverless**"
 - ✅ Badges separadas (Dev + Prod)
 - ✅ Stack Tecnológica por ambiente
@@ -92,22 +96,26 @@ Todos os documentos principais foram atualizados com as novas informações:
 - ✅ Decisões técnicas (Lambda Function URLs, AWS SAM, Híbrida)
 - ✅ Histórico de alterações (v2.2.0)
 
-#### docs/README.md:
+#### docs/README.md
+
 - ✅ Nova seção 05-INFRAESTRUTURA adicionada
 - ✅ Estrutura de pastas atualizada
 - ✅ Estatísticas corrigidas (91 docs, 6 pastas ativas)
 - ✅ Histórico de versões (v3.1.0)
 
-#### docs/00-LEIA_PRIMEIRO.md:
+#### docs/00-LEIA_PRIMEIRO.md
+
 - ✅ Estrutura atualizada
 - ✅ Documentos essenciais (novos guias AWS)
 - ✅ Versão 3.1.0
 
-#### docs/INDEX.md:
+#### docs/INDEX.md
+
 - ✅ Guias recomendados (AWS SAM e Deploy)
 - ✅ Versão 3.1.0
 
-#### docs/01-NAVEGACAO/_INDICE_COMPLETO.md:
+#### docs/01-NAVEGACAO/_INDICE_COMPLETO.md
+
 - ✅ Seção 05-INFRAESTRUTURA completa
 - ✅ 91 documentos totais
 - ✅ Descrições detalhadas
@@ -116,7 +124,8 @@ Todos os documentos principais foram atualizados com as novas informações:
 
 ## 📊 Estatísticas Finais
 
-### Estrutura de Pastas:
+### Estrutura de Pastas
+
 ```
 docs/
 ├── 📂 01-NAVEGACAO/          (4 docs)
@@ -129,7 +138,8 @@ docs/
 └── 📂 99-ARQUIVADOS/         (26+ itens)
 ```
 
-### Números:
+### Números
+
 - **Pastas ativas:** 6
 - **Pastas auxiliares:** 2 (HISTORICO, ARQUIVADOS)
 - **Documentos totais:** 91
@@ -142,13 +152,15 @@ docs/
 
 ## 🏗️ Arquitetura Documentada
 
-### Desenvolvimento Local:
+### Desenvolvimento Local
+
 - **Framework:** NestJS 11 + Fastify 4
 - **Database:** MongoDB 7 + Prisma 6
 - **Auth:** AWS Cognito (config local)
 - **Runtime:** Node.js 20
 
-### Produção AWS:
+### Produção AWS
+
 - **Compute:** AWS Lambda (Node.js 20)
 - **HTTP:** Lambda Function URLs (sem API Gateway)
 - **Database:** Amazon DynamoDB (on-demand)
@@ -160,7 +172,8 @@ docs/
 
 ## 💰 Custos AWS
 
-### Free Tier (12 meses):
+### Free Tier (12 meses)
+
 | Serviço | Free Tier | Custo |
 |---------|-----------|-------|
 | Lambda | 1M req/mês | R$ 0,00 |
@@ -175,26 +188,31 @@ docs/
 ## 🎯 Benefícios
 
 ### 1. **Clareza Total**
+
 - Separação clara entre dev e prod
 - Documentação específica para cada ambiente
 - Stack híbrida bem explicada
 
 ### 2. **Deploy Facilitado**
+
 - Guia passo a passo completo
 - Template.yaml pronto para usar
 - Múltiplos ambientes configurados
 
 ### 3. **Economia**
+
 - Function URLs: 3.5x mais barato que API Gateway
 - Free Tier: R$ 0,00/mês
 - DynamoDB on-demand: Pague apenas pelo uso
 
 ### 4. **Produtividade**
+
 - Dev: MongoDB + Prisma (rápido)
 - Prod: DynamoDB (escalável)
 - Melhor dos dois mundos
 
 ### 5. **Documentação Profissional**
+
 - 91 documentos organizados
 - 0% redundância
 - Estrutura escalável
@@ -221,14 +239,16 @@ docs/
 
 ## 🔗 Documentos Chave Criados
 
-### Infraestrutura AWS:
+### Infraestrutura AWS
+
 1. [05-INFRAESTRUTURA/AWS_SAM_COMPLETO.md](05-INFRAESTRUTURA/AWS_SAM_COMPLETO.md)
 2. [05-INFRAESTRUTURA/LAMBDA_FUNCTION_URLS.md](05-INFRAESTRUTURA/LAMBDA_FUNCTION_URLS.md)
 3. [05-INFRAESTRUTURA/GUIA_DEPLOY_AWS.md](05-INFRAESTRUTURA/GUIA_DEPLOY_AWS.md)
 4. [05-INFRAESTRUTURA/TEMPLATE_YAML_COMPLETO.md](05-INFRAESTRUTURA/TEMPLATE_YAML_COMPLETO.md)
 5. [05-INFRAESTRUTURA/README.md](05-INFRAESTRUTURA/README.md)
 
-### Principais Atualizados:
+### Principais Atualizados
+
 1. [../README.md](../README.md) - README raiz
 2. [README.md](README.md) - README docs
 3. [00-LEIA_PRIMEIRO.md](00-LEIA_PRIMEIRO.md)
@@ -239,13 +259,15 @@ docs/
 
 ## 🚀 Próximos Passos para Usuários
 
-### Para Deploy AWS:
+### Para Deploy AWS
+
 1. Ler: [05-INFRAESTRUTURA/AWS_SAM_COMPLETO.md](05-INFRAESTRUTURA/AWS_SAM_COMPLETO.md)
 2. Seguir: [05-INFRAESTRUTURA/GUIA_DEPLOY_AWS.md](05-INFRAESTRUTURA/GUIA_DEPLOY_AWS.md)
 3. Copiar: [05-INFRAESTRUTURA/TEMPLATE_YAML_COMPLETO.md](05-INFRAESTRUTURA/TEMPLATE_YAML_COMPLETO.md)
 4. Deploy: `sam build && sam deploy --guided`
 
-### Para Desenvolvimento:
+### Para Desenvolvimento
+
 1. Continuar usando MongoDB + Prisma
 2. Testar localmente: `npm run dev`
 3. Preparar código para Lambda quando necessário
@@ -254,20 +276,23 @@ docs/
 
 ## ✅ Resultado Final
 
-### Estrutura:
+### Estrutura
+
 - ✅ **6 pastas ativas** bem organizadas
 - ✅ **91 documentos** profissionais
 - ✅ **0% redundância**
 - ✅ **100% atualizado** com stack AWS
 
-### Documentação:
+### Documentação
+
 - ✅ **Infraestrutura completa** documentada
 - ✅ **Deploy passo a passo** pronto
 - ✅ **Template.yaml** completo
 - ✅ **Custos** detalhados
 - ✅ **Arquitetura** clara
 
-### Qualidade:
+### Qualidade
+
 - ✅ Sem arquivos desatualizados nas pastas ativas
 - ✅ Histórico preservado (99-ARQUIVADOS)
 - ✅ Navegação clara por perfil
@@ -279,4 +304,3 @@ docs/
 **Versão:** 3.1.0  
 **Data:** 16/10/2025  
 **Próxima versão:** Aguardando novas features
-

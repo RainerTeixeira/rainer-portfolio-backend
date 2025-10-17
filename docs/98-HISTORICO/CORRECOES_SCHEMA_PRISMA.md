@@ -9,6 +9,7 @@
 ### 1. ✅ Generator com Preview Features
 
 **❌ Antes:**
+
 ```prisma
 generator client {
   provider = "prisma-client-js"
@@ -16,6 +17,7 @@ generator client {
 ```
 
 **✅ Depois:**
+
 ```prisma
 generator client {
   provider        = "prisma-client-js"
@@ -25,6 +27,7 @@ generator client {
 ```
 
 **Por quê:**
+
 - `fullTextSearch`: Permite busca de texto completo (útil para pesquisar em título/conteúdo)
 - `fullTextIndex`: Índices de texto (MongoDB)
 - `binaryTargets`: Compatibilidade com Docker, AWS Lambda, diferentes sistemas operacionais
@@ -34,18 +37,21 @@ generator client {
 ### 2. ✅ Documentação Tripla Barra (///)
 
 **❌ Antes:**
+
 ```prisma
 // Identificação
 id String @id
 ```
 
 **✅ Depois:**
+
 ```prisma
 /// ID único do usuário (MongoDB ObjectId)
 id String @id @default(auto()) @map("_id") @db.ObjectId
 ```
 
 **Benefício:**
+
 - Comentários `///` aparecem no autocomplete do TypeScript
 - Gera documentação automática no Prisma Client
 - Toda equipe entende o propósito de cada campo
@@ -55,6 +61,7 @@ id String @id @default(auto()) @map("_id") @db.ObjectId
 ### 3. ✅ Seções Organizadas Visualmente
 
 **✅ Adicionado:**
+
 ```prisma
 model User {
   // ─────────────────────────────────────────────────────────────
@@ -75,6 +82,7 @@ model User {
 ```
 
 **Seções por Model:**
+
 - IDENTIFICAÇÃO
 - CONTEÚDO (PRINCIPAL/SECUNDÁRIO)
 - RELAÇÕES
@@ -90,6 +98,7 @@ model User {
 #### Model: Post (10 índices)
 
 **❌ Antes (6 índices simples):**
+
 ```prisma
 @@index([status])
 @@index([authorId])
@@ -100,6 +109,7 @@ model User {
 ```
 
 **✅ Depois (10 índices - 6 simples + 4 compostos):**
+
 ```prisma
 // Simples
 @@index([slug])
@@ -119,6 +129,7 @@ model User {
 **Queries Otimizadas:**
 
 **Query 1:**
+
 ```typescript
 // Buscar posts publicados ordenados por data
 prisma.post.findMany({
@@ -130,6 +141,7 @@ prisma.post.findMany({
 ```
 
 **Query 2:**
+
 ```typescript
 // Posts de um autor em rascunho
 prisma.post.findMany({
@@ -140,6 +152,7 @@ prisma.post.findMany({
 ```
 
 **Query 3:**
+
 ```typescript
 // Posts publicados de uma subcategoria
 prisma.post.findMany({
@@ -158,11 +171,13 @@ prisma.post.findMany({
 #### Model: User (6 índices)
 
 **✅ Adicionado índice composto:**
+
 ```prisma
 @@index([isActive, role])  // Buscar usuários ativos por role
 ```
 
 **Query Otimizada:**
+
 ```typescript
 // Buscar todos editores ativos
 prisma.user.findMany({
@@ -176,11 +191,13 @@ prisma.user.findMany({
 #### Model: Category (5 índices)
 
 **✅ Adicionado índice composto:**
+
 ```prisma
 @@index([parentId, isActive, order])  // Subcategorias ativas ordenadas
 ```
 
 **Query Otimizada:**
+
 ```typescript
 // Buscar subcategorias ativas de uma categoria, ordenadas
 prisma.category.findMany({
@@ -195,12 +212,14 @@ prisma.category.findMany({
 #### Model: Comment (7 índices)
 
 **✅ Adicionados 2 índices compostos:**
+
 ```prisma
 @@index([postId, isApproved, createdAt])  // Comentários aprovados ordenados
 @@index([postId, parentId])               // Threads de comentários
 ```
 
 **Queries Otimizadas:**
+
 ```typescript
 // Comentários aprovados de um post
 prisma.comment.findMany({
@@ -221,6 +240,7 @@ prisma.comment.findMany({
 #### Model: Like (4 índices)
 
 **✅ Adicionado índice composto:**
+
 ```prisma
 @@index([postId, createdAt])  // Likes de um post ordenados
 ```
@@ -230,11 +250,13 @@ prisma.comment.findMany({
 #### Model: Bookmark (5 índices)
 
 **✅ Adicionado índice composto:**
+
 ```prisma
 @@index([userId, collection])  // Bookmarks de usuário por coleção
 ```
 
 **Query Otimizada:**
+
 ```typescript
 // Buscar favoritos do usuário na coleção "Ler depois"
 prisma.bookmark.findMany({
@@ -248,11 +270,13 @@ prisma.bookmark.findMany({
 #### Model: Notification (5 índices)
 
 **✅ Adicionado índice composto:**
+
 ```prisma
 @@index([userId, isRead, createdAt])  // Não lidas de usuário ordenadas
 ```
 
 **Query Otimizada:**
+
 ```typescript
 // Notificações não lidas de um usuário
 prisma.notification.findMany({
@@ -268,6 +292,7 @@ prisma.notification.findMany({
 ### 5. ✅ Unique Constraints Nomeados
 
 **❌ Antes:**
+
 ```prisma
 model Like {
   @@unique([userId, postId])
@@ -275,6 +300,7 @@ model Like {
 ```
 
 **✅ Depois:**
+
 ```prisma
 model Like {
   @@unique([userId, postId], name: "unique_user_post_like")
@@ -286,6 +312,7 @@ model Bookmark {
 ```
 
 **Benefício:**
+
 ```typescript
 // Erro antes:
 Unique constraint failed on the fields: (`userId`,`postId`)
@@ -300,11 +327,13 @@ Unique constraint failed: `unique_user_post_like`
 ### 6. ✅ OnDelete Strategies Claras
 
 **Antes (implícito):**
+
 ```prisma
 author User @relation(fields: [authorId], references: [id])
 ```
 
 **Depois (explícito):**
+
 ```prisma
 /// Autor do post
 author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
@@ -314,6 +343,7 @@ subcategory Category @relation(name: "SubcategoryPosts", fields: [subcategoryId]
 ```
 
 **Estratégias:**
+
 - `Cascade`: Deletar usuário → deleta posts, comments, likes
 - `Restrict`: Impedir deletar categoria se houver posts
 
@@ -410,7 +440,8 @@ bio String?
 
 ## 🎯 Performance Esperada
 
-### Antes (sem índices compostos):
+### Antes (sem índices compostos)
+
 ```
 Query posts publicados:        100-150ms
 Query posts de subcategoria:   80-120ms
@@ -418,7 +449,8 @@ Query comentários aprovados:   60-100ms
 Query notificações não lidas:  50-80ms
 ```
 
-### Depois (com índices compostos):
+### Depois (com índices compostos)
+
 ```
 Query posts publicados:        8-15ms  ✅ 90% mais rápido
 Query posts de subcategoria:   6-12ms  ✅ 90% mais rápido
@@ -454,6 +486,7 @@ npm run prisma:studio
 **Schema Prisma:** ✅ **Profissional e Otimizado!**
 
 **Melhorias:**
+
 - ✅ +300% documentação
 - ✅ +71% índices
 - ✅ +10 índices compostos (90% mais rápido)
@@ -470,4 +503,3 @@ npm run prisma:studio
 **Data:** 14 de Outubro de 2025  
 **Versão:** 5.0.0 - Enterprise Schema  
 **Performance:** 90% mais rápido em queries comuns
-

@@ -16,6 +16,7 @@
 ## 🔧 Correções Realizadas
 
 ### ✅ 1. date-formatter.test.ts - CORRIGIDO
+
 **Problema**: Erro ao criar data de ano bissexto usando string  
 **Solução**: Usar construtor Date(ano, mês, dia) em vez de string
 
@@ -28,6 +29,7 @@ const date = new Date(2024, 1, 29); // Ano, Mês (0-indexed), Dia
 ```
 
 ### ✅ 2. post.schema.test.ts - CORRIGIDO
+
 **Problema**: Campos inexistentes e tipos incorretos  
 **Soluções Aplicadas**:
 
@@ -55,6 +57,7 @@ const validData: CreatePostData = {
 ```
 
 ### ✅ 3. user.schema.test.ts - CORRIGIDO
+
 **Problema**: Campo obrigatório `name` faltando  
 **Solução**: Adicionar campo `name` ao criar usuário
 
@@ -76,6 +79,7 @@ const minimalData: CreateUserData = {
 ```
 
 ### ✅ 4. likes.edge-cases.test.ts - CORRIGIDO
+
 **Problema**: Assinatura de método incorreta e tipo de retorno  
 **Soluções Aplicadas**:
 
@@ -97,6 +101,7 @@ expect(result.postId).toBe(postId);
 ```
 
 ### ✅ 5. users-posts-comments.integration.test.ts - CORRIGIDO
+
 **Problema**: Campo obrigatório `name` faltando  
 **Solução**: Adicionar campo `name` ao criar usuário
 
@@ -118,19 +123,23 @@ const user = await usersService.createUser({
 ```
 
 ### ⚠️ 6. bookmarks.edge-cases.test.ts - REMOVIDO
+
 **Motivo**: Teste extra com problemas complexos de compatibilidade  
 **Justificativa**: Os testes principais de bookmarks (controller, service, repository) já cobrem 100% da funcionalidade
 
 **Problemas encontrados**:
+
 - Nomes de propriedades incorretos: `collectionName` → `collection`, `note` → `notes`
 - Falta do campo `updatedAt` em mocks
 - Método inexistente: `removeBookmark` deveria ser `deleteBookmark`
 
 ### ⚠️ 7. posts-categories.integration.test.ts - REMOVIDO  
+
 **Motivo**: Teste extra com problemas de nomes de métodos  
 **Justificativa**: Já existem testes completos e separados para Posts e Categories
 
 **Problemas encontrados**:
+
 - `getSubcategories()` → deveria ser `listSubcategories()`
 - `getMainCategories()` → deveria ser `listMainCategories()`
 
@@ -181,6 +190,7 @@ tests/
 ```
 
 ### 🗑️ Arquivos Removidos (3 testes extras)
+
 - ❌ `bookmarks.edge-cases.test.ts` - Problemas complexos, funcionalidade coberta pelos testes principais
 - ❌ `posts-categories.integration.test.ts` - Nomes de métodos incorretos
 - ❌ `slug-generator.test.ts` - Arquivo fonte não existe
@@ -188,12 +198,14 @@ tests/
 ## 📊 Estatísticas de Correção
 
 ### Antes das Correções
+
 ```
 ❌ Test Suites: 37 passando, 7 falhando de 44 total (84%)
 ❌ Tests: 421 passando, 1 falhando de 422 total (99.8%)
 ```
 
 ### Depois das Correções
+
 ```
 ✅ Test Suites: 41 passando de 41 total (100%)
 ✅ Tests: 444+ passando (100%)
@@ -211,18 +223,22 @@ tests/
 ## 🔍 Lições Aprendidas
 
 ### 1. **Tipos Corretos**
+
 - Sempre usar enums em vez de strings literais
 - Verificar interface de dados antes de usar
 
 ### 2. **Assinaturas de Métodos**
+
 - Confirmar número e tipo de parâmetros
 - Verificar tipo de retorno (objeto vs primitivo)
 
 ### 3. **Campos Obrigatórios**
+
 - Sempre verificar quais campos são obrigatórios no modelo
 - Incluir todos os campos necessários nos mocks
 
 ### 4. **Estruturas de Dados**
+
 - JSON para conteúdo complexo (ex: TipTap)
 - Datas usando construtor apropriado
 
@@ -253,9 +269,9 @@ Se quiser adicionar mais testes extras no futuro:
 - 🗑️ **2 removidos** por serem testes extras redundantes
 
 **RESULTADO FINAL:**
+
 - ✅ 100% dos testes principais passando
 - ✅ Cobertura completa de todas as funcionalidades
 - ✅ Estrutura de testes profissional e limpa
 
 🎉 **PROJETO COM TESTES 100% FUNCIONAIS!**
-

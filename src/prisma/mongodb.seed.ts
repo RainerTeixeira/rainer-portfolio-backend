@@ -1,15 +1,17 @@
 /**
- * Seed do Prisma - Popular Banco de Dados
+ * Seed do MongoDB - Popular Banco de Dados
  * 
- * Script para popular o banco de dados com dados iniciais de exemplo.
+ * Script para popular o MongoDB com dados iniciais de exemplo usando Prisma ORM.
  * 
  * Uso:
  * ```bash
- * npx tsx src/prisma/seed.ts
+ * npm run seed
+ * # ou
+ * npx tsx src/prisma/mongodb.seed.ts
  * ```
  * 
- * @fileoverview Seed do banco de dados
- * @module prisma/seed
+ * @fileoverview Seed do MongoDB com Prisma
+ * @module prisma/mongodb.seed
  */
 
 import { PrismaClient } from '@prisma/client';
@@ -23,29 +25,46 @@ const prisma = new PrismaClient();
 async function cleanup() {
   console.log('🧹 Limpando banco de dados...');
   
-  await prisma.notification.deleteMany();
-  await prisma.bookmark.deleteMany();
-  await prisma.like.deleteMany();
-  await prisma.comment.deleteMany();
-  await prisma.post.deleteMany();
-  
-  // Deletar subcategorias primeiro (onde parentId não é null)
-  await prisma.category.deleteMany({
-    where: {
-      parentId: { not: null }
-    }
-  });
-  
-  // Depois deletar categorias principais (onde parentId é null)
-  await prisma.category.deleteMany({
-    where: {
-      parentId: null
-    }
-  });
-  
-  await prisma.user.deleteMany();
-  
-  console.log('✅ Banco limpo!');
+  try {
+    // Deletar em ordem reversa das dependências
+    await prisma.notification.deleteMany();
+    console.log('   ✓ Notificações removidas');
+    
+    await prisma.bookmark.deleteMany();
+    console.log('   ✓ Bookmarks removidos');
+    
+    await prisma.like.deleteMany();
+    console.log('   ✓ Likes removidos');
+    
+    await prisma.comment.deleteMany();
+    console.log('   ✓ Comentários removidos');
+    
+    await prisma.post.deleteMany();
+    console.log('   ✓ Posts removidos');
+    
+    // Deletar subcategorias primeiro (onde parentId não é null)
+    const subcategoriesDeleted = await prisma.category.deleteMany({
+      where: {
+        parentId: { not: null }
+      }
+    });
+    console.log(`   ✓ ${subcategoriesDeleted.count} subcategorias removidas`);
+    
+    // Depois deletar categorias principais (onde parentId é null)
+    const categoriesDeleted = await prisma.category.deleteMany({
+      where: {
+        parentId: null
+      }
+    });
+    console.log(`   ✓ ${categoriesDeleted.count} categorias principais removidas`);
+    
+    await prisma.user.deleteMany();
+    console.log('   ✓ Usuários removidos');
+    
+    console.log('✅ Banco limpo!');
+  } catch (error: any) {
+    console.warn('⚠️  Aviso ao limpar banco (pode ser normal se estiver vazio):', error?.message || error);
+  }
 }
 
 /**
@@ -136,9 +155,11 @@ async function seedUsers() {
 async function seedCategories() {
   console.log('\n📂 Criando categorias...');
   
-  // CATEGORIAS PRINCIPAIS
-  const tecnologia = await prisma.category.create({
-    data: {
+  // CATEGORIAS PRINCIPAIS - usando upsert para evitar duplicatas
+  const tecnologia = await prisma.category.upsert({
+    where: { slug: 'tecnologia' },
+    update: {},
+    create: {
       name: 'Tecnologia',
       slug: 'tecnologia',
       description: 'Tudo sobre tecnologia, programação e inovação',
@@ -150,8 +171,10 @@ async function seedCategories() {
   });
   console.log('   ✅ Tecnologia (categoria principal)');
 
-  const design = await prisma.category.create({
-    data: {
+  const design = await prisma.category.upsert({
+    where: { slug: 'design' },
+    update: {},
+    create: {
       name: 'Design',
       slug: 'design',
       description: 'Design UX/UI, Design Gráfico e tendências visuais',
@@ -163,8 +186,10 @@ async function seedCategories() {
   });
   console.log('   ✅ Design (categoria principal)');
 
-  const carreira = await prisma.category.create({
-    data: {
+  const carreira = await prisma.category.upsert({
+    where: { slug: 'carreira' },
+    update: {},
+    create: {
       name: 'Carreira',
       slug: 'carreira',
       description: 'Dicas de carreira, produtividade e desenvolvimento pessoal',
@@ -176,9 +201,11 @@ async function seedCategories() {
   });
   console.log('   ✅ Carreira (categoria principal)');
 
-  // SUBCATEGORIAS DE TECNOLOGIA
-  const frontend = await prisma.category.create({
-    data: {
+  // SUBCATEGORIAS DE TECNOLOGIA - usando upsert
+  const frontend = await prisma.category.upsert({
+    where: { slug: 'frontend' },
+    update: { parentId: tecnologia.id },
+    create: {
       name: 'Frontend',
       slug: 'frontend',
       description: 'React, Vue, Angular, Next.js e tecnologias frontend',
@@ -191,8 +218,10 @@ async function seedCategories() {
   });
   console.log('   ✅ Frontend (subcategoria de Tecnologia)');
 
-  const backend = await prisma.category.create({
-    data: {
+  const backend = await prisma.category.upsert({
+    where: { slug: 'backend' },
+    update: { parentId: tecnologia.id },
+    create: {
       name: 'Backend',
       slug: 'backend',
       description: 'Node.js, NestJS, APIs e arquitetura de sistemas',
@@ -205,8 +234,10 @@ async function seedCategories() {
   });
   console.log('   ✅ Backend (subcategoria de Tecnologia)');
 
-  const devops = await prisma.category.create({
-    data: {
+  const devops = await prisma.category.upsert({
+    where: { slug: 'devops' },
+    update: { parentId: tecnologia.id },
+    create: {
       name: 'DevOps',
       slug: 'devops',
       description: 'CI/CD, Docker, Kubernetes, Cloud e infraestrutura',
@@ -219,9 +250,11 @@ async function seedCategories() {
   });
   console.log('   ✅ DevOps (subcategoria de Tecnologia)');
 
-  // SUBCATEGORIAS DE DESIGN
-  const uxui = await prisma.category.create({
-    data: {
+  // SUBCATEGORIAS DE DESIGN - usando upsert
+  const uxui = await prisma.category.upsert({
+    where: { slug: 'ux-ui-design' },
+    update: { parentId: design.id },
+    create: {
       name: 'UX/UI Design',
       slug: 'ux-ui-design',
       description: 'User Experience, User Interface e Design de Produto',
@@ -234,8 +267,10 @@ async function seedCategories() {
   });
   console.log('   ✅ UX/UI Design (subcategoria de Design)');
 
-  const designGrafico = await prisma.category.create({
-    data: {
+  const designGrafico = await prisma.category.upsert({
+    where: { slug: 'design-grafico' },
+    update: { parentId: design.id },
+    create: {
       name: 'Design Gráfico',
       slug: 'design-grafico',
       description: 'Ilustração, branding e design visual',
@@ -248,9 +283,11 @@ async function seedCategories() {
   });
   console.log('   ✅ Design Gráfico (subcategoria de Design)');
 
-  // SUBCATEGORIAS DE CARREIRA
-  const produtividade = await prisma.category.create({
-    data: {
+  // SUBCATEGORIAS DE CARREIRA - usando upsert
+  const produtividade = await prisma.category.upsert({
+    where: { slug: 'produtividade' },
+    update: { parentId: carreira.id },
+    create: {
       name: 'Produtividade',
       slug: 'produtividade',
       description: 'Técnicas, ferramentas e dicas para ser mais produtivo',

@@ -20,6 +20,7 @@ Configuração completa do ambiente DynamoDB Local para desenvolvimento e testes
 - Feedback visual do progresso
 
 **Tabelas criadas:**
+
 - `blog-users` (com EmailIndex e CognitoIdIndex)
 - `blog-posts` (com AuthorIndex e StatusIndex)
 - `blog-categories` (com SlugIndex)
@@ -130,6 +131,7 @@ iniciar-ambiente-dynamodb.bat
 ```
 
 Este script fará tudo automaticamente:
+
 1. ✅ Verificar Docker
 2. ✅ Criar .env (se necessário)
 3. ✅ Iniciar DynamoDB Local
@@ -275,7 +277,7 @@ docker logs dynamodb-local
 
 ---
 
-## 🎉 Ambiente Pronto!
+## 🎉 Ambiente Pronto
 
 Seu ambiente DynamoDB Local está completamente configurado e pronto para uso!
 

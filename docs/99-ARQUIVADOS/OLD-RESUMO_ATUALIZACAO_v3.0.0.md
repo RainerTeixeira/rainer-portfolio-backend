@@ -19,6 +19,7 @@ Implementação completa de um sistema que permite **alternar entre MongoDB (Pri
 ### 1. Novo Módulo `database-provider/`
 
 5 arquivos criados em `src/utils/database-provider/`:
+
 - ✅ Context Service (AsyncLocalStorage)
 - ✅ Interceptor HTTP
 - ✅ Decorator Swagger
@@ -86,6 +87,7 @@ Documentação técnica completa da atualização
 ## 🔢 Números da Atualização
 
 ### Código
+
 - **Arquivos Criados:** 5 (.ts) + 2 (.md)
 - **Linhas de Código:** ~200
 - **Classes:** 3 (Service, Interceptor, Module)
@@ -93,12 +95,14 @@ Documentação técnica completa da atualização
 - **Métodos Públicos:** 7
 
 ### Documentação
+
 - **README Atualizado:** 1 arquivo
 - **Seções Adicionadas:** 1 nova + 6 atualizadas
 - **Scripts Documentados:** +15 (total: 27)
 - **Linhas Adicionadas:** ~300
 
 ### Arquivos Gerenciados
+
 - **Arquivados:** 3 (OLD-*)
 - **Criados:** 7
 - **Atualizados:** 1
@@ -156,7 +160,7 @@ npm run sam:deploy:prod
 ### Para Usuários
 
 1. ✅ Ler [GUIA_SELECAO_BANCO_SWAGGER.md](03-GUIAS/GUIA_SELECAO_BANCO_SWAGGER.md)
-2. ✅ Testar no Swagger: http://localhost:4000/docs
+2. ✅ Testar no Swagger: <http://localhost:4000/docs>
 3. ✅ Experimentar os 3 cenários
 4. ✅ Escolher estratégia para seu projeto
 
@@ -192,11 +196,13 @@ npm run sam:deploy:prod
 ## 📊 Impacto
 
 ### Antes (v2.3.0)
+
 - 1 banco fixo (MongoDB)
 - Configuração apenas por .env
 - Sem seleção dinâmica
 
 ### Depois (v3.0.0)
+
 - **3 cenários** (PRISMA, DYNAMODB_LOCAL, DYNAMODB_AWS)
 - **Seleção dinâmica** (header HTTP + .env)
 - **Dropdown no Swagger** interativo
@@ -237,15 +243,17 @@ A feature de **Seleção Dinâmica de Banco de Dados** está:
 ## 📞 Links Úteis
 
 ### Documentação
+
 - **README Principal:** [README.md](../README.md)
 - **Guia Swagger:** [GUIA_SELECAO_BANCO_SWAGGER.md](03-GUIAS/GUIA_SELECAO_BANCO_SWAGGER.md)
 - **Guia Decisão:** [GUIA_DECISAO_DATABASE.md](02-CONFIGURACAO/GUIA_DECISAO_DATABASE.md)
 - **Atualização Completa:** [ATUALIZACAO_v3.0.0.md](ATUALIZACAO_v3.0.0.md)
 
 ### Aplicação
-- **API:** http://localhost:4000
-- **Swagger:** http://localhost:4000/docs
-- **Health:** http://localhost:4000/health
+
+- **API:** <http://localhost:4000>
+- **Swagger:** <http://localhost:4000/docs>
+- **Health:** <http://localhost:4000/health>
 
 ---
 
@@ -253,4 +261,3 @@ A feature de **Seleção Dinâmica de Banco de Dados** está:
 **Data:** 16 de Outubro de 2025  
 **Autor:** AI Assistant  
 **Status:** ✅ Concluída
-

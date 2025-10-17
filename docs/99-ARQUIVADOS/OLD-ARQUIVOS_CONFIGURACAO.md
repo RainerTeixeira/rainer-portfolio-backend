@@ -23,25 +23,30 @@ src/config/
 ## 📄 1. database.ts - Cliente Prisma
 
 ### O que faz?
+
 Configura e exporta o cliente Prisma para acesso ao **MongoDB** em desenvolvimento local.
 
 ### Quando usar?
+
 - Desenvolvimento local sem DynamoDB Local
 - Testes de integração
 - Prototipagem rápida de features
 
-### Exports principais:
+### Exports principais
 
 #### `prisma` (PrismaClient)
+
 Cliente Prisma Singleton que mantém UMA única instância de conexão.
 
 **Características:**
+
 - ✅ Singleton (evita múltiplas conexões)
 - ✅ Logs configuráveis por ambiente
 - ✅ Connection pooling automático
 - ✅ Graceful shutdown
 
 **Exemplo de uso:**
+
 ```typescript
 import { prisma } from './config/database';
 
@@ -70,14 +75,17 @@ const userPosts = await prisma.post.findMany({
 ```
 
 #### `disconnectPrisma()` (Function)
+
 Desconecta o Prisma do banco de dados de forma segura.
 
 **Quando usar:**
+
 - Ao encerrar a aplicação (SIGTERM, SIGINT)
 - Ao finalizar testes de integração
 - Antes de fazer deploy
 
 **Exemplo de uso:**
+
 ```typescript
 import { disconnectPrisma } from './config/database';
 
@@ -93,13 +101,15 @@ afterAll(async () => {
 });
 ```
 
-### Configurações:
+### Configurações
 
 **Logs por Ambiente:**
+
 - **Desenvolvimento:** `['query', 'error', 'warn']` - Debug completo
 - **Produção:** `['error']` - Apenas erros
 
 **Connection Pooling:**
+
 - Mantém pool de conexões abertas
 - Reutiliza conexões automaticamente
 - Fecha conexões ociosas
@@ -109,24 +119,29 @@ afterAll(async () => {
 ## ☁️ 2. dynamo-client.ts - Cliente DynamoDB
 
 ### O que faz?
+
 Configura e exporta o cliente DynamoDB usando **AWS SDK v3** para uso em produção (Lambda) ou local (DynamoDB Local).
 
 ### Quando usar?
+
 - Produção (AWS Lambda)
 - Desenvolvimento com DynamoDB Local
 - Testes que simulam ambiente AWS
 
-### Exports principais:
+### Exports principais
 
 #### `dynamodb` (DynamoDBDocumentClient)
+
 Cliente principal para trabalhar com DynamoDB, converte automaticamente objetos JavaScript ↔ formato DynamoDB.
 
 **Vantagens:**
+
 - ✅ Trabalha com objetos JavaScript normais
 - ✅ Conversão automática de tipos
 - ✅ API simples e intuitiva
 
 **Exemplo de uso:**
+
 ```typescript
 import { dynamodb, PutCommand, GetCommand, TABLES } from './config/dynamo-client';
 
@@ -154,6 +169,7 @@ const posts = await dynamodb.send(new QueryCommand({
 #### Comandos Disponíveis
 
 **PutCommand** - Criar ou substituir item completo
+
 ```typescript
 await dynamodb.send(new PutCommand({
   TableName: TABLES.POSTS,
@@ -162,6 +178,7 @@ await dynamodb.send(new PutCommand({
 ```
 
 **GetCommand** - Buscar item pela chave primária
+
 ```typescript
 const result = await dynamodb.send(new GetCommand({
   TableName: TABLES.USERS,
@@ -170,6 +187,7 @@ const result = await dynamodb.send(new GetCommand({
 ```
 
 **QueryCommand** - Buscar múltiplos itens
+
 ```typescript
 const result = await dynamodb.send(new QueryCommand({
   TableName: TABLES.POSTS,
@@ -178,6 +196,7 @@ const result = await dynamodb.send(new QueryCommand({
 ```
 
 **UpdateCommand** - Atualizar campos específicos
+
 ```typescript
 await dynamodb.send(new UpdateCommand({
   TableName: TABLES.USERS,
@@ -189,6 +208,7 @@ await dynamodb.send(new UpdateCommand({
 ```
 
 **DeleteCommand** - Remover item
+
 ```typescript
 await dynamodb.send(new DeleteCommand({
   TableName: TABLES.POSTS,
@@ -197,9 +217,11 @@ await dynamodb.send(new DeleteCommand({
 ```
 
 #### `TABLES` (Object)
+
 Constantes com nomes das tabelas DynamoDB.
 
 **Tabelas disponíveis:**
+
 - `TABLES.USERS` - Usuários do sistema
 - `TABLES.POSTS` - Posts/artigos do blog
 - `TABLES.COMMENTS` - Comentários nos posts
@@ -209,11 +231,13 @@ Constantes com nomes das tabelas DynamoDB.
 - `TABLES.CATEGORIES` - Categorias de posts
 
 **Por que usar?**
+
 - ✅ Evita erros de digitação
 - ✅ Autocomplete na IDE
 - ✅ Fácil refatoração
 
 **Exemplo:**
+
 ```typescript
 // ✅ Correto
 TableName: TABLES.USERS
@@ -222,17 +246,20 @@ TableName: TABLES.USERS
 TableName: 'users'
 ```
 
-### Configurações:
+### Configurações
 
 **Endpoint:**
+
 - **Produção:** `undefined` (usa AWS padrão)
 - **Local:** `http://localhost:8000` (DynamoDB Local)
 
 **Credenciais:**
+
 - **Produção:** Automáticas (Lambda Role)
 - **Local:** `AWS_ACCESS_KEY_ID` e `AWS_SECRET_ACCESS_KEY`
 
 **Região:**
+
 - Configurável via `AWS_REGION` (ex: us-east-1)
 
 ---
@@ -240,53 +267,63 @@ TableName: 'users'
 ## 🔐 3. cognito.config.ts - Configuração Cognito
 
 ### O que faz?
+
 Centraliza todas as configurações necessárias para autenticação de usuários usando **AWS Cognito**.
 
 ### Quando usar?
+
 - Login de usuários
 - Registro de novos usuários
 - Validação de tokens JWT
 - Recuperação de senha
 - Refresh de tokens
 
-### Exports principais:
+### Exports principais
 
 #### `cognitoConfig` (Object)
+
 Objeto com todas as credenciais e configurações do Cognito.
 
 **Propriedades:**
 
 **userPoolId** (string)
+
 - ID do User Pool no Cognito
 - É como o "ID do banco de usuários"
 - Formato: `us-east-1_XXXXXXXXX`
 - Onde encontrar: AWS Console > Cognito > User Pools
 
 **clientId** (string)
+
 - ID da aplicação cliente
 - Identifica sua aplicação no Cognito
 - Formato: string alfanumérica longa
 
 **clientSecret** (string, opcional)
+
 - Segredo da aplicação
 - Usado para autenticação server-to-server
 - ⚠️ Mantenha em segredo! Nunca exponha no frontend
 
 **region** (string)
+
 - Região AWS onde o Cognito está hospedado
 - Ex: us-east-1, us-west-2, sa-east-1 (São Paulo)
 - Fallback para `AWS_REGION` se não especificado
 
 **issuer** (string)
+
 - URL do emissor dos tokens JWT
 - Formato: `https://cognito-idp.{region}.amazonaws.com/{userPoolId}`
 - Usado para validar se os tokens são legítimos
 
 **jwtSecret** (string, opcional)
+
 - Segredo para assinar tokens JWT customizados
 - Para tokens Cognito, não é necessário
 
 **Exemplo de uso:**
+
 ```typescript
 import { cognitoConfig } from './config/cognito.config';
 import { CognitoIdentityProviderClient } from '@aws-sdk/client-cognito-identity-provider';
@@ -304,19 +341,23 @@ const decoded = jwt.verify(token, cognitoConfig.jwtSecret, {
 ```
 
 #### `isCognitoConfigured()` (Function)
+
 Verifica se as configurações mínimas do Cognito estão presentes.
 
 **O que verifica:**
+
 - ✅ User Pool ID está definido
 - ✅ Client ID está definido
 - ✅ Região está definida
 
 **Por que usar:**
+
 - Validar ambiente antes de iniciar a aplicação
 - Health checks
 - Evitar erros de configuração
 
 **Exemplo de uso:**
+
 ```typescript
 import { isCognitoConfigured } from './config/cognito.config';
 
@@ -361,14 +402,16 @@ Todos os 3 arquivos possuem **documentação JSDoc completa** que inclui:
 ✅ **Observações importantes** - Dicas e cuidados  
 ✅ **Links para documentação** - Referências externas
 
-### Como acessar a documentação:
+### Como acessar a documentação
 
 **Na IDE (VS Code):**
+
 1. Passe o mouse sobre qualquer função/constante
 2. A documentação JSDoc aparecerá automaticamente
 3. Use `Ctrl + Click` para ir à definição
 
 **Exemplos:**
+
 - Passe o mouse sobre `prisma` → veja explicação completa
 - Passe o mouse sobre `dynamodb` → veja exemplos de uso
 - Passe o mouse sobre `cognitoConfig` → veja propriedades
@@ -379,7 +422,7 @@ Todos os 3 arquivos possuem **documentação JSDoc completa** que inclui:
 
 **Data:** 16/10/2025
 
-### O que foi melhorado:
+### O que foi melhorado
 
 1. **Documentação expandida** em todos os 3 arquivos
 2. **10+ exemplos práticos** adicionados
@@ -387,7 +430,7 @@ Todos os 3 arquivos possuem **documentação JSDoc completa** que inclui:
 4. **Informações de contexto** (quando usar, por que usar)
 5. **Links para documentação oficial** da AWS e Prisma
 
-### Impacto:
+### Impacto
 
 - ✅ **Onboarding 3x mais rápido** para novos desenvolvedores
 - ✅ **Menos perguntas** sobre configuração
@@ -399,13 +442,15 @@ Todos os 3 arquivos possuem **documentação JSDoc completa** que inclui:
 
 ## 🔗 Links Úteis
 
-### Documentação Externa:
+### Documentação Externa
+
 - [Prisma Docs](https://www.prisma.io/docs)
 - [AWS SDK for JavaScript v3](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/)
 - [DynamoDB Document Client](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/)
 - [AWS Cognito](https://docs.aws.amazon.com/cognito/)
 
-### Documentação Interna:
+### Documentação Interna
+
 - [GUIA_DECISAO_DATABASE.md](GUIA_DECISAO_DATABASE.md) - Qual banco usar
 - [ATUALIZACAO_ENV_CONFIG.md](ATUALIZACAO_ENV_CONFIG.md) - Configuração .env
 - [REFERENCIA_RAPIDA_ENV.md](REFERENCIA_RAPIDA_ENV.md) - Referência rápida
@@ -425,4 +470,3 @@ Todos os 3 arquivos possuem **documentação JSDoc completa** que inclui:
 **Status:** ✅ Documentação Completa  
 **Versão:** 1.0.0  
 **Atualização:** 16/10/2025
-

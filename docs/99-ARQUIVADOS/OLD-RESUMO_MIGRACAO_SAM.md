@@ -81,26 +81,31 @@ src/lambda/
 ## 🎯 Benefícios da Migração
 
 ### 1. ✅ Suporte Oficial AWS
+
 - Ferramenta nativa da Amazon
 - Manutenção garantida
 - Atualizações frequentes
 
 ### 2. ✅ Melhor Integração
+
 - CloudFormation nativo
 - AWS Toolkit integrado
 - X-Ray tracing nativo
 
 ### 3. ✅ Sem Dependências Externas
+
 - Não precisa mais instalar `serverless` no npm
 - Menos pacotes no projeto
 - Menos pontos de falha
 
 ### 4. ✅ Teste Local Nativo
+
 - `sam local start-api` sem plugins
 - Debugging melhor
 - Simulação mais precisa
 
 ### 5. ✅ Infraestrutura Centralizada
+
 - Apenas 1 arquivo de IaC: `template.yaml`
 - Tudo em um lugar
 - Fácil de versionar
@@ -165,6 +170,7 @@ npm run sam:logs
 ## 📚 Recursos Criados pelo Template
 
 ### Lambda Function
+
 - **Nome**: `blog-backend-api-{ambiente}`
 - **Runtime**: Node.js 18.x
 - **Memória**: 512 MB
@@ -182,12 +188,14 @@ npm run sam:logs
 7. **notifications** - Notificações
 
 Todas com:
+
 - ✅ PAY_PER_REQUEST (sem custos fixos)
 - ✅ GSIs otimizados
 - ✅ Point-in-time recovery (apenas prod)
 - ✅ Streams habilitados
 
 ### Permissões IAM
+
 - ✅ DynamoDB CRUD completo
 - ✅ CloudWatch Logs
 - ✅ X-Ray Tracing
@@ -232,21 +240,25 @@ Todas com:
 ## 🔜 Próximos Passos
 
 ### 1. Validar Template
+
 ```bash
 npm run sam:validate
 ```
 
 ### 2. Fazer Build
+
 ```bash
 npm run build
 ```
 
 ### 3. Primeiro Deploy
+
 ```bash
 npm run sam:deploy:guided
 ```
 
 ### 4. Testar API
+
 ```bash
 # Obter URL da função
 aws cloudformation describe-stacks \
@@ -278,4 +290,3 @@ curl {function-url}/api/health
 **Data**: 16 de Outubro de 2025  
 **Versão**: 2.3.0  
 **Responsável**: AI Assistant (Claude Sonnet 4.5)
-

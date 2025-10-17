@@ -1,4 +1,4 @@
-# ✅ Migração para AWS SAM - Concluída!
+# ✅ Migração para AWS SAM - Concluída
 
 ## 📋 Resumo das Mudanças
 
@@ -73,6 +73,7 @@ npm run sam:deploy:guided
 ```
 
 Responda as perguntas:
+
 - **Stack Name**: `blog-backend-api`
 - **AWS Region**: `us-east-1`
 - **Parameter Environment**: `dev`
@@ -257,8 +258,8 @@ npm run sam:validate
 ## 📚 Documentação
 
 - **SAM**: Ver `src/lambda/README.md` (completo)
-- **AWS SAM Docs**: https://docs.aws.amazon.com/serverless-application-model/
-- **SAM CLI**: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-command-reference.html
+- **AWS SAM Docs**: <https://docs.aws.amazon.com/serverless-application-model/>
+- **SAM CLI**: <https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-command-reference.html>
 
 ---
 
@@ -280,6 +281,7 @@ npm run sam:validate
 ## 🔜 Próximos Passos
 
 1. **Testar localmente**:
+
    ```bash
    npm run sam:validate
    npm run build
@@ -287,6 +289,7 @@ npm run sam:validate
    ```
 
 2. **Fazer primeiro deploy**:
+
    ```bash
    npm run sam:deploy:guided
    ```
@@ -296,6 +299,7 @@ npm run sam:validate
    - Tab "Outputs" → `BlogApiFunctionUrl`
 
 4. **Testar API**:
+
    ```bash
    curl https://{function-url}/api/health
    ```
@@ -324,12 +328,11 @@ npm run sam:validate
 Dúvidas ou problemas? Consulte:
 
 1. `src/lambda/README.md` - Documentação completa
-2. AWS SAM Docs - https://docs.aws.amazon.com/serverless-application-model/
-3. AWS Support - https://console.aws.amazon.com/support/
+2. AWS SAM Docs - <https://docs.aws.amazon.com/serverless-application-model/>
+3. AWS Support - <https://console.aws.amazon.com/support/>
 
 ---
 
 **Data da Migração**: 16/10/2025  
 **Versão**: 1.0.0  
 **Status**: ✅ Concluída
-

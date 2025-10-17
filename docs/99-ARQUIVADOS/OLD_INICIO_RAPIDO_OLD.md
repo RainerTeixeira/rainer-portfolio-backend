@@ -16,9 +16,10 @@ npm run start:dev
 ```
 
 **Acessar:**
-- API: http://localhost:4000
-- Swagger: http://localhost:4000/api
-- Prisma Studio: `npm run prisma:studio` (depois acessar http://localhost:5555)
+
+- API: <http://localhost:4000>
+- Swagger: <http://localhost:4000/api>
+- Prisma Studio: `npm run prisma:studio` (depois acessar <http://localhost:5555>)
 
 ---
 
@@ -39,9 +40,10 @@ npm run start:dev
 ```
 
 **Acessar:**
-- API: http://localhost:4000
-- Swagger: http://localhost:4000/api
-- Prisma Studio: http://localhost:5555
+
+- API: <http://localhost:4000>
+- Swagger: <http://localhost:4000/api>
+- Prisma Studio: <http://localhost:5555>
 
 ---
 
@@ -65,8 +67,9 @@ npm run start:dev
 ```
 
 **Acessar:**
-- API: http://localhost:4000
-- Swagger: http://localhost:4000/api
+
+- API: <http://localhost:4000>
+- Swagger: <http://localhost:4000/api>
 - DynamoDB Admin: Instalar com `npm install -g dynamodb-admin` e rodar `dynamodb-admin`
 
 ---
@@ -164,39 +167,45 @@ Verifique qual banco está ativo:
 
 ## 🎯 Workflow Recomendado
 
-### Para Desenvolvimento Diário:
+### Para Desenvolvimento Diário
 
 1. **Iniciar MongoDB:**
+
    ```powershell
    docker-compose up -d mongodb
    ```
 
 2. **Iniciar Aplicação:**
+
    ```powershell
    npm run start:dev
    ```
 
 3. **Acessar Swagger:**
-   - http://localhost:4000/api
+   - <http://localhost:4000/api>
 
-### Para Testar com DynamoDB:
+### Para Testar com DynamoDB
 
 1. **Alterar Banco:**
+
    ```powershell
    .\scripts\alternar-banco.ps1 DYNAMODB
    ```
 
 2. **Iniciar DynamoDB:**
+
    ```powershell
    docker-compose up -d dynamodb-local
    ```
 
 3. **Criar Tabelas:**
+
    ```powershell
    npm run dynamodb:create-tables
    ```
 
 4. **Reiniciar Aplicação:**
+
    ```powershell
    npm run start:dev
    ```
@@ -257,9 +266,8 @@ Veja o guia completo em: [GUIA_AMBIENTE_LOCAL.md](./GUIA_AMBIENTE_LOCAL.md)
 - [ ] Iniciou MongoDB ou DynamoDB
 - [ ] Configurou o `.env` corretamente
 - [ ] Executou `npm run start:dev`
-- [ ] Acessou http://localhost:4000/api
+- [ ] Acessou <http://localhost:4000/api>
 
 ---
 
 **Pronto para começar!** 🎉
-

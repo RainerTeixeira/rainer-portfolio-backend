@@ -34,7 +34,7 @@ Selecione abaixo o perfil que mais se adequa a você:
 
 **Objetivo:** Configurar ambiente e começar a desenvolver
 
-### Passo a Passo (30 minutos):
+### Passo a Passo (30 minutos)
 
 ```
 ┌─ FASE 1: ORIENTAÇÃO (5 min)
@@ -84,7 +84,8 @@ Selecione abaixo o perfil que mais se adequa a você:
 └─ 4. Teste: npm test
 ```
 
-### Guias Recomendados:
+### Guias Recomendados
+
 - ⭐ 02-CONFIGURACAO/GUIA_DECISAO_DATABASE.md - Qual banco usar?
 - ⭐ 02-CONFIGURACAO/GUIA_CONFIGURACAO.md - Setup completo
 - ⭐ 03-GUIAS/COMECE_AQUI_NESTJS.md - NestJS para iniciantes
@@ -99,7 +100,7 @@ Selecione abaixo o perfil que mais se adequa a você:
 
 **Objetivo:** Entender arquitetura, decisões técnicas e qualidade
 
-### Roteiro Recomendado (45 minutos):
+### Roteiro Recomendado (45 minutos)
 
 ```
 ┌─ VISÃO GERAL (10 min)
@@ -152,7 +153,8 @@ Selecione abaixo o perfil que mais se adequa a você:
       └─ Fluxo de autenticação completo
 ```
 
-### Documentos Chave:
+### Documentos Chave
+
 - ⭐ 06-RESULTADOS/RESULTADO_QUALIDADE.md
 - ⭐ 04-ANALISES/ANALISE_TECNICA_COMPLETA.md
 - ⭐ 02-CONFIGURACAO/GUIA_DECISAO_DATABASE.md
@@ -165,7 +167,7 @@ Selecione abaixo o perfil que mais se adequa a você:
 
 **Objetivo:** Executar testes, validar funcionalidades, popular dados
 
-### Roteiro de Testes (30 minutos):
+### Roteiro de Testes (30 minutos)
 
 ```
 ┌─ PREPARAÇÃO (10 min)
@@ -209,7 +211,8 @@ Selecione abaixo o perfil que mais se adequa a você:
       └─ Análise de erros
 ```
 
-### Guias Essenciais:
+### Guias Essenciais
+
 - ⭐ 03-GUIAS/GUIA_RAPIDO_TESTES.md
 - ⭐ 03-GUIAS/GUIA_SEED_BANCO_DADOS.md
 - ⭐ 06-RESULTADOS/RESULTADO_QUALIDADE.md
@@ -221,7 +224,7 @@ Selecione abaixo o perfil que mais se adequa a você:
 
 **Objetivo:** Deploy, configuração AWS, infraestrutura
 
-### Roteiro DevOps (40 minutos):
+### Roteiro DevOps (40 minutos)
 
 ```
 ┌─ CONFIGURAÇÃO (15 min)
@@ -265,7 +268,8 @@ Selecione abaixo o perfil que mais se adequa a você:
       └─ Lambda logs
 ```
 
-### Documentos Chave:
+### Documentos Chave
+
 - ⭐ 02-CONFIGURACAO/GUIA_CONFIGURACAO.md
 - ⭐ 03-GUIAS/GUIA_DYNAMODB_LOCAL.md
 - ⭐ 02-CONFIGURACAO/GUIA_DECISAO_DATABASE.md
@@ -278,9 +282,10 @@ Selecione abaixo o perfil que mais se adequa a você:
 
 **Objetivo:** Resolver problema específico agora
 
-### Problemas Comuns:
+### Problemas Comuns
 
 #### 1. "Não sei qual banco usar"
+
 ```
 → 02-CONFIGURACAO/GUIA_DECISAO_DATABASE.md
   • Árvore de decisão visual
@@ -289,6 +294,7 @@ Selecione abaixo o perfil que mais se adequa a você:
 ```
 
 #### 2. "Como configurar o .env?"
+
 ```
 → 02-CONFIGURACAO/GUIA_CONFIGURACAO.md
   • Guia completo passo a passo
@@ -297,6 +303,7 @@ Selecione abaixo o perfil que mais se adequa a você:
 ```
 
 #### 3. "Como rodar o projeto?"
+
 ```
 → 02-CONFIGURACAO/GUIA_CONFIGURACAO.md
   • Quick start (3 comandos)
@@ -304,6 +311,7 @@ Selecione abaixo o perfil que mais se adequa a você:
 ```
 
 #### 4. "Como rodar testes?"
+
 ```
 → 03-GUIAS/GUIA_RAPIDO_TESTES.md
   • npm test
@@ -311,6 +319,7 @@ Selecione abaixo o perfil que mais se adequa a você:
 ```
 
 #### 5. "Onde encontro X?"
+
 ```
 → 01-NAVEGACAO/GUIA_NAVEGACAO.md
   • Navegação por categoria
@@ -319,6 +328,7 @@ Selecione abaixo o perfil que mais se adequa a você:
 ```
 
 #### 6. "MongoDB não conecta"
+
 ```
 → 02-CONFIGURACAO/GUIA_CONFIGURACAO.md (Troubleshooting)
   • Verificar replica set
@@ -326,6 +336,7 @@ Selecione abaixo o perfil que mais se adequa a você:
 ```
 
 #### 7. "DynamoDB Local"
+
 ```
 → 03-GUIAS/GUIA_DYNAMODB_LOCAL.md
   • Setup completo
@@ -333,7 +344,8 @@ Selecione abaixo o perfil que mais se adequa a você:
   • npm run docker:dynamodb
 ```
 
-### Referência Rápida:
+### Referência Rápida
+
 - ⚡ 02-CONFIGURACAO/REFERENCIA_RAPIDA_ENV.md
 - 📚 01-NAVEGACAO/GUIA_NAVEGACAO.md
 - 🗂️ INDEX.md (este arquivo)
@@ -344,7 +356,7 @@ Selecione abaixo o perfil que mais se adequa a você:
 
 **Objetivo:** Manter, atualizar e expandir documentação
 
-### Estrutura para Manutenção:
+### Estrutura para Manutenção
 
 ```
 ┌─ ORGANIZAÇÃO
@@ -381,7 +393,8 @@ Selecione abaixo o perfil que mais se adequa a você:
       • 01-NAVEGACAO/GUIA_NAVEGACAO.md
 ```
 
-### Documentos de Referência:
+### Documentos de Referência
+
 - 01-NAVEGACAO/GUIA_NAVEGACAO.md
 - INDEX.md (este arquivo)
 - README.md (documentação principal)
@@ -390,7 +403,7 @@ Selecione abaixo o perfil que mais se adequa a você:
 
 ## 🗂️ Mapa Completo da Documentação
 
-### 📁 Por Categoria:
+### 📁 Por Categoria
 
 ```
 01-NAVEGACAO/         → Índices e organização
@@ -408,7 +421,8 @@ Selecione abaixo o perfil que mais se adequa a você:
 
 ## ✅ Checklist por Perfil
 
-### Novo Desenvolvedor:
+### Novo Desenvolvedor
+
 - [ ] Li 00-LEIA_PRIMEIRO.md
 - [ ] Li README.md
 - [ ] Li INDEX.md
@@ -417,19 +431,22 @@ Selecione abaixo o perfil que mais se adequa a você:
 - [ ] Rodei npm run dev
 - [ ] Acessei Swagger
 
-### Tech Lead:
+### Tech Lead
+
 - [ ] Revisei arquitetura
 - [ ] Analisei testes (99.74%)
 - [ ] Entendi decisões técnicas
 - [ ] Verifiquei conformidade
 
-### QA:
+### QA
+
 - [ ] Rodei testes (npm test)
 - [ ] Populei banco (npm run seed)
 - [ ] Testei endpoints (Swagger)
 - [ ] Verifiquei cobertura
 
-### DevOps:
+### DevOps
+
 - [ ] Configurei ambientes
 - [ ] Testei DynamoDB Local
 - [ ] Revisei serverless.yml
@@ -461,4 +478,3 @@ Agora que você já sabe por onde navegar:
 **Última atualização:** 16/10/2025  
 **Versão:** 4.1.0  
 **Status:** 🚀 Pronto para Uso
-

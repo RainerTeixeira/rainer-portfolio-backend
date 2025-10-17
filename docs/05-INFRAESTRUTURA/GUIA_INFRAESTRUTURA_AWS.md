@@ -108,6 +108,7 @@ FunctionUrlConfig:
 ## ✅ Pré-requisitos
 
 ### 1. Conta AWS
+
 - [ ] Conta AWS criada
 - [ ] Cartão cadastrado (não será cobrado no Free Tier)
 
@@ -255,6 +256,7 @@ sam deploy --guided
 ```
 
 **Perguntas interativas:**
+
 ```
 Stack Name: blog-backend-api
 AWS Region: us-east-1
@@ -593,6 +595,7 @@ sam deploy --guided
 Lambda está recebendo muitas requisições (cold start).
 
 **Solução:**
+
 ```yaml
 # Provisioned concurrency (evita cold starts)
 Properties:
@@ -605,6 +608,7 @@ Properties:
 Função demorou mais de 30s.
 
 **Solução:**
+
 ```yaml
 Globals:
   Function:
@@ -849,11 +853,13 @@ npm run sam:delete
 ### Após Deploy Bem-Sucedido
 
 1. ✅ **Testar API:**
+
    ```bash
    curl https://sua-url.lambda-url.us-east-1.on.aws/health
    ```
 
 2. ✅ **Configurar Frontend:**
+
    ```javascript
    const API_URL = 'https://sua-url.lambda-url.us-east-1.on.aws';
    ```
@@ -906,4 +912,3 @@ Após seguir este guia, você terá na AWS:
 **Criado em:** 16/10/2025  
 **Tipo:** Guia Completo de Infraestrutura  
 **Status:** ✅ Consolidado (v4.1.1)
-

@@ -40,7 +40,7 @@ Write-Host "✅ Tabelas criadas! Ver logs\dynamodb-setup.log" -ForegroundColor G
 # FASE 3: Popular MongoDB
 Write-Host "`n📊 FASE 3: Populando MongoDB com dados..." -ForegroundColor Yellow
 
-tsx src/prisma/seed.ts 2>&1 | Out-File -FilePath "logs\seed-final.log"
+tsx src/prisma/mongodb.seed.ts 2>&1 | Out-File -FilePath "logs\seed-final.log"
 Write-Host "✅ MongoDB populado! Ver logs\seed-final.log" -ForegroundColor Green
 
 # FASE 4: Verificar Containers

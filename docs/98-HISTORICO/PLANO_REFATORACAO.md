@@ -9,6 +9,7 @@ Refatorar de estrutura **tradicional** (routes/, controllers/, services/ separad
 ## 📊 Comparação: Antes vs Depois
 
 ### ❌ ANTES (Estrutura Tradicional)
+
 ```
 src/
 ├── routes/
@@ -36,6 +37,7 @@ src/
 ---
 
 ### ✅ DEPOIS (Estrutura Modular)
+
 ```
 src/
 ├── modules/
@@ -150,11 +152,13 @@ export async function userRoutes(app: FastifyInstance) {
 ## ⏳ Próximos Passos
 
 ### 1. Completar Módulo Users
+
 - [ ] user.repository.ts
 - [ ] user.service.ts
 - [ ] user.controller.ts
 
 ### 2. Criar Outros 6 Módulos
+
 - [ ] modules/posts/
 - [ ] modules/categories/
 - [ ] modules/comments/
@@ -163,18 +167,22 @@ export async function userRoutes(app: FastifyInstance) {
 - [ ] modules/notifications/
 
 ### 3. Criar Utilitários Simplificados
+
 - [ ] utils/logger.ts
 - [ ] utils/error-handler.ts
 - [ ] utils/pagination.ts
 
 ### 4. Criar Routes Centralizado
+
 - [ ] routes/index.ts
 
 ### 5. Criar Lambda Handler
+
 - [ ] lambda/handler.ts
 - [ ] lambda/serverless.yml
 
 ### 6. Marcar Arquivos Antigos
+
 - [ ] Renomear routes/, controllers/, services/, schemas/ antigos com "old."
 
 ---
@@ -190,4 +198,3 @@ export async function userRoutes(app: FastifyInstance) {
 
 **Status Atual:** 🔄 Refatoração Iniciada  
 **Próximo:** Completar módulo users
-

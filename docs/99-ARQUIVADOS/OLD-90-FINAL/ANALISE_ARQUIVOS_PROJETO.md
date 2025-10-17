@@ -1,4 +1,5 @@
 # 🔍 Análise de Arquivos do Projeto
+
 **Data**: 15 de Outubro de 2025  
 **Cobertura de Testes**: 99.9%  
 **Objetivo**: Identificar arquivos úteis vs obsoletos/redundantes
@@ -20,6 +21,7 @@
 ## ✅ ARQUIVOS ESSENCIAIS (Manter)
 
 ### Configuração Core
+
 1. **package.json** ⭐
    - Gerenciamento de dependências
    - Scripts npm
@@ -42,6 +44,7 @@
    - **Status**: ESSENCIAL
 
 ### Configuração de Ambiente
+
 6. **.env** (não versionado)
    - Variáveis de ambiente
    - **Status**: ESSENCIAL
@@ -51,6 +54,7 @@
    - **Status**: ESSENCIAL
 
 ### Controle de Qualidade
+
 8. **.eslintrc.cjs** ⭐
    - Linting
    - **Status**: ESSENCIAL
@@ -68,16 +72,19 @@
     - **Status**: ESSENCIAL
 
 ### Infraestrutura
+
 12. **docker-compose.yml** ⭐
     - MongoDB local (desenvolvimento)
     - **Status**: ESSENCIAL
 
 ### Documentação
+
 13. **README.md** ⭐
     - Documentação principal
     - **Status**: ESSENCIAL
 
 ### Diretórios Core
+
 14. **src/** ⭐
     - Código-fonte (9 módulos NestJS)
     - **Status**: ESSENCIAL
@@ -91,6 +98,7 @@
 ## ✅ ARQUIVOS ÚTEIS (Manter)
 
 ### Scripts de Automação
+
 1. **iniciar-servidor-completo.bat**
    - Script completo: MongoDB + Prisma + Seed + Dev
    - **Status**: ÚTIL ✅
@@ -112,12 +120,14 @@
    - **Uso**: Verificação rápida
 
 ### Seed & Teste
+
 5. **seed-simplificado.cjs**
    - Popula banco com dados de teste
    - **Status**: ÚTIL ✅
    - **Uso**: Desenvolvimento e demos
 
 ### Deploy (escolher um)
+
 6. **serverless.yml**
    - Deploy via Serverless Framework
    - **Status**: ÚTIL (se usar Serverless) ✅
@@ -139,6 +149,7 @@
    - **Decisão**: Manter como opção
 
 ### Qualidade (Opcional)
+
 10. **sonar-project.properties**
     - Configuração SonarQube
     - **Status**: ÚTIL (se usar SonarQube) ✅
@@ -149,6 +160,7 @@
 ## ⚠️ ARQUIVOS REDUNDANTES (Marcar OLD-)
 
 ### Scripts Duplicados
+
 1. **run-tests-loop.bat**
    - **Problema**: Faz a mesma coisa que `executar-testes.bat` e `check-tests.ps1`
    - **Conteúdo**: Apenas `prisma generate` + `npm test`
@@ -170,6 +182,7 @@
 ## 🗑️ PASTAS GERADAS (Remover do Git)
 
 ### Pastas que deveriam estar apenas localmente
+
 1. **coverage/**
    - **Tipo**: Relatórios de cobertura (gerados por Jest)
    - **Status**: ✅ Já está no .gitignore
@@ -197,6 +210,7 @@
 Você tem **3 métodos de deploy**. Recomendo escolher **UM** e marcar os outros como OLD-.
 
 ### Opção 1: Serverless Framework (Recomendado) 🏆
+
 ```bash
 # Manter:
 ✅ serverless.yml
@@ -206,9 +220,11 @@ Você tem **3 métodos de deploy**. Recomendo escolher **UM** e marcar os outros
 ⚠️ samconfig.toml → OLD-samconfig.toml
 ⚠️ deploy-lambda.sh → OLD-deploy-lambda.sh
 ```
+
 **Vantagens**: Mais popular, comunidade maior, plugins
 
 ### Opção 2: AWS SAM
+
 ```bash
 # Manter:
 ✅ template.yaml
@@ -218,9 +234,11 @@ Você tem **3 métodos de deploy**. Recomendo escolher **UM** e marcar os outros
 ⚠️ serverless.yml → OLD-serverless.yml
 ⚠️ deploy-lambda.sh → OLD-deploy-lambda.sh
 ```
+
 **Vantagens**: Oficial AWS, melhor integração
 
 ### Opção 3: Script Manual
+
 ```bash
 # Manter:
 ✅ deploy-lambda.sh
@@ -230,6 +248,7 @@ Você tem **3 métodos de deploy**. Recomendo escolher **UM** e marcar os outros
 ⚠️ template.yaml → OLD-template.yaml
 ⚠️ samconfig.toml → OLD-samconfig.toml
 ```
+
 **Vantagens**: Controle total, sem dependências
 
 ---
@@ -237,6 +256,7 @@ Você tem **3 métodos de deploy**. Recomendo escolher **UM** e marcar os outros
 ## 📋 AÇÕES RECOMENDADAS
 
 ### Ação 1: Renomear Arquivos Redundantes
+
 ```bash
 # Windows (PowerShell)
 Rename-Item "run-tests-loop.bat" "OLD-run-tests-loop.bat"
@@ -244,7 +264,9 @@ Rename-Item "test-prisma.cjs" "OLD-test-prisma.cjs"
 ```
 
 ### Ação 2: Decidir método de deploy e renomear outros
+
 **Exemplo (se escolher Serverless Framework):**
+
 ```bash
 Rename-Item "template.yaml" "OLD-template.yaml"
 Rename-Item "samconfig.toml" "OLD-samconfig.toml"
@@ -252,6 +274,7 @@ Rename-Item "deploy-lambda.sh" "OLD-deploy-lambda.sh"
 ```
 
 ### Ação 3: Remover pastas geradas do Git
+
 ```bash
 git rm -r --cached coverage/
 git rm -r --cached logs/
@@ -262,7 +285,8 @@ git commit -m "Remove pastas geradas do versionamento (já estão no .gitignore)
 
 ## 📊 RESULTADO FINAL
 
-### Arquivos que permanecerão ativos:
+### Arquivos que permanecerão ativos
+
 ```
 📦 Raiz (15-18 arquivos)
 ├── .eslintrc.cjs
@@ -292,14 +316,16 @@ git commit -m "Remove pastas geradas do versionamento (já estão no .gitignore)
 📦 .vscode/ (configurações do editor)
 ```
 
-### Arquivos marcados como OLD- (2-5):
+### Arquivos marcados como OLD- (2-5)
+
 ```
 OLD-run-tests-loop.bat
 OLD-test-prisma.cjs
 [+ 2-3 arquivos de deploy não escolhidos]
 ```
 
-### Pastas removidas do Git (2):
+### Pastas removidas do Git (2)
+
 ```
 coverage/ (apenas local)
 logs/ (apenas local)
@@ -320,11 +346,13 @@ logs/ (apenas local)
 ## 📌 NOTAS IMPORTANTES
 
 ### .vscode/
+
 - **Status**: Útil (configurações do editor)
 - **Decisão**: ✅ Manter (já está no .gitignore mas pode ser útil para o time)
 - **Alternativa**: Remover do Git se preferir que cada dev configure seu próprio editor
 
 ### FUTURO/
+
 - **Status**: Ignorado no .gitignore (linha 48)
 - **Decisão**: ✅ Manter no .gitignore (não versionar)
 
@@ -340,4 +368,3 @@ O projeto está bem organizado! Apenas alguns arquivos duplicados e pastas gerad
 ---
 
 **Próximo Passo**: Aprovar e executar as ações de renomeação
-

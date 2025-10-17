@@ -24,6 +24,7 @@
 ### ✅ CORRETO: Módulos NestJS (9 módulos)
 
 **README diz:**
+
 ```
 src/modules/
 ├── auth/ (7 arquivos)
@@ -39,6 +40,7 @@ src/modules/
 
 **Realidade:**
 ✅ **TODOS os 9 módulos existem com 7 arquivos cada**
+
 - ✅ controller.ts
 - ✅ service.ts
 - ✅ repository.ts
@@ -51,16 +53,14 @@ src/modules/
 
 ---
 
-
 ---
-
-
 
 ## 3️⃣ Features Implementadas mas Não Documentadas no README
 
 ### 1. Seleção Dinâmica de Banco de Dados ✨ NOVA
 
 **Implementação:**
+
 - ✅ `src/utils/database-provider/` (5 arquivos)
 - ✅ Header `X-Database-Provider` no Swagger
 - ✅ Interceptor global para capturar header
@@ -68,10 +68,12 @@ src/modules/
 - ✅ Métodos: `isPrisma()`, `isDynamoDB()`, `isDynamoDBLocal()`, `isDynamoDBCloud()`
 
 **Documentação:**
+
 - ✅ Documentado em `docs/03-GUIAS/GUIA_SELECAO_BANCO_SWAGGER.md`
 - ⚠️ **NÃO documentado no README.md principal**
 
 **Ação Necessária:**
+
 - Adicionar seção "🗄️ Seleção de Banco de Dados" no README
 - Explicar os 3 cenários suportados
 - Mostrar exemplo de uso no Swagger
@@ -81,14 +83,17 @@ src/modules/
 ### 2. Scripts Batch para Windows
 
 **Implementação:**
+
 - ✅ `iniciar-ambiente-local.bat` (MongoDB + Prisma)
 - ✅ `iniciar-ambiente-dynamodb.bat` (DynamoDB Local)
 - ✅ `iniciar-servidor-completo.bat`
 
 **Documentação:**
+
 - ⚠️ Mencionados brevemente mas sem detalhes
 
 **Ação Necessária:**
+
 - Adicionar seção "Scripts Windows" no README
 - Explicar diferença entre os 3 scripts
 - Quando usar cada um
@@ -98,14 +103,17 @@ src/modules/
 ### 3. Docker Compose com DynamoDB
 
 **Implementação:**
+
 - ✅ `docker-compose.yml` tem MongoDB E DynamoDB Local
 - ✅ DynamoDB na porta 8000
 - ✅ Persistência de dados em `./dynamodb-data`
 
 **Documentação:**
+
 - ⚠️ README menciona apenas MongoDB
 
 **Ação Necessária:**
+
 - Atualizar seção Docker para mencionar ambos bancos
 - Explicar como escolher qual subir
 
@@ -163,6 +171,7 @@ docs/
 **Problema:** README.md principal não menciona docs/ importantes!
 
 **Ação Necessária:**
+
 - Adicionar seção "📚 Documentação Adicional" atualizada no README
 - Mencionar especificamente:
   - `docs/03-GUIAS/GUIA_DYNAMODB_LOCAL.md`
@@ -176,6 +185,7 @@ docs/
 ### ✅ CORRETO: Todos os 65 Endpoints
 
 Validei controllers e todos os endpoints mencionados no README existem:
+
 - ✅ Health (2 endpoints)
 - ✅ Auth (6 endpoints)
 - ✅ Users (7 endpoints)
@@ -195,6 +205,7 @@ Validei controllers e todos os endpoints mencionados no README existem:
 ### ⚠️ FALTA Documentar no README: DATABASE_PROVIDER
 
 **env.example tem:**
+
 ```env
 DATABASE_PROVIDER=PRISMA
 # ou
@@ -202,6 +213,7 @@ DATABASE_PROVIDER=DYNAMODB
 ```
 
 **README menciona:**
+
 ```env
 DATABASE_URL="mongodb://localhost:27017/blog?replicaSet=rs0"
 ```
@@ -209,6 +221,7 @@ DATABASE_URL="mongodb://localhost:27017/blog?replicaSet=rs0"
 **Status:** ⚠️ **Variável principal não documentada**
 
 **Ação Necessária:**
+
 - Adicionar `DATABASE_PROVIDER` na seção "Variáveis de Ambiente"
 - Explicar valores possíveis (PRISMA vs DYNAMODB)
 - Mostrar configuração para cada cenário
@@ -220,6 +233,7 @@ DATABASE_URL="mongodb://localhost:27017/blog?replicaSet=rs0"
 ### ✅ CORRETO: Estrutura e Métricas
 
 **README diz:**
+
 ```
 ✅ Test Suites: 41 passed
 ✅ Tests: 478+ passed
@@ -227,6 +241,7 @@ DATABASE_URL="mongodb://localhost:27017/blog?replicaSet=rs0"
 ```
 
 **Realidade:**
+
 - ✅ 41 arquivos de teste em `tests/`
 - ✅ Estrutura 100% espelhada
 - ✅ Cobertura próxima a 99%
@@ -240,6 +255,7 @@ DATABASE_URL="mongodb://localhost:27017/blog?replicaSet=rs0"
 ### ⚠️ Parcialmente Documentado
 
 **README menciona:**
+
 - ✅ AWS SAM
 - ✅ Lambda Function URLs
 - ✅ template.yaml
@@ -247,12 +263,14 @@ DATABASE_URL="mongodb://localhost:27017/blog?replicaSet=rs0"
 - ✅ DynamoDB
 
 **Mas não menciona:**
+
 - ⚠️ Scripts NPM específicos (`sam:deploy:dev`, `sam:deploy:staging`, `sam:deploy:prod`)
 - ⚠️ `samconfig.toml` para configurações
 - ⚠️ Diferença entre ambientes
 - ⚠️ Como configurar variáveis por ambiente
 
 **Ação Necessária:**
+
 - Expandir seção de deploy com exemplos práticos
 - Documentar workflow completo de deploy
 - Mencionar scripts NPM disponíveis
@@ -322,7 +340,7 @@ DATABASE_URL="mongodb://localhost:27017/blog?replicaSet=rs0"
 
 ## ✅ Recomendações
 
-### 1. Atualizar README.md Seções:
+### 1. Atualizar README.md Seções
 
 ```markdown
 ## 🗄️ Seleção de Banco de Dados (ADICIONAR)
@@ -374,7 +392,8 @@ iniciar-ambiente-dynamodb.bat   # DynamoDB
 
 ### Swagger
 
-Acesse http://localhost:4000/docs e veja o dropdown **X-Database-Provider** em cada endpoint!
+Acesse <http://localhost:4000/docs> e veja o dropdown **X-Database-Provider** em cada endpoint!
+
 ```
 
 ### 2. Atualizar Seção de Scripts
@@ -393,12 +412,14 @@ npm run sam:logs             # Ver logs
 ```
 
 ### DynamoDB (Local)
+
 ```bash
 npm run docker:dynamodb          # Subir DynamoDB Local
 npm run dynamodb:create-tables   # Criar tabelas
 npm run dynamodb:seed            # Popular dados
 npm run dynamodb:list-tables     # Listar tabelas
 ```
+
 ```
 
 ### 3. Atualizar Seção Documentação Adicional
@@ -436,6 +457,7 @@ npm run dynamodb:list-tables     # Listar tabelas
 ### 📝 Ação Imediata
 
 **Atualizar README.md com:**
+
 1. Seção "Seleção de Banco de Dados"
 2. Variável `DATABASE_PROVIDER`
 3. Scripts DynamoDB
@@ -449,4 +471,3 @@ npm run dynamodb:list-tables     # Listar tabelas
 **Análise Completa por:** AI Assistant  
 **Data:** 16/10/2024  
 **Status:** ✅ Concluída
-

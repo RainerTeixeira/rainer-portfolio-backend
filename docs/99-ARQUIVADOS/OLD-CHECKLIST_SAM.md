@@ -109,16 +109,19 @@
 ## 🔧 Comandos Disponíveis
 
 ### ✅ Validação
+
 ```bash
 npm run sam:validate
 ```
 
 ### ✅ Build
+
 ```bash
 npm run build
 ```
 
 ### ✅ Deploy
+
 ```bash
 # Primeira vez (guiado)
 npm run sam:deploy:guided
@@ -131,16 +134,19 @@ npm run sam:deploy:prod      # Prod
 ```
 
 ### ✅ Teste Local
+
 ```bash
 npm run sam:local
 ```
 
 ### ✅ Logs
+
 ```bash
 npm run sam:logs
 ```
 
 ### ✅ Deletar Stack
+
 ```bash
 npm run sam:delete
 ```
@@ -152,16 +158,19 @@ npm run sam:delete
 ### 1. ✅ Instalação de Ferramentas
 
 - [ ] Instalar AWS CLI
+
   ```bash
   choco install awscli
   ```
 
 - [ ] Instalar SAM CLI
+
   ```bash
   choco install aws-sam-cli
   ```
 
 - [ ] Configurar credenciais AWS
+
   ```bash
   aws configure
   ```
@@ -169,11 +178,13 @@ npm run sam:delete
 ### 2. ✅ Validação
 
 - [ ] Validar template
+
   ```bash
   npm run sam:validate
   ```
 
 - [ ] Verificar versões
+
   ```bash
   aws --version
   sam --version
@@ -183,11 +194,13 @@ npm run sam:delete
 ### 3. ✅ Build
 
 - [ ] Build da aplicação
+
   ```bash
   npm run build
   ```
 
 - [ ] Verificar pasta dist/
+
   ```bash
   dir dist
   ```
@@ -195,6 +208,7 @@ npm run sam:delete
 ### 4. ✅ Primeiro Deploy
 
 - [ ] Deploy guiado
+
   ```bash
   npm run sam:deploy:guided
   ```
@@ -210,6 +224,7 @@ npm run sam:delete
 ### 5. ✅ Teste
 
 - [ ] Obter Function URL
+
   ```bash
   aws cloudformation describe-stacks \
     --stack-name blog-backend-api \
@@ -218,6 +233,7 @@ npm run sam:delete
   ```
 
 - [ ] Testar endpoint
+
   ```bash
   curl {function-url}/api/health
   ```
@@ -225,23 +241,26 @@ npm run sam:delete
 ### 6. ✅ Verificação
 
 - [ ] Ver logs
+
   ```bash
   npm run sam:logs
   ```
 
 - [ ] Verificar tabelas DynamoDB
+
   ```bash
   aws dynamodb list-tables
   ```
 
 - [ ] Acessar AWS Console
-  - https://console.aws.amazon.com/cloudformation/
+  - <https://console.aws.amazon.com/cloudformation/>
 
 ---
 
 ## 📊 Recursos AWS Criados
 
 ### Lambda Function
+
 - [x] Nome: `blog-backend-api-{ambiente}`
 - [x] Runtime: Node.js 18.x
 - [x] Memória: 512 MB
@@ -250,6 +269,7 @@ npm run sam:delete
 - [x] CORS habilitado
 
 ### DynamoDB Tables (7)
+
 - [x] `{stack}-{env}-users`
 - [x] `{stack}-{env}-posts`
 - [x] `{stack}-{env}-categories`
@@ -259,12 +279,14 @@ npm run sam:delete
 - [x] `{stack}-{env}-notifications`
 
 ### IAM Roles
+
 - [x] Lambda execution role
 - [x] Permissões DynamoDB CRUD
 - [x] Permissões CloudWatch Logs
 - [x] Permissões X-Ray
 
 ### CloudWatch
+
 - [x] Log Group criado
 - [x] Retenção: 7 dias (dev), 30 dias (prod)
 
@@ -340,13 +362,13 @@ src/lambda/
 ## 🆘 Suporte
 
 Dúvidas? Consulte:
+
 1. `src/lambda/README.md` - Documentação completa
 2. `MIGRAÇÃO_SAM.md` - Guia de migração
-3. AWS SAM Docs - https://docs.aws.amazon.com/serverless-application-model/
+3. AWS SAM Docs - <https://docs.aws.amazon.com/serverless-application-model/>
 
 ---
 
 **Data**: 16 de Outubro de 2025  
 **Versão**: 2.3.0  
 **Status**: ✅ **MIGRAÇÃO CONCLUÍDA COM SUCESSO!** 🎉
-

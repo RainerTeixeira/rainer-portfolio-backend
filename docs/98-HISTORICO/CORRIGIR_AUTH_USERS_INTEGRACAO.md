@@ -3,6 +3,7 @@
 ## 🎯 Objetivo
 
 Integrar o módulo `auth` com o módulo `users` para que:
+
 1. Registro no Cognito **crie perfil no MongoDB**
 2. Login sincronize usuário entre Cognito ↔ MongoDB
 3. IDs sejam consistentes em todo o sistema
@@ -240,6 +241,7 @@ export class UsersModule {}
 Após as correções:
 
 ### Fluxo de Registro
+
 ```
 1. POST /auth/register
    ↓
@@ -251,6 +253,7 @@ Após as correções:
 ```
 
 ### Fluxo de Login
+
 ```
 1. POST /auth/login
    ↓
@@ -337,4 +340,3 @@ curl -X POST http://localhost:4000/auth/login \
 **Status:** ⚠️ Aguardando implementação  
 **Prioridade:** 🚨 CRÍTICA  
 **Tempo Estimado:** 30 minutos
-

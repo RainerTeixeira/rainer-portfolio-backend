@@ -121,7 +121,9 @@ src/
 │   ├── prisma.module.ts         #    @Global() Module - Disponível em toda aplicação
 │   ├── prisma.service.ts        #    Service com métodos de banco de dados
 │   ├── schema.prisma            #    Schema do banco (7 models: User, Post, etc)
-│   └── seed.ts                  #    Script para popular banco com dados de exemplo
+│   ├── mongodb.seed.ts          #    Seed para MongoDB (Prisma)
+│   ├── dynamodb.seed.ts         #    Seed para DynamoDB (AWS)
+│   └── dynamodb.tables.ts       #    Criação de tabelas DynamoDB
 │
 ├── modules/                     # 📚 9 Módulos NestJS (Lógica de Negócio)
 │   │                            #    Cada módulo tem 7 arquivos (padrão consistente)
@@ -895,6 +897,7 @@ docker-compose down
 ```
 
 ⏱️ **Tempo de Inicialização:**
+
 - MongoDB: ~5-10s (health check + replica set)
 - DynamoDB: ~5s
 - Prisma Studio: ~30s (npm install)
@@ -905,15 +908,16 @@ docker-compose down
 
 | Serviço | URL | Descrição |
 |---------|-----|-----------|
-| **API** | http://localhost:4000 | Aplicação NestJS |
-| **Swagger** | http://localhost:4000/docs | Documentação interativa |
-| **Health** | http://localhost:4000/health | Status da API |
-| **Prisma Studio** | http://localhost:5555 | GUI do MongoDB |
-| **DynamoDB Admin** | http://localhost:8001 | GUI do DynamoDB |
+| **API** | <http://localhost:4000> | Aplicação NestJS |
+| **Swagger** | <http://localhost:4000/docs> | Documentação interativa |
+| **Health** | <http://localhost:4000/health> | Status da API |
+| **Prisma Studio** | <http://localhost:5555> | GUI do MongoDB |
+| **DynamoDB Admin** | <http://localhost:8001> | GUI do DynamoDB |
 
 ### Recursos Docker
 
 #### Containers (5)
+
 - `blogapi-mongodb` - MongoDB 7.0 (porta 27017)
 - `blogapi-dynamodb` - DynamoDB Local (porta 8000)
 - `blogapi-prisma-studio` - Interface visual MongoDB (porta 5555)
@@ -921,6 +925,7 @@ docker-compose down
 - `blogapi-app` - Aplicação NestJS (porta 4000)
 
 #### Volumes (5)
+
 - `blogapi-mongodb-data` - Dados do MongoDB
 - `blogapi-mongodb-config` - Configuração do Replica Set
 - `blogapi-dynamodb-data` - Dados do DynamoDB
@@ -928,6 +933,7 @@ docker-compose down
 - `blogapi-app-node-modules` - Cache npm da aplicação
 
 #### Network
+
 - `blogapi-network` - Rede bridge isolada para comunicação interna
 
 ### Health Checks Configurados
@@ -945,13 +951,16 @@ App NestJS:     Verifica endpoint /health (a cada 15s)
 ### Organização por Camadas
 
 **🗄️ DATA (Dados)**
+
 - MongoDB (banco principal)
 - DynamoDB Local (banco alternativo)
 
 **🚀 BACKEND (Aplicação)**
+
 - API NestJS com Fastify + Prisma
 
 **🎨 TOOLS (Ferramentas)**
+
 - Prisma Studio (gerenciar MongoDB)
 - DynamoDB Admin (gerenciar DynamoDB)
 
@@ -1357,6 +1366,7 @@ export class PostsRepository {
 ### Segurança
 
 cls- ✅ **CORS configurado** - Origin, credentials e headers customizáveis
+
 - ✅ **Helmet (security headers)** - CSP, X-Frame-Options, HSTS, XSS Protection
 - ✅ **Validação de entrada (Zod)** - Runtime validation em todos os endpoints
 - ✅ **Error handling sem vazamento** - Mensagens genéricas em produção
@@ -1365,6 +1375,7 @@ cls- ✅ **CORS configurado** - Origin, credentials e headers customizáveis
 - ✅ **JWT validation** - Tokens verificados em cada requisição
 
 **Headers de Segurança (Helmet):**
+
 - `Content-Security-Policy` - Proteção contra XSS e injeção de código
 - `X-Content-Type-Options: nosniff` - Previne MIME type sniffing
 - `X-Frame-Options: DENY` - Proteção contra clickjacking
@@ -1936,6 +1947,7 @@ MIT
 ## 🎉 Histórico de Alterações
 
 ### Versão 4.1.0 (16/10/2025)
+
 **Implementação Completa de Helmet - Segurança 100%** 🔒
 
 #### ✅ Mudanças Aplicadas
@@ -2000,6 +2012,7 @@ MIT
 ---
 
 ### Versão 4.0.0 (16/10/2025)
+
 **Docker Compose Profissional - Ambiente Completo Configurado** ⭐
 
 #### ✅ Mudanças Aplicadas
@@ -2085,6 +2098,7 @@ MIT
 ---
 
 ### Versão 2.3.0 (16/10/2025)
+
 **Migração de Serverless Framework para AWS SAM**
 
 #### ✅ Mudanças Aplicadas
@@ -2122,6 +2136,7 @@ MIT
 ---
 
 ### Versão 3.0.0 (16/10/2025)
+
 **Seleção Dinâmica de Banco de Dados - Feature Completa**
 
 #### ✨ NOVA FEATURE: Database Provider Selection
@@ -2263,6 +2278,7 @@ if (this.databaseContext.isPrisma()) {
 ---
 
 ### Versão 2.2.0 (16/10/2025)
+
 **Atualização da Stack AWS - Arquitetura Serverless Completa**
 
 #### ✅ Mudanças Aplicadas
@@ -2311,6 +2327,7 @@ if (this.databaseContext.isPrisma()) {
 ---
 
 ### Versão 2.1.1 (16/10/2025)
+
 **Melhoria da Documentação JSDoc dos Arquivos de Configuração**
 
 #### ✅ Mudanças Aplicadas
@@ -2360,6 +2377,7 @@ if (this.databaseContext.isPrisma()) {
 ---
 
 ### Versão 2.1.0 (15/10/2025)
+
 **Organização Completa da Documentação (.md)**
 
 #### ✅ Mudanças Aplicadas
@@ -2433,6 +2451,7 @@ if (this.databaseContext.isPrisma()) {
 ---
 
 ### Versão 2.0.0 (15/10/2025)
+
 **Reestruturação Completa do README Principal**
 
 #### ✅ Mudanças Aplicadas

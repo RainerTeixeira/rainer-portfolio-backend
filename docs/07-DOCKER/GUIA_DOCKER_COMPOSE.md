@@ -84,6 +84,7 @@ Tecnologia: MongoDB
 ```
 
 **Características:**
+
 - Replica Set configurado automaticamente
 - Health check inteligente que inicializa o RS se não existir
 - Persistência de dados e configuração
@@ -103,6 +104,7 @@ Tecnologia: DynamoDB
 ```
 
 **Características:**
+
 - Modo compartilhado (sharedDb)
 - Persistência em disco
 - Compatível 100% com DynamoDB AWS
@@ -122,6 +124,7 @@ Tecnologia: Prisma
 ```
 
 **Características:**
+
 - Auto-instala dependências
 - Gera Prisma Client automaticamente
 - Hot reload habilitado
@@ -141,6 +144,7 @@ Tecnologia: DynamoDB Admin
 ```
 
 **Características:**
+
 - Auto-instala dynamodb-admin
 - Aguarda DynamoDB ficar saudável
 - Interface web moderna
@@ -163,6 +167,7 @@ Tecnologia: NestJS + Fastify + Prisma
 ```
 
 **Características:**
+
 - Hot reload ativado
 - Debug remoto na porta 9229
 - Cache de node_modules em volume
@@ -363,6 +368,7 @@ Labels:
 #### Volumes de Dados
 
 **blogapi-mongodb-data**
+
 ```yaml
 Labels:
   com.blogapi.description: "MongoDB - Dados do banco (coleções e documentos)"
@@ -371,6 +377,7 @@ Labels:
 ```
 
 **blogapi-mongodb-config**
+
 ```yaml
 Labels:
   com.blogapi.description: "MongoDB - Configuração do Replica Set"
@@ -379,6 +386,7 @@ Labels:
 ```
 
 **blogapi-dynamodb-data**
+
 ```yaml
 Labels:
   com.blogapi.description: "DynamoDB Local - Dados das tabelas"
@@ -389,6 +397,7 @@ Labels:
 #### Volumes de Cache
 
 **blogapi-prisma-node-modules**
+
 ```yaml
 Labels:
   com.blogapi.description: "Prisma Studio - Cache de dependências npm"
@@ -397,6 +406,7 @@ Labels:
 ```
 
 **blogapi-app-node-modules**
+
 ```yaml
 Labels:
   com.blogapi.description: "App NestJS - Cache de dependências npm"
@@ -409,6 +419,7 @@ Labels:
 ### 🌐 Labels da Network
 
 **blogapi-network**
+
 ```yaml
 Labels:
   com.blogapi.description: "Rede interna para comunicação entre serviços da BlogAPI"
@@ -423,13 +434,16 @@ Labels:
 ### 📊 Organização por Camadas (Tiers)
 
 #### **data** (Camada de Dados)
+
 - `blogapi-mongodb` - Banco MongoDB com Replica Set
 - `blogapi-dynamodb` - Banco DynamoDB Local
 
 #### **backend** (Camada de Aplicação)
+
 - `blogapi-app` - API NestJS + Fastify + Prisma
 
 #### **tools** (Ferramentas de Desenvolvimento)
+
 - `blogapi-prisma-studio` - GUI do MongoDB (Prisma Studio)
 - `blogapi-dynamodb-admin` - GUI do DynamoDB (DynamoDB Admin)
 
@@ -438,15 +452,18 @@ Labels:
 ### 🎯 Como Visualizar Labels no Docker Desktop
 
 #### 1. Aba Containers
+
 - Clique em qualquer container `blogapi-*`
 - Vá na aba **"Inspect"**
 - Procure por `Labels` - verá todas as informações descritivas
 
 #### 2. Aba Volumes
+
 - Todos os volumes aparecem com o prefixo `blogapi-`
 - Nas propriedades, você verá a descrição do que cada um armazena
 
 #### 3. Aba Networks
+
 - A rede `blogapi-network` mostra sua finalidade nas labels
 
 ---
@@ -454,6 +471,7 @@ Labels:
 ### 🔍 Busca Rápida no Docker Desktop
 
 Agora você pode filtrar por:
+
 - **Nome do projeto:** `blogapi`
 - **Tipo de serviço:** `database`, `gui`, `application`
 - **Tecnologia:** `MongoDB`, `DynamoDB`, `NestJS`, etc.
@@ -477,6 +495,7 @@ Agora você pode filtrar por:
 Todos os recursos seguem este padrão consistente:
 
 **Containers:**
+
 ```yaml
 com.blogapi.description: "Descrição clara do serviço"
 com.blogapi.service: "database | gui | application"
@@ -487,6 +506,7 @@ com.blogapi.url: "URL de acesso (quando aplicável)"
 ```
 
 **Volumes:**
+
 ```yaml
 com.blogapi.description: "O que está armazenado"
 com.blogapi.type: "data | config | cache"
@@ -494,6 +514,7 @@ com.blogapi.service: "serviço relacionado"
 ```
 
 **Networks:**
+
 ```yaml
 com.blogapi.description: "Finalidade da rede"
 com.blogapi.type: "network"
@@ -507,6 +528,7 @@ com.blogapi.isolation: "isolated"
 ### Volumes de Dados
 
 #### blogapi-mongodb-data
+
 ```yaml
 Propósito: Armazena coleções e documentos do MongoDB
 Caminho:   /data/db
@@ -515,6 +537,7 @@ Backup:    Essencial
 ```
 
 #### blogapi-mongodb-config
+
 ```yaml
 Propósito: Configuração do Replica Set
 Caminho:   /data/configdb
@@ -523,6 +546,7 @@ Backup:    Recomendado
 ```
 
 #### blogapi-dynamodb-data
+
 ```yaml
 Propósito: Tabelas e dados do DynamoDB Local
 Caminho:   /home/dynamodblocal/data
@@ -533,6 +557,7 @@ Backup:    Essencial (se usar em testes)
 ### Volumes de Cache
 
 #### blogapi-prisma-node-modules
+
 ```yaml
 Propósito: node_modules do Prisma Studio
 Benefício: Evita reinstalar a cada restart
@@ -540,6 +565,7 @@ Tamanho:   ~50-100MB
 ```
 
 #### blogapi-app-node-modules
+
 ```yaml
 Propósito: node_modules da aplicação
 Benefício: Build mais rápido
@@ -576,6 +602,7 @@ Propósito:  Comunicação interna entre serviços
 ```
 
 **Características:**
+
 - Resolução de nomes automática (DNS interno)
 - Containers se comunicam pelo nome do serviço
 - Isolamento de segurança
@@ -583,6 +610,7 @@ Propósito:  Comunicação interna entre serviços
 **Exemplo de Uso:**
 
 No container `blogapi-app`, você acessa:
+
 ```javascript
 // MongoDB
 mongodb://mongodb:27017/blog
@@ -784,17 +812,19 @@ docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 ## 📚 Referências
 
 ### Documentação Interna
+
 - **[README.md Principal](../../README.md)** - Seção "Docker Compose - Ambiente Completo"
 - **[docs/README.md](../README.md)** - Índice geral da documentação
 - **[docker-compose.yml](../../docker-compose.yml)** - Arquivo de configuração
 - **[iniciar-ambiente-local.bat](../../iniciar-ambiente-local.bat)** - Script de inicialização
 
 ### Documentação Externa
-- **Docker Compose Docs**: https://docs.docker.com/compose/
-- **Docker Labels Best Practices**: https://docs.docker.com/config/labels-custom-metadata/
-- **Health Check Reference**: https://docs.docker.com/engine/reference/builder/#healthcheck
-- **MongoDB Replica Set**: https://www.mongodb.com/docs/manual/replication/
-- **DynamoDB Local**: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.html
+
+- **Docker Compose Docs**: <https://docs.docker.com/compose/>
+- **Docker Labels Best Practices**: <https://docs.docker.com/config/labels-custom-metadata/>
+- **Health Check Reference**: <https://docs.docker.com/engine/reference/builder/#healthcheck>
+- **MongoDB Replica Set**: <https://www.mongodb.com/docs/manual/replication/>
+- **DynamoDB Local**: <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.html>
 
 ---
 
@@ -802,4 +832,3 @@ docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 **Data:** 16/10/2025  
 **Autor:** BlogAPI Team  
 **Status:** ✅ Documentação Completa
-

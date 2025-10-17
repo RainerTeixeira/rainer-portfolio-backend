@@ -117,6 +117,7 @@
 ### 1. Scripts de Teste
 
 #### ❌ ANTES (3 scripts - Confuso)
+
 ```
 check-coverage.ps1         → Verifica cobertura
 check-tests.ps1            → Roda testes
@@ -127,6 +128,7 @@ executar-testes.bat        → Faz install + test:coverage + abre relatório
 ```
 
 #### ✅ DEPOIS (2 scripts + 1 OLD- - Claro)
+
 ```
 check-coverage.ps1         → Verifica cobertura (rápido, sem rodar)
 check-tests.ps1            → Roda testes (médio)
@@ -142,6 +144,7 @@ OLD-run-tests-loop.bat     → Redundante (removido)
 ### 2. Métodos de Deploy
 
 #### ❌ ANTES (3 métodos - Confuso)
+
 ```
 serverless.yml             → Serverless Framework
 template.yaml              → AWS SAM
@@ -153,6 +156,7 @@ deploy-lambda.sh           → Script bash manual
 ```
 
 #### ✅ DEPOIS (1 método + 3 OLD- - Definido)
+
 ```
 serverless.yml             → ⭐ MÉTODO OFICIAL
   Comando: npm run deploy:serverless
@@ -171,6 +175,7 @@ OLD-deploy-lambda.sh       → Script bash manual
 ### 3. Arquivos Temporários
 
 #### ❌ ANTES (1 ativo)
+
 ```
 test-prisma.cjs            → Script de debug de conexão
 Status: ATIVO na raiz
@@ -179,6 +184,7 @@ Status: ATIVO na raiz
 ```
 
 #### ✅ DEPOIS (0 ativos)
+
 ```
 OLD-test-prisma.cjs        → Marcado como OLD-
 Status: Disponível apenas para troubleshooting
@@ -194,6 +200,7 @@ Status: Disponível apenas para troubleshooting
 ### Clareza de Uso
 
 #### ANTES 🔴
+
 ```
 Novo Dev: "Qual script de teste eu uso?"
 Você: "Depende... temos 3 opções..."
@@ -206,6 +213,7 @@ Você: "É temporário mas está ativo... não sei..."
 ```
 
 #### DEPOIS 🟢
+
 ```
 Novo Dev: "Qual script de teste eu uso?"
 Você: "executar-testes.bat para completo, check-tests.ps1 para rápido!"
@@ -224,6 +232,7 @@ Você: "São obsoletos, pode ignorar. Vou deletar em breve."
 ### Caso 1: Novo Desenvolvedor
 
 #### ANTES 🔴
+
 1. Clona repositório
 2. Vê 23 arquivos na raiz
 3. Não sabe qual script usar
@@ -231,6 +240,7 @@ Você: "São obsoletos, pode ignorar. Vou deletar em breve."
 5. **Tempo perdido**: 2-3 horas pesquisando
 
 #### DEPOIS 🟢
+
 1. Clona repositório
 2. Lê README.md (indica scripts claros)
 3. Roda `iniciar-servidor-completo.bat`
@@ -242,6 +252,7 @@ Você: "São obsoletos, pode ignorar. Vou deletar em breve."
 ### Caso 2: CI/CD Pipeline
 
 #### ANTES 🔴
+
 ```yaml
 # CI precisa decidir qual script usar
 script:
@@ -250,6 +261,7 @@ script:
 ```
 
 #### DEPOIS 🟢
+
 ```yaml
 # CI tem decisões claras
 script:
@@ -262,11 +274,13 @@ script:
 ### Caso 3: Manutenção
 
 #### ANTES 🔴
+
 - Múltiplos scripts para manter
 - 3 configurações de deploy para atualizar
 - Confusão sobre qual é oficial
 
 #### DEPOIS 🟢
+
 - Scripts específicos e únicos
 - 1 configuração de deploy oficial
 - OLD- claramente marcados como obsoletos
@@ -276,24 +290,28 @@ script:
 ## 📈 Métricas de Melhoria
 
 ### Clareza +100%
+
 ```
 Antes: ████░░░░░░ 40% claro
 Depois: ██████████ 100% claro ✅
 ```
 
 ### Facilidade de Manutenção +80%
+
 ```
 Antes: █████░░░░░ 50%
 Depois: █████████░ 90% ✅
 ```
 
 ### Onboarding +90%
+
 ```
 Antes: ███░░░░░░░ 30%
 Depois: █████████░ 90% ✅
 ```
 
 ### Decisões de Deploy +100%
+
 ```
 Antes: ░░░░░░░░░░ 0% (confuso)
 Depois: ██████████ 100% (definido) ✅
@@ -304,6 +322,7 @@ Depois: ██████████ 100% (definido) ✅
 ## ✅ Checklist de Verificação
 
 ### Arquivos Essenciais (11)
+
 - [x] package.json
 - [x] tsconfig.json
 - [x] jest.config.ts
@@ -317,6 +336,7 @@ Depois: ██████████ 100% (definido) ✅
 - [x] serverless.yml
 
 ### Scripts Úteis (5)
+
 - [x] iniciar-servidor-completo.bat
 - [x] executar-testes.bat
 - [x] check-tests.ps1
@@ -324,6 +344,7 @@ Depois: ██████████ 100% (definido) ✅
 - [x] seed-simplificado.cjs
 
 ### Arquivos OLD- Marcados (5)
+
 - [x] OLD-run-tests-loop.bat
 - [x] OLD-test-prisma.cjs
 - [x] OLD-template.yaml
@@ -331,6 +352,7 @@ Depois: ██████████ 100% (definido) ✅
 - [x] OLD-deploy-lambda.sh
 
 ### Documentação Criada (4)
+
 - [x] ANALISE_ARQUIVOS_PROJETO.md
 - [x] RESUMO_LIMPEZA.md
 - [x] ESTRUTURA_PROJETO_FINAL.md
@@ -344,16 +366,16 @@ Depois: ██████████ 100% (definido) ✅
 
 1. ✅ **Identificar arquivos obsoletos**
    - 5 arquivos marcados como OLD-
-   
+
 2. ✅ **Definir método de deploy**
    - Serverless Framework escolhido
-   
+
 3. ✅ **Remover redundâncias**
    - 1 script de teste redundante marcado
-   
+
 4. ✅ **Organizar estrutura**
    - Arquivos categorizados e documentados
-   
+
 5. ✅ **Criar documentação**
    - 4 documentos de análise criados
 
@@ -391,4 +413,3 @@ Depois: ██████████ 100% (definido) ✅
 
 **Criado em**: 15 de Outubro de 2025  
 **Próximo passo**: Aguardar 1-2 semanas e deletar arquivos OLD-
-

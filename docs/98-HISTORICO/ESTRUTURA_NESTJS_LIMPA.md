@@ -102,6 +102,7 @@ src/
 ## ✅ O Que Foi Feito
 
 ### 1. Arquivos Renomeados para old.*
+
 - ✅ `app.ts` → `old.app.ts` (Fastify puro)
 - ✅ `server.ts` → `old.server.ts` (entry point antigo)
 - ✅ `lambda.ts` → `old.lambda.ts` (lambda antigo)
@@ -109,15 +110,19 @@ src/
 - ✅ `config/database.ts` → `config/old.database.ts` (abstração manual)
 
 ### 2. Módulos - Arquivos Antigos Renomeados
+
 **Em users/, posts/, categories/:**
+
 - ✅ `user.controller.ts` → `old.user.controller.ts`
 - ✅ `user.service.ts` → `old.user.service.ts`
 - ✅ `user.repository.ts` → `old.user.repository.ts`
 
 **Em comments/, likes/, bookmarks/, notifications/:**
+
 - ✅ Todos os arquivos `.controller.ts`, `.service.ts`, `.repository.ts` → `old.*`
 
 ### 3. Mantidos (Usados por NestJS)
+
 - ✅ `*.model.ts` - Interfaces TypeScript (reutilizáveis)
 - ✅ `*.schema.ts` - Zod schemas (reutilizáveis)
 - ✅ `utils/` - Funções utilitárias (compatíveis)
@@ -128,11 +133,13 @@ src/
 ## 🎯 Módulos NestJS
 
 ### ✅ Completos (3/7)
+
 1. **users** - @Module, @Controller, @Service, @Repository
 2. **posts** - @Module, @Controller, @Service, @Repository
 3. **categories** - @Module, @Controller, @Service, @Repository
 
 ### ⏳ Faltam Criar (4/7)
+
 4. **comments** - Precisa criar `.module.ts`, `.controller.ts`, `.service.ts`, `.repository.ts`
 5. **likes** - Precisa criar `.module.ts`, `.controller.ts`, `.service.ts`, `.repository.ts`
 6. **bookmarks** - Precisa criar `.module.ts`, `.controller.ts`, `.service.ts`, `.repository.ts`
@@ -143,6 +150,7 @@ src/
 ## 🚀 Próximos Passos
 
 ### 1. Completar 4 Módulos NestJS
+
 Para cada módulo (comments, likes, bookmarks, notifications):
 
 ```typescript
@@ -182,6 +190,7 @@ export class CommentsRepository {
 ```
 
 ### 2. Atualizar app.module.ts
+
 ```typescript
 @Module({
   imports: [
@@ -200,6 +209,7 @@ export class AppModule {}
 ```
 
 ### 3. Rodar
+
 ```bash
 npm run start:dev
 ```
@@ -235,4 +245,3 @@ npm run start:dev
 
 **Status:** 🟡 **50% PRONTO - ESTRUTURA LIMPA!**  
 **Próximo:** Criar 4 módulos restantes (comments, likes, bookmarks, notifications)
-

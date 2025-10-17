@@ -102,6 +102,7 @@ docs/
 ## 📝 Arquivos Principais na Raiz
 
 ### 1. **README.md** (NOVO - criar)
+
 ```markdown
 # 📚 Documentação do Projeto
 
@@ -117,6 +118,7 @@ Master index com visão geral completa.
 ```
 
 ### 2. **INDEX.md** (NOVO - criar)
+
 ```markdown
 # 🗺️ Guia de Navegação por Perfil
 
@@ -131,6 +133,7 @@ Master index com visão geral completa.
 ```
 
 ### 3. **00-LEIA_PRIMEIRO.md** (NOVO - criar)
+
 ```markdown
 # 🎯 LEIA PRIMEIRO - Bem-vindo!
 
@@ -149,11 +152,13 @@ Master index com visão geral completa.
 ## 🔄 Ações Necessárias
 
 ### Fase 1: Criar Arquivos Principais (3 arquivos)
+
 - [ ] Criar `docs/README.md`
 - [ ] Criar `docs/INDEX.md`
 - [ ] Criar `docs/00-LEIA_PRIMEIRO.md`
 
 ### Fase 2: Criar Pastas Numeradas (9 pastas)
+
 - [ ] Criar `01-NAVEGACAO/`
 - [ ] Criar `02-CONFIGURACAO/`
 - [ ] Criar `03-GUIAS/`
@@ -165,6 +170,7 @@ Master index com visão geral completa.
 - [ ] Renomear `historico/` → `98-HISTORICO/`
 
 ### Fase 3: Mover Arquivos para Pastas (30+ arquivos)
+
 - [ ] Mover arquivos de navegação → `01-NAVEGACAO/`
 - [ ] Mover arquivos de configuração → `02-CONFIGURACAO/`
 - [ ] Mover pasta `guias/` → `03-GUIAS/`
@@ -174,6 +180,7 @@ Master index com visão geral completa.
 - [ ] Mover `OLD-*` → `99-ARQUIVADOS/`
 
 ### Fase 4: Criar READMEs de Pasta (6 arquivos)
+
 - [ ] Criar `01-NAVEGACAO/README.md`
 - [ ] Criar `02-CONFIGURACAO/README.md`
 - [ ] Criar `03-GUIAS/README.md`
@@ -182,6 +189,7 @@ Master index com visão geral completa.
 - [ ] Criar `06-REORGANIZACAO/README.md`
 
 ### Fase 5: Atualizar Links (verificar)
+
 - [ ] Atualizar links internos nos documentos
 - [ ] Atualizar referências em README.md principal
 - [ ] Verificar integridade
@@ -191,6 +199,7 @@ Master index com visão geral completa.
 ## 📊 Mapa de Movimentação
 
 ### → 01-NAVEGACAO/ (4 arquivos)
+
 ```
 _LEIA_ISTO.md
 _INDICE_COMPLETO.md
@@ -199,6 +208,7 @@ CHECKLIST_ORGANIZACAO.md
 ```
 
 ### → 02-CONFIGURACAO/ (5 arquivos)
+
 ```
 _LEIA_ATUALIZACAO_ENV.md
 GUIA_DECISAO_DATABASE.md
@@ -208,24 +218,28 @@ COMECE_AQUI.md
 ```
 
 ### → 03-GUIAS/ (pasta inteira)
+
 ```
 guias/* → 03-GUIAS/*
 (10 arquivos)
 ```
 
 ### → 04-ANALISES/ (pasta inteira)
+
 ```
 analises/* → 04-ANALISES/*
 (10 arquivos)
 ```
 
 ### → 05-RESULTADOS/ (2 arquivos)
+
 ```
 VERIFICACAO_REQUISITOS_COMPLETA.md
 RESULTADO_FINAL_99_74.md
 ```
 
 ### → 06-REORGANIZACAO/ (4 arquivos)
+
 ```
 _PLANO_REORGANIZACAO_DOCS.md
 _RESULTADO_REORGANIZACAO_DOCS.md
@@ -234,6 +248,7 @@ _PLANO_NOVA_ORGANIZACAO.md (este arquivo)
 ```
 
 ### → 99-ARQUIVADOS/ (9 arquivos)
+
 ```
 OLD-COMECAR_DYNAMODB.md
 OLD-README_DYNAMODB.md
@@ -251,21 +266,25 @@ OLD-RESUMO_ORGANIZACAO_FINAL.md
 ## ✅ Benefícios da Nova Estrutura
 
 ### 1. **Hierarquia Clara**
+
 - Pastas numeradas (01, 02, 03...)
 - Ordem lógica de leitura
 - Fácil navegação
 
 ### 2. **Profissionalismo**
+
 - Estrutura enterprise
 - Modelo comprovado (FUTURO)
 - Organização visual
 
 ### 3. **Escalabilidade**
+
 - Fácil adicionar novas categorias
 - Pastas bem definidas
 - Crescimento organizado
 
 ### 4. **Experiência do Desenvolvedor**
+
 - Ponto de entrada claro (00-LEIA_PRIMEIRO.md)
 - Navegação por perfil (INDEX.md)
 - Estrutura intuitiva
@@ -275,6 +294,7 @@ OLD-RESUMO_ORGANIZACAO_FINAL.md
 ## 📈 Comparação: Antes vs Depois
 
 ### ANTES (Atual)
+
 ```
 docs/
 ├── 20+ arquivos na raiz ❌
@@ -285,6 +305,7 @@ docs/
 ```
 
 ### DEPOIS (Proposto)
+
 ```
 docs/
 ├── 3 arquivos principais ✅
@@ -301,11 +322,13 @@ docs/
 ## 🎯 Resultado Esperado
 
 ### Navegação
+
 ```
 00-LEIA_PRIMEIRO.md → README.md → INDEX.md → Pasta específica
 ```
 
 ### Experiência
+
 - ✅ Ponto de entrada claro
 - ✅ Navegação intuitiva
 - ✅ Estrutura profissional
@@ -328,4 +351,3 @@ docs/
 **Status:** 📋 Plano Completo  
 **Pronto para:** 🚀 Execução  
 **Modelo:** ✨ FUTURO (comprovado)
-

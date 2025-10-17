@@ -19,24 +19,39 @@ import { DynamoDBDocumentClient, PutCommand, GetCommand, QueryCommand, UpdateCom
 import { env, TABLES } from './env.js';
 
 /**
+ * Detecta se está rodando na AWS Lambda
+ * Lambda define automaticamente estas variáveis de ambiente
+ */
+const isRunningInLambda = !!(
+  process.env.AWS_LAMBDA_FUNCTION_NAME ||
+  process.env.AWS_EXECUTION_ENV ||
+  process.env.LAMBDA_TASK_ROOT
+);
+
+/**
  * Cliente DynamoDB básico (low-level)
  * 
- * Este é o cliente base que se conecta ao DynamoDB. Ele lida com:
- * - **Região AWS**: Define onde os dados estão hospedados (ex: us-east-1)
- * - **Endpoint**: URL do serviço DynamoDB
- *   - Produção: undefined (usa AWS padrão)
- *   - Local: http://localhost:8000 (DynamoDB Local)
- * - **Credenciais**: Chaves de acesso AWS (obrigatórias em dev, automáticas em Lambda)
+ * Detecção Automática de Ambiente:
+ * - **AWS Lambda**: Detecta via AWS_LAMBDA_FUNCTION_NAME → usa DynamoDB AWS
+ * - **Local com DYNAMODB_ENDPOINT**: usa DynamoDB Local
+ * - **Local sem DYNAMODB_ENDPOINT**: não conecta DynamoDB (usa Prisma)
+ * 
+ * ✅ Vantagem: NÃO precisa trocar .env ao fazer deploy!
  * 
  * @private - Não use diretamente, use o `dynamodb` exportado abaixo
  */
 const client = new DynamoDBClient({
   region: env.AWS_REGION,
-  endpoint: env.DYNAMODB_ENDPOINT, // undefined em produção, http://localhost:8000 em dev
-  credentials: env.AWS_ACCESS_KEY_ID && env.AWS_SECRET_ACCESS_KEY ? {
-    accessKeyId: env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: env.AWS_SECRET_ACCESS_KEY,
-  } : undefined,
+  // Se está na Lambda → undefined (AWS)
+  // Se está local → usa DYNAMODB_ENDPOINT se definido
+  endpoint: isRunningInLambda ? undefined : env.DYNAMODB_ENDPOINT,
+  // Lambda usa IAM Role automaticamente
+  credentials: isRunningInLambda ? undefined : (
+    env.AWS_ACCESS_KEY_ID && env.AWS_SECRET_ACCESS_KEY ? {
+      accessKeyId: env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: env.AWS_SECRET_ACCESS_KEY,
+    } : undefined
+  ),
 });
 
 /**

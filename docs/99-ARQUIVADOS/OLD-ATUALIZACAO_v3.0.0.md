@@ -179,6 +179,7 @@ DATABASE_URL="mongodb://localhost:27017/blog?replicaSet=rs0"
 ```
 
 **Scripts:**
+
 ```bash
 docker run -d --name mongodb -p 27017:27017 mongo:7 --replSet rs0
 docker exec mongodb mongosh --eval "rs.initiate()"
@@ -189,6 +190,7 @@ npm run dev
 ```
 
 **Ou:**
+
 ```bash
 iniciar-ambiente-local.bat  # Windows
 ```
@@ -207,6 +209,7 @@ DYNAMODB_TABLE_PREFIX=blog-dev
 ```
 
 **Scripts:**
+
 ```bash
 npm run docker:dynamodb
 npm run dynamodb:create-tables
@@ -215,6 +218,7 @@ npm run dev
 ```
 
 **Ou:**
+
 ```bash
 iniciar-ambiente-dynamodb.bat  # Windows
 ```
@@ -235,6 +239,7 @@ DYNAMODB_TABLE_PREFIX=blog-prod
 ```
 
 **Deploy:**
+
 ```bash
 npm run build
 npm run sam:deploy:prod
@@ -371,7 +376,7 @@ Para preservar histórico, os seguintes arquivos foram arquivados:
 ### Para Usuários
 
 1. **Testar no Swagger**
-   - Acesse http://localhost:4000/docs
+   - Acesse <http://localhost:4000/docs>
    - Teste o dropdown `X-Database-Provider`
    - Compare resultados entre PRISMA e DYNAMODB
 
@@ -393,6 +398,7 @@ Para preservar histórico, os seguintes arquivos foram arquivados:
 ### Para Desenvolvedores
 
 1. **Adicionar Decorator**
+
    ```typescript
    @DatabaseProviderHeader()
    @Get()
@@ -400,6 +406,7 @@ Para preservar histórico, os seguintes arquivos foram arquivados:
    ```
 
 2. **Usar Context Service**
+
    ```typescript
    if (this.databaseContext.isPrisma()) {
      // MongoDB
@@ -469,7 +476,7 @@ A versão **3.0.0** representa um marco importante no projeto:
 
 1. Leia os guias em `docs/03-GUIAS/`
 2. Consulte o README.md principal
-3. Teste no Swagger: http://localhost:4000/docs
+3. Teste no Swagger: <http://localhost:4000/docs>
 4. Verifique exemplos de código nos guias
 
 **Encontrou um problema?**
@@ -483,4 +490,3 @@ A versão **3.0.0** representa um marco importante no projeto:
 
 **Versão deste documento:** 1.0.0  
 **Compatível com:** Blog API v3.0.0
-

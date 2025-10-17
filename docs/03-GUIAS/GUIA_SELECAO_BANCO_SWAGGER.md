@@ -111,6 +111,7 @@ export class UsersService {
 ### Exemplo 1: Health Check
 
 **Pré-requisitos:**
+
 ```powershell
 # Garantir que ambos os bancos estão rodando
 .\scripts\docker-ambiente-completo.ps1 start
@@ -121,6 +122,7 @@ docker-compose up -d dynamodb-local # Para DYNAMODB
 ```
 
 **Teste:**
+
 1. Acesse: `http://localhost:4000/docs`
 2. Abra `GET /health`
 3. Selecione **PRISMA** no dropdown
@@ -174,6 +176,7 @@ curl -X GET "http://localhost:4000/users" \
 ### Exemplo 3: Testar Simultaneamente
 
 Abra 2 abas do Swagger:
+
 - **Aba 1**: Selecione PRISMA → Execute
 - **Aba 2**: Selecione DYNAMODB → Execute
 
@@ -301,7 +304,7 @@ Cada requisição pode sobrescrever com o header `X-Database-Provider` sem alter
 
 ## 🎯 Quando Usar Cada Banco
 
-### Use PRISMA (MongoDB) quando:
+### Use PRISMA (MongoDB) quando
 
 ✅ Desenvolvimento rápido  
 ✅ Prototipagem  
@@ -309,7 +312,7 @@ Cada requisição pode sobrescrever com o header `X-Database-Provider` sem alter
 ✅ Queries complexas com relacionamentos  
 ✅ Não precisa de alta escalabilidade imediata  
 
-### Use DYNAMODB quando:
+### Use DYNAMODB quando
 
 ✅ Testes pré-produção  
 ✅ Validação de performance  
@@ -462,7 +465,7 @@ Remova o decorator `@DatabaseProviderHeader()` dos endpoints e o provider será 
 
 **Pronto!** 🎉 Agora você pode escolher dinamicamente entre MongoDB e DynamoDB diretamente no Swagger!
 
-**Teste agora:** http://localhost:4000/docs → `GET /health` → Try it out → Selecione o provider → Execute
+**Teste agora:** <http://localhost:4000/docs> → `GET /health` → Try it out → Selecione o provider → Execute
 
 ---
 
@@ -493,6 +496,7 @@ Remova o decorator `@DatabaseProviderHeader()` dos endpoints e o provider será 
 ### Configuração Atual
 
 O projeto está configurado com:
+
 - ✅ **AWS Cognito** (RainerSoftCognito)
   - User Pool ID: `us-east-1_wryiyhbWC`
   - Client ID: `3ueos5ofu499je6ebc5u98n35h`
@@ -505,4 +509,3 @@ O projeto está configurado com:
 
 **Última atualização:** 16/10/2025  
 **Versão:** 2.0.0 (Atualizado com scripts e configurações)
-

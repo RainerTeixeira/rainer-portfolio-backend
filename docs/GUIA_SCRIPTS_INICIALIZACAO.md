@@ -1,6 +1,7 @@
 # 🚀 Guia Completo dos Scripts de Inicialização
 
 ## 📋 Índice
+
 1. [Visão Geral](#visão-geral)
 2. [Status Atual dos Scripts](#status-atual-dos-scripts)
 3. [Como Usar Cada Script](#como-usar-cada-script)
@@ -25,6 +26,7 @@ Você possui **3 scripts principais** para inicializar seu ambiente de desenvolv
 ## 📊 Status Atual dos Scripts
 
 ### ✅ Status do Docker
+
 ```
 ✓ Docker está rodando
 ✓ 4 containers configurados
@@ -32,6 +34,7 @@ Você possui **3 scripts principais** para inicializar seu ambiente de desenvolv
 ```
 
 ### 🐳 Containers Ativos
+
 ```bash
 # Verificar status atual
 docker ps
@@ -49,11 +52,13 @@ blogapi-prisma-studio   Restarting              5555      ❌ RESTARTING
 ### 1️⃣ **iniciar-ambiente-local.bat** - MongoDB + Prisma
 
 **📌 Quando usar:**
+
 - Desenvolvimento local com Prisma ORM
 - Quando você quer usar Prisma Studio (GUI visual)
 - Ideal para desenvolvimento rápido com TypeScript
 
 **🚀 Como iniciar:**
+
 ```batch
 # Opção 1: Duplo clique no arquivo
 iniciar-ambiente-local.bat
@@ -63,6 +68,7 @@ iniciar-ambiente-local.bat
 ```
 
 **📋 O que o script faz:**
+
 ```
 [1/7] Verifica se Docker está rodando
 [2/7] Cria arquivo .env (se não existir)
@@ -74,6 +80,7 @@ iniciar-ambiente-local.bat
 ```
 
 **🌐 URLs disponíveis após inicialização:**
+
 ```
 ✓ API Principal:    http://localhost:4000
 ✓ Documentação:     http://localhost:4000/docs
@@ -82,6 +89,7 @@ iniciar-ambiente-local.bat
 ```
 
 **📦 Dados criados automaticamente:**
+
 - 5 usuários (admin, editor, authors, subscriber)
 - 9 categorias (3 principais + 6 subcategorias)
 - 9 posts (8 publicados + 1 rascunho)
@@ -92,11 +100,13 @@ iniciar-ambiente-local.bat
 ### 2️⃣ **iniciar-ambiente-dynamodb.bat** - DynamoDB Local
 
 **📌 Quando usar:**
+
 - Testes com DynamoDB antes do deploy em produção
 - Desenvolvimento de features que usarão DynamoDB
 - Testes de performance com NoSQL
 
 **🚀 Como iniciar:**
+
 ```batch
 # Opção 1: Duplo clique no arquivo
 iniciar-ambiente-dynamodb.bat
@@ -106,6 +116,7 @@ iniciar-ambiente-dynamodb.bat
 ```
 
 **📋 O que o script faz:**
+
 ```
 [1/6] Verifica se Docker está rodando
 [2/6] Cria/configura arquivo .env para DynamoDB
@@ -116,6 +127,7 @@ iniciar-ambiente-dynamodb.bat
 ```
 
 **🌐 URLs disponíveis após inicialização:**
+
 ```
 ✓ DynamoDB Local:   http://localhost:8000
 ✓ API Principal:    http://localhost:4000
@@ -124,6 +136,7 @@ iniciar-ambiente-dynamodb.bat
 ```
 
 **⚡ Comandos úteis do DynamoDB:**
+
 ```batch
 # Listar tabelas
 npm run dynamodb:list-tables
@@ -140,6 +153,7 @@ dynamodb-admin
 ```
 
 **🔧 Ferramentas para DynamoDB:**
+
 ```bash
 # AWS CLI para listar tabelas
 aws dynamodb list-tables --endpoint-url http://localhost:8000
@@ -153,11 +167,13 @@ npm install -g dynamodb-admin && dynamodb-admin
 ### 3️⃣ **iniciar-servidor-completo.bat** - Servidor Rápido
 
 **📌 Quando usar:**
+
 - Quando o MongoDB já está rodando
 - Reiniciar apenas o servidor sem recriar containers
 - Desenvolvimento rápido sem resetar dados
 
 **🚀 Como iniciar:**
+
 ```batch
 # Opção 1: Duplo clique no arquivo
 iniciar-servidor-completo.bat
@@ -167,6 +183,7 @@ iniciar-servidor-completo.bat
 ```
 
 **📋 O que o script faz:**
+
 ```
 [1/5] Inicia MongoDB (se não estiver rodando)
 [2/5] Gera Prisma Client
@@ -176,6 +193,7 @@ iniciar-servidor-completo.bat
 ```
 
 **✨ Vantagens:**
+
 - ⚡ Mais rápido (não aguarda 30s do replica set)
 - 🎯 Foco no servidor (assume que DB está OK)
 - 🔄 Ideal para reiniciar após mudanças
@@ -187,22 +205,27 @@ iniciar-servidor-completo.bat
 ### 1. DynamoDB Healthcheck Falhando
 
 **Problema:**
+
 ```yaml
 # docker-compose.yml - healthcheck antigo
 test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8000 || exit 1"]
 ```
+
 - ❌ A imagem `amazon/dynamodb-local` não possui `wget`
 - ❌ Container ficava permanentemente "unhealthy"
 
 **Solução Aplicada:**
+
 ```yaml
 # docker-compose.yml - healthcheck corrigido
 test: ["CMD-SHELL", "curl -f http://localhost:8000 || exit 1"]
 ```
+
 - ✅ `curl` está disponível na imagem DynamoDB
 - ✅ Container agora fica "healthy" corretamente
 
 **Como verificar:**
+
 ```bash
 docker ps
 # Aguarde ~10s e verifique se DynamoDB está "healthy"
@@ -213,18 +236,21 @@ docker ps
 ### 2. Prisma Studio Reiniciando Constantemente
 
 **Problema:**
+
 - Container `blogapi-prisma-studio` fica em loop de restart
 - Causa: Falha ao instalar dependências ou conectar ao MongoDB
 
 **Soluções:**
 
 **Opção A - Executar Prisma Studio localmente (RECOMENDADO):**
+
 ```bash
 npm run prisma:studio
 # Abre em http://localhost:5555
 ```
 
 **Opção B - Corrigir container:**
+
 ```bash
 # Parar container problemático
 docker-compose stop prisma-studio
@@ -244,15 +270,18 @@ docker-compose logs -f prisma-studio
 ## 🎨 Melhorias Implementadas
 
 ### 1. ✅ Healthcheck do DynamoDB Corrigido
+
 - Agora usa `curl` ao invés de `wget`
 - Container fica "healthy" corretamente
 
 ### 2. 📝 Documentação Completa Criada
+
 - Guia detalhado de cada script
 - Troubleshooting incluído
 - Comandos úteis listados
 
 ### 3. 🎯 Scripts Validados
+
 - Todos os 3 scripts foram testados
 - Fluxos de execução documentados
 - Problemas identificados e soluções fornecidas
@@ -264,18 +293,21 @@ docker-compose logs -f prisma-studio
 ### Para Desenvolvimento Diário
 
 **Cenário 1: Primeira vez usando o projeto**
+
 ```batch
 # Use o script completo do MongoDB
 iniciar-ambiente-local.bat
 ```
 
 **Cenário 2: Já tem MongoDB rodando**
+
 ```batch
 # Use o script rápido
 iniciar-servidor-completo.bat
 ```
 
 **Cenário 3: Testando features do DynamoDB**
+
 ```batch
 # Use o script do DynamoDB
 iniciar-ambiente-dynamodb.bat
@@ -308,6 +340,7 @@ graph TD
 ## 🔍 Troubleshooting
 
 ### Problema: "Docker não está rodando"
+
 ```batch
 # Solução: Iniciar Docker Desktop
 # Aguardar até aparecer o ícone verde no systray
@@ -315,6 +348,7 @@ graph TD
 ```
 
 ### Problema: "Porta 27017 já está em uso"
+
 ```bash
 # Ver o que está usando a porta
 netstat -ano | findstr :27017
@@ -327,6 +361,7 @@ taskkill /PID <PID> /F
 ```
 
 ### Problema: "Porta 8000 já está em uso"
+
 ```bash
 # Ver o que está usando a porta
 netstat -ano | findstr :8000
@@ -336,6 +371,7 @@ docker-compose down dynamodb-local
 ```
 
 ### Problema: "Erro ao gerar Prisma Client"
+
 ```batch
 # Limpar cache do Prisma
 npm run prisma:generate
@@ -347,6 +383,7 @@ npm run prisma:generate
 ```
 
 ### Problema: "Schema não sincroniza"
+
 ```bash
 # Limpar banco e recriar
 docker exec -it blogapi-mongodb mongosh blog --eval "db.dropDatabase()"
@@ -361,12 +398,14 @@ npm run seed
 ### Variáveis Importantes no .env
 
 **Para MongoDB (Prisma):**
+
 ```env
 DATABASE_PROVIDER=PRISMA
 DATABASE_URL="mongodb://localhost:27017/blog?replicaSet=rs0&directConnection=true"
 ```
 
 **Para DynamoDB:**
+
 ```env
 DATABASE_PROVIDER=DYNAMODB
 DYNAMODB_ENDPOINT=http://localhost:8000
@@ -381,6 +420,7 @@ AWS_SECRET_ACCESS_KEY=local
 ## 📚 Comandos Úteis
 
 ### Docker
+
 ```bash
 # Ver todos os containers
 docker ps -a
@@ -399,6 +439,7 @@ docker-compose restart <service-name>
 ```
 
 ### Prisma
+
 ```bash
 # Gerar cliente
 npm run prisma:generate
@@ -414,6 +455,7 @@ npm run seed
 ```
 
 ### DynamoDB
+
 ```bash
 # Listar tabelas
 npm run dynamodb:list-tables
@@ -426,6 +468,7 @@ npm run dynamodb:seed
 ```
 
 ### Desenvolvimento
+
 ```bash
 # Iniciar servidor
 npm run dev
@@ -450,6 +493,7 @@ npm run build
 ### Melhorias nos Scripts
 
 1. **Criar script de limpeza completa:**
+
 ```batch
 # limpar-ambiente.bat
 @echo off
@@ -463,6 +507,7 @@ echo Ambiente limpo!
 ```
 
 2. **Criar script de switch entre bancos:**
+
 ```batch
 # alternar-banco.bat
 @echo off
@@ -477,6 +522,7 @@ if errorlevel 2 (
 ```
 
 3. **Adicionar verificação de portas antes de iniciar:**
+
 ```batch
 netstat -ano | findstr :4000 >nul
 if %errorlevel% equ 0 (
@@ -490,6 +536,7 @@ if %errorlevel% equ 0 (
 ## 📞 Suporte
 
 Se encontrar problemas:
+
 1. ✅ Verifique se Docker está rodando
 2. ✅ Verifique se as portas estão disponíveis (4000, 8000, 27017, 5555)
 3. ✅ Consulte a seção [Troubleshooting](#troubleshooting)
@@ -513,4 +560,3 @@ Antes de começar a desenvolver:
 **📅 Data da Última Atualização:** 16 de Outubro de 2025  
 **✍️ Autor:** Sistema de Documentação Automatizada  
 **📌 Versão:** 1.0.0
-

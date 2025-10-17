@@ -15,11 +15,13 @@
 ## ✅ Arquivos Criados (18/45)
 
 ### config/ - 100% ✅
+
 - [x] database.ts
 - [x] prisma.ts
 - [x] dynamo-client.ts
 
 ### modules/users/ - 100% ✅
+
 - [x] user.model.ts
 - [x] user.schema.ts (copiado)
 - [x] user.repository.ts
@@ -27,6 +29,7 @@
 - [x] user.controller.ts
 
 ### modules/posts/ - 40% 🔄
+
 - [x] post.model.ts
 - [x] post.schema.ts (copiado)
 - [ ] post.repository.ts
@@ -34,6 +37,7 @@
 - [ ] post.controller.ts
 
 ### modules/categories/ - 40% 🔄
+
 - [x] category.model.ts
 - [x] category.schema.ts (copiado)
 - [ ] category.repository.ts
@@ -41,6 +45,7 @@
 - [ ] category.controller.ts
 
 ### modules/comments/ - 40% 🔄
+
 - [x] comment.model.ts
 - [x] comment.schema.ts (copiado)
 - [ ] comment.repository.ts
@@ -48,6 +53,7 @@
 - [ ] comment.controller.ts
 
 ### modules/likes/ - 40% 🔄
+
 - [x] like.model.ts
 - [x] like.schema.ts (copiado)
 - [ ] like.repository.ts
@@ -55,6 +61,7 @@
 - [ ] like.controller.ts
 
 ### modules/bookmarks/ - 40% 🔄
+
 - [x] bookmark.model.ts
 - [x] bookmark.schema.ts (copiado)
 - [ ] bookmark.repository.ts
@@ -62,6 +69,7 @@
 - [ ] bookmark.controller.ts
 
 ### modules/notifications/ - 40% 🔄
+
 - [x] notification.model.ts
 - [x] notification.schema.ts (copiado)
 - [ ] notification.repository.ts
@@ -69,6 +77,7 @@
 - [ ] notification.controller.ts
 
 ### modules/health/ - 20% 🔄
+
 - [ ] health.model.ts (não precisa)
 - [x] health.schema.ts (copiado)
 - [ ] health.service.ts
@@ -79,6 +88,7 @@
 ## ⏳ Faltam Criar (27 arquivos)
 
 ### Repositories (6)
+
 - [ ] post.repository.ts
 - [ ] category.repository.ts
 - [ ] comment.repository.ts
@@ -87,6 +97,7 @@
 - [ ] notification.repository.ts
 
 ### Services (7)
+
 - [ ] post.service.ts
 - [ ] category.service.ts
 - [ ] comment.service.ts
@@ -96,6 +107,7 @@
 - [ ] health.service.ts
 
 ### Controllers (7)
+
 - [ ] post.controller.ts
 - [ ] category.controller.ts
 - [ ] comment.controller.ts
@@ -105,15 +117,18 @@
 - [ ] health.controller.ts
 
 ### Routes (2)
+
 - [ ] routes/index.ts
 - [ ] routes/health.ts
 
 ### Utils (3)
+
 - [ ] utils/logger.ts
 - [ ] utils/error-handler.ts
 - [ ] utils/pagination.ts
 
 ### Lambda (2)
+
 - [ ] lambda/handler.ts
 - [ ] lambda/serverless.yml
 
@@ -144,4 +159,3 @@
 
 **Status:** 🔄 Em Andamento (40% completo)  
 **Próximo:** Criar repositories para 6 módulos
-

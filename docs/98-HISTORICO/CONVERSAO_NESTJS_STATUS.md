@@ -7,12 +7,14 @@
 ## ✅ Progresso Atual
 
 ### Estrutura Base NestJS (100%)
+
 - [x] main.ts - Entry point NestJS com Fastify adapter
 - [x] app.module.ts - Módulo raiz
 - [x] prisma/prisma.module.ts - Prisma Module global
 - [x] prisma/prisma.service.ts - Prisma Service com DI
 
 ### Módulo Users (100% ✅)
+
 - [x] users.module.ts - Module decorator
 - [x] users.repository.ts - @Injectable() com DI
 - [x] users.service.ts - @Injectable() com DI
@@ -21,6 +23,7 @@
 - [x] user.schema.ts - Validação Zod
 
 ### Outros Módulos (Pendente)
+
 - [ ] posts.module.ts
 - [ ] categories.module.ts
 - [ ] comments.module.ts
@@ -69,6 +72,7 @@ src/
 ## 🎯 Mudanças Principais
 
 ### De: Fastify Puro
+
 ```typescript
 // user.controller.ts (antes)
 export async function userRoutes(app: FastifyInstance) {
@@ -80,6 +84,7 @@ export async function userRoutes(app: FastifyInstance) {
 ```
 
 ### Para: NestJS + Decorators
+
 ```typescript
 // users.controller.ts (depois)
 @Controller('users')
@@ -159,4 +164,3 @@ export class UsersController {
 
 **Progresso:** 25% (1/8 módulos convertidos)  
 **Status:** 🔄 Em andamento
-

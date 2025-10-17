@@ -11,6 +11,7 @@
 ## 📚 O Que Você Vai Aprender
 
 Neste guia, você aprenderá:
+
 - ✅ O que são categorias hierárquicas
 - ✅ Por que posts usam `subcategoryId` (não `categoryId`)
 - ✅ Como criar categorias e subcategorias
@@ -53,6 +54,7 @@ Category "Tecnologia" (principal)
 ```
 
 **Vantagens:**
+
 - ✅ Organização muito melhor
 - ✅ URLs mais descritivas
 - ✅ SEO aprimorado
@@ -75,6 +77,7 @@ export interface Post {
 ```
 
 **Resultado:**
+
 ```bash
 ❌ Erro ao rodar aplicação:
 PrismaClientValidationError: Invalid field categoryId
@@ -229,6 +232,7 @@ curl -X POST http://localhost:4000/categories \
 ```
 
 **Retorna:**
+
 ```json
 {
   "id": "cat-culinaria",
@@ -277,6 +281,7 @@ curl -X POST http://localhost:4000/posts \
 ```
 
 **✅ Resultado:** Post criado com caminho completo:
+
 ```
 Culinária → Doces → Bolo de Chocolate
 ```
@@ -306,6 +311,7 @@ const post = await prisma.post.create({
 ### 2. **URLs Hierárquicas (SEO)**
 
 **Com subcategoryId:**
+
 ```
 /tecnologia/frontend/introducao-react
  ↑          ↑         ↑
@@ -313,6 +319,7 @@ categoria  subcat.   post
 ```
 
 **Sem subcategoryId:**
+
 ```
 /tecnologia/introducao-react
  ↑          ↑
@@ -337,6 +344,7 @@ const post = await prisma.post.findUnique({
 ```
 
 **Resultado:**
+
 ```json
 {
   "title": "Introdução ao React",
@@ -458,6 +466,7 @@ Verifique se entendeu:
 **Causa:** Tentou usar `categoryId` em vez de `subcategoryId`
 
 **Solução:**
+
 ```typescript
 // ❌ Errado
 data: { categoryId: "abc" }
@@ -471,6 +480,7 @@ data: { subcategoryId: "abc" }
 **Causa:** Tentou criar post em categoria principal
 
 **Solução:**
+
 ```typescript
 // ❌ Errado - categoria principal
 const tecnologia = await prisma.category.findUnique({
@@ -661,14 +671,14 @@ const posts = await prisma.post.findMany({
 
 ## 💡 TL;DR (Resumo Rápido)
 
-### O Ponto Crítico É:
+### O Ponto Crítico É
 
 1. ✅ Schema Prisma define que **Post pertence a SUBCATEGORIA**
 2. ❌ Se usar `categoryId`, a aplicação **quebra**
 3. ✅ Subcategoria permite **hierarquia** (Tech → Frontend → Post)
 4. ✅ É **obrigatório** usar `subcategoryId` para compatibilidade
 
-### Regra de Ouro:
+### Regra de Ouro
 
 > **Posts SEMPRE pertencem a SUBCATEGORIAS, nunca à categoria principal diretamente.**
 
@@ -701,4 +711,3 @@ Na nossa aplicação, verificamos que:
 **Atualizado em:** 16/10/2025  
 **Tipo:** Guia Conceitual  
 **Status:** ✅ Completo e Implementado
-

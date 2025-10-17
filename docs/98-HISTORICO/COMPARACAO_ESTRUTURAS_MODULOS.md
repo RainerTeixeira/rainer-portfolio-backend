@@ -1,6 +1,6 @@
 # 📊 Comparação de Estruturas dos Módulos
 
-## ✅ Todos os Módulos Agora Seguem o Mesmo Padrão!
+## ✅ Todos os Módulos Agora Seguem o Mesmo Padrão
 
 ---
 
@@ -22,6 +22,7 @@ modules/<modulo>/
 ## 📦 Módulos do Projeto
 
 ### 1. Bookmarks (6 arquivos)
+
 ```
 bookmarks/
 ├── bookmarks.controller.ts
@@ -33,6 +34,7 @@ bookmarks/
 ```
 
 ### 2. Categories (6 arquivos)
+
 ```
 categories/
 ├── categories.controller.ts
@@ -44,6 +46,7 @@ categories/
 ```
 
 ### 3. Comments (6 arquivos)
+
 ```
 comments/
 ├── comments.controller.ts
@@ -55,6 +58,7 @@ comments/
 ```
 
 ### 4. Health (3 arquivos - módulo simples)
+
 ```
 health/
 ├── health.controller.ts
@@ -63,6 +67,7 @@ health/
 ```
 
 ### 5. Likes (6 arquivos)
+
 ```
 likes/
 ├── likes.controller.ts
@@ -74,6 +79,7 @@ likes/
 ```
 
 ### 6. Notifications (6 arquivos)
+
 ```
 notifications/
 ├── notifications.controller.ts
@@ -84,7 +90,8 @@ notifications/
 ├── notification.schema.ts
 ```
 
-### 7. Auth (7 arquivos) ✅ AGORA PADRONIZADO!
+### 7. Auth (7 arquivos) ✅ AGORA PADRONIZADO
+
 ```
 auth/
 ├── auth.controller.ts
@@ -101,33 +108,39 @@ auth/
 ## ✅ Características Comuns
 
 ### 1. Controller
+
 - ✅ Decorators simples do NestJS
 - ✅ Emojis nas operações do Swagger
 - ✅ Retorno padronizado: `{ success: true, data: ... }`
 - ✅ Tipagem com interfaces do `.model.ts`
 
 ### 2. Service
+
 - ✅ `@Injectable()`
 - ✅ Usa Repository
 - ✅ Lógica de negócio
 - ✅ Tratamento de exceções
 
 ### 3. Repository
+
 - ✅ `@Injectable()`
 - ✅ Acesso a dados (Prisma, DynamoDB, Cognito)
 - ✅ Métodos puros
 
 ### 4. Module
+
 - ✅ Simples e direto
 - ✅ `controllers`, `providers`, `exports`
 - ✅ Sem complexidade extra
 
 ### 5. Model
+
 - ✅ Interfaces TypeScript
 - ✅ Tipos de dados
 - ✅ Sem classes
 
 ### 6. Schema
+
 - ✅ Schemas Zod
 - ✅ Validação de dados
 - ✅ Types inferidos
@@ -137,6 +150,7 @@ auth/
 ## 🎯 Padrão de Código
 
 ### Controller (Exemplo)
+
 ```typescript
 @ApiTags('nome')
 @Controller('nome')
@@ -154,6 +168,7 @@ export class NomeController {
 ```
 
 ### Service (Exemplo)
+
 ```typescript
 @Injectable()
 export class NomeService {
@@ -166,6 +181,7 @@ export class NomeService {
 ```
 
 ### Repository (Exemplo)
+
 ```typescript
 @Injectable()
 export class NomeRepository {
@@ -176,6 +192,7 @@ export class NomeRepository {
 ```
 
 ### Model (Exemplo)
+
 ```typescript
 export interface Nome {
   id: string;
@@ -189,6 +206,7 @@ export interface CreateNomeData {
 ```
 
 ### Schema (Exemplo)
+
 ```typescript
 export const createNomeSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
@@ -198,6 +216,7 @@ export type CreateNomeInput = z.infer<typeof createNomeSchema>;
 ```
 
 ### Module (Exemplo)
+
 ```typescript
 @Module({
   controllers: [NomeController],
@@ -252,4 +271,3 @@ Todos os módulos agora seguem exatamente o mesmo padrão de estrutura, código 
 **Data:** 14/10/2025  
 **Módulos Padronizados:** 7/7  
 **Conformidade:** 100%
-
