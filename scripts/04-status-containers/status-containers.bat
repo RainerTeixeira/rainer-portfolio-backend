@@ -99,11 +99,15 @@ if not errorlevel 1 (
     echo %GREEN%   ✅ Prisma Studio:  %RESET%http://localhost:5555
 )
 
+REM Ler PORT do .env
+for /f %%i in ('powershell -Command "if(Test-Path .env){($c=Get-Content .env|Where-Object{$_ -match '^PORT\s*=\s*(\d+)'});if($c -match 'PORT\s*=\s*(\d+)'){$matches[1]}}else{'4000'}"') do set API_PORT=%%i
+if not defined API_PORT set API_PORT=4000
+
 docker ps --filter "name=blogapi-app" --filter "status=running" >nul 2>&1
 if not errorlevel 1 (
-    echo %GREEN%   ✅ API:            %RESET%http://localhost:4000
-    echo %GREEN%   ✅ Swagger:        %RESET%http://localhost:4000/docs
-    echo %GREEN%   ✅ Health:         %RESET%http://localhost:4000/health
+    echo %GREEN%   ✅ API:            %RESET%http://localhost:%API_PORT%
+    echo %GREEN%   ✅ Swagger:        %RESET%http://localhost:%API_PORT%/docs
+    echo %GREEN%   ✅ Health:         %RESET%http://localhost:%API_PORT%/health
 )
 
 echo.

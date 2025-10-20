@@ -218,7 +218,7 @@ Melhorias:
 2. **Acesse a documentação:**
 
    ```
-   http://localhost:3000/docs
+   http://localhost:4000/docs
    ```
 
 3. **Observe as melhorias:**

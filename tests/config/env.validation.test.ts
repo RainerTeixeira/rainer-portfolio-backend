@@ -24,7 +24,7 @@ describe('Environment Validation', () => {
     });
 
     it('deve validar PORT como número', () => {
-      const validPort = 3000;
+      const validPort = 4000;
       expect(typeof validPort).toBe('number');
       expect(validPort).toBeGreaterThan(0);
       expect(validPort).toBeLessThan(65536);
@@ -82,11 +82,11 @@ describe('Environment Validation', () => {
 
   describe('Conversão de tipos', () => {
     it('deve converter PORT para número', () => {
-      const portStr = '3000';
+      const portStr = '4000';
       const portNum = parseInt(portStr, 10);
       
       expect(typeof portNum).toBe('number');
-      expect(portNum).toBe(3000);
+      expect(portNum).toBe(4000);
     });
 
     it('deve converter LOG_LEVEL para minúsculo', () => {
@@ -105,9 +105,9 @@ describe('Environment Validation', () => {
   });
 
   describe('Valores padrão', () => {
-    it('deve usar 3000 como PORT padrão', () => {
-      const defaultPort = 3000;
-      expect(defaultPort).toBe(3000);
+    it('deve usar 4000 como PORT padrão', () => {
+      const defaultPort = 4000;
+      expect(defaultPort).toBe(4000);
     });
 
     it('deve usar "info" como LOG_LEVEL padrão', () => {

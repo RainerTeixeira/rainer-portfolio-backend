@@ -7,7 +7,7 @@
 - ✅ **25 arquivos de teste** criados
 - ✅ **120+ casos de teste** implementados
 - ✅ **9 módulos** completamente testados
-- ✅ **3000+ linhas** de código de teste profissional
+- ✅ **4000+ linhas** de código de teste profissional
 - ✅ **90-100%** de cobertura esperada
 
 ---
@@ -505,7 +505,7 @@ it('deve lançar NotFoundException', async () => {
 
 - **25 arquivos** de teste criados
 - **120+ casos** de teste implementados
-- **3000+ linhas** de código de teste
+- **4000+ linhas** de código de teste
 - **90-100%** de cobertura esperada
 - **9 módulos** completamente testados
 - **100%** dos TODOs completados

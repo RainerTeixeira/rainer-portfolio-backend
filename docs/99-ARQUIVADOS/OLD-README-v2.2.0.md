@@ -2,14 +2,14 @@
 
 API RESTful completa para blog com **arquitetura híbrida**: desenvolvimento local com **NestJS + MongoDB + Prisma** e produção serverless na **AWS com Lambda + DynamoDB + Cognito**.
 
-### 💻 Desenvolvimento Local
+## 💻 Desenvolvimento Local
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
 [![NestJS](https://img.shields.io/badge/NestJS-11-red?style=flat-square&logo=nestjs)](https://nestjs.com/)
 [![Prisma](https://img.shields.io/badge/Prisma-6.17-teal?style=flat-square&logo=prisma)](https://www.prisma.io/)
 [![MongoDB](https://img.shields.io/badge/MongoDB-7-green?style=flat-square&logo=mongodb)](https://www.mongodb.com/)
 [![Jest](https://img.shields.io/badge/Tests-478%20passed-success?style=flat-square&logo=jest)](https://jestjs.io/)
-[![Coverage](https://img.shields.io/badge/Coverage-~99%25-brightgreen?style=flat-square)]()
+![Coverage](https://img.shields.io/badge/Coverage-~99%25-brightgreen?style=flat-square)
 
 ### ☁️ Produção AWS
 
@@ -995,7 +995,7 @@ taskkill /PID <PID> /F
 lsof -ti:4000 | xargs kill -9
 
 # Ou alterar no .env
-PORT=3000
+PORT=4000
 ```
 
 ---

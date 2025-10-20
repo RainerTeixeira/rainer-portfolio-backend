@@ -905,7 +905,7 @@ async function main() {
     
     console.log('\n🌐 Próximos passos:');
     console.log('   • Execute: npm run dev (iniciar servidor)');
-    console.log('   • Acesse: http://localhost:4000/docs');
+    console.log(`   • Acesse: http://localhost:${env.PORT}/docs`);
     console.log('   • Use header: X-Database-Provider: DYNAMODB');
     
     if (!isLocalEnvironment) {
@@ -928,9 +928,14 @@ async function main() {
 main()
   .then(() => {
     console.log('✅ Seed concluído com sucesso!\n');
-    process.exit(0);
+    if (process.env.NODE_ENV !== 'test') {
+      process.exit(0);
+    }
   })
   .catch((error) => {
     console.error('\n❌ Erro ao executar seed:', error);
-    process.exit(1);
+    if (process.env.NODE_ENV !== 'test') {
+      process.exit(1);
+    }
+    throw error;
   });

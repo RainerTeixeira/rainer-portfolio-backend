@@ -99,7 +99,7 @@ src/utils/
 {
   "sam:validate": "cd src/lambda && sam validate",
   "sam:build": "cd src/lambda && sam build",
-  "sam:local": "cd src/lambda && sam local start-api --port 3000",
+  "sam:local": "cd src/lambda && sam local start-api --port 4000",
   "sam:deploy": "npm run build && cd src/lambda && sam deploy",
   "sam:deploy:dev": "...",
   "sam:deploy:staging": "...",

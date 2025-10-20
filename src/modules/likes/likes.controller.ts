@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Delete, Body, Param, HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiParam, ApiBody } from '@nestjs/swagger';
 import { LikesService } from './likes.service.js';
 import type { CreateLikeData } from './like.model.js';
 
@@ -11,6 +11,16 @@ export class LikesController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: '❤️ Curtir Post' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        userId: { type: 'string', example: '507f1f77bcf86cd799439011' },
+        postId: { type: 'string', example: '507f1f77bcf86cd799439022' },
+      },
+      required: ['userId', 'postId'],
+    },
+  })
   async like(@Body() data: CreateLikeData) {
     const like = await this.likesService.likePost(data);
     return { success: true, data: like };

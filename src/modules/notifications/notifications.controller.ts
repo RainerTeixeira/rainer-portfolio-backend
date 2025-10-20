@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Put, Delete, Patch, Body, Param, Query, HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiParam, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiParam, ApiQuery, ApiBody } from '@nestjs/swagger';
 import { NotificationsService } from './notifications.service.js';
 import type { CreateNotificationData, UpdateNotificationData } from './notification.model.js';
 
@@ -11,6 +11,19 @@ export class NotificationsController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: '🔔 Criar Notificação' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        userId: { type: 'string', example: '507f1f77bcf86cd799439011' },
+        type: { type: 'string', example: 'COMMENT', enum: ['COMMENT', 'LIKE', 'REPLY', 'MENTION'] },
+        title: { type: 'string', example: 'Novo comentário' },
+        message: { type: 'string', example: 'Alguém comentou no seu post' },
+        relatedId: { type: 'string', example: '507f1f77bcf86cd799439022', nullable: true },
+      },
+      required: ['userId', 'type', 'title', 'message'],
+    },
+  })
   async create(@Body() data: CreateNotificationData) {
     const notification = await this.notificationsService.createNotification(data);
     return { success: true, data: notification };
@@ -43,6 +56,14 @@ export class NotificationsController {
   @Put(':id')
   @ApiOperation({ summary: '✏️ Atualizar Notificação' })
   @ApiParam({ name: 'id' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        isRead: { type: 'boolean', example: true },
+      },
+    },
+  })
   async updateNotification(@Param('id') id: string, @Body() data: UpdateNotificationData) {
     const notification = await this.notificationsService.updateNotification(id, data);
     return { success: true, data: notification };

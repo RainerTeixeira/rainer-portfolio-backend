@@ -29,6 +29,7 @@
 ### Causa Raiz
 
 O script `dynamodb:create-tables` está tentando se conectar ao DynamoDB Local, mas pode haver um problema de:
+
 1. Timeout muito longo
 2. Credenciais não configuradas corretamente
 3. DynamoDB ainda não pronto (apesar do healthcheck)
@@ -121,6 +122,7 @@ iniciar-ambiente-local-MongoDB+Prisma.bat
 ```
 
 **Este script:**
+
 - ✅ Inicia apenas MongoDB
 - ✅ Configura Prisma
 - ✅ Popula dados
@@ -343,6 +345,7 @@ if errorlevel 1 (
 ### Executar em Ordem
 
 ```bash
+
 # 1. Verificar ambiente
 .\verificar-ambiente.bat
 
@@ -380,6 +383,7 @@ Get-Process tsx -ErrorAction SilentlyContinue
 ### Para Ambiente Completo
 
 **Use:** `iniciar-servidor-completo.bat` mas:
+
 1. Aguarde pacientemente (pode levar 30-40s total)
 2. Se travar no DynamoDB, pressione Ctrl+C
 3. Continue apenas com MongoDB (já está rodando)
@@ -475,4 +479,3 @@ npm run dynamodb:create-tables  # Execute manualmente
 **Criado em:** 17/10/2025  
 **Versão:** 1.0  
 **Status:** ✅ Guia de Troubleshooting Completo
-

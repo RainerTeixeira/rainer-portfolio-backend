@@ -495,7 +495,7 @@ db.categories.find()
 
 ```bash
 # Com servidor rodando (npm run dev)
-curl <http://localhost:3000/health>
+curl <http://localhost:4000/health>
 
 # Resposta esperada:
 {
@@ -512,7 +512,7 @@ curl <http://localhost:3000/health>
 
 ```bash
 # Acessar no navegador
-http://localhost:3000/api
+http://localhost:4000/api
 
 # Testar rotas diretamente no Swagger UI
 ```
@@ -569,7 +569,7 @@ Versão bash do script completo usando curl.
 .\scripts\testar-todas-rotas-completo.ps1 -DatabaseProvider DYNAMODB
 
 # Método 3: URL customizada
-.\scripts\testar-todas-rotas-completo.ps1 -BaseUrl "http://localhost:3000"
+.\scripts\testar-todas-rotas-completo.ps1 -BaseUrl "http://localhost:4000"
 
 # Método 4: Pular deleção
 .\scripts\testar-todas-rotas-completo.ps1 -SkipDelete

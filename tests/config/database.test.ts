@@ -24,7 +24,7 @@ describe('Database Configuration', () => {
       url: process.env.DATABASE_URL,
       maxPoolSize: 10,
       minPoolSize: 1,
-      maxIdleTimeMS: 30000,
+      maxIdleTimeMS: 40000,
     };
     
     expect(config.url).toBeDefined();

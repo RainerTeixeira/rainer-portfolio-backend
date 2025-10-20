@@ -303,7 +303,7 @@ npm run sam:deploy:prod
 {
   "sam:validate": "Validar template.yaml",
   "sam:build": "Build da aplicação",
-  "sam:local": "Testar localmente (porta 3000)",
+  "sam:local": "Testar localmente (porta 4000)",
   "sam:deploy": "Deploy (usa samconfig.toml)",
   "sam:deploy:dev": "Deploy ambiente dev",
   "sam:deploy:staging": "Deploy ambiente staging",

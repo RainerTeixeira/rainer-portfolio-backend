@@ -39,8 +39,8 @@ WINDOWS - Opção 1 (Mais Fácil):
 WINDOWS - Opção 2 (PowerShell):
    .\testar-api.ps1
    .\testar-api.ps1 -DatabaseProvider DYNAMODB
-   .\testar-api.ps1 -BaseUrl "http://localhost:3000"
-   .\testar-api.ps1 -SkipDelete
+   .\testar-api.ps1 -BaseUrl "http://localhost:3000" (customizado)
+   .\testar-api.ps1 -SkipDelete (usa porta do .env)
 
 LINUX/MAC/WSL:
    chmod +x testar-api.sh
@@ -70,8 +70,8 @@ LINUX/MAC/WSL:
 ╚═══════════════════════════════════════════════════════════════╝
 
 📌 Configurações:
-   Base URL:  http://localhost:4000
-   Database:  PRISMA
+   Base URL:  http://localhost:{PORT do .env}
+   Database:  PRISMA (ou lê do .env)
    Ambiente:  LOCAL
 
 ════════════════════════════════════════════════════════════════
@@ -116,8 +116,9 @@ LINUX/MAC/WSL:
   Se não informado, lê do arquivo .env
 
 -BaseUrl
-  URL base da API (padrão: http://localhost:4000)
+  URL base da API (padrão: lê PORT do .env, fallback 4000)
   Exemplo: .\testar-api.ps1 -BaseUrl "https://api.production.com"
+  Se não informado, lê automaticamente do .env
 
 -SkipDelete
   Pula a etapa de limpeza de dados
@@ -142,15 +143,15 @@ LINUX/MAC/WSL:
 
 ✨ Debugging:
    .\testar-api.ps1 -SkipDelete
-   # Depois inspecionar via Swagger: http://localhost:4000/docs
+   # Depois inspecionar via Swagger: http://localhost:{PORT}/docs
 
 
 📚 MAIS INFORMAÇÕES
 ═══════════════════════════════════════════════════════════════════════════
 
 📖 Ver documentação completa: TESTE_ROTAS_README.md
-🌐 Swagger: http://localhost:4000/docs
-❤️  Health Check: http://localhost:4000/health
+🌐 Swagger: http://localhost:{PORT}/docs (porta do .env)
+❤️  Health Check: http://localhost:{PORT}/health
 
 
 ════════════════════════════════════════════════════════════════════════════

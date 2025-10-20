@@ -97,10 +97,10 @@ sam deploy --parameter-overrides Environment=prod --stack-name blog-backend-api-
 
 ```bash
 # Iniciar Lambda local
-sam local start-api --port 3000
+sam local start-api --port 4000
 
 # Testar
-curl http://localhost:3000/api/health
+curl http://localhost:${PORT:-4000}/api/health  # Usa PORT do .env
 ```
 
 ### Invocar função diretamente

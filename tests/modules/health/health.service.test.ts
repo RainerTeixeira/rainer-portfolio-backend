@@ -59,8 +59,8 @@ describe('HealthService', () => {
   });
 
   describe('getBasicHealth', () => {
-    it('deve retornar status básico de saúde', () => {
-      const result = service.getBasicHealth();
+    it('deve retornar status básico de saúde', async () => {
+      const result = await service.getBasicHealth();
 
       expect(result).toHaveProperty('status', 'ok');
       expect(result).toHaveProperty('service', 'Blog API NestJS');
@@ -68,22 +68,22 @@ describe('HealthService', () => {
       expect(result).toHaveProperty('timestamp');
     });
 
-    it('deve retornar timestamp válido', () => {
-      const result = service.getBasicHealth();
+    it('deve retornar timestamp válido', async () => {
+      const result = await service.getBasicHealth();
       
       const timestamp = new Date(result.timestamp);
       expect(timestamp).toBeInstanceOf(Date);
       expect(timestamp.getTime()).toBeGreaterThan(0);
     });
 
-    it('deve retornar status ok', () => {
-      const result = service.getBasicHealth();
+    it('deve retornar status ok', async () => {
+      const result = await service.getBasicHealth();
       
       expect(result.status).toBe('ok');
     });
 
-    it('não deve chamar repository para health básico', () => {
-      service.getBasicHealth();
+    it('não deve chamar repository para health básico', async () => {
+      await service.getBasicHealth();
 
       expect(repository.getMemoryUsage).not.toHaveBeenCalled();
       expect(repository.getUptime).not.toHaveBeenCalled();
@@ -94,7 +94,7 @@ describe('HealthService', () => {
   describe('getDetailedHealth', () => {
     const mockMemory = {
       rss: 50000000,
-      heapTotal: 30000000,
+      heapTotal: 40000000,
       heapUsed: 20000000,
       external: 1000000,
       arrayBuffers: 500000,
@@ -111,8 +111,8 @@ describe('HealthService', () => {
       repository.getDatabaseStatus.mockReturnValue(mockDatabase);
     });
 
-    it('deve retornar status detalhado de saúde', () => {
-      const result = service.getDetailedHealth();
+    it('deve retornar status detalhado de saúde', async () => {
+      const result = await service.getDetailedHealth();
 
       expect(result).toHaveProperty('status', 'ok');
       expect(result).toHaveProperty('service', 'Blog API NestJS');
@@ -123,46 +123,46 @@ describe('HealthService', () => {
       expect(result).toHaveProperty('database');
     });
 
-    it('deve chamar repository para obter informações', () => {
-      service.getDetailedHealth();
+    it('deve chamar repository para obter informações', async () => {
+      await service.getDetailedHealth();
 
       expect(repository.getMemoryUsage).toHaveBeenCalledTimes(1);
       expect(repository.getUptime).toHaveBeenCalledTimes(1);
       expect(repository.getDatabaseStatus).toHaveBeenCalledTimes(1);
     });
 
-    it('deve retornar uptime correto', () => {
-      const result = service.getDetailedHealth();
+    it('deve retornar uptime correto', async () => {
+      const result = await service.getDetailedHealth();
 
       expect(result.uptime).toBe(3600);
     });
 
-    it('deve retornar informações de memória', () => {
-      const result = service.getDetailedHealth();
+    it('deve retornar informações de memória', async () => {
+      const result = await service.getDetailedHealth();
 
       expect(result.memory).toEqual(mockMemory);
       expect(result.memory.heapUsed).toBeLessThanOrEqual(result.memory.heapTotal);
     });
 
-    it('deve retornar status do banco de dados', () => {
-      const result = service.getDetailedHealth();
+    it('deve retornar status do banco de dados', async () => {
+      const result = await service.getDetailedHealth();
 
       expect(result.database).toHaveProperty('provider', 'PRISMA');
       expect(result.database).toHaveProperty('status', 'connected');
       expect(result.database).toHaveProperty('description');
     });
 
-    it('deve incluir todas as informações básicas', () => {
-      const result = service.getDetailedHealth();
+    it('deve incluir todas as informações básicas', async () => {
+      const result = await service.getDetailedHealth();
 
       expect(result.status).toBe('ok');
       expect(result.service).toBe('Blog API NestJS');
       expect(result.version).toBe('5.0.0');
     });
 
-    it('deve gerar timestamp recente', () => {
+    it('deve gerar timestamp recente', async () => {
       const beforeTime = new Date().getTime();
-      const result = service.getDetailedHealth();
+      const result = await service.getDetailedHealth();
       const afterTime = new Date().getTime();
 
       const timestamp = new Date(result.timestamp).getTime();

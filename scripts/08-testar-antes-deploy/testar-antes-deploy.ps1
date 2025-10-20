@@ -6,7 +6,16 @@ Write-Host "`n══════════════════════
 Write-Host "  🧪 TESTE LOCAL COMPLETO - SIMULANDO AMBIENTE AWS" -ForegroundColor Cyan
 Write-Host "═══════════════════════════════════════════════════════════════`n" -ForegroundColor Cyan
 
-$BaseUrl = "http://localhost:4000"
+# Ler PORT do .env (fallback para 4000)
+$PORT = "4000"
+if (Test-Path ".env") {
+    $portLine = Get-Content ".env" | Where-Object { $_ -match "^PORT\s*=\s*(\d+)" }
+    if ($portLine -match "PORT\s*=\s*(\d+)") {
+        $PORT = $matches[1]
+    }
+}
+$BaseUrl = "http://localhost:$PORT"
+Write-Host "🔧 Usando porta do .env: $PORT`n" -ForegroundColor Cyan
 
 # Verificar Docker
 Write-Host "📋 Verificando Docker..." -ForegroundColor Yellow

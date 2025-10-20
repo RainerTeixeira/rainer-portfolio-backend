@@ -96,11 +96,11 @@ npm run sam:deploy:prod
 ### 5. Testar Localmente
 
 ```bash
-# Iniciar API local na porta 3000
+# Iniciar API local na porta 4000
 npm run sam:local
 
 # Em outro terminal
-curl http://localhost:3000/api/health
+curl http://localhost:4000/api/health
 ```
 
 ### 6. Ver Logs

@@ -6,14 +6,15 @@
  * @module main
  */
 
+import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from '@fastify/helmet';
-import { AppModule } from './app.module.js';
-import { env } from './config/env.js';
-import { DatabaseProviderInterceptor, DatabaseProviderContextService } from './utils/database-provider/index.js';
+import { AppModule } from './app.module';
+import { env } from './config/env';
+import { DatabaseProviderInterceptor, DatabaseProviderContextService } from './utils/database-provider';
 
 /**
  * Bootstrap da aplicação
@@ -64,6 +65,54 @@ async function bootstrap() {
   // Global Interceptor para Database Provider
   const databaseContext = app.get(DatabaseProviderContextService);
   app.useGlobalInterceptors(new DatabaseProviderInterceptor(databaseContext));
+
+  // Rota raiz (/) - Página inicial da API
+  const fastifyInstance = app.getHttpAdapter().getInstance();
+  fastifyInstance.get('/', async (_request: any, reply: any) => {
+    reply.status(200).send({
+      success: true,
+      message: '🚀 Bem-vindo à Blog API!',
+      version: '5.0.0',
+      description: 'API RESTful moderna para blog com NestJS + Fastify',
+      documentation: {
+        swagger: `http://localhost:${env.PORT}/docs`,
+        openapi: `http://localhost:${env.PORT}/api-json`,
+      },
+      endpoints: {
+        health: `http://localhost:${env.PORT}/health`,
+        healthDetailed: `http://localhost:${env.PORT}/health/detailed`,
+      },
+      features: [
+        '✅ CRUD completo para 7 recursos',
+        '✅ Dual Database (MongoDB/Prisma + DynamoDB)',
+        '✅ Autenticação AWS Cognito',
+        '✅ Validação robusta com Zod',
+        '✅ Type-safe end-to-end',
+        '✅ Swagger/OpenAPI 3.0',
+      ],
+      resources: {
+        users: `http://localhost:${env.PORT}/users`,
+        posts: `http://localhost:${env.PORT}/posts`,
+        categories: `http://localhost:${env.PORT}/categories`,
+        comments: `http://localhost:${env.PORT}/comments`,
+        likes: `http://localhost:${env.PORT}/likes`,
+        bookmarks: `http://localhost:${env.PORT}/bookmarks`,
+        notifications: `http://localhost:${env.PORT}/notifications`,
+      },
+      database: {
+        provider: process.env.DATABASE_PROVIDER || 'PRISMA',
+        description: process.env.DATABASE_PROVIDER === 'DYNAMODB' 
+          ? 'DynamoDB (AWS NoSQL)'
+          : 'MongoDB + Prisma ORM',
+      },
+      stack: {
+        framework: 'NestJS + Fastify',
+        language: 'TypeScript',
+        validation: 'Zod + class-validator',
+        orm: 'Prisma (MongoDB) / AWS SDK (DynamoDB)',
+      },
+    });
+  });
 
   // Configuração Swagger
   const config = new DocumentBuilder()

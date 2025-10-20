@@ -41,9 +41,18 @@ Write-Host ""
 # FASE 5: Testar API
 Write-Host "📊 FASE 5: Testando API..." -ForegroundColor Yellow
 
+# Ler PORT do .env
+$PORT = "4000"
+if (Test-Path ".env") {
+    $portLine = Get-Content ".env" | Where-Object { $_ -match "^PORT\s*=\s*(\d+)" }
+    if ($portLine -match "PORT\s*=\s*(\d+)") {
+        $PORT = $matches[1]
+    }
+}
+
 try {
-    $response = Invoke-RestMethod -Uri "http://localhost:4000/health" -Method Get -TimeoutSec 3
-    Write-Host "✅ API funcionando!" -ForegroundColor Green
+    $response = Invoke-RestMethod -Uri "http://localhost:$PORT/health" -Method Get -TimeoutSec 3
+    Write-Host "✅ API funcionando na porta $PORT!" -ForegroundColor Green
     $response | ConvertTo-Json
 } catch {
     Write-Host "⚠️  API não está rodando. Inicie com: npm run start:dev" -ForegroundColor Yellow
@@ -61,7 +70,7 @@ Write-Host "1. Se a API não estiver rodando:" -ForegroundColor White
 Write-Host "   npm run start:dev`n" -ForegroundColor Cyan
 
 Write-Host "2. Acessar aplicação:" -ForegroundColor White
-Write-Host "   http://localhost:4000/api`n" -ForegroundColor Cyan
+Write-Host "   http://localhost:$PORT/api`n" -ForegroundColor Cyan
 
 Write-Host "3. Para deploy na nuvem:" -ForegroundColor White
 Write-Host "   Ver: docs/GUIA_DEPLOY_CLOUD.md`n" -ForegroundColor Cyan

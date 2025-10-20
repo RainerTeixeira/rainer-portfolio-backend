@@ -116,7 +116,7 @@ Cada seção agora funciona como um **módulo independente** com seus próprios 
 ### 1. **Acessar a Documentação**
 
 ```bash
-http://localhost:3000/docs
+http://localhost:4000/docs
 ```
 
 ### 2. **Navegar pelas Seções**

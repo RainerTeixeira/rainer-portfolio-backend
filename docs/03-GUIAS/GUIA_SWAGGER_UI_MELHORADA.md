@@ -581,7 +581,7 @@ npm run start:dev
 Abra no navegador:
 
 ```bash
-http://localhost:3000/docs
+http://localhost:4000/docs
 ```
 
 ### 3️⃣ Navegar pelas Seções
@@ -1142,7 +1142,7 @@ Se desejar melhorar ainda mais:
 ### 3. Adicionar Servidores Múltiplos
 
 ```typescript
-.addServer('http://localhost:3000', 'Ambiente Local')
+.addServer('http://localhost:4000', 'Ambiente Local')
 .addServer('https://dev.api.com', 'Ambiente de Desenvolvimento')
 .addServer('https://api.com', 'Ambiente de Produção')
 ```
@@ -1164,7 +1164,7 @@ Se desejar melhorar ainda mais:
 Após implementar as melhorias, verifique:
 
 - [ ] Servidor iniciado com sucesso
-- [ ] Acesso a `http://localhost:3000/docs` funcionando
+- [ ] Acesso a `http://localhost:4000/docs` funcionando
 - [ ] Todas as 9 seções visíveis
 - [ ] Emojis aparecendo corretamente
 - [ ] Descrições em português
@@ -1228,7 +1228,7 @@ Pronta para produção, demonstrações e apresentações
 npm run start:dev
 
 # 2. Acesse a documentação
-http://localhost:3000/docs
+http://localhost:4000/docs
 
 # 3. Aproveite a nova experiência! 🎉
 ```

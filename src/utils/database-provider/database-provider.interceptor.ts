@@ -36,9 +36,10 @@ export class DatabaseProviderInterceptor implements NestInterceptor {
     const request = context.switchToHttp().getRequest();
     
     // Captura o header (case-insensitive)
+    const headers = request.headers || {};
     const providerHeader = 
-      request.headers['x-database-provider'] || 
-      request.headers['X-Database-Provider'];
+      headers['x-database-provider'] || 
+      headers['X-Database-Provider'];
 
     // Determina o provider (do header ou do .env)
     let provider: DatabaseProvider;

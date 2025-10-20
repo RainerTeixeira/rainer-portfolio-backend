@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Query, HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiParam, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiParam, ApiQuery, ApiBody } from '@nestjs/swagger';
 import { BookmarksService } from './bookmarks.service.js';
 import type { CreateBookmarkData, UpdateBookmarkData } from './bookmark.model.js';
 
@@ -11,6 +11,18 @@ export class BookmarksController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: '🔖 Salvar Post' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        userId: { type: 'string', example: '507f1f77bcf86cd799439011' },
+        postId: { type: 'string', example: '507f1f77bcf86cd799439022' },
+        collection: { type: 'string', example: 'Favoritos', nullable: true },
+        notes: { type: 'string', example: 'Artigo interessante para reler', nullable: true },
+      },
+      required: ['userId', 'postId'],
+    },
+  })
   async create(@Body() data: CreateBookmarkData) {
     const bookmark = await this.bookmarksService.createBookmark(data);
     return { success: true, data: bookmark };
@@ -44,6 +56,15 @@ export class BookmarksController {
   @Put(':id')
   @ApiOperation({ summary: '✏️ Atualizar Bookmark' })
   @ApiParam({ name: 'id' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        collection: { type: 'string', example: 'Ler Depois', nullable: true },
+        notes: { type: 'string', example: 'Atualizado: preciso revisar', nullable: true },
+      },
+    },
+  })
   async update(@Param('id') id: string, @Body() data: UpdateBookmarkData) {
     const bookmark = await this.bookmarksService.updateBookmark(id, data);
     return { success: true, data: bookmark };

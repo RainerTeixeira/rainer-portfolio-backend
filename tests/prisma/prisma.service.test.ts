@@ -10,8 +10,12 @@ import { PrismaService } from '../../src/prisma/prisma.service';
 
 describe('PrismaService', () => {
   let service: PrismaService;
+  const originalEnv = process.env;
 
   beforeEach(async () => {
+    // Define DATABASE_PROVIDER para PRISMA nos testes
+    process.env.DATABASE_PROVIDER = 'PRISMA';
+    
     const module: TestingModule = await Test.createTestingModule({
       providers: [PrismaService],
     }).compile();
@@ -25,6 +29,7 @@ describe('PrismaService', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+    process.env = originalEnv;
   });
 
   describe('Definição', () => {
