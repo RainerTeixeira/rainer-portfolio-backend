@@ -87,6 +87,11 @@ dotenv.config();
 /**
  * Schema Zod para validação de variáveis de ambiente
  * 
+ * Exportado para permitir:
+ * - Testes unitários do schema
+ * - Validação customizada em outros módulos
+ * - Reutilização do schema
+ * 
  * Cada campo define:
  * - Tipo esperado (string, number, enum)
  * - Validações (URL, coerção numérica)
@@ -104,7 +109,7 @@ dotenv.config();
  * - Porta HTTP do servidor
  * - Tipo: number (coerção automática de string)
  * - Padrão: 4000
- * - Range típico: 3000-9000 (desenvolvimento), 80/443 (produção)
+ * - Range típico: 4000-9000 (desenvolvimento), 80/443 (produção)
  * 
  * HOST:
  * - Host de bind do servidor
@@ -173,7 +178,7 @@ dotenv.config();
  *   • Alta disponibilidade automática
  *   • Ideal para: produção AWS Lambda
  */
-const envSchema = z.object({
+export const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   PORT: z.coerce.number().default(4000),
   HOST: z.string().default('0.0.0.0'),
@@ -201,47 +206,39 @@ const envSchema = z.object({
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
-// VALIDAÇÃO E PARSE
+// FUNÇÃO DE VALIDAÇÃO (TESTÁVEL)
 // ═══════════════════════════════════════════════════════════════════════════
 /**
- * Valida process.env contra o schema
+ * Valida variáveis de ambiente contra o schema Zod
  * 
- * safeParse vs parse:
- * - safeParse: Retorna { success, data, error } sem lançar exceção
- * - parse: Lança ZodError se validação falhar
+ * Esta função é exportada para permitir testes unitários completos
+ * do comportamento de validação e tratamento de erros.
  * 
- * Usamos safeParse para:
- * - Formatar erro customizado
- * - Mostrar mensagem amigável
- * - Controlar processo de encerramento
+ * @param {NodeJS.ProcessEnv} processEnv - Objeto de variáveis de ambiente
+ * @returns {z.infer<typeof envSchema>} Configuração validada
+ * @throws {Error} Se validação falhar
+ * 
+ * @example
+ * // Uso normal (chamado automaticamente no bootstrap)
+ * const config = validateEnvironment(process.env);
+ * 
+ * @example
+ * // Teste com env customizado
+ * const testConfig = validateEnvironment({
+ *   NODE_ENV: 'test',
+ *   PORT: '3000',
+ *   DATABASE_URL: 'mongodb://localhost:27017/test'
+ * });
  */
-const _env = envSchema.safeParse(process.env);
-
-// ═══════════════════════════════════════════════════════════════════════════
-// TRATAMENTO DE ERRO DE VALIDAÇÃO
-// ═══════════════════════════════════════════════════════════════════════════
-/**
- * Falha rápida se configuração for inválida
- * 
- * Se validação falhar:
- * 1. Exibe erro formatado no console
- * 2. Lança Error explicativo
- * 3. Aplicação não inicia (fail-fast)
- * 
- * Benefícios:
- * - Evita bugs sutis por configuração incorreta
- * - Erro claro na inicialização
- * - Não permite estado inválido
- * 
- * Formato do erro:
- * {
- *   NODE_ENV: { _errors: ['Expected "development" | "production" | "test"'] },
- *   PORT: { _errors: ['Expected number, received string'] }
- * }
- */
-if (!_env.success) {
-  console.error('❌ Erro nas variáveis de ambiente:', _env.error.format());
-  throw new Error('Configuração de ambiente inválida');
+export function validateEnvironment(processEnv: NodeJS.ProcessEnv) {
+  const result = envSchema.safeParse(processEnv);
+  
+  if (!result.success) {
+    console.error('❌ Erro nas variáveis de ambiente:', result.error.format());
+    throw new Error('Configuração de ambiente inválida');
+  }
+  
+  return result.data;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -274,7 +271,7 @@ if (!_env.success) {
  * console.log(`Servidor na porta ${env.PORT}`);
  * console.log(`Ambiente: ${env.NODE_ENV}`);
  */
-export const env = _env.data;
+export const env = validateEnvironment(process.env);
 
 // ═══════════════════════════════════════════════════════════════════════════
 // NOMES DE TABELAS DYNAMODB

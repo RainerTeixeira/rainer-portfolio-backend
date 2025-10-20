@@ -11,6 +11,7 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import request from 'supertest';
 import { AppModule } from '../../src/app.module';
 import { PrismaService } from '../../src/prisma/prisma.service';
@@ -21,6 +22,9 @@ describe('Backend E2E - MongoDB/Prisma', () => {
   let server: any;
 
   beforeAll(async () => {
+    // Forçar uso do Prisma nos testes E2E
+    process.env.DATABASE_PROVIDER = 'PRISMA';
+    
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
@@ -28,6 +32,18 @@ describe('Backend E2E - MongoDB/Prisma', () => {
     app = moduleFixture.createNestApplication<NestFastifyApplication>(
       new FastifyAdapter()
     );
+    
+    // Configurar Swagger para os testes E2E
+    const config = new DocumentBuilder()
+      .setTitle('📝 Blog API - E2E Tests')
+      .setDescription('API para testes E2E')
+      .setVersion('4.0.0')
+      .addBearerAuth()
+      .build();
+    
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('docs', app, document);
+    
     await app.init();
     await app.getHttpAdapter().getInstance().ready();
     
@@ -135,8 +151,9 @@ describe('Backend E2E - MongoDB/Prisma', () => {
         .expect(200)
         .expect((res) => {
           expect(res.body).toHaveProperty('success', true);
-          expect(Array.isArray(res.body.data.data)).toBe(true);
-          expect(res.body.data.data.length).toBeGreaterThan(0);
+          expect(Array.isArray(res.body.users)).toBe(true);
+          expect(res.body.users.length).toBeGreaterThan(0);
+          expect(res.body).toHaveProperty('pagination');
         });
     });
 
@@ -272,7 +289,8 @@ describe('Backend E2E - MongoDB/Prisma', () => {
         .expect(200)
         .expect((res) => {
           expect(res.body).toHaveProperty('success', true);
-          expect(Array.isArray(res.body.data.data)).toBe(true);
+          expect(Array.isArray(res.body.posts)).toBe(true);
+          expect(res.body).toHaveProperty('pagination');
         });
     });
   });

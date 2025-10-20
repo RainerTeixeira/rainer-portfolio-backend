@@ -184,7 +184,7 @@ Volumes criados:
 ✨ Para desenvolvimento rápido:
    1. .\gerenciar-docker.ps1 start
    2. npm run start:dev
-   3. Acesse http://localhost:4000/docs
+   3. Acesse http://localhost:{PORT}/docs (porta do .env)
 
 ✨ Para resetar dados:
    .\gerenciar-docker.ps1 clean

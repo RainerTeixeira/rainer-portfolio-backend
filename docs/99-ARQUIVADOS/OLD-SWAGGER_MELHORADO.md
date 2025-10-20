@@ -81,7 +81,7 @@ npm run start:dev
 ### 2️⃣ **Acesse a Documentação**
 
 ```
-http://localhost:3000/docs
+http://localhost:4000/docs
 ```
 
 ### 3️⃣ **Explore a Nova Interface**
@@ -287,7 +287,7 @@ Pronta para produção e apresentações
 ## 🚀 TESTE AGORA
 
 1. Execute: `npm run start:dev`
-2. Acesse: `http://localhost:3000/docs`
+2. Acesse: `http://localhost:4000/docs`
 3. Aproveite a nova experiência! 🎉
 
 ---

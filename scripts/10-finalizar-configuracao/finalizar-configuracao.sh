@@ -47,9 +47,12 @@ docker ps --filter "name=blogapi" --format "{{.Names}}\t{{.Status}}"
 echo ""
 
 # FASE 5: API
+# Ler PORT do .env
+API_PORT=$(grep -oP '^PORT\s*=\s*\K\d+' .env 2>/dev/null || echo "4000")
+
 echo -e "${YELLOW}📊 FASE 5: Testando API...${NC}"
-if curl -s http://localhost:4000/health &> /dev/null; then
-    echo -e "${GREEN}✅ API funcionando!${NC}"
+if curl -s http://localhost:${API_PORT}/health &> /dev/null; then
+    echo -e "${GREEN}✅ API funcionando na porta ${API_PORT}!${NC}"
 else
     echo -e "${YELLOW}⚠️  API não está rodando. Execute: npm run start:dev${NC}"
 fi
@@ -64,6 +67,6 @@ echo -e "${GREEN}✅ Configuração finalizada!${NC}"
 echo ""
 echo -e "${CYAN}📚 PRÓXIMOS PASSOS:${NC}"
 echo "   1. npm run start:dev"
-echo "   2. http://localhost:4000/api"
+echo "   2. http://localhost:${API_PORT}/api"
 echo ""
 

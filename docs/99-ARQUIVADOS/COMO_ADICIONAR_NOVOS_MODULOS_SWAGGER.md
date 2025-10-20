@@ -371,7 +371,7 @@ swaggerOptions: {
 
 ---
 
-**💡 Dica Final:** Sempre teste localmente acessando `http://localhost:3000/docs` após adicionar um novo módulo!
+**💡 Dica Final:** Sempre teste localmente acessando `http://localhost:4000/docs` após adicionar um novo módulo!
 
 **Data:** 16/10/2025  
 **Versão:** 4.0.0  

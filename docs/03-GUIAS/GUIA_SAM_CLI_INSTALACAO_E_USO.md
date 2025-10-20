@@ -157,6 +157,7 @@ docker --version
 ```
 
 **Saída esperada:**
+
 ```
 Docker version 24.x.x
 ```
@@ -168,6 +169,7 @@ sam --help
 ```
 
 **Saída esperada:**
+
 ```
 Usage: sam [OPTIONS] COMMAND [ARGS]...
 
@@ -205,7 +207,7 @@ rainer-portfolio-backend/
   "scripts": {
     "sam:validate": "cd src/lambda && sam validate",
     "sam:build": "cd src/lambda && sam build",
-    "sam:local": "cd src/lambda && sam local start-api --port 3000",
+    "sam:local": "cd src/lambda && sam local start-api --port 4000",
     "sam:deploy": "npm run build && cd src/lambda && sam deploy",
     "sam:deploy:dev": "npm run build && cd src/lambda && sam deploy --config-env dev",
     "sam:deploy:staging": "npm run build && cd src/lambda && sam deploy --config-env staging",
@@ -233,6 +235,7 @@ sam validate
 ```
 
 **Saída esperada:**
+
 ```
 ✅ /path/to/template.yaml is a valid SAM Template
 ```
@@ -284,14 +287,14 @@ npm run sam:local
 
 # Ou diretamente
 cd src/lambda
-sam local start-api --port 3000
+sam local start-api --port 4000
 ```
 
 **URLs locais:**
 
-- `http://localhost:3000` - API emulada
-- `http://localhost:3000/health` - Health check
-- `http://localhost:3000/users` - Endpoint users
+- `http://localhost:4000` - API emulada
+- `http://localhost:4000/health` - Health check
+- `http://localhost:4000/users` - Endpoint users
 
 **Requisitos:**
 
@@ -442,7 +445,7 @@ npm run sam:build
 npm run sam:local
 
 # Acessar
-http://localhost:3000
+http://localhost:4000
 ```
 
 **Vantagens:**
@@ -491,9 +494,9 @@ npm run sam:build     # Build Lambda package
 npm run sam:local
 
 # Terminal 2: Testar endpoints
-curl http://localhost:3000/health
-curl http://localhost:3000/users
-curl http://localhost:3000/posts
+curl http://localhost:4000/health
+curl http://localhost:4000/users
+curl http://localhost:4000/posts
 ```
 
 ### 4. Teste de Função Individual
@@ -737,7 +740,7 @@ npm run sam:build
 npm run sam:local
 
 # 3. Testar endpoints
-curl http://localhost:3000/health
+curl http://localhost:4000/health
 ```
 
 ### Para Deploy AWS
@@ -791,7 +794,7 @@ sam build --debug
 
 ```bash
 # Iniciar API local
-sam local start-api --port 3000
+sam local start-api --port 4000
 
 # Com variáveis de ambiente
 sam local start-api --env-vars env.json
@@ -876,9 +879,9 @@ docker-compose up -d          # MongoDB + DynamoDB
 npm run sam:local             # Lambda local
 
 # 3. Testar (em outro terminal)
-curl http://localhost:3000/health
-curl http://localhost:3000/users
-curl -X POST http://localhost:3000/auth/login \
+curl http://localhost:4000/health
+curl http://localhost:4000/users
+curl -X POST http://localhost:4000/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"admin@blog.com","password":"test"}'
 ```
@@ -933,7 +936,7 @@ curl https://sua-url-lambda.lambda-url.us-east-1.on.aws/health
 ### Teste Local (Opcional)
 
 - [ ] `npm run sam:local` inicia
-- [ ] `http://localhost:3000/health` responde
+- [ ] `http://localhost:4000/health` responde
 - [ ] Endpoints funcionam
 
 ### Deploy AWS (Opcional)
@@ -1102,4 +1105,3 @@ sam validate --help
 **Versão:** 1.0  
 **Status:** ✅ Guia Completo  
 **Público:** Desenvolvedores backend e DevOps
-

@@ -9,7 +9,10 @@ echo "  🧪 TESTE LOCAL COMPLETO - SIMULANDO AMBIENTE AWS"
 echo "═══════════════════════════════════════════════════════════════"
 echo ""
 
-BASE_URL="http://localhost:4000"
+# Ler PORT do .env (fallback para 4000)
+API_PORT=$(grep -oP '^PORT\s*=\s*\K\d+' .env 2>/dev/null || echo "4000")
+BASE_URL="http://localhost:${API_PORT}"
+echo "🔧 Usando porta do .env: $API_PORT"
 
 # Verificar Docker
 if ! docker ps &> /dev/null; then

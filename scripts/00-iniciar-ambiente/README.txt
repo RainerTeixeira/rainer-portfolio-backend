@@ -55,7 +55,7 @@ OPÇÃO 1: MONGODB + PRISMA
 ─────────────────────────────────────────────────────────────────────────
 
 Windows - Duplo clique:
-   iniciar-mongodb.bat
+   ✨ iniciar-mongodb.bat  (Interface visual colorida!)
 
 PowerShell:
    .\iniciar-mongodb.ps1
@@ -69,7 +69,7 @@ OPÇÃO 2: DYNAMODB LOCAL
 ─────────────────────────────────────────────────────────────────────────
 
 Windows - Duplo clique:
-   iniciar-dynamodb.bat
+   ✨ iniciar-dynamodb.bat  (Interface visual colorida!)
 
 PowerShell:
    .\iniciar-dynamodb.ps1
@@ -83,7 +83,7 @@ OPÇÃO 3: AMBIENTE COMPLETO
 ─────────────────────────────────────────────────────────────────────────
 
 Windows - Duplo clique:
-   iniciar-completo.bat
+   ✨ iniciar-completo.bat  (Interface visual colorida!)
 
 PowerShell:
    .\iniciar-completo.ps1
@@ -91,6 +91,15 @@ PowerShell:
 Linux/Mac:
    chmod +x iniciar-completo.sh
    ./iniciar-completo.sh
+
+
+OPÇÃO 4: LIMPAR PORTA 4000 E INICIAR 🆕
+─────────────────────────────────────────────────────────────────────────
+
+Windows - Duplo clique:
+   ✨ iniciar-dev-limpo.bat  (Mata processo na porta 4000!)
+
+Resolve o erro: "EADDRINUSE: address already in use 0.0.0.0:4000"
 
 
 📊 O QUE CADA SCRIPT FAZ
@@ -104,7 +113,8 @@ INICIAR-MONGODB:
   5. ✅ Gera Prisma Client
   6. ✅ Sincroniza schema
   7. ✅ Popula dados de teste
-  8. ✅ Inicia servidor
+  8. ✅ Abre Prisma Studio em nova janela
+  9. ✅ Inicia servidor
   
   Dados criados:
     • 5 usuários (diferentes roles)
@@ -113,9 +123,9 @@ INICIAR-MONGODB:
     • Comentários, likes, bookmarks
   
   URLs disponíveis:
-    • API: http://localhost:4000
-    • Swagger: http://localhost:4000/docs
-    • Prisma Studio: http://localhost:5555
+    • API: http://localhost:{PORT do .env, padrão 4000}
+    • Swagger: http://localhost:{PORT}/docs
+    • Prisma Studio: http://localhost:5555 (abre automaticamente!)
 
 INICIAR-DYNAMODB:
   1. ✅ Verifica Docker
@@ -124,19 +134,22 @@ INICIAR-DYNAMODB:
   4. ✅ Aguarda inicialização (5s)
   5. ✅ Cria tabelas DynamoDB
   6. ✅ Pergunta se quer popular dados (opcional)
-  7. ✅ Inicia servidor
+  7. ✅ Abre DynamoDB Admin em background (GUI NoSQL)
+  8. ✅ Inicia servidor
   
   URLs disponíveis:
-    • API: http://localhost:4000
-    • Swagger: http://localhost:4000/docs
+    • API: http://localhost:{PORT do .env, padrão 4000}
+    • Swagger: http://localhost:{PORT}/docs
     • DynamoDB: http://localhost:8000
-    • DynamoDB Admin: http://localhost:8001
+    • DynamoDB Admin: http://localhost:8001 (abre automaticamente!)
 
 INICIAR-COMPLETO:
   Executa TUDO dos dois ambientes acima:
   • MongoDB + Prisma
   • DynamoDB Local
   • Ambos populados
+  • Prisma Studio aberto automaticamente (MongoDB GUI)
+  • DynamoDB Admin aberto automaticamente (NoSQL GUI)
   • Servidor pronto
   
   Use quando precisar testar ambos os bancos ou alternar
@@ -245,9 +258,9 @@ Portas necessárias livres:
 ╚══════════════════════════════════════════════════════════════╝
 
 🌐 URLS DO SISTEMA:
-   ┌─ API Principal    http://localhost:4000
-   ├─ Documentação     http://localhost:4000/docs
-   ├─ Health Check     http://localhost:4000/health
+   ┌─ API Principal    http://localhost:{PORT} (lê do .env)
+   ├─ Documentação     http://localhost:{PORT}/docs
+   ├─ Health Check     http://localhost:{PORT}/health
    └─ Prisma Studio    http://localhost:5555
 
 

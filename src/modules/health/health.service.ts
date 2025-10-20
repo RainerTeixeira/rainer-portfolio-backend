@@ -18,7 +18,7 @@ export class HealthService {
     private readonly databaseProviderContext: DatabaseProviderContextService,
   ) {}
 
-  getBasicHealth(): HealthStatus {
+  async getBasicHealth(): Promise<HealthStatus> {
     const provider = this.databaseProviderContext.getProvider();
     const description = this.databaseProviderContext.getEnvironmentDescription();
     
@@ -36,7 +36,7 @@ export class HealthService {
     return result;
   }
 
-  getDetailedHealth(): DetailedHealthStatus {
+  async getDetailedHealth(): Promise<DetailedHealthStatus> {
     const memory = this.healthRepository.getMemoryUsage();
     const uptime = this.healthRepository.getUptime();
     const database = this.healthRepository.getDatabaseStatus();

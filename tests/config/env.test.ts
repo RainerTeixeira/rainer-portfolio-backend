@@ -39,17 +39,17 @@ describe('Environment Configuration', () => {
       return process.env[key] || defaultValue;
     };
 
-    const port = getEnvWithDefault('PORT', '3000');
+    const port = getEnvWithDefault('PORT', '4000');
     expect(port).toBeDefined();
     expect(parseInt(port)).toBeGreaterThan(0);
   });
 
   it('deve converter strings para números', () => {
-    process.env.PORT = '3000';
+    process.env.PORT = '4000';
     const port = parseInt(process.env.PORT);
     
     expect(typeof port).toBe('number');
-    expect(port).toBe(3000);
+    expect(port).toBe(4000);
   });
 
   it('deve converter strings para booleanos', () => {

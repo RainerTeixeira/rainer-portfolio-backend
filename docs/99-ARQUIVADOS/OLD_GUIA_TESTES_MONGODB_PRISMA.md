@@ -9,9 +9,11 @@ Este guia explica como executar os testes para validar o funcionamento do backen
 ## 🎯 **Tipos de Testes**
 
 ### **1. Testes de Integração MongoDB/Prisma**
+
 **Arquivo**: `tests/integration/mongodb-prisma.integration.test.ts`
 
 **O que testa**:
+
 - ✅ Conexão com MongoDB
 - ✅ CRUD operations (Create, Read, Update, Delete)
 - ✅ Relacionamentos entre entidades
@@ -20,6 +22,7 @@ Este guia explica como executar os testes para validar o funcionamento do backen
 - ✅ Hierarquia de categorias
 
 **Suites de teste**:
+
 1. Conexão MongoDB (ping, serverStatus)
 2. CRUD Users (criar, buscar, atualizar, deletar)
 3. CRUD Categories (hierarquia pai/filho)
@@ -30,9 +33,11 @@ Este guia explica como executar os testes para validar o funcionamento do backen
 8. Relacionamentos Complexos
 
 ### **2. Testes End-to-End (E2E)**
+
 **Arquivo**: `tests/e2e/mongodb-backend.e2e.test.ts`
 
 **O que testa**:
+
 - ✅ Servidor NestJS completo
 - ✅ Rotas HTTP (GET, POST, PUT, DELETE)
 - ✅ Health check endpoint
@@ -41,6 +46,7 @@ Este guia explica como executar os testes para validar o funcionamento do backen
 - ✅ Integração entre módulos
 
 **Suites de teste**:
+
 1. Health Check (`/health`)
 2. Swagger (`/api`, `/api-json`)
 3. Users API (`/users`)
@@ -55,6 +61,7 @@ Este guia explica como executar os testes para validar o funcionamento do backen
 ## 🚀 **Pré-requisitos**
 
 ### **1. MongoDB Rodando**
+
 ```bash
 # Docker Compose (recomendado)
 docker-compose up -d mongodb
@@ -64,11 +71,13 @@ docker-compose up -d mongodb
 ```
 
 ### **2. Prisma Client Gerado**
+
 ```bash
 npm run prisma:generate
 ```
 
 ### **3. Variáveis de Ambiente**
+
 ```bash
 # .env.test ou .env
 DATABASE_URL="mongodb://localhost:27017/blog-test"
@@ -80,26 +89,31 @@ NODE_ENV="test"
 ## ⚡ **Execução Rápida**
 
 ### **Todos os Testes**
+
 ```bash
 npm test
 ```
 
 ### **Apenas Testes de Integração MongoDB**
+
 ```bash
 npm test -- mongodb-prisma.integration
 ```
 
 ### **Apenas Testes E2E**
+
 ```bash
 npm test -- mongodb-backend.e2e
 ```
 
 ### **Com Cobertura**
+
 ```bash
 npm run test:coverage
 ```
 
 ### **Watch Mode (desenvolvimento)**
+
 ```bash
 npm run test:watch
 ```
@@ -109,6 +123,7 @@ npm run test:watch
 ## 📊 **Execução Detalhada**
 
 ### **1. Setup Inicial**
+
 ```bash
 # 1. Subir MongoDB
 docker-compose up -d mongodb
@@ -127,6 +142,7 @@ npm run mongodb:seed
 ```
 
 ### **2. Executar Testes de Integração**
+
 ```bash
 # Executar apenas testes de integração MongoDB/Prisma
 npx jest tests/integration/mongodb-prisma.integration.test.ts
@@ -139,6 +155,7 @@ npx jest tests/integration/mongodb-prisma.integration.test.ts --coverage
 ```
 
 **Saída esperada**:
+
 ```
 PASS  tests/integration/mongodb-prisma.integration.test.ts
   MongoDB/Prisma Integration
@@ -162,6 +179,7 @@ Time:        5.234s
 ```
 
 ### **3. Executar Testes E2E**
+
 ```bash
 # Executar testes E2E
 npx jest tests/e2e/mongodb-backend.e2e.test.ts
@@ -171,6 +189,7 @@ npx jest tests/e2e/mongodb-backend.e2e.test.ts --verbose
 ```
 
 **Saída esperada**:
+
 ```
 PASS  tests/e2e/mongodb-backend.e2e.test.ts
   Backend E2E - MongoDB/Prisma
@@ -196,6 +215,7 @@ Time:        8.123s
 ## 🔍 **Validação Manual**
 
 ### **1. Conectar ao MongoDB**
+
 ```bash
 # Via Docker
 docker exec -it rainer-portfolio-backend-mongodb-1 mongosh
@@ -208,9 +228,10 @@ db.categories.find()
 ```
 
 ### **2. Health Check**
+
 ```bash
 # Com servidor rodando (npm run dev)
-curl http://localhost:3000/health
+curl http://localhost:4000/health
 
 # Resposta esperada:
 {
@@ -224,9 +245,10 @@ curl http://localhost:3000/health
 ```
 
 ### **3. Swagger**
+
 ```bash
 # Acessar no navegador
-http://localhost:3000/api
+http://localhost:4000/api
 
 # Testar rotas diretamente no Swagger UI
 ```
@@ -236,11 +258,13 @@ http://localhost:3000/api
 ## 📈 **Cobertura de Testes**
 
 ### **Ver Cobertura**
+
 ```bash
 npm run test:coverage
 ```
 
 ### **Ver Relatório HTML**
+
 ```bash
 npm run test:coverage
 start coverage/index.html  # Windows
@@ -248,6 +272,7 @@ open coverage/index.html   # Mac/Linux
 ```
 
 ### **Metas de Cobertura**
+
 ```javascript
 // jest.config.ts
 coverageThreshold: {
@@ -265,6 +290,7 @@ coverageThreshold: {
 ## 🐛 **Troubleshooting**
 
 ### **Erro: MongoDB não está rodando**
+
 ```bash
 # Erro:
 MongooseServerSelectionError: connect ECONNREFUSED 127.0.0.1:27017
@@ -275,6 +301,7 @@ docker ps  # Verificar se está rodando
 ```
 
 ### **Erro: Prisma Client não gerado**
+
 ```bash
 # Erro:
 Cannot find module '@prisma/client'
@@ -284,6 +311,7 @@ npm run prisma:generate
 ```
 
 ### **Erro: Database em uso**
+
 ```bash
 # Erro:
 Database is locked / in use
@@ -298,6 +326,7 @@ npm run prisma:push
 ```
 
 ### **Erro: Timeout nos testes**
+
 ```bash
 # Erro:
 Timeout - Async callback was not invoked within the 5000 ms timeout
@@ -308,6 +337,7 @@ testTimeout: 10000,  // 10 segundos
 ```
 
 ### **Erro: Unique constraint failed**
+
 ```bash
 # Erro:
 Unique constraint failed on the fields: (`email`)
@@ -417,4 +447,3 @@ Após validar que todos os testes passam:
 **Status**: ✅ **TESTES PRONTOS PARA EXECUÇÃO!**
 
 Execute: `npm test` para validar tudo! 🚀
-

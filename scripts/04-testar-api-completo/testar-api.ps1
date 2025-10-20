@@ -25,10 +25,23 @@ param(
     [ValidateSet('PRISMA', 'DYNAMODB')]
     [string]$DatabaseProvider,
     
-    [string]$BaseUrl = "http://localhost:4000",
+    [string]$BaseUrl,
     
     [switch]$SkipDelete
 )
+
+# Se BaseUrl não foi informado, ler PORT do .env
+if (-not $BaseUrl) {
+    $PORT = "4000"  # Default
+    if (Test-Path ".env") {
+        $portLine = Get-Content ".env" | Where-Object { $_ -match "^PORT\s*=\s*(\d+)" }
+        if ($portLine -match "PORT\s*=\s*(\d+)") {
+            $PORT = $matches[1]
+        }
+    }
+    $BaseUrl = "http://localhost:$PORT"
+    Write-Host "🔧 Usando porta do .env: $PORT" -ForegroundColor Cyan
+}
 
 # ========================================
 # 🎨 CONFIGURAÇÕES E CORES

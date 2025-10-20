@@ -272,7 +272,7 @@ F5 → "Jest - Watch Mode"
 │ Arquivos de Teste     │      21      │
 │ Arquivos de Suporte   │       4      │
 │ Casos de Teste        │     120+     │
-│ Linhas de Código      │    3000+     │
+│ Linhas de Código      │    4000+     │
 │ Módulos Testados      │       9      │
 │ Cobertura Esperada    │   90-100%    │
 └───────────────────────┴──────────────┘

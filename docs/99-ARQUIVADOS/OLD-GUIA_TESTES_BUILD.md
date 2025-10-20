@@ -3,31 +3,37 @@
 ## 📋 **Checklist de Validação**
 
 ### ✅ **Fase 1: Validação de Arquivos**
+
 - [ ] Schema Prisma válido
 - [ ] Template SAM válido
 - [ ] TypeScript compila sem erros
 - [ ] Linter sem erros críticos
 
 ### ✅ **Fase 2: Build Local**
+
 - [ ] `npm run build` - NestJS compila
 - [ ] Arquivos em `dist/` gerados
 - [ ] Lambda handler presente
 
 ### ✅ **Fase 3: Validação SAM**
+
 - [ ] `npm run sam:validate` - Template válido
 - [ ] `npm run sam:build` - Lambda empacotado
 
 ### ✅ **Fase 4: Testes**
+
 - [ ] `npm run test` - Testes unitários
 - [ ] `npm run test:coverage` - Cobertura mínima
 - [ ] `npm run lint` - Código limpo
 
 ### ✅ **Fase 5: Ambiente Local**
+
 - [ ] MongoDB rodando (Docker)
 - [ ] DynamoDB Local rodando (Docker)
 - [ ] Servidor dev iniciando (`npm run dev`)
 
 ### ✅ **Fase 6: Deploy (Opcional)**
+
 - [ ] `npm run sam:deploy:dev` - Deploy teste
 
 ---
@@ -35,24 +41,30 @@
 ## 🚀 **EXECUÇÃO - Passo a Passo**
 
 ### **1️⃣ Validar Prisma**
+
 ```bash
 npm run prisma:format
 npm run prisma:generate
 ```
+
 **Esperado**: ✅ Cliente Prisma gerado
 
 ---
 
 ### **2️⃣ Build Local (NestJS)**
+
 ```bash
 npm run build
 ```
-**Esperado**: 
+
+**Esperado**:
+
 - ✅ Pasta `dist/` criada
 - ✅ Arquivo `dist/main.js` existe
 - ✅ Arquivo `dist/lambda/handler.js` existe
 
 **Verificar**:
+
 ```bash
 ls dist/
 ls dist/lambda/
@@ -61,12 +73,15 @@ ls dist/lambda/
 ---
 
 ### **3️⃣ Validar Template SAM**
+
 ```bash
 npm run sam:validate
 ```
+
 **Esperado**: ✅ `template.yaml is a valid SAM Template`
 
 **Ver log**:
+
 ```bash
 cat logs/sam-validate.log
 ```
@@ -74,20 +89,25 @@ cat logs/sam-validate.log
 ---
 
 ### **4️⃣ Build SAM (empacotamento Lambda)**
+
 ```bash
 npm run sam:build
 ```
+
 **Esperado**:
+
 - ✅ `.aws-sam/build/` criado
 - ✅ Dependências copiadas
 - ✅ Código compilado empacotado
 
 **Ver log**:
+
 ```bash
 cat logs/sam-build.log
 ```
 
 **Verificar estrutura**:
+
 ```bash
 ls src/lambda/.aws-sam/build/BlogApiFunction/
 ```
@@ -95,12 +115,15 @@ ls src/lambda/.aws-sam/build/BlogApiFunction/
 ---
 
 ### **5️⃣ Testes Unitários**
+
 ```bash
 npm run test
 ```
+
 **Esperado**: ✅ Todos os testes passando
 
 **Ver resultado**:
+
 ```bash
 cat logs/test.log
 ```
@@ -108,14 +131,18 @@ cat logs/test.log
 ---
 
 ### **6️⃣ Cobertura de Código**
+
 ```bash
 npm run test:coverage
 ```
-**Esperado**: 
+
+**Esperado**:
+
 - ✅ Cobertura > 80%
 - ✅ Relatório em `coverage/`
 
 **Ver relatório**:
+
 ```bash
 start coverage/index.html   # Windows
 # ou
@@ -125,12 +152,15 @@ open coverage/index.html    # Mac/Linux
 ---
 
 ### **7️⃣ Linter**
+
 ```bash
 npm run lint
 ```
+
 **Esperado**: ✅ Sem erros críticos
 
 **Ver log**:
+
 ```bash
 cat logs/lint.log
 ```
@@ -138,6 +168,7 @@ cat logs/lint.log
 ---
 
 ### **8️⃣ Testar Servidor Local**
+
 ```bash
 # Terminal 1: Subir infraestrutura
 docker-compose up -d
@@ -147,18 +178,21 @@ npm run dev
 ```
 
 **Esperado**:
+
 - ✅ MongoDB conectado
-- ✅ Servidor rodando em `http://localhost:3000`
-- ✅ Swagger em `http://localhost:3000/api`
+- ✅ Servidor rodando em `http://localhost:4000`
+- ✅ Swagger em `http://localhost:4000/api`
 
 **Testar API**:
+
 ```bash
-curl http://localhost:3000/health
+curl http://localhost:4000/health
 ```
 
 ---
 
 ### **9️⃣ Seed de Dados (Opcional)**
+
 ```bash
 # MongoDB
 npm run mongodb:seed
@@ -173,6 +207,7 @@ npm run dynamodb:seed
 ### **🔟 Deploy SAM (AWS) - OPCIONAL**
 
 ⚠️ **ANTES DE FAZER DEPLOY**:
+
 1. Configurar credenciais AWS: `aws configure`
 2. Criar bucket S3: `aws s3 mb s3://seu-bucket-sam`
 
@@ -185,6 +220,7 @@ npm run sam:deploy:guided
 ```
 
 **Esperado**:
+
 - ✅ Stack criada
 - ✅ Lambda Function URL retornada
 - ✅ DynamoDB tables criadas
@@ -232,11 +268,13 @@ npm run lint
 ## 🐛 **Troubleshooting**
 
 ### **Erro: `nest: command not found`**
+
 ```bash
 npm install -g @nestjs/cli
 ```
 
 ### **Erro: `sam: command not found`**
+
 ```bash
 # Windows
 choco install aws-sam-cli
@@ -249,6 +287,7 @@ pip install aws-sam-cli
 ```
 
 ### **Erro: `dist/lambda/handler.js` não existe**
+
 ```bash
 # Verificar se o build NestJS incluiu a pasta lambda
 npm run build
@@ -258,6 +297,7 @@ npm run build
 ```
 
 ### **Erro: SAM Build falha**
+
 ```bash
 # Limpar e reconstruir
 rm -rf src/lambda/.aws-sam
@@ -291,4 +331,3 @@ Para considerar o projeto **pronto para produção**:
 ---
 
 **Status**: 🚀 **PRONTO PARA VALIDAÇÃO!**
-

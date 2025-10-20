@@ -18,7 +18,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBody } from '@nestjs/swagger';
 import { UsersService } from './users.service.js';
 import type { CreateUserData, UpdateUserData } from './user.model.js';
 
@@ -47,6 +47,21 @@ export class UsersController {
   @ApiOperation({ summary: '➕ Criar Usuário' })
   @ApiResponse({ status: 201, description: 'Usuário criado com sucesso' })
   @ApiResponse({ status: 409, description: 'Email ou username já existe' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        username: { type: 'string', example: 'johndoe' },
+        email: { type: 'string', example: 'john@example.com' },
+        password: { type: 'string', example: 'SenhaForte123!' },
+        name: { type: 'string', example: 'John Doe' },
+        bio: { type: 'string', example: 'Desenvolvedor full-stack', nullable: true },
+        avatar: { type: 'string', example: 'https://avatar.url/image.jpg', nullable: true },
+        role: { type: 'string', example: 'USER', enum: ['USER', 'ADMIN', 'MODERATOR'], nullable: true },
+      },
+      required: ['username', 'email', 'password', 'name'],
+    },
+  })
   async create(@Body() data: CreateUserData & { password: string }) {
     const user = await this.usersService.createUser(data);
     return { success: true, data: user };
@@ -101,6 +116,17 @@ export class UsersController {
   @Put(':id')
   @ApiOperation({ summary: '✏️ Atualizar Usuário' })
   @ApiParam({ name: 'id', description: 'ID do usuário' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', example: 'John Doe Updated' },
+        bio: { type: 'string', example: 'Nova bio do usuário', nullable: true },
+        avatar: { type: 'string', example: 'https://avatar.url/new-image.jpg', nullable: true },
+        role: { type: 'string', example: 'MODERATOR', enum: ['USER', 'ADMIN', 'MODERATOR'], nullable: true },
+      },
+    },
+  })
   async update(@Param('id') id: string, @Body() data: UpdateUserData) {
     const user = await this.usersService.updateUser(id, data);
     return { success: true, data: user };

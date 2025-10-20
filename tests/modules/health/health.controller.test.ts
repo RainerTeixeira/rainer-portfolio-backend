@@ -29,7 +29,7 @@ describe('HealthController', () => {
     uptime: 3600,
     memory: {
       rss: 50000000,
-      heapTotal: 30000000,
+      heapTotal: 40000000,
       heapUsed: 20000000,
       external: 1000000,
     },
@@ -69,7 +69,7 @@ describe('HealthController', () => {
 
   describe('getHealth', () => {
     it('deve retornar status de saúde básico do servidor', async () => {
-      service.getBasicHealth.mockReturnValue(mockBasicHealth);
+      service.getBasicHealth.mockResolvedValue(mockBasicHealth);
 
       const result = await controller.getHealth();
 
@@ -80,7 +80,7 @@ describe('HealthController', () => {
 
   describe('getDetailedHealth', () => {
     it('deve retornar status de saúde detalhado', async () => {
-      service.getDetailedHealth.mockReturnValue(mockDetailedHealth);
+      service.getDetailedHealth.mockResolvedValue(mockDetailedHealth);
 
       const result = await controller.getDetailedHealth();
 

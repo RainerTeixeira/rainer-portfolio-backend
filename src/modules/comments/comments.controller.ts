@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Put, Delete, Patch, Body, Param, Query, HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiParam, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiParam, ApiQuery, ApiBody } from '@nestjs/swagger';
 import { CommentsService } from './comments.service.js';
 import type { CreateCommentData, UpdateCommentData } from './comment.model.js';
 
@@ -11,6 +11,18 @@ export class CommentsController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: '➕ Criar Comentário' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        content: { type: 'string', example: 'Excelente artigo! Muito informativo.' },
+        postId: { type: 'string', example: '507f1f77bcf86cd799439022' },
+        authorId: { type: 'string', example: '507f1f77bcf86cd799439011' },
+        parentId: { type: 'string', example: '507f1f77bcf86cd799439033', nullable: true },
+      },
+      required: ['content', 'postId', 'authorId'],
+    },
+  })
   async create(@Body() data: CreateCommentData) {
     const comment = await this.commentsService.createComment(data);
     return { success: true, data: comment };
@@ -55,6 +67,14 @@ export class CommentsController {
   @Put(':id')
   @ApiOperation({ summary: '✏️ Atualizar Comentário' })
   @ApiParam({ name: 'id' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        content: { type: 'string', example: 'Comentário atualizado com nova informação.' },
+      },
+    },
+  })
   async update(@Param('id') id: string, @Body() data: UpdateCommentData) {
     const comment = await this.commentsService.updateComment(id, data);
     return { success: true, data: comment };

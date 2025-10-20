@@ -226,17 +226,20 @@ Execute os testes e marque:
 ## 🐛 **TROUBLESHOOTING RÁPIDO**
 
 ### **Erro: MongoDB não conecta**
+
 ```bash
 docker-compose up -d mongodb
 docker ps  # Verificar se está rodando
 ```
 
 ### **Erro: Prisma Client não encontrado**
+
 ```bash
 npm run prisma:generate
 ```
 
 ### **Erro: Testes falham**
+
 ```bash
 # Limpar banco e tentar novamente
 docker-compose down mongodb
@@ -263,6 +266,7 @@ Após validar que os testes passam:
 ## 🎉 **RESUMO EXECUTIVO**
 
 ```
+
 ✅ 2 arquivos de teste criados (integração + E2E)
 ✅ 1 guia completo de testes (450+ linhas)
 ✅ 1 script helper PowerShell (automação)

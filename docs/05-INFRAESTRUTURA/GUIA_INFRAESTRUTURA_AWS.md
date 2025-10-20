@@ -458,7 +458,7 @@ sam validate
 sam build
 
 # Testar localmente
-sam local start-api  # Inicia API na porta 3000
+sam local start-api  # Inicia API na porta 4000
 
 # Invocar função diretamente
 sam local invoke BlogApiFunction --event events/test-event.json
@@ -711,7 +711,7 @@ sam logs --start-time '5min ago'
 | Métrica | Descrição | Alerta |
 |---------|-----------|--------|
 | **Invocations** | Número de chamadas | > 100k/dia |
-| **Duration** | Tempo de execução | > 3000ms |
+| **Duration** | Tempo de execução | > 4000ms |
 | **Errors** | Erros na função | > 1% |
 | **Throttles** | Requisições limitadas | > 0 |
 

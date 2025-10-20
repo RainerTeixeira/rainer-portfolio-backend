@@ -118,7 +118,7 @@ src/lambda/
 {
   "sam:validate": "Validar template SAM",
   "sam:build": "Build da aplicação",
-  "sam:local": "Iniciar API local (porta 3000)",
+  "sam:local": "Iniciar API local (porta 4000)",
   "sam:deploy": "Deploy padrão",
   "sam:deploy:dev": "Deploy para dev",
   "sam:deploy:staging": "Deploy para staging",

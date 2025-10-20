@@ -88,7 +88,7 @@ npm run start:dev
 Abra no navegador:
 
 ```
-http://localhost:3000/docs
+http://localhost:4000/docs
 ```
 
 ### **3. Explorar a Nova Interface**
@@ -207,7 +207,7 @@ docs/
 ### **Teste Checklist**
 
 - [ ] Servidor iniciado com sucesso
-- [ ] Acesso a `http://localhost:3000/docs` funcionando
+- [ ] Acesso a `http://localhost:4000/docs` funcionando
 - [ ] Todas as 9 seções visíveis
 - [ ] Emojis aparecendo corretamente
 - [ ] Descrições em português
@@ -224,7 +224,7 @@ Se tiver dúvidas ou precisar de ajustes:
 1. Consulte os guias em `docs/03-GUIAS/`
 2. Verifique o código em `src/main.ts`
 3. Compare com os controllers modificados
-4. Teste localmente em `localhost:3000/docs`
+4. Teste localmente em `localhost:4000/docs`
 
 ## 🎉 Conclusão
 

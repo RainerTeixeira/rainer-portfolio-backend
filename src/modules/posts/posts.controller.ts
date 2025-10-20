@@ -20,7 +20,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBody } from '@nestjs/swagger';
 import { PostsService } from './posts.service.js';
 import type { CreatePostData, UpdatePostData } from './post.model.js';
 
@@ -60,6 +60,24 @@ export class PostsController {
   @ApiResponse({ 
     status: 400, 
     description: 'Dados inválidos (conteúdo, subcategoria ou autor ausentes)' 
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', example: 'Meu Primeiro Post' },
+        slug: { type: 'string', example: 'meu-primeiro-post' },
+        content: { type: 'string', example: 'Conteúdo completo do post em markdown...' },
+        excerpt: { type: 'string', example: 'Resumo breve do post', nullable: true },
+        subcategoryId: { type: 'string', example: '507f1f77bcf86cd799439011' },
+        authorId: { type: 'string', example: '507f1f77bcf86cd799439022' },
+        coverImage: { type: 'string', example: 'https://image.url/cover.jpg', nullable: true },
+        tags: { type: 'array', items: { type: 'string' }, example: ['tech', 'tutorial'], nullable: true },
+        status: { type: 'string', example: 'DRAFT', enum: ['DRAFT', 'PUBLISHED', 'ARCHIVED'], nullable: true },
+        featured: { type: 'boolean', example: false, nullable: true },
+      },
+      required: ['title', 'slug', 'content', 'subcategoryId', 'authorId'],
+    },
   })
   async create(@Body() data: CreatePostData) {
     const post = await this.postsService.createPost(data);
@@ -174,6 +192,19 @@ export class PostsController {
   @ApiParam({ name: 'id', description: 'ID do post' })
   @ApiResponse({ status: 200, description: 'Post atualizado com sucesso' })
   @ApiResponse({ status: 404, description: 'Post não encontrado' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', example: 'Post Atualizado' },
+        content: { type: 'string', example: 'Novo conteúdo atualizado...' },
+        excerpt: { type: 'string', example: 'Novo resumo', nullable: true },
+        coverImage: { type: 'string', example: 'https://image.url/new-cover.jpg', nullable: true },
+        tags: { type: 'array', items: { type: 'string' }, example: ['updated', 'tech'], nullable: true },
+        featured: { type: 'boolean', example: true, nullable: true },
+      },
+    },
+  })
   async update(@Param('id') id: string, @Body() data: UpdatePostData) {
     const post = await this.postsService.updatePost(id, data);
     return { 

@@ -8,7 +8,7 @@
  */
 
 import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service.js';
 import type { Post, CreatePostData, UpdatePostData, PostWithRelations } from './post.model.js';
 import { Prisma } from '@prisma/client';
 

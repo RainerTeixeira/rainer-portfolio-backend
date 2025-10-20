@@ -7,8 +7,12 @@
 # Use: bash test-api-curls.sh
 # ========================================
 
-BASE_URL="http://localhost:3000"
+# Ler PORT do .env (fallback para 4000)
+API_PORT=$(grep -oP '^PORT\s*=\s*\K\d+' .env 2>/dev/null || echo "4000")
+BASE_URL="http://localhost:${API_PORT}"
 DB_PROVIDER="PRISMA"  # Altere para "DYNAMODB" se preferir
+
+echo "🔧 Usando porta do .env: $API_PORT"
 
 echo "========================================="
 echo "🚀 INICIANDO TESTES DA API"

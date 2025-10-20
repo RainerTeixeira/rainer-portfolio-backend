@@ -6,7 +6,7 @@
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
-import { DatabaseProviderContextService, DatabaseProvider } from '../../../src/utils/database-provider/database-provider-context.service';
+import { DatabaseProviderContextService } from '../../../src/utils/database-provider/database-provider-context.service';
 
 describe('DatabaseProviderContextService', () => {
   let service: DatabaseProviderContextService;
