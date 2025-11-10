@@ -1,5 +1,5 @@
 /**
- * Category Model
+ * Modelo de Categoria
  * 
  * Interfaces TypeScript para o modelo Category.
  * 
@@ -20,7 +20,8 @@ export interface Category {
   isActive: boolean;
   postsCount: number;
   createdAt: Date;
-  updatedAt: Date;
+  /** Data de última atualização (null até primeira atualização real - economia de espaço) */
+  updatedAt: Date | null;
 }
 
 export interface CreateCategoryData {

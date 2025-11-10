@@ -17,7 +17,7 @@ describe('CommentsController', () => {
     id: 'comment-123',
     content: 'Comentário de teste',
     postId: 'post-123',
-    authorId: 'user-123',
+    authorId: 'cognito-user-123',
     parentId: null,
     isApproved: true,
     isReported: false,
@@ -66,7 +66,7 @@ describe('CommentsController', () => {
       const createData = {
         content: 'Comentário de teste',
         postId: 'post-123',
-        authorId: 'user-123',
+        authorId: 'cognito-user-123',
       };
 
       service.createComment.mockResolvedValue(mockComment);

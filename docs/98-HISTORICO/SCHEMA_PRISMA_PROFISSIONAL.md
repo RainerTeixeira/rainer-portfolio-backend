@@ -181,7 +181,7 @@ prisma.post.findMany({
 ### Depois
 
 ```prisma
-@@unique([userId, postId], name: "unique_user_post_like")
+@@unique([userId, postId], fullName: "unique_user_post_like")
 ```
 
 **Benefícios:**

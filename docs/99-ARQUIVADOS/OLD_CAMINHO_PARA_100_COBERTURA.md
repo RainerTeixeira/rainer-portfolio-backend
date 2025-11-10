@@ -71,7 +71,7 @@
 
 - ✅ Tratamento de erro quando não há AuthenticationResult em refreshToken
 - ✅ Login com username alternativo quando cognito:username não existe
-- ✅ Login com nome padrão quando name não existe
+- ✅ Login com nome padrão quando fullName não existe
 - ✅ Registro com UserConfirmed true/false
 
 ### 6. **users.service.ts** - 88% → 100% ✅
@@ -139,7 +139,7 @@
 **auth.service.test.ts**: +4 testes
 
 1. Usar email como username quando cognito:username não existe
-2. Usar "Usuário" como nome padrão quando name não existe
+2. Usar "Usuário" como nome padrão quando fullName não existe
 3. Retornar mensagem diferente quando usuário já está confirmado
 4. Lançar UnauthorizedException quando não há AuthenticationResult (corrigido)
 
@@ -188,7 +188,7 @@
 - ✓ Testados todos os caminhos de erro
 - ✓ Testadas validações de token
 - ✓ Testados casos de usuário não encontrado
-- ✓ Testados branches de username e name
+- ✓ Testados branches de username e fullName
 
 ### ✅ Users Service
 

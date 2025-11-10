@@ -238,7 +238,7 @@ aws sts get-caller-identity
 ```bash
 # Obter URL criada
 aws cloudformation describe-stacks \
-  --stack-name blog-backend-api \
+  --stack-fullName blog-backend-api \
   --query 'Stacks[0].Outputs[?OutputKey==`BlogApiFunctionUrl`].OutputValue' \
   --output text
 ```

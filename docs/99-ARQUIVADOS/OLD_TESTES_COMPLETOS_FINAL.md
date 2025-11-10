@@ -142,8 +142,8 @@ repository.incrementViews.mockResolvedValue(undefined);
 
 ### UsersService (+2 testes) - 88% → ~95% ✅
 
-- ✅ Sync com nome padrão quando name ausente
-- ✅ Sincronizar apenas name quando email não mudou
+- ✅ Sync com nome padrão quando fullName ausente
+- ✅ Sincronizar apenas fullName quando email não mudou
 
 ### PostsRepository (+3 testes) - 95% → 100% ✅
 

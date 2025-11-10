@@ -57,22 +57,24 @@ describe('Backend E2E - MongoDB/Prisma', () => {
   });
 
   beforeEach(async () => {
-    // Limpar banco antes de cada teste
-    await prisma.notification.deleteMany({});
-    await prisma.bookmark.deleteMany({});
-    await prisma.like.deleteMany({});
-    await prisma.comment.deleteMany({});
-    await prisma.post.deleteMany({});
-    
-    // Deletar categorias: primeiro subcategorias (com parentId), depois principais
-    await prisma.category.deleteMany({
-      where: { parentId: { not: null } },
-    });
-    await prisma.category.deleteMany({
-      where: { parentId: null },
-    });
-    
-    await prisma.user.deleteMany({});
+    // Limpeza sem transações para ambientes MongoDB sem suporte a transactions
+    const collections = [
+      'notifications',
+      'bookmarks',
+      'likes',
+      'comments',
+      'posts',
+      'categories',
+      'users',
+    ] as const
+
+    for (const coll of collections) {
+      try {
+        await prisma.$runCommandRaw({ delete: coll, deletes: [{ q: {}, limit: 0 }] })
+      } catch (_) {
+        // Ignora erro se coleção não existir
+      }
+    }
   });
 
   describe('🏥 Health Check', () => {
@@ -123,15 +125,13 @@ describe('Backend E2E - MongoDB/Prisma', () => {
         .post('/users')
         .send({
           cognitoSub: 'e2e-cognito-001',
-          email: 'e2e@example.com',
-          username: 'e2euser',
-          name: 'E2E User',
+          fullName: 'E2E User',
         })
         .expect(201)
         .expect((res) => {
           expect(res.body).toHaveProperty('success', true);
-          expect(res.body.data).toHaveProperty('id');
-          expect(res.body.data.email).toBe('e2e@example.com');
+          expect(res.body.data).toHaveProperty('cognitoSub');
+          expect(res.body.data.fullName).toBe('E2E User');
         });
     });
 
@@ -140,9 +140,7 @@ describe('Backend E2E - MongoDB/Prisma', () => {
       await prisma.user.create({
         data: {
           cognitoSub: 'e2e-cognito-002',
-          email: 'list@example.com',
-          username: 'listuser',
-          name: 'List User',
+          fullName: 'List User',
         },
       });
 
@@ -161,19 +159,17 @@ describe('Backend E2E - MongoDB/Prisma', () => {
       const user = await prisma.user.create({
         data: {
           cognitoSub: 'e2e-cognito-003',
-          email: 'find@example.com',
-          username: 'finduser',
-          name: 'Find User',
+          fullName: 'Find User',
         },
       });
 
       return request(server)
-        .get(`/users/${user.id}`)
+        .get(`/users/${user.cognitoSub}`)
         .expect(200)
         .expect((res) => {
           expect(res.body).toHaveProperty('success', true);
-          expect(res.body.data.id).toBe(user.id);
-          expect(res.body.data.email).toBe('find@example.com');
+          expect(res.body.data.cognitoSub).toBe(user.cognitoSub);
+          expect(res.body.data.fullName).toBe('Find User');
         });
     });
   });
@@ -219,24 +215,24 @@ describe('Backend E2E - MongoDB/Prisma', () => {
       const user = await prisma.user.create({
         data: {
           cognitoSub: 'e2e-author-001',
-          email: 'author-e2e@example.com',
-          username: 'authore2e',
-          name: 'Author E2E',
+          fullName: 'Author E2E',
         },
       });
 
       const category = await prisma.category.create({
         data: {
           name: 'Tech',
-          slug: 'tech',
+          slug: `tech-${Date.now()}`,
+          isActive: true,
         },
       });
 
       const subcategory = await prisma.category.create({
         data: {
           name: 'Backend',
-          slug: 'backend',
+          slug: `backend-${Date.now()}`,
           parentId: category.id,
+          isActive: true,
         },
       });
 
@@ -244,9 +240,9 @@ describe('Backend E2E - MongoDB/Prisma', () => {
         .post('/posts')
         .send({
           title: 'Post E2E Test',
-          slug: 'post-e2e-test',
+          slug: `post-e2e-test-${Date.now()}`,
           content: { type: 'doc', content: [] },
-          authorId: user.id,
+          authorId: user.cognitoSub,
           subcategoryId: subcategory.id,
           status: 'PUBLISHED',
         })
@@ -262,23 +258,30 @@ describe('Backend E2E - MongoDB/Prisma', () => {
       const user = await prisma.user.create({
         data: {
           cognitoSub: 'e2e-author-002',
-          email: 'author2-e2e@example.com',
-          username: 'author2e2e',
-          name: 'Author 2 E2E',
+          fullName: 'Author 2 E2E',
         },
       });
 
       const category = await prisma.category.create({
-        data: { name: 'Cat', slug: 'cat' },
+        data: { name: 'Cat', slug: `cat-${Date.now()}`, isActive: true },
+      });
+
+      const subcategory = await prisma.category.create({
+        data: { 
+          name: 'Sub', 
+          slug: `sub-${Date.now()}`, 
+          parentId: category.id,
+          isActive: true 
+        },
       });
 
       await prisma.post.create({
         data: {
           title: 'Published Post',
-          slug: 'published-post',
-          content: {},
-          authorId: user.id,
-          subcategoryId: category.id,
+          slug: `published-post-${Date.now()}`,
+          content: { type: 'doc', content: [] }, // Formato TipTap válido
+          authorId: user.cognitoSub,
+          subcategoryId: subcategory.id,
           status: 'PUBLISHED',
           publishedAt: new Date(),
         },
@@ -300,23 +303,30 @@ describe('Backend E2E - MongoDB/Prisma', () => {
       const user = await prisma.user.create({
         data: {
           cognitoSub: 'e2e-commenter-001',
-          email: 'commenter-e2e@example.com',
-          username: 'commentere2e',
-          name: 'Commenter E2E',
+          fullName: 'Commenter E2E',
         },
       });
 
       const category = await prisma.category.create({
-        data: { name: 'Cat', slug: 'cat' },
+        data: { name: 'Cat', slug: `cat-${Date.now()}`, isActive: true },
+      });
+
+      const subcategory = await prisma.category.create({
+        data: { 
+          name: 'Sub', 
+          slug: `sub-${Date.now()}`, 
+          parentId: category.id,
+          isActive: true 
+        },
       });
 
       const post = await prisma.post.create({
         data: {
           title: 'Post',
-          slug: 'post',
-          content: {},
-          authorId: user.id,
-          subcategoryId: category.id,
+          slug: `post-${Date.now()}`,
+          content: { type: 'doc', content: [] }, // Formato TipTap válido
+          authorId: user.cognitoSub,
+          subcategoryId: subcategory.id,
         },
       });
 
@@ -324,7 +334,7 @@ describe('Backend E2E - MongoDB/Prisma', () => {
         .post('/comments')
         .send({
           content: 'Comentário E2E',
-          authorId: user.id,
+          authorId: user.cognitoSub,
           postId: post.id,
         })
         .expect(201)
@@ -341,30 +351,37 @@ describe('Backend E2E - MongoDB/Prisma', () => {
       const user = await prisma.user.create({
         data: {
           cognitoSub: 'e2e-liker-001',
-          email: 'liker-e2e@example.com',
-          username: 'likere2e',
-          name: 'Liker E2E',
+          fullName: 'Liker E2E',
         },
       });
 
       const category = await prisma.category.create({
-        data: { name: 'Cat', slug: 'cat' },
+        data: { name: 'Cat', slug: `cat-${Date.now()}`, isActive: true },
+      });
+
+      const subcategory = await prisma.category.create({
+        data: { 
+          name: 'Sub', 
+          slug: `sub-${Date.now()}`, 
+          parentId: category.id,
+          isActive: true 
+        },
       });
 
       const post = await prisma.post.create({
         data: {
           title: 'Post',
-          slug: 'post',
-          content: {},
-          authorId: user.id,
-          subcategoryId: category.id,
+          slug: `post-${Date.now()}`,
+          content: { type: 'doc', content: [] }, // Formato TipTap válido
+          authorId: user.cognitoSub,
+          subcategoryId: subcategory.id,
         },
       });
 
       return request(server)
         .post('/likes')
         .send({
-          userId: user.id,
+          userId: user.cognitoSub,
           postId: post.id,
         })
         .expect(201)
@@ -382,34 +399,46 @@ describe('Backend E2E - MongoDB/Prisma', () => {
         .post('/users')
         .send({
           cognitoSub: 'e2e-flow-001',
-          email: 'flow@example.com',
-          username: 'flowuser',
-          name: 'Flow User',
+          fullName: 'Flow User',
         })
         .expect(201);
 
-      const userId = userRes.body.data.id;
+      const userId = userRes.body.data.cognitoSub;
 
-      // 2. Criar categoria
+      // 2. Criar categoria principal
       const categoryRes = await request(server)
         .post('/categories')
         .send({
           name: 'Flow Category',
-          slug: 'flow-category',
+          slug: `flow-category-${Date.now()}`,
+          isActive: true,
         })
         .expect(201);
 
       const categoryId = categoryRes.body.data.id;
+
+      // 2.5. Criar subcategoria (posts precisam de subcategoria, não categoria principal)
+      const subcategoryRes = await request(server)
+        .post('/categories')
+        .send({
+          name: 'Flow Subcategory',
+          slug: `flow-subcategory-${Date.now()}`,
+          parentId: categoryId,
+          isActive: true,
+        })
+        .expect(201);
+
+      const subcategoryId = subcategoryRes.body.data.id;
 
       // 3. Criar post
       const postRes = await request(server)
         .post('/posts')
         .send({
           title: 'Flow Post',
-          slug: 'flow-post',
-          content: {},
+          slug: `flow-post-${Date.now()}`,
+          content: { type: 'doc', content: [] }, // Formato TipTap válido
           authorId: userId,
-          subcategoryId: categoryId,
+          subcategoryId: subcategoryId,
           status: 'PUBLISHED',
         })
         .expect(201);

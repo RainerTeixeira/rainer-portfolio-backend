@@ -88,7 +88,7 @@ import { env } from './env.js';
  * 
  * const updated = await prisma.user.update({
  *   where: { id: '123' },
- *   data: { name: 'Novo Nome' }
+ *   data: { fullName: 'Novo Nome' }
  * });
  * 
  * @see {@link https://www.prisma.io/docs/reference/api-reference/prisma-client-reference}

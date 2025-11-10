@@ -20,7 +20,7 @@ const config: Config = {
     '!src/prisma/dynamodb.tables.ts',
     '!src/prisma/OLD_*.ts',
   ],
-  coverageDirectory: 'coverage',
+  coverageDirectory: 'tests/coverage',
   coverageReporters: ['text', 'lcov', 'html', 'json'],
   coverageThreshold: {
     global: {
@@ -49,7 +49,7 @@ const config: Config = {
       },
     ],
   },
-  testTimeout: 10000,
+  testTimeout: 60000, // 60 segundos para testes de integração com banco
   maxWorkers: '50%',
 };
 

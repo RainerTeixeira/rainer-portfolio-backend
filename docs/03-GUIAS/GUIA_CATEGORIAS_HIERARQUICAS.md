@@ -105,7 +105,7 @@ model Post {
   
   // Relação com subcategoria
   subcategory   Category @relation(
-    name: "SubcategoryPosts", 
+    fullName: "SubcategoryPosts", 
     fields: [subcategoryId],    ← Usa subcategoryId
     references: [id]
   )
@@ -117,15 +117,15 @@ model Post {
 ```prisma
 model Category {
   id       String     @id
-  name     String
+  fullName     String
   parentId String?    @db.ObjectId  ← null = principal, não-null = subcategoria
   
   // Posts que pertencem a esta categoria (quando é subcategoria)
-  posts    Post[]     @relation(name: "SubcategoryPosts")
+  posts    Post[]     @relation(fullName: "SubcategoryPosts")
   
   // Relação hierárquica
-  parent   Category?  @relation(name: "CategoryHierarchy", ...)
-  children Category[] @relation(name: "CategoryHierarchy")
+  parent   Category?  @relation(fullName: "CategoryHierarchy", ...)
+  children Category[] @relation(fullName: "CategoryHierarchy")
 }
 ```
 
@@ -141,7 +141,7 @@ model Category {
 // POST /categories
 const tecnologia = await prisma.category.create({
   data: {
-    name: "Tecnologia",
+    fullName: "Tecnologia",
     slug: "tecnologia",
     color: "#3498DB",
     icon: "code",
@@ -156,7 +156,7 @@ const tecnologia = await prisma.category.create({
 // POST /categories
 const frontend = await prisma.category.create({
   data: {
-    name: "Frontend",
+    fullName: "Frontend",
     slug: "frontend",
     color: "#61DAFB",
     icon: "react",
@@ -223,7 +223,7 @@ await prisma.post.create({
 curl -X POST http://localhost:4000/categories \
   -H "Content-Type: application/json" \
   -d '{
-    "name": "Culinária",
+    "fullName": "Culinária",
     "slug": "culinaria",
     "color": "#E74C3C",
     "icon": "utensils",
@@ -236,7 +236,7 @@ curl -X POST http://localhost:4000/categories \
 ```json
 {
   "id": "cat-culinaria",
-  "name": "Culinária",
+  "fullName": "Culinária",
   "parentId": null  // ← Categoria PRINCIPAL
 }
 ```
@@ -248,7 +248,7 @@ curl -X POST http://localhost:4000/categories \
 curl -X POST http://localhost:4000/categories \
   -H "Content-Type: application/json" \
   -d '{
-    "name": "Doces",
+    "fullName": "Doces",
     "slug": "doces",
     "parentId": "cat-culinaria",
     "color": "#F39C12"
@@ -258,7 +258,7 @@ curl -X POST http://localhost:4000/categories \
 curl -X POST http://localhost:4000/categories \
   -H "Content-Type: application/json" \
   -d '{
-    "name": "Salgados",
+    "fullName": "Salgados",
     "slug": "salgados",
     "parentId": "cat-culinaria",
     "color": "#D35400"
@@ -349,9 +349,9 @@ const post = await prisma.post.findUnique({
 {
   "title": "Introdução ao React",
   "subcategory": {
-    "name": "Frontend",
+    "fullName": "Frontend",
     "parent": {
-      "name": "Tecnologia"
+      "fullName": "Tecnologia"
     }
   }
 }
@@ -383,7 +383,7 @@ Siga estes passos:
 ```typescript
 const programacao = await prisma.category.create({
   data: {
-    name: "Programação",
+    fullName: "Programação",
     slug: "programacao",
     parentId: null,
   }
@@ -396,7 +396,7 @@ const programacao = await prisma.category.create({
 // JavaScript
 const javascript = await prisma.category.create({
   data: {
-    name: "JavaScript",
+    fullName: "JavaScript",
     slug: "javascript",
     parentId: programacao.id,
   }
@@ -405,7 +405,7 @@ const javascript = await prisma.category.create({
 // Python
 const python = await prisma.category.create({
   data: {
-    name: "Python",
+    fullName: "Python",
     slug: "python",
     parentId: programacao.id,
   }
@@ -529,7 +529,7 @@ async function validateSubcategory(id: string) {
 // Sempre inclua o parent ao criar subcategoria
 await prisma.category.create({
   data: {
-    name: "Frontend",
+    fullName: "Frontend",
     slug: "frontend",
     parentId: tecnologia.id,  // ✅ Obrigatório
   }
@@ -555,9 +555,9 @@ const post = await prisma.post.findUnique({
 {
   title: "Introdução ao React",
   subcategory: {
-    name: "Frontend",      // Subcategoria
+    fullName: "Frontend",      // Subcategoria
     parent: {
-      name: "Tecnologia"   // Categoria principal
+      fullName: "Tecnologia"   // Categoria principal
     }
   }
 }
@@ -572,13 +572,13 @@ const post = await prisma.post.findUnique({
 ```
 📦 Collection: categories
 │
-├── { id: "cat-tech", name: "Tecnologia", parentId: null }
+├── { id: "cat-tech", fullName: "Tecnologia", parentId: null }
 │
-├── { id: "cat-frontend", name: "Frontend", parentId: "cat-tech" }
+├── { id: "cat-frontend", fullName: "Frontend", parentId: "cat-tech" }
 │
-├── { id: "cat-backend", name: "Backend", parentId: "cat-tech" }
+├── { id: "cat-backend", fullName: "Backend", parentId: "cat-tech" }
 │
-└── { id: "cat-devops", name: "DevOps", parentId: "cat-tech" }
+└── { id: "cat-devops", fullName: "DevOps", parentId: "cat-tech" }
 
 📦 Collection: posts
 │
@@ -635,8 +635,8 @@ const posts = await prisma.post.findMany({
   {
     title: "React 18",
     subcategory: {
-      name: "Frontend",
-      parent: { name: "Tecnologia" }
+      fullName: "Frontend",
+      parent: { fullName: "Tecnologia" }
     }
   }
 ]

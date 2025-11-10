@@ -391,10 +391,10 @@ Outputs:
 
 ```bash
 # Logs em tempo real
-sam logs -n BlogApiFunction --stack-name blog-backend-api --tail
+sam logs -n BlogApiFunction --stack-fullName blog-backend-api --tail
 
 # Últimas 10 linhas
-sam logs -n BlogApiFunction --stack-name blog-backend-api --tail --filter ERROR
+sam logs -n BlogApiFunction --stack-fullName blog-backend-api --tail --filter ERROR
 ```
 
 ### CloudWatch Console
@@ -409,7 +409,7 @@ sam logs -n BlogApiFunction --stack-name blog-backend-api --tail --filter ERROR
 # Ver métricas da função
 aws cloudwatch get-metric-statistics \
   --namespace AWS/Lambda \
-  --metric-name Invocations \
+  --metric-fullName Invocations \
   --dimensions Name=FunctionName,Value=blog-backend-api-BlogApiFunction \
   --start-time 2025-10-16T00:00:00Z \
   --end-time 2025-10-17T00:00:00Z \
@@ -497,7 +497,7 @@ aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE
 sam delete
 
 # Ou via CloudFormation
-aws cloudformation delete-stack --stack-name blog-backend-api
+aws cloudformation delete-stack --stack-fullName blog-backend-api
 ```
 
 ---
@@ -619,7 +619,7 @@ Globals:
 
 ```bash
 # Verificar se CloudWatch está habilitado
-aws logs describe-log-groups --log-group-name-prefix /aws/lambda/blog
+aws logs describe-log-groups --log-group-fullName-prefix /aws/lambda/blog
 
 # Forçar nova função
 sam deploy --force-upload

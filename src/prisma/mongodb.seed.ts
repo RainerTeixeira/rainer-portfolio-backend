@@ -69,16 +69,19 @@ async function cleanup() {
 
 /**
  * Cria usuários de exemplo
+ * 
+ * IMPORTANTE: Email NÃO é armazenado no MongoDB.
+ * Email vem apenas do Amazon Cognito (JWT token).
+ * MongoDB armazena apenas cognitoSub + dados complementares.
  */
 async function seedUsers() {
   console.log('\n👥 Criando usuários...');
+  console.log('   ℹ️  Email gerenciado pelo Cognito (não armazenado no MongoDB)');
   
   const users: any[] = [
     {
-      cognitoSub: nanoid(),
-      email: 'admin@blog.com',
-      username: 'admin',
-      name: 'Administrador Sistema',
+      cognitoSub: '6488d4d8-9081-7058-108b-07aab2786b43', // CognitoSub fixo para testes com usuário aoline
+      fullName: 'Administrador Sistema',
       avatar: 'https://i.pravatar.cc/150?img=1',
       bio: 'Administrador principal do sistema. Gerencio tudo por aqui!',
       website: 'https://blog.com',
@@ -86,10 +89,8 @@ async function seedUsers() {
       isActive: true,
     },
     {
-      cognitoSub: nanoid(),
-      email: 'editor@blog.com',
-      username: 'editor',
-      name: 'Maria Silva',
+      cognitoSub: `cognito-${nanoid()}`,
+      fullName: 'Maria Silva',
       avatar: 'https://i.pravatar.cc/150?img=2',
       bio: 'Editora de conteúdo. Amo revisar e aprovar posts incríveis!',
       website: 'https://mariasilva.com',
@@ -97,10 +98,8 @@ async function seedUsers() {
       isActive: true,
     },
     {
-      cognitoSub: nanoid(),
-      email: 'joao@blog.com',
-      username: 'joaodev',
-      name: 'João Desenvolvedor',
+      cognitoSub: `cognito-${nanoid()}`,
+      fullName: 'João Desenvolvedor',
       avatar: 'https://i.pravatar.cc/150?img=3',
       bio: 'Desenvolvedor Full Stack apaixonado por tecnologia e boas práticas.',
       website: 'https://joaodev.com.br',
@@ -113,10 +112,8 @@ async function seedUsers() {
       isActive: true,
     },
     {
-      cognitoSub: nanoid(),
-      email: 'ana@blog.com',
-      username: 'anadesigner',
-      name: 'Ana Designer',
+      cognitoSub: `cognito-${nanoid()}`,
+      fullName: 'Ana Designer',
       avatar: 'https://i.pravatar.cc/150?img=4',
       bio: 'Designer UX/UI. Criando experiências digitais incríveis desde 2015.',
       website: 'https://anadesigner.com',
@@ -128,10 +125,8 @@ async function seedUsers() {
       isActive: true,
     },
     {
-      cognitoSub: nanoid(),
-      email: 'carlos@example.com',
-      username: 'carlosleitor',
-      name: 'Carlos Leitor',
+      cognitoSub: `cognito-${nanoid()}`,
+      fullName: 'Carlos Leitor',
       avatar: 'https://i.pravatar.cc/150?img=5',
       bio: 'Leitor assíduo de tecnologia e desenvolvimento.',
       role: 'SUBSCRIBER',
@@ -141,11 +136,29 @@ async function seedUsers() {
 
   const createdUsers = [];
   for (const userData of users) {
-    const user = await prisma.user.create({ data: userData });
+    // Usar upsert para garantir que sempre crie/atualize o usuário
+    // Isso é especialmente importante para o administrador com cognitoSub fixo
+    const { cognitoSub, ...userDataWithoutId } = userData;
+    
+    let user = await prisma.user.upsert({
+      where: { cognitoSub },
+      update: {
+        ...userDataWithoutId,
+        updatedAt: new Date(),
+      },
+      create: userData,
+    });
+    
     createdUsers.push(user);
-    console.log(`   ✅ ${user.name} (@${user.username}) - ${user.role}`);
+    
+    // Mostrar cognitoSub completo para o administrador fixo
+    const cognitoDisplay = cognitoSub === '6488d4d8-9081-7058-108b-07aab2786b43' 
+      ? cognitoSub 
+      : `${user.cognitoSub.substring(0, 20)}...`;
+    console.log(`   ✅ ${user.fullName} - ${user.role} [cognitoSub: ${cognitoDisplay}]`);
   }
 
+  console.log('   ℹ️  Emails dos usuários estão no Cognito, não no MongoDB');
   return createdUsers;
 }
 
@@ -204,7 +217,10 @@ async function seedCategories() {
   // SUBCATEGORIAS DE TECNOLOGIA - usando upsert
   const frontend = await prisma.category.upsert({
     where: { slug: 'frontend' },
-    update: { parentId: tecnologia.id },
+    update: { 
+      parentId: tecnologia.id,
+      updatedAt: new Date(),
+    },
     create: {
       name: 'Frontend',
       slug: 'frontend',
@@ -220,7 +236,10 @@ async function seedCategories() {
 
   const backend = await prisma.category.upsert({
     where: { slug: 'backend' },
-    update: { parentId: tecnologia.id },
+    update: { 
+      parentId: tecnologia.id,
+      updatedAt: new Date(),
+    },
     create: {
       name: 'Backend',
       slug: 'backend',
@@ -236,7 +255,10 @@ async function seedCategories() {
 
   const devops = await prisma.category.upsert({
     where: { slug: 'devops' },
-    update: { parentId: tecnologia.id },
+    update: { 
+      parentId: tecnologia.id,
+      updatedAt: new Date(),
+    },
     create: {
       name: 'DevOps',
       slug: 'devops',
@@ -253,7 +275,10 @@ async function seedCategories() {
   // SUBCATEGORIAS DE DESIGN - usando upsert
   const uxui = await prisma.category.upsert({
     where: { slug: 'ux-ui-design' },
-    update: { parentId: design.id },
+    update: { 
+      parentId: design.id,
+      updatedAt: new Date(),
+    },
     create: {
       name: 'UX/UI Design',
       slug: 'ux-ui-design',
@@ -269,7 +294,10 @@ async function seedCategories() {
 
   const designGrafico = await prisma.category.upsert({
     where: { slug: 'design-grafico' },
-    update: { parentId: design.id },
+    update: { 
+      parentId: design.id,
+      updatedAt: new Date(),
+    },
     create: {
       name: 'Design Gráfico',
       slug: 'design-grafico',
@@ -286,7 +314,10 @@ async function seedCategories() {
   // SUBCATEGORIAS DE CARREIRA - usando upsert
   const produtividade = await prisma.category.upsert({
     where: { slug: 'produtividade' },
-    update: { parentId: carreira.id },
+    update: { 
+      parentId: carreira.id,
+      updatedAt: new Date(),
+    },
     create: {
       name: 'Produtividade',
       slug: 'produtividade',
@@ -339,7 +370,7 @@ async function seedPosts(users: any[], categories: any) {
         ],
       },
       subcategoryId: categories.frontend.id,
-      authorId: users[2].id, // João Dev
+      authorId: users[2].cognitoSub, // João Dev
       status: 'PUBLISHED',
       featured: true,
       allowComments: true,
@@ -363,7 +394,7 @@ async function seedPosts(users: any[], categories: any) {
         ],
       },
       subcategoryId: categories.frontend.id,
-      authorId: users[2].id,
+      authorId: users[2].cognitoSub,
       status: 'PUBLISHED',
       featured: true,
       publishedAt: new Date('2024-10-05'),
@@ -387,7 +418,7 @@ async function seedPosts(users: any[], categories: any) {
         ],
       },
       subcategoryId: categories.backend.id,
-      authorId: users[2].id,
+      authorId: users[2].cognitoSub,
       status: 'PUBLISHED',
       featured: false,
       publishedAt: new Date('2024-10-10'),
@@ -410,7 +441,7 @@ async function seedPosts(users: any[], categories: any) {
         ],
       },
       subcategoryId: categories.backend.id,
-      authorId: users[2].id,
+      authorId: users[2].cognitoSub,
       status: 'PUBLISHED',
       publishedAt: new Date('2024-10-12'),
     },
@@ -433,7 +464,7 @@ async function seedPosts(users: any[], categories: any) {
         ],
       },
       subcategoryId: categories.devops.id,
-      authorId: users[2].id,
+      authorId: users[2].cognitoSub,
       status: 'PUBLISHED',
       publishedAt: new Date('2024-10-08'),
     },
@@ -456,7 +487,7 @@ async function seedPosts(users: any[], categories: any) {
         ],
       },
       subcategoryId: categories.uxui.id,
-      authorId: users[3].id, // Ana Designer
+      authorId: users[3].cognitoSub, // Ana Designer
       status: 'PUBLISHED',
       featured: true,
       publishedAt: new Date('2024-10-03'),
@@ -479,7 +510,7 @@ async function seedPosts(users: any[], categories: any) {
         ],
       },
       subcategoryId: categories.uxui.id,
-      authorId: users[3].id,
+      authorId: users[3].cognitoSub,
       status: 'PUBLISHED',
       publishedAt: new Date('2024-10-07'),
     },
@@ -502,7 +533,7 @@ async function seedPosts(users: any[], categories: any) {
         ],
       },
       subcategoryId: categories.produtividade.id,
-      authorId: users[1].id, // Maria Editor
+      authorId: users[1].cognitoSub, // Maria Editor
       status: 'PUBLISHED',
       publishedAt: new Date('2024-10-09'),
     },
@@ -525,7 +556,7 @@ async function seedPosts(users: any[], categories: any) {
         ],
       },
       subcategoryId: categories.devops.id,
-      authorId: users[2].id,
+      authorId: users[2].cognitoSub,
       status: 'DRAFT',
       featured: false,
     },
@@ -562,15 +593,15 @@ async function seedPosts(users: any[], categories: any) {
 
   // Atualizar contador de posts dos autores
   await prisma.user.update({
-    where: { id: users[2].id },
+    where: { cognitoSub: users[2].cognitoSub },
     data: { postsCount: 5 },
   });
   await prisma.user.update({
-    where: { id: users[3].id },
+    where: { cognitoSub: users[3].cognitoSub },
     data: { postsCount: 2 },
   });
   await prisma.user.update({
-    where: { id: users[1].id },
+    where: { cognitoSub: users[1].cognitoSub },
     data: { postsCount: 1 },
   });
 
@@ -587,7 +618,7 @@ async function seedComments(users: any[], posts: any[]) {
   const comment1 = await prisma.comment.create({
     data: {
       content: 'Excelente artigo! O Concurrent Rendering realmente muda o jogo. Já estou usando no meu projeto e a diferença de performance é notável.',
-      authorId: users[4].id, // Carlos
+      authorId: users[4].cognitoSub, // Carlos
       postId: posts[0].id,
       isApproved: true,
     },
@@ -598,7 +629,7 @@ async function seedComments(users: any[], posts: any[]) {
   const comment2 = await prisma.comment.create({
     data: {
       content: 'Que bom que gostou, Carlos! O Concurrent Rendering é mesmo impressionante. Você já experimentou o Suspense para data fetching?',
-      authorId: users[2].id, // João (autor do post)
+      authorId: users[2].cognitoSub, // João (autor do post)
       postId: posts[0].id,
       parentId: comment1.id,
       isApproved: true,
@@ -610,7 +641,7 @@ async function seedComments(users: any[], posts: any[]) {
   const comment3 = await prisma.comment.create({
     data: {
       content: 'Server Actions são o futuro! Não preciso mais criar rotas de API separadas. Isso economiza muito tempo e deixa o código mais limpo.',
-      authorId: users[3].id, // Ana
+      authorId: users[3].cognitoSub, // Ana
       postId: posts[1].id,
       isApproved: true,
     },
@@ -621,7 +652,7 @@ async function seedComments(users: any[], posts: any[]) {
   const comment4 = await prisma.comment.create({
     data: {
       content: 'NestJS é incrível para projetos grandes. A arquitetura modular facilita muito a manutenção. Estou migrando meu projeto Express para NestJS.',
-      authorId: users[4].id,
+      authorId: users[4].cognitoSub,
       postId: posts[2].id,
       isApproved: true,
     },
@@ -632,7 +663,7 @@ async function seedComments(users: any[], posts: any[]) {
   const comment5 = await prisma.comment.create({
     data: {
       content: 'Adorei o artigo sobre Figma! Muito útil para iniciantes.',
-      authorId: users[4].id,
+      authorId: users[4].cognitoSub,
       postId: posts[5].id,
       isApproved: false, // Aguardando aprovação
     },
@@ -659,15 +690,15 @@ async function seedComments(users: any[], posts: any[]) {
 
   // Atualizar contador de comentários dos usuários
   await prisma.user.update({
-    where: { id: users[4].id },
+    where: { cognitoSub: users[4].cognitoSub },
     data: { commentsCount: 3 },
   });
   await prisma.user.update({
-    where: { id: users[2].id },
+    where: { cognitoSub: users[2].cognitoSub },
     data: { commentsCount: 1 },
   });
   await prisma.user.update({
-    where: { id: users[3].id },
+    where: { cognitoSub: users[3].cognitoSub },
     data: { commentsCount: 1 },
   });
 
@@ -682,23 +713,23 @@ async function seedLikes(users: any[], posts: any[]) {
   
   const likes = [
     // Carlos curtiu vários posts
-    { userId: users[4].id, postId: posts[0].id },
-    { userId: users[4].id, postId: posts[1].id },
-    { userId: users[4].id, postId: posts[2].id },
-    { userId: users[4].id, postId: posts[4].id },
+    { userId: users[4].cognitoSub, postId: posts[0].id },
+    { userId: users[4].cognitoSub, postId: posts[1].id },
+    { userId: users[4].cognitoSub, postId: posts[2].id },
+    { userId: users[4].cognitoSub, postId: posts[4].id },
     
     // Ana curtiu posts de tech
-    { userId: users[3].id, postId: posts[0].id },
-    { userId: users[3].id, postId: posts[1].id },
-    { userId: users[3].id, postId: posts[2].id },
+    { userId: users[3].cognitoSub, postId: posts[0].id },
+    { userId: users[3].cognitoSub, postId: posts[1].id },
+    { userId: users[3].cognitoSub, postId: posts[2].id },
     
     // João curtiu posts de design
-    { userId: users[2].id, postId: posts[5].id },
-    { userId: users[2].id, postId: posts[6].id },
+    { userId: users[2].cognitoSub, postId: posts[5].id },
+    { userId: users[2].cognitoSub, postId: posts[6].id },
     
     // Maria curtiu vários
-    { userId: users[1].id, postId: posts[0].id },
-    { userId: users[1].id, postId: posts[5].id },
+    { userId: users[1].cognitoSub, postId: posts[0].id },
+    { userId: users[1].cognitoSub, postId: posts[5].id },
   ];
 
   for (const likeData of likes) {
@@ -726,13 +757,13 @@ async function seedBookmarks(users: any[], posts: any[]) {
   const bookmarks = [
     // Carlos salvou posts para ler depois
     {
-      userId: users[4].id,
+      userId: users[4].cognitoSub,
       postId: posts[0].id,
       collection: 'Para Ler Depois',
       notes: 'Preciso estudar Concurrent Rendering com calma',
     },
     {
-      userId: users[4].id,
+      userId: users[4].cognitoSub,
       postId: posts[3].id,
       collection: 'Estudar',
       notes: 'Importante para o projeto atual',
@@ -740,12 +771,12 @@ async function seedBookmarks(users: any[], posts: any[]) {
     
     // Ana salvou posts de referência
     {
-      userId: users[3].id,
+      userId: users[3].cognitoSub,
       postId: posts[1].id,
       collection: 'Favoritos',
     },
     {
-      userId: users[3].id,
+      userId: users[3].cognitoSub,
       postId: posts[2].id,
       collection: 'Aprender Backend',
       notes: 'NestJS parece interessante para projetos grandes',
@@ -753,7 +784,7 @@ async function seedBookmarks(users: any[], posts: any[]) {
     
     // João salvou posts de design
     {
-      userId: users[2].id,
+      userId: users[2].cognitoSub,
       postId: posts[5].id,
       collection: 'Design Inspiration',
     },
@@ -787,7 +818,7 @@ async function seedNotifications(users: any[], posts: any[]) {
       title: 'Novo Comentário',
       message: 'Carlos comentou no seu post "Introdução ao React 18"',
       link: `/posts/${posts[0].id}`,
-      userId: users[2].id,
+      userId: users[2].cognitoSub,
       isRead: false,
       metadata: {
         postId: posts[0].id,
@@ -800,7 +831,7 @@ async function seedNotifications(users: any[], posts: any[]) {
       title: 'Novo Like',
       message: 'Ana Designer curtiu seu post "Next.js 14: Server Actions"',
       link: `/posts/${posts[1].id}`,
-      userId: users[2].id,
+      userId: users[2].cognitoSub,
       isRead: true,
       readAt: new Date('2024-10-11'),
       metadata: {
@@ -814,7 +845,7 @@ async function seedNotifications(users: any[], posts: any[]) {
       title: 'Post Publicado',
       message: 'Seu post "Prisma ORM: Do Zero à Produção" foi publicado com sucesso!',
       link: `/posts/${posts[3].id}`,
-      userId: users[2].id,
+      userId: users[2].cognitoSub,
       isRead: true,
       readAt: new Date('2024-10-12'),
     },
@@ -824,7 +855,7 @@ async function seedNotifications(users: any[], posts: any[]) {
       title: 'Novo Comentário',
       message: 'Carlos comentou no seu post "Figma: Do Básico ao Avançado"',
       link: `/posts/${posts[5].id}`,
-      userId: users[3].id,
+      userId: users[3].cognitoSub,
       isRead: false,
     },
     // Notificação do sistema
@@ -832,7 +863,7 @@ async function seedNotifications(users: any[], posts: any[]) {
       type: 'SYSTEM',
       title: 'Bem-vindo ao Blog!',
       message: 'Obrigado por se cadastrar. Explore nossos artigos e não se esqueça de deixar seus comentários!',
-      userId: users[4].id,
+      userId: users[4].cognitoSub,
       isRead: false,
     },
   ];

@@ -47,19 +47,27 @@ Este documento centraliza **TODAS** as informações sobre testes do projeto, in
 
 ## 🔬 **Tipos de Testes**
 
-### **1. Testes Unitários**
+### **1. Testes Unitários com Banco Real**
 
-Testam componentes isoladamente usando mocks.
+Testam componentes usando **banco de dados real** ao invés de mocks.
 
 **Localização:** `tests/modules/`, `tests/utils/`, `tests/config/`
 
 **O que testa:**
 
 - ✅ Controllers (endpoints, validações)
-- ✅ Services (lógica de negócio)
-- ✅ Repositories (acesso a dados)
+- ✅ Services (lógica de negócio com banco real)
+- ✅ Repositories (acesso a dados real)
 - ✅ Utils (funções auxiliares)
 - ✅ Configurações (env, database)
+
+**Características:**
+- ✅ Usa MongoDB real via Prisma
+- ✅ Limpa banco antes de cada teste
+- ✅ Apenas serviços externos (Cognito, Cloudinary) são mockados
+- ✅ Testes mais próximos do ambiente de produção
+
+**Helper disponível:** `tests/helpers/database-test-helper.ts`
 
 **Exemplo:**
 
@@ -387,6 +395,52 @@ npm test -- --onlyFailures
 ---
 
 ## 🧪 **Testes Unitários e Integração**
+
+### **🆕 Testes com Banco Real**
+
+Os testes unitários agora usam **banco de dados real** ao invés de mocks!
+
+**Helper criado:** `tests/helpers/database-test-helper.ts`
+
+**Benefícios:**
+- ✅ Testes mais próximos do ambiente de produção
+- ✅ Validação real de constraints e relacionamentos
+- ✅ Detecta problemas de integração mais cedo
+- ✅ Apenas serviços externos (Cognito, Cloudinary) são mockados
+
+**Como usar:**
+
+```typescript
+import {
+  createDatabaseTestModule,
+  cleanDatabase,
+  setupDatabaseCleanup,
+  setupDatabaseTeardown,
+} from '../../helpers/database-test-helper';
+
+describe('MyService (Banco Real)', () => {
+  let service: MyService;
+  let prisma: PrismaService;
+  let module: TestingModule;
+
+  beforeAll(async () => {
+    module = await createDatabaseTestModule({
+      imports: [MyModule],
+    });
+    
+    service = module.get<MyService>(MyService);
+    prisma = module.get<PrismaService>(PrismaService);
+    await prisma.$connect();
+    
+    setupDatabaseCleanup(prisma);
+    setupDatabaseTeardown(prisma, module);
+  });
+
+  beforeEach(async () => {
+    await cleanDatabase(prisma);
+  });
+});
+```
 
 ### **1. Setup Inicial**
 

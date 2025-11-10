@@ -279,7 +279,7 @@ curl -X POST http://localhost:4000/auth/register \
   -d '{
     "email": "teste@exemplo.com",
     "password": "SenhaSegura123!",
-    "name": "Teste",
+    "fullName": "Teste",
     "username": "teste"
   }'
 ```

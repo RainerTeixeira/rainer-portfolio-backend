@@ -1,5 +1,5 @@
 /**
- * Health Module
+ * Módulo de Health Check
  * 
  * Módulo NestJS para health check da aplicação.
  * 

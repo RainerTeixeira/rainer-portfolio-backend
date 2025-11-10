@@ -79,7 +79,7 @@ const client = new DynamoDBClient({
  * 3. ✅ Itens ≤ 1 KB (escrita) e ≤ 4 KB (leitura)
  * 4. ✅ Apenas GSIs essenciais (cada GSI consome RCU/WCU)
  * 5. ✅ CloudFront/cache recomendado (reduz leituras)
- * 6. ✅ Mídia no S3, só metadados no DynamoDB
+ * 6. ✅ Mídia no S3(outro), só metadados no DynamoDB
  * 
  * 💡 Para escalar além do Free Tier:
  * - Configure Auto-Scaling (min=1, max=10 por tabela)
@@ -94,12 +94,11 @@ const baseTableDefinitions = [
   {
     TableName: TABLES.USERS,
     KeySchema: [
-      { AttributeName: 'id', KeyType: 'HASH' }, // Partition key
+      { AttributeName: 'cognitoSub', KeyType: 'HASH' }, // Partition key (chave primária)
     ],
     AttributeDefinitions: [
-      { AttributeName: 'id', AttributeType: 'S' },
-      { AttributeName: 'email', AttributeType: 'S' },
       { AttributeName: 'cognitoSub', AttributeType: 'S' },
+      { AttributeName: 'email', AttributeType: 'S' },
       { AttributeName: 'username', AttributeType: 'S' },
     ],
     GlobalSecondaryIndexes: [
@@ -107,17 +106,6 @@ const baseTableDefinitions = [
         IndexName: 'EmailIndex',
         KeySchema: [
           { AttributeName: 'email', KeyType: 'HASH' },
-        ],
-        Projection: { ProjectionType: 'ALL' },
-        ProvisionedThroughput: {
-          ReadCapacityUnits: 5,
-          WriteCapacityUnits: 5,
-        },
-      },
-      {
-        IndexName: 'CognitoSubIndex',
-        KeySchema: [
-          { AttributeName: 'cognitoSub', KeyType: 'HASH' },
         ],
         Projection: { ProjectionType: 'ALL' },
         ProvisionedThroughput: {
@@ -408,7 +396,7 @@ async function tableExists(tableName: string): Promise<boolean> {
     await client.send(command);
     return true;
   } catch (error: any) {
-    if (error.name === 'ResourceNotFoundException') {
+    if (error.fullName === 'ResourceNotFoundException') {
       return false;
     }
     throw error;

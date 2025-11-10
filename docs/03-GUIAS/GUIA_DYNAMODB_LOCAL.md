@@ -300,7 +300,7 @@ O script `dynamodb.tables.ts` cria as seguintes tabelas:
 ```json
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
-  "name": "Maria Silva",
+  "fullName": "Maria Silva",
   "email": "maria@blog.com",
   "cognitoId": "cognito-maria-123",
   "role": "AUTHOR",
@@ -352,15 +352,15 @@ alias dynamodb-local="aws dynamodb --endpoint-url http://localhost:8000 --region
 dynamodb-local list-tables
 
 # Descrever tabela
-dynamodb-local describe-table --table-name blog-users
+dynamodb-local describe-table --table-fullName blog-users
 
 # Scan completo (todos os itens)
-dynamodb-local scan --table-name blog-users
+dynamodb-local scan --table-fullName blog-users
 
 # Query por email
 dynamodb-local query \
-  --table-name blog-users \
-  --index-name EmailIndex \
+  --table-fullName blog-users \
+  --index-fullName EmailIndex \
   --key-condition-expression "email = :email" \
   --expression-attribute-values '{":email":{"S":"maria@blog.com"}}'
 ```
@@ -390,7 +390,7 @@ aws dynamodb list-tables \
 
 # Descrever estrutura de uma tabela
 aws dynamodb describe-table \
-  --table-name blog-users \
+  --table-fullName blog-users \
   --endpoint-url http://localhost:8000 \
   --region us-east-1
 ```
@@ -400,21 +400,21 @@ aws dynamodb describe-table \
 ```bash
 # Buscar item por ID (GetItem)
 aws dynamodb get-item \
-  --table-name blog-users \
+  --table-fullName blog-users \
   --key '{"id":{"S":"550e8400-e29b-41d4-a716-446655440000"}}' \
   --endpoint-url http://localhost:8000 \
   --region us-east-1
 
 # Scan (retorna todos os itens - use com cuidado)
 aws dynamodb scan \
-  --table-name blog-posts \
+  --table-fullName blog-posts \
   --endpoint-url http://localhost:8000 \
   --region us-east-1
 
 # Query usando GSI
 aws dynamodb query \
-  --table-name blog-posts \
-  --index-name StatusIndex \
+  --table-fullName blog-posts \
+  --index-fullName StatusIndex \
   --key-condition-expression "#status = :status" \
   --expression-attribute-names '{"#status":"status"}' \
   --expression-attribute-values '{":status":{"S":"PUBLISHED"}}' \
@@ -427,10 +427,10 @@ aws dynamodb query \
 ```bash
 # Inserir item (PutItem)
 aws dynamodb put-item \
-  --table-name blog-users \
+  --table-fullName blog-users \
   --item '{
     "id": {"S": "test-123"},
-    "name": {"S": "Test User"},
+    "fullName": {"S": "Test User"},
     "email": {"S": "test@example.com"},
     "createdAt": {"S": "2024-01-15T10:00:00Z"}
   }' \
@@ -439,17 +439,17 @@ aws dynamodb put-item \
 
 # Atualizar item (UpdateItem)
 aws dynamodb update-item \
-  --table-name blog-users \
+  --table-fullName blog-users \
   --key '{"id":{"S":"test-123"}}' \
-  --update-expression "SET #name = :name" \
-  --expression-attribute-names '{"#name":"name"}' \
-  --expression-attribute-values '{":name":{"S":"Updated Name"}}' \
+  --update-expression "SET #fullName = :fullName" \
+  --expression-attribute-names '{"#fullName":"fullName"}' \
+  --expression-attribute-values '{":fullName":{"S":"Updated Name"}}' \
   --endpoint-url http://localhost:8000 \
   --region us-east-1
 
 # Deletar item
 aws dynamodb delete-item \
-  --table-name blog-users \
+  --table-fullName blog-users \
   --key '{"id":{"S":"test-123"}}' \
   --endpoint-url http://localhost:8000 \
   --region us-east-1
@@ -460,13 +460,13 @@ aws dynamodb delete-item \
 ```bash
 # Deletar tabela
 aws dynamodb delete-table \
-  --table-name blog-test \
+  --table-fullName blog-test \
   --endpoint-url http://localhost:8000 \
   --region us-east-1
 
 # Contar itens em uma tabela
 aws dynamodb scan \
-  --table-name blog-posts \
+  --table-fullName blog-posts \
   --select COUNT \
   --endpoint-url http://localhost:8000 \
   --region us-east-1
@@ -578,7 +578,7 @@ npm run dynamodb:create-tables
 ```bash
 # Verificar estrutura da tabela
 aws dynamodb describe-table \
-  --table-name blog-users \
+  --table-fullName blog-users \
   --endpoint-url http://localhost:8000 \
   --region us-east-1
 

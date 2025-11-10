@@ -1,13 +1,37 @@
+/**
+ * Controlador de Notificações
+ *
+ * Controller NestJS para endpoints de notificações.
+ * Implementa rotas REST com documentação Swagger.
+ *
+ * @module modules/notifications/notifications.controller
+ */
 import { Controller, Get, Post, Put, Delete, Patch, Body, Param, Query, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam, ApiQuery, ApiBody } from '@nestjs/swagger';
 import { NotificationsService } from './notifications.service.js';
 import type { CreateNotificationData, UpdateNotificationData } from './notification.model.js';
 
+/**
+ * NotificationsController
+ *
+ * Endpoints REST para gerenciar notificações (CRUD, leitura e contagem).
+ *
+ * Convenções:
+ * - Respostas com `{ success: true, data }` quando apropriado.
+ * - Ações de marcação/contagem retornam objetos simples e claros.
+ *
+ * Integração Swagger:
+ * - `@ApiTags`, `@ApiOperation`, `@ApiParam`, `@ApiQuery`, `@ApiBody` com exemplos.
+ *
+ */
 @ApiTags('🔔 Notificações')
 @Controller('notifications')
 export class NotificationsController {
   constructor(private readonly notificationsService: NotificationsService) {}
 
+  /**
+   * Cria nova notificação.
+   */
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: '🔔 Criar Notificação' })
@@ -29,6 +53,9 @@ export class NotificationsController {
     return { success: true, data: notification };
   }
 
+  /**
+   * Busca notificação por ID.
+   */
   @Get(':id')
   @ApiOperation({ summary: '🔍 Buscar Notificação' })
   @ApiParam({ name: 'id' })
@@ -37,6 +64,9 @@ export class NotificationsController {
     return { success: true, data: notification };
   }
 
+  /**
+   * Lista notificações de um usuário (opcionalmente apenas não lidas).
+   */
   @Get('user/:userId')
   @ApiOperation({ summary: '👤 Notificações do Usuário' })
   @ApiParam({ name: 'userId' })
@@ -46,6 +76,9 @@ export class NotificationsController {
     return { success: true, data: notifications };
   }
 
+  /**
+   * Conta notificações não lidas de um usuário.
+   */
   @Get('user/:userId/unread/count')
   @ApiOperation({ summary: '🔢 Contar Não Lidas' })
   @ApiParam({ name: 'userId' })
@@ -53,6 +86,9 @@ export class NotificationsController {
     return await this.notificationsService.countUnread(userId);
   }
 
+  /**
+   * Atualiza atributos de uma notificação.
+   */
   @Put(':id')
   @ApiOperation({ summary: '✏️ Atualizar Notificação' })
   @ApiParam({ name: 'id' })
@@ -69,6 +105,9 @@ export class NotificationsController {
     return { success: true, data: notification };
   }
 
+  /**
+   * Remove notificação por ID.
+   */
   @Delete(':id')
   @ApiOperation({ summary: '🗑️ Deletar Notificação' })
   @ApiParam({ name: 'id' })
@@ -76,6 +115,9 @@ export class NotificationsController {
     return await this.notificationsService.deleteNotification(id);
   }
 
+  /**
+   * Marca uma notificação como lida.
+   */
   @Patch(':id/read')
   @ApiOperation({ summary: '✅ Marcar como Lida' })
   @ApiParam({ name: 'id' })
@@ -84,6 +126,9 @@ export class NotificationsController {
     return { success: true, data: notification };
   }
 
+  /**
+   * Marca todas as notificações de um usuário como lidas.
+   */
   @Patch('user/:userId/read-all')
   @ApiOperation({ summary: '✅ Marcar Todas como Lidas' })
   @ApiParam({ name: 'userId' })

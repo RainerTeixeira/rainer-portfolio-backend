@@ -70,25 +70,18 @@ model User {
   // IDENTIFICAÇÃO
   // ─────────────────────────────────────────────────────────────────────────
 
-  /// ID interno do MongoDB (ObjectId)
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-
   /// ID único do usuário no Amazon Cognito (sub claim do JWT)
   /// Este é o identificador global que conecta Cognito ⇄ MongoDB
-  cognitoSub String @unique
+  /// ATUALIZADO: Agora é a chave primária (@id) ao invés de id autoincremental
+  cognitoSub String @id @map("_id")
 
   // ─────────────────────────────────────────────────────────────────────────
-  // PERFIL BÁSICO (Sincronizado com Cognito)
+  // PERFIL BÁSICO (Gerenciado pela aplicação)
   // ─────────────────────────────────────────────────────────────────────────
+  // NOTA: email e nickname são gerenciados pelo Cognito, não armazenados aqui
 
-  /// Email do usuário (sincronizado do Cognito)
-  email String @unique
-
-  /// Nome de usuário único para identificação pública (@username)
-  username String @unique
-
-  /// Nome completo ou nome de exibição (sincronizado do Cognito)
-  name String
+  /// Nome completo ou nome de exibição
+  fullName String @unique
 
   // ─────────────────────────────────────────────────────────────────────────
   // PERFIL COMPLEMENTAR (Gerenciado pela aplicação)
@@ -141,8 +134,8 @@ model User {
   /// Data de criação do perfil na aplicação (não é o registro no Cognito)
   createdAt DateTime @default(now())
 
-  /// Última atualização do perfil
-  updatedAt DateTime @updatedAt
+  /// Última atualização do perfil (null se nunca foi atualizado)
+  updatedAt DateTime?
 
   // ─────────────────────────────────────────────────────────────────────────
   // RELAÇÕES
@@ -201,8 +194,8 @@ model Post {
   /// Exemplo: "Frontend" (subcategoria de "Tecnologia")
   subcategoryId String @db.ObjectId
 
-  /// ID do autor (referência ao User)
-  authorId String @db.ObjectId
+  /// CognitoSub do autor (referência ao User via cognitoSub como chave primária)
+  authorId String
 
   // ─────────────────────────────────────────────────────────────────────────
   // STATUS & PUBLICAÇÃO
@@ -233,8 +226,8 @@ model Post {
   /// Data de criação (rascunho)
   createdAt DateTime @default(now())
 
-  /// Última atualização do post
-  updatedAt DateTime @updatedAt
+  /// Última atualização do post (null se nunca foi atualizado)
+  updatedAt DateTime?
 
   // ─────────────────────────────────────────────────────────────────────────
   // ESTATÍSTICAS (Calculadas/Mantidas por triggers ou jobs)
@@ -257,7 +250,7 @@ model Post {
   // ─────────────────────────────────────────────────────────────────────────
 
   /// Autor do post (usuário que criou)
-  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  author User @relation(fields: [authorId], references: [cognitoSub], onDelete: Cascade)
 
   /// Subcategoria do post (IMPORTANTE: sempre subcategoria, nunca categoria principal)
   /// Exemplo: Post "Intro ao React" → Subcategoria "Frontend" → Categoria "Tecnologia"
@@ -365,8 +358,8 @@ model Category {
   /// Data de criação da categoria
   createdAt DateTime @default(now())
 
-  /// Última atualização da categoria
-  updatedAt DateTime @updatedAt
+  /// Última atualização da categoria (null se nunca foi atualizada)
+  updatedAt DateTime?
 
   // ─────────────────────────────────────────────────────────────────────────
   // RELAÇÕES HIERÁRQUICAS
@@ -422,8 +415,8 @@ model Comment {
   // RELAÇÕES
   // ─────────────────────────────────────────────────────────────────────────
 
-  /// ID do autor do comentário
-  authorId String @db.ObjectId
+  /// CognitoSub do autor do comentário (referência ao User via cognitoSub)
+  authorId String
 
   /// ID do post comentado
   postId String @db.ObjectId
@@ -462,8 +455,8 @@ model Comment {
   /// Data de criação do comentário
   createdAt DateTime @default(now())
 
-  /// Última atualização
-  updatedAt DateTime @updatedAt
+  /// Última atualização (null se nunca foi atualizado)
+  updatedAt DateTime?
 
   /// Data da última edição (se isEdited = true)
   editedAt DateTime?
@@ -473,7 +466,7 @@ model Comment {
   // ─────────────────────────────────────────────────────────────────────────
 
   /// Autor do comentário
-  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  author User @relation(fields: [authorId], references: [cognitoSub], onDelete: Cascade)
 
   /// Post comentado
   post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
@@ -510,8 +503,8 @@ model Like {
   // RELAÇÕES (Chave Composta: userId + postId)
   // ─────────────────────────────────────────────────────────────────────────
 
-  /// ID do usuário que curtiu
-  userId String @db.ObjectId
+  /// CognitoSub do usuário que curtiu (referência ao User via cognitoSub)
+  userId String
 
   /// ID do post curtido
   postId String @db.ObjectId
@@ -528,7 +521,7 @@ model Like {
   // ─────────────────────────────────────────────────────────────────────────
 
   /// Usuário que curtiu
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [cognitoSub], onDelete: Cascade)
 
   /// Post curtido
   post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
@@ -563,8 +556,8 @@ model Bookmark {
   // RELAÇÕES (Chave Composta: userId + postId)
   // ─────────────────────────────────────────────────────────────────────────
 
-  /// ID do usuário que salvou o post
-  userId String @db.ObjectId
+  /// CognitoSub do usuário que salvou o post (referência ao User via cognitoSub)
+  userId String
 
   /// ID do post salvo
   postId String @db.ObjectId
@@ -587,15 +580,15 @@ model Bookmark {
   /// Data em que o post foi salvo
   createdAt DateTime @default(now())
 
-  /// Última atualização (alteração de notas ou coleção)
-  updatedAt DateTime @updatedAt
+  /// Última atualização (alteração de notas ou coleção, null se nunca foi atualizado)
+  updatedAt DateTime?
 
   // ─────────────────────────────────────────────────────────────────────────
   // RELAÇÕES
   // ─────────────────────────────────────────────────────────────────────────
 
   /// Usuário que salvou
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [cognitoSub], onDelete: Cascade)
 
   /// Post salvo
   post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
@@ -658,8 +651,8 @@ model Notification {
   // RELAÇÕES
   // ─────────────────────────────────────────────────────────────────────────
 
-  /// ID do usuário destinatário da notificação
-  userId String @db.ObjectId
+  /// CognitoSub do usuário destinatário da notificação (referência ao User via cognitoSub)
+  userId String
 
   // ─────────────────────────────────────────────────────────────────────────
   // AUDITORIA
@@ -676,7 +669,7 @@ model Notification {
   // ─────────────────────────────────────────────────────────────────────────
 
   /// Usuário destinatário
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [cognitoSub], onDelete: Cascade)
 
   // ─────────────────────────────────────────────────────────────────────────
   // METADATA & ÍNDICES

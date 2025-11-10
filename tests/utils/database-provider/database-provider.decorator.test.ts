@@ -126,13 +126,13 @@ describe('DatabaseProviderHeader Decorator', () => {
     it('deve aparecer no swagger como header customizado', () => {
       // O decorator usa ApiHeader do @nestjs/swagger
       const headerConfig = {
-        name: 'X-Database-Provider',
+        fullName: 'X-Database-Provider',
         description: '🗄️ Escolha o banco de dados (PRISMA = MongoDB, DYNAMODB = AWS)',
         required: false,
         enum: ['PRISMA', 'DYNAMODB'],
       };
 
-      expect(headerConfig.name).toBe('X-Database-Provider');
+      expect(headerConfig.fullName).toBe('X-Database-Provider');
       expect(headerConfig.required).toBe(false);
     });
 

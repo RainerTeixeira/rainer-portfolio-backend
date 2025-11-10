@@ -1,5 +1,5 @@
 /**
- * Logger
+ * Logger da Aplicação
  * 
  * Configuração de logging para a aplicação.
  * Usa Pino para logs estruturados e performáticos.

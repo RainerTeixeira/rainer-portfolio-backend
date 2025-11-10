@@ -1,5 +1,5 @@
 /**
- * Posts Repository
+ * Repositório de Posts
  * 
  * Camada de acesso a dados para posts.
  * Implementa padrão Repository com injeção de dependência.
@@ -11,6 +11,34 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import type { Post, CreatePostData, UpdatePostData, PostWithRelations } from './post.model.js';
 import { Prisma } from '@prisma/client';
+
+// Tipo auxiliar para posts com includes
+type PostWithIncludes = Prisma.PostGetPayload<{
+  include: {
+    author: {
+      select: {
+        cognitoSub: true;
+        fullName: true;
+        avatar: true;
+      };
+    };
+    subcategory: {
+      select: {
+        id: true;
+        name: true;
+        slug: true;
+        color: true;
+        parent?: {
+          select: {
+            id: true;
+            name: true;
+            slug: true;
+          };
+        };
+      };
+    };
+  };
+}>;
 
 /**
  * Repositório de Posts
@@ -42,7 +70,7 @@ export class PostsRepository {
       priority: data.priority ?? 0,
       publishedAt: data.publishedAt ? new Date(data.publishedAt) : null,
       author: {
-        connect: { id: data.authorId }
+        connect: { cognitoSub: data.authorId }
       },
       subcategory: {
         connect: { id: data.subcategoryId }
@@ -63,34 +91,82 @@ export class PostsRepository {
   async findById(id: string): Promise<PostWithRelations | null> {
     this.logger.log(`Finding post by ID: ${id}`);
     
-    return await this.prisma.post.findUnique({
-      where: { id },
-      include: {
-        author: {
-          select: {
-            id: true,
-            name: true,
-            username: true,
-            avatar: true,
-          }
-        },
-        subcategory: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-            color: true,
-            parent: {
-              select: {
-                id: true,
-                name: true,
-                slug: true,
+    try {
+      const post = await this.prisma.post.findUnique({
+        where: { id },
+        include: {
+          author: {
+            select: {
+              cognitoSub: true, // cognitoSub é a chave primária agora
+              fullName: true,
+              avatar: true,
+            }
+          },
+          subcategory: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              color: true,
+              parent: {
+                select: {
+                  id: true,
+                  name: true,
+                  slug: true,
+                }
               }
             }
           }
-        }
-      },
-    }) as PostWithRelations | null;
+        },
+      }) as PostWithIncludes | null;
+
+      if (!post) return null;
+
+      // Mapeia cognitoSub para id no author (formato esperado pelo frontend)
+      // Nota: nickname não está no MongoDB (gerenciado apenas pelo Cognito)
+      return {
+        ...post,
+        author: post.author ? {
+          id: post.author.cognitoSub, // Mapeia cognitoSub para id
+          nickname: post.author.fullName.split(' ')[0] || '', // Usa primeira palavra do fullName como fallback
+          fullName: post.author.fullName,
+          avatar: post.author.avatar || undefined,
+        } : undefined,
+        // Se subcategory não foi encontrada (foi deletada), retorna undefined
+        subcategory: post.subcategory || undefined,
+      } as PostWithRelations;
+    } catch (error: any) {
+      // Se o erro for relacionado a subcategory não encontrada, busca sem include
+      if (error?.code === 'P2025' || error?.message?.includes('subcategory')) {
+        this.logger.warn(`Subcategory not found for post ${id}, fetching without relations`);
+        const post = await this.prisma.post.findUnique({
+          where: { id },
+          include: {
+            author: {
+              select: {
+                cognitoSub: true,
+                fullName: true,
+                avatar: true,
+              }
+            },
+          },
+        }) as any;
+        
+        if (!post) return null;
+        
+        return {
+          ...post,
+          author: post.author ? {
+            id: post.author.cognitoSub,
+            nickname: post.author.fullName.split(' ')[0] || '',
+            fullName: post.author.fullName,
+            avatar: post.author.avatar || undefined,
+          } : undefined,
+          subcategory: undefined,
+        } as PostWithRelations;
+      }
+      throw error;
+    }
   }
 
   /**
@@ -102,27 +178,75 @@ export class PostsRepository {
   async findBySlug(slug: string): Promise<PostWithRelations | null> {
     this.logger.log(`Finding post by slug: ${slug}`);
     
-    return await this.prisma.post.findUnique({ 
-      where: { slug },
-      include: {
-        author: {
-          select: {
-            id: true,
-            name: true,
-            username: true,
-            avatar: true,
+    try {
+      const post = await this.prisma.post.findUnique({ 
+        where: { slug },
+        include: {
+          author: {
+            select: {
+              cognitoSub: true, // cognitoSub é a chave primária agora
+              fullName: true,
+              avatar: true,
+            }
+          },
+          subcategory: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              color: true,
+            }
           }
         },
-        subcategory: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-            color: true,
-          }
-        }
-      },
-    }) as PostWithRelations | null;
+      }) as PostWithIncludes | null;
+
+      if (!post) return null;
+
+      // Mapeia cognitoSub para id no author (formato esperado pelo frontend)
+      // Nota: nickname não está no MongoDB (gerenciado apenas pelo Cognito)
+      return {
+        ...post,
+        author: post.author ? {
+          id: post.author.cognitoSub, // Mapeia cognitoSub para id
+          nickname: post.author.fullName.split(' ')[0] || '', // Usa primeira palavra do fullName como fallback
+          fullName: post.author.fullName,
+          avatar: post.author.avatar || undefined,
+        } : undefined,
+        // Se subcategory não foi encontrada (foi deletada), retorna undefined
+        subcategory: post.subcategory || undefined,
+      } as PostWithRelations;
+    } catch (error: any) {
+      // Se o erro for relacionado a subcategory não encontrada, busca sem include
+      if (error?.code === 'P2025' || error?.message?.includes('subcategory')) {
+        this.logger.warn(`Subcategory not found for post ${slug}, fetching without relations`);
+        const post = await this.prisma.post.findUnique({
+          where: { slug },
+          include: {
+            author: {
+              select: {
+                cognitoSub: true,
+                fullName: true,
+                avatar: true,
+              }
+            },
+          },
+        }) as any;
+        
+        if (!post) return null;
+        
+        return {
+          ...post,
+          author: post.author ? {
+            id: post.author.cognitoSub,
+            nickname: post.author.fullName.split(' ')[0] || '',
+            fullName: post.author.fullName,
+            avatar: post.author.avatar || undefined,
+          } : undefined,
+          subcategory: undefined,
+        } as PostWithRelations;
+      }
+      throw error;
+    }
   }
 
   /**
@@ -145,7 +269,7 @@ export class PostsRepository {
 
     const where: Prisma.PostWhereInput = {};
     
-    if (params.status) where.status = params.status as any;
+    if (params.status) where.status = params.status as Prisma.EnumPostStatusFilter;
     if (params.subcategoryId) where.subcategoryId = params.subcategoryId;
     if (params.authorId) where.authorId = params.authorId;
     if (params.featured !== undefined) where.featured = params.featured;
@@ -159,9 +283,8 @@ export class PostsRepository {
         include: {
           author: {
             select: {
-              id: true,
-              name: true,
-              username: true,
+              cognitoSub: true, // cognitoSub é a chave primária agora
+              fullName: true,
               avatar: true,
             }
           },
@@ -178,8 +301,20 @@ export class PostsRepository {
       this.prisma.post.count({ where }),
     ]);
 
+    // Mapeia os posts para transformar cognitoSub em id no author (formato esperado pelo frontend)
+    // Nota: nickname não está no MongoDB (gerenciado apenas pelo Cognito), usa primeira palavra do fullName como fallback
+    const mappedPosts = posts.map(post => ({
+      ...post,
+      author: post.author ? {
+        id: post.author.cognitoSub, // Mapeia cognitoSub para id
+        nickname: post.author.fullName.split(' ')[0] || '', // Usa primeira palavra do fullName como fallback
+        fullName: post.author.fullName,
+        avatar: post.author.avatar || undefined,
+      } : undefined,
+    }));
+
     return {
-      posts: posts as PostWithRelations[],
+      posts: mappedPosts as PostWithRelations[],
       pagination: {
         page,
         limit,
@@ -216,6 +351,9 @@ export class PostsRepository {
       updateData.subcategory = { connect: { id: data.subcategoryId } };
     }
 
+    // Atualiza updatedAt apenas quando há uma atualização real
+    updateData.updatedAt = new Date();
+
     return await this.prisma.post.update({ 
       where: { id }, 
       data: updateData 
@@ -243,7 +381,10 @@ export class PostsRepository {
   async incrementViews(id: string): Promise<void> {
     await this.prisma.post.update({
       where: { id },
-      data: { views: { increment: 1 } },
+      data: { 
+        views: { increment: 1 },
+        updatedAt: new Date(), // Atualiza quando há mudança real
+      },
     });
   }
 

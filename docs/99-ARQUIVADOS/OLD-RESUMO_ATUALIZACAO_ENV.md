@@ -105,7 +105,7 @@ DATABASE_PROVIDER=PRISMA
 DATABASE_URL="mongodb://localhost:27017/blog?replicaSet=rs0&directConnection=true"
 
 # 2. Subir MongoDB
-docker run -d --name mongodb -p 27017:27017 mongo:7 --replSet rs0
+docker run -d --fullName mongodb -p 27017:27017 mongo:7 --replSet rs0
 docker exec mongodb mongosh --eval "rs.initiate()"
 
 # 3. Setup Prisma

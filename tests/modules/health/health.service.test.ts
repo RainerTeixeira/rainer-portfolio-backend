@@ -1,34 +1,31 @@
 /**
- * Testes Unitários: Health Service
+ * Testes do Health Service com Banco Real
  * 
- * Testa a lógica de health check da aplicação.
+ * Testa a lógica de health check usando banco real.
+ * Minimiza mocks - apenas DatabaseProviderContextService (necessário para contexto).
+ * 
  * Cobertura: 100%
  */
 
-import { Test, TestingModule } from '@nestjs/testing';
+import { TestingModule } from '@nestjs/testing';
 import { HealthService } from '../../../src/modules/health/health.service';
-import { HealthRepository } from '../../../src/modules/health/health.repository';
+import { HealthModule } from '../../../src/modules/health/health.module';
+import { PrismaService } from '../../../src/prisma/prisma.service';
 import { DatabaseProviderContextService } from '../../../src/utils/database-provider/database-provider-context.service';
+import {
+  createDatabaseTestModule,
+  cleanDatabase,
+} from '../../helpers/database-test-helper';
 
-describe('HealthService', () => {
+describe('HealthService (Banco Real)', () => {
   let service: HealthService;
-  let repository: jest.Mocked<HealthRepository>;
+  let prisma: PrismaService;
+  let module: TestingModule;
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+  beforeAll(async () => {
+    module = await createDatabaseTestModule({
+      imports: [HealthModule],
       providers: [
-        HealthService,
-        {
-          provide: HealthRepository,
-          useValue: {
-            getMemoryUsage: jest.fn(),
-            getUptime: jest.fn(),
-            getDatabaseStatus: jest.fn(),
-            getNodeVersion: jest.fn(),
-            getPlatform: jest.fn(),
-            getProcessId: jest.fn(),
-          },
-        },
         {
           provide: DatabaseProviderContextService,
           useValue: {
@@ -42,14 +39,21 @@ describe('HealthService', () => {
           },
         },
       ],
-    }).compile();
+    });
 
     service = module.get<HealthService>(HealthService);
-    repository = module.get(HealthRepository) as jest.Mocked<HealthRepository>;
+    prisma = module.get<PrismaService>(PrismaService);
+
+    await prisma.$connect();
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
+  afterAll(async () => {
+    await prisma.$disconnect();
+    await module.close();
+  });
+
+  beforeEach(async () => {
+    await cleanDatabase(prisma);
   });
 
   describe('Definição', () => {
@@ -81,36 +85,9 @@ describe('HealthService', () => {
       
       expect(result.status).toBe('ok');
     });
-
-    it('não deve chamar repository para health básico', async () => {
-      await service.getBasicHealth();
-
-      expect(repository.getMemoryUsage).not.toHaveBeenCalled();
-      expect(repository.getUptime).not.toHaveBeenCalled();
-      expect(repository.getDatabaseStatus).not.toHaveBeenCalled();
-    });
   });
 
   describe('getDetailedHealth', () => {
-    const mockMemory = {
-      rss: 50000000,
-      heapTotal: 40000000,
-      heapUsed: 20000000,
-      external: 1000000,
-      arrayBuffers: 500000,
-    };
-
-    const mockDatabase = {
-      provider: 'PRISMA',
-      status: 'connected' as const,
-    };
-
-    beforeEach(() => {
-      repository.getMemoryUsage.mockReturnValue(mockMemory);
-      repository.getUptime.mockReturnValue(3600);
-      repository.getDatabaseStatus.mockReturnValue(mockDatabase);
-    });
-
     it('deve retornar status detalhado de saúde', async () => {
       const result = await service.getDetailedHealth();
 
@@ -123,33 +100,28 @@ describe('HealthService', () => {
       expect(result).toHaveProperty('database');
     });
 
-    it('deve chamar repository para obter informações', async () => {
-      await service.getDetailedHealth();
-
-      expect(repository.getMemoryUsage).toHaveBeenCalledTimes(1);
-      expect(repository.getUptime).toHaveBeenCalledTimes(1);
-      expect(repository.getDatabaseStatus).toHaveBeenCalledTimes(1);
-    });
-
-    it('deve retornar uptime correto', async () => {
+    it('deve retornar uptime válido', async () => {
       const result = await service.getDetailedHealth();
 
-      expect(result.uptime).toBe(3600);
+      expect(typeof result.uptime).toBe('number');
+      expect(result.uptime).toBeGreaterThanOrEqual(0);
     });
 
-    it('deve retornar informações de memória', async () => {
+    it('deve retornar informações de memória válidas', async () => {
       const result = await service.getDetailedHealth();
 
-      expect(result.memory).toEqual(mockMemory);
+      expect(result.memory).toHaveProperty('rss');
+      expect(result.memory).toHaveProperty('heapTotal');
+      expect(result.memory).toHaveProperty('heapUsed');
       expect(result.memory.heapUsed).toBeLessThanOrEqual(result.memory.heapTotal);
     });
 
     it('deve retornar status do banco de dados', async () => {
       const result = await service.getDetailedHealth();
 
-      expect(result.database).toHaveProperty('provider', 'PRISMA');
-      expect(result.database).toHaveProperty('status', 'connected');
-      expect(result.database).toHaveProperty('description');
+      expect(result.database).toHaveProperty('provider');
+      expect(result.database).toHaveProperty('status');
+      expect(result.database.status).toBe('connected');
     });
 
     it('deve incluir todas as informações básicas', async () => {
@@ -172,4 +144,3 @@ describe('HealthService', () => {
     });
   });
 });
-

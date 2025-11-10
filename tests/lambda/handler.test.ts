@@ -8,6 +8,56 @@
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter } from '@nestjs/platform-fastify';
 import awsLambdaFastify from '@fastify/aws-lambda';
+import type { APIGatewayProxyEventV2, Context } from 'aws-lambda';
+
+// Helper para criar eventos válidos do API Gateway
+function createMockEvent(path: string, httpMethod: string = 'GET', body?: string): APIGatewayProxyEventV2 {
+  return {
+    version: '2.0',
+    routeKey: `${httpMethod} ${path}`,
+    rawPath: path,
+    rawQueryString: '',
+    headers: {},
+    requestContext: {
+      accountId: '123456789012',
+      apiId: 'api-id',
+      domainName: 'id.execute-api.us-east-1.amazonaws.com',
+      domainPrefix: 'id',
+      http: {
+        method: httpMethod,
+        path,
+        protocol: 'HTTP/1.1',
+        sourceIp: '127.0.0.1',
+        userAgent: 'agent',
+      },
+      requestId: 'id',
+      routeKey: `${httpMethod} ${path}`,
+      stage: '$default',
+      time: '12/Mar/2020:19:03:58 +0000',
+      timeEpoch: 1583348638390,
+    },
+    body,
+    isBase64Encoded: false,
+  } as APIGatewayProxyEventV2;
+}
+
+// Helper para criar contexto válido do Lambda
+function createMockContext(requestId: string = '123'): Context {
+  return {
+    callbackWaitsForEmptyEventLoop: false,
+    functionName: 'test-function',
+    functionVersion: '$LATEST',
+    invokedFunctionArn: 'arn:aws:lambda:us-east-1:123456789012:function:test-function',
+    memoryLimitInMB: '128',
+    awsRequestId: requestId,
+    logGroupName: '/aws/lambda/test-function',
+    logStreamName: '2020/03/12/[$LATEST]abcdef',
+    getRemainingTimeInMillis: () => 30000,
+    done: () => {},
+    fail: () => {},
+    succeed: () => {},
+  } as Context;
+}
 
 // Mock do AppModule ANTES de importar o handler
 jest.mock('../../src/app.module', () => ({
@@ -63,8 +113,8 @@ describe('Lambda Handler', () => {
     it('deve criar aplicação NestJS na primeira chamada', async () => {
       const { lambdaHandler } = await import('../../src/lambda/handler');
       
-      const event = { httpMethod: 'GET', path: '/health' };
-      const context = { requestId: '123' };
+      const event = createMockEvent('/health', 'GET');
+      const context = createMockContext('123');
 
       await lambdaHandler(event, context);
 
@@ -76,8 +126,8 @@ describe('Lambda Handler', () => {
     it('deve usar FastifyAdapter', async () => {
       const { lambdaHandler } = await import('../../src/lambda/handler');
       
-      const event = { httpMethod: 'GET', path: '/health' };
-      const context = { requestId: '123' };
+      const event = createMockEvent('/health', 'GET');
+      const context = createMockContext('123');
 
       await lambdaHandler(event, context);
 
@@ -88,8 +138,8 @@ describe('Lambda Handler', () => {
     it('deve inicializar a aplicação', async () => {
       const { lambdaHandler } = await import('../../src/lambda/handler');
       
-      const event = { httpMethod: 'GET', path: '/health' };
-      const context = { requestId: '123' };
+      const event = createMockEvent('/health', 'GET');
+      const context = createMockContext('123');
 
       await lambdaHandler(event, context);
 
@@ -100,8 +150,8 @@ describe('Lambda Handler', () => {
     it('deve criar handler com awsLambdaFastify', async () => {
       const { lambdaHandler } = await import('../../src/lambda/handler');
       
-      const event = { httpMethod: 'GET', path: '/health' };
-      const context = { requestId: '123' };
+      const event = createMockEvent('/health', 'GET');
+      const context = createMockContext('123');
 
       await lambdaHandler(event, context);
 
@@ -117,9 +167,9 @@ describe('Lambda Handler', () => {
       
       const { lambdaHandler } = await import('../../src/lambda/handler');
       
-      const event1 = { httpMethod: 'GET', path: '/health' };
-      const event2 = { httpMethod: 'GET', path: '/posts' };
-      const context = { requestId: '123' };
+      const event1 = createMockEvent('/health', 'GET');
+      const event2 = createMockEvent('/posts', 'GET');
+      const context = createMockContext('123');
 
       // Primeira chamada
       await lambdaHandler(event1, context);
@@ -137,8 +187,8 @@ describe('Lambda Handler', () => {
       
       const { lambdaHandler } = await import('../../src/lambda/handler');
       
-      const event = { httpMethod: 'GET', path: '/health' };
-      const context = { requestId: '123' };
+      const event = createMockEvent('/health', 'GET');
+      const context = createMockContext('123');
 
       // Múltiplas chamadas
       await lambdaHandler(event, context);
@@ -154,16 +204,8 @@ describe('Lambda Handler', () => {
     it('deve aceitar evento e contexto Lambda', async () => {
       const { lambdaHandler } = await import('../../src/lambda/handler');
       
-      const event = {
-        httpMethod: 'GET',
-        path: '/api/health',
-        headers: {},
-        body: null,
-      };
-      const context = {
-        requestId: 'test-request-id',
-        functionName: 'test-function',
-      };
+      const event = createMockEvent('/api/health', 'GET');
+      const context = createMockContext('test-request-id');
 
       await lambdaHandler(event, context);
 
@@ -173,12 +215,8 @@ describe('Lambda Handler', () => {
     it('deve processar eventos GET', async () => {
       const { lambdaHandler } = await import('../../src/lambda/handler');
       
-      const event = {
-        httpMethod: 'GET',
-        path: '/posts',
-        headers: {},
-      };
-      const context = { requestId: '123' };
+      const event = createMockEvent('/posts', 'GET');
+      const context = createMockContext('123');
 
       const result = await lambdaHandler(event, context);
 
@@ -188,13 +226,8 @@ describe('Lambda Handler', () => {
     it('deve processar eventos POST', async () => {
       const { lambdaHandler } = await import('../../src/lambda/handler');
       
-      const event = {
-        httpMethod: 'POST',
-        path: '/posts',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ title: 'Test Post' }),
-      };
-      const context = { requestId: '123' };
+      const event = createMockEvent('/posts', 'POST', JSON.stringify({ title: 'Test Post' }));
+      const context = createMockContext('123');
 
       const result = await lambdaHandler(event, context);
 
@@ -204,13 +237,8 @@ describe('Lambda Handler', () => {
     it('deve processar eventos PUT', async () => {
       const { lambdaHandler } = await import('../../src/lambda/handler');
       
-      const event = {
-        httpMethod: 'PUT',
-        path: '/posts/123',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ title: 'Updated' }),
-      };
-      const context = { requestId: '123' };
+      const event = createMockEvent('/posts/123', 'PUT', JSON.stringify({ title: 'Updated' }));
+      const context = createMockContext('123');
 
       const result = await lambdaHandler(event, context);
 
@@ -220,12 +248,8 @@ describe('Lambda Handler', () => {
     it('deve processar eventos DELETE', async () => {
       const { lambdaHandler } = await import('../../src/lambda/handler');
       
-      const event = {
-        httpMethod: 'DELETE',
-        path: '/posts/123',
-        headers: {},
-      };
-      const context = { requestId: '123' };
+      const event = createMockEvent('/posts/123', 'DELETE');
+      const context = createMockContext('123');
 
       const result = await lambdaHandler(event, context);
 
@@ -237,15 +261,12 @@ describe('Lambda Handler', () => {
     it('deve processar headers do evento', async () => {
       const { lambdaHandler } = await import('../../src/lambda/handler');
       
-      const event = {
-        httpMethod: 'GET',
-        path: '/posts',
-        headers: {
-          'x-database-provider': 'DYNAMODB',
-          'authorization': 'Bearer token',
-        },
+      const event = createMockEvent('/posts', 'GET');
+      event.headers = {
+        'x-database-provider': 'DYNAMODB',
+        'authorization': 'Bearer token',
       };
-      const context = { requestId: '123' };
+      const context = createMockContext('123');
 
       await lambdaHandler(event, context);
 
@@ -258,16 +279,13 @@ describe('Lambda Handler', () => {
     it('deve aceitar múltiplos headers', async () => {
       const { lambdaHandler } = await import('../../src/lambda/handler');
       
-      const event = {
-        httpMethod: 'GET',
-        path: '/posts',
-        headers: {
-          'content-type': 'application/json',
-          'accept': 'application/json',
-          'x-api-key': 'test-key',
-        },
+      const event = createMockEvent('/posts', 'GET');
+      event.headers = {
+        'content-type': 'application/json',
+        'accept': 'application/json',
+        'x-api-key': 'test-key',
       };
-      const context = { requestId: '123' };
+      const context = createMockContext('123');
 
       await lambdaHandler(event, context);
 
@@ -279,12 +297,8 @@ describe('Lambda Handler', () => {
     it('deve receber requestId do contexto', async () => {
       const { lambdaHandler } = await import('../../src/lambda/handler');
       
-      const event = { httpMethod: 'GET', path: '/health' };
-      const context = {
-        requestId: 'unique-request-id',
-        functionName: 'myFunction',
-        functionVersion: '1',
-      };
+      const event = createMockEvent('/health', 'GET');
+      const context = createMockContext('unique-request-id');
 
       await lambdaHandler(event, context);
 
@@ -294,20 +308,13 @@ describe('Lambda Handler', () => {
     it('deve passar contexto completo para o handler', async () => {
       const { lambdaHandler } = await import('../../src/lambda/handler');
       
-      const event = { httpMethod: 'GET', path: '/health' };
-      const context = {
-        requestId: '123',
-        functionName: 'test-function',
-        functionVersion: '$LATEST',
-        invokedFunctionArn: 'arn:aws:lambda:us-east-1:123456789:function:test',
-        memoryLimitInMB: '512',
-        awsRequestId: 'aws-123',
-      };
+      const event = createMockEvent('/health', 'GET');
+      const context = createMockContext('123');
 
       await lambdaHandler(event, context);
 
       expect(mockHandler).toHaveBeenCalledWith(event, expect.objectContaining({
-        requestId: '123',
+        awsRequestId: '123',
         functionName: 'test-function',
       }));
     });
@@ -323,8 +330,8 @@ describe('Lambda Handler', () => {
       };
       mockHandler.mockResolvedValue(expectedResponse);
 
-      const event = { httpMethod: 'GET', path: '/health' };
-      const context = { requestId: '123' };
+      const event = createMockEvent('/health', 'GET');
+      const context = createMockContext('123');
 
       const response = await lambdaHandler(event, context);
 
@@ -339,8 +346,8 @@ describe('Lambda Handler', () => {
         body: JSON.stringify({ created: true }),
       });
 
-      const event = { httpMethod: 'POST', path: '/posts' };
-      const context = { requestId: '123' };
+      const event = createMockEvent('/posts', 'POST');
+      const context = createMockContext('123');
 
       const response = await lambdaHandler(event, context);
 
@@ -356,8 +363,8 @@ describe('Lambda Handler', () => {
         body: JSON.stringify(responseData),
       });
 
-      const event = { httpMethod: 'GET', path: '/posts' };
-      const context = { requestId: '123' };
+      const event = createMockEvent('/posts', 'GET');
+      const context = createMockContext('123');
 
       const response = await lambdaHandler(event, context);
 
@@ -369,8 +376,8 @@ describe('Lambda Handler', () => {
     it('deve importar AppModule', async () => {
       const { lambdaHandler } = await import('../../src/lambda/handler');
       
-      const event = { httpMethod: 'GET', path: '/health' };
-      const context = { requestId: '123' };
+      const event = createMockEvent('/health', 'GET');
+      const context = createMockContext('123');
 
       await lambdaHandler(event, context);
 
@@ -387,8 +394,8 @@ describe('Lambda Handler', () => {
       const { lambdaHandler } = await import('../../src/lambda/handler');
       
       const start = Date.now();
-      const event = { httpMethod: 'GET', path: '/health' };
-      const context = { requestId: '123' };
+      const event = createMockEvent('/health', 'GET');
+      const context = createMockContext('123');
 
       await lambdaHandler(event, context);
       
@@ -401,15 +408,15 @@ describe('Lambda Handler', () => {
       
       // Primeira chamada (cold start)
       await lambdaHandler(
-        { httpMethod: 'GET', path: '/health' },
-        { requestId: '1' }
+        createMockEvent('/health', 'GET'),
+        createMockContext('1')
       );
 
       // Segunda chamada (warm start)
       const start = Date.now();
       await lambdaHandler(
-        { httpMethod: 'GET', path: '/health' },
-        { requestId: '2' }
+        createMockEvent('/health', 'GET'),
+        createMockContext('2')
       );
       const duration = Date.now() - start;
 
@@ -424,8 +431,8 @@ describe('Lambda Handler', () => {
 
       const { lambdaHandler } = await import('../../src/lambda/handler');
       
-      const event = { httpMethod: 'GET', path: '/health' };
-      const context = { requestId: '123' };
+      const event = createMockEvent('/health', 'GET');
+      const context = createMockContext('123');
 
       await expect(lambdaHandler(event, context)).rejects.toThrow('Handler error');
       
@@ -442,8 +449,8 @@ describe('Lambda Handler', () => {
       // Simular erro no handler
       mockHandler.mockRejectedValueOnce(new Error('Internal error'));
       
-      const event = { httpMethod: 'GET', path: '/health' };
-      const context = { requestId: '123' };
+      const event = createMockEvent('/health', 'GET');
+      const context = createMockContext('123');
 
       await expect(lambdaHandler(event, context)).rejects.toThrow();
     });
@@ -464,8 +471,8 @@ describe('Lambda Handler', () => {
       
       const { lambdaHandler } = await import('../../src/lambda/handler');
       
-      const event = { httpMethod: 'GET', path: '/health' };
-      const context = { requestId: '123' };
+      const event = createMockEvent('/health', 'GET');
+      const context = createMockContext('123');
 
       // Múltiplas invocações
       await lambdaHandler(event, context);
@@ -487,8 +494,8 @@ describe('Lambda Handler', () => {
     it('deve retornar Promise', async () => {
       const { lambdaHandler } = await import('../../src/lambda/handler');
       
-      const event = { httpMethod: 'GET', path: '/health' };
-      const context = { requestId: '123' };
+      const event = createMockEvent('/health', 'GET');
+      const context = createMockContext('123');
 
       const result = lambdaHandler(event, context);
       

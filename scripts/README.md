@@ -4,27 +4,28 @@
 
 ## 🎯 Estrutura Organizada
 
-### 📂 Todos na Pasta scripts/:
+### 📂 Todos na Pasta scripts/
+
 - **12 pastas numeradas (00 a 11)** - Scripts organizados por ordem lógica
 
 Cada pasta contém:
 - ✅ **README.txt** - Documentação completa do script
 - ✅ **script.bat** - Atalho Windows (duplo clique)
 - ✅ **script.ps1** - PowerShell (Windows avançado)
-- ✅ **script.sh** - Bash (Linux/Mac/WSL)
 
 ---
 
-## 📁 Scripts Disponíveis
+## Scripts Disponíveis
 
-### 00. 🚀 Iniciar Ambiente ⭐
-📂 **Pasta:** `00-iniciar-ambiente/`
+### 00. Iniciar Ambiente 
+
+**Pasta:** `00-iniciar-ambiente/`
 
 Setup completo do projeto com três opções diferentes (início mais rápido!)
 
-✅ Opção 1: MongoDB + Prisma (desenvolvimento)  
-✅ Opção 2: DynamoDB Local (pré-deploy)  
-✅ Opção 3: Ambiente Completo (ambos)  
+- Opção 1: MongoDB + Prisma (desenvolvimento)  
+- Opção 2: DynamoDB Local (pré-deploy)  
+- Opção 3: Ambiente Completo (ambos)
 
 ```bash
 # Windows - MongoDB
@@ -49,15 +50,16 @@ Setup completo do projeto com três opções diferentes (início mais rápido!)
 
 ---
 
-### 01. 🔍 Verificar Ambiente
-📂 **Pasta:** `01-verificar-ambiente/`
+### 01. Verificar Ambiente
+
+**Pasta:** `01-verificar-ambiente/`
 
 Diagnóstico completo do ambiente
 
-✅ Verifica Docker, Node.js, npm  
-✅ Verifica portas disponíveis  
-✅ Verifica arquivos e configurações  
-✅ Status dos containers  
+- Verifica Docker, Node.js, npm  
+- Verifica portas disponíveis  
+- Verifica arquivos e configurações  
+- Status dos containers
 
 ```bash
 # Windows
@@ -72,15 +74,16 @@ Diagnóstico completo do ambiente
 
 ---
 
-### 02. 🐳 Gerenciar Docker
-📂 **Pasta:** `02-gerenciar-docker/`
+### 02. Gerenciar Docker
+
+**Pasta:** `02-gerenciar-docker/`
 
 Gerencia MongoDB, DynamoDB e interfaces gráficas
 
-✅ Iniciar/parar/reiniciar todos os serviços  
-✅ Ver status detalhado  
-✅ Visualizar logs  
-✅ Limpar volumes  
+- Iniciar/parar/reiniciar todos os serviços  
+- Ver status detalhado  
+- Visualizar logs  
+- Limpar volumes
 
 ```bash
 # Windows
@@ -95,14 +98,15 @@ Gerencia MongoDB, DynamoDB e interfaces gráficas
 
 ---
 
-### 03. 🔄 Alternar Banco de Dados
-📂 **Pasta:** `03-alternar-banco-dados/`
+### 03. Alternar Banco de Dados
+
+**Pasta:** `03-alternar-banco-dados/`
 
 Alterna entre MongoDB (Prisma) e DynamoDB Local
 
-✅ Detecção automática do banco atual  
-✅ Backup automático do .env  
-✅ Instruções pós-configuração  
+- Detecção automática do banco atual  
+- Backup automático do .env  
+- Instruções pós-configuração  
 
 ```bash
 # Windows
@@ -117,15 +121,16 @@ Alterna entre MongoDB (Prisma) e DynamoDB Local
 
 ---
 
-### 04. 📊 Status dos Containers
-📂 **Pasta:** `04-status-containers/`
+### 04. Status dos Containers
+
+**Pasta:** `04-status-containers/`
 
 Visualiza status de todos containers
 
-✅ Nome, status e portas  
-✅ Health check  
-✅ URLs de acesso  
-✅ Comandos úteis  
+- Nome, status e portas  
+- Health check  
+- URLs de acesso  
+- Comandos úteis  
 
 ```bash
 # Windows
@@ -140,107 +145,138 @@ Visualiza status de todos containers
 
 ---
 
-### 05. 🗄️ Testar MongoDB
-📂 **Pasta:** `05-testar-mongodb/`
+### Scripts de Teste (Organizados em `testes/`)
+
+### 05. Testar MongoDB
+
+**Pasta:** `testes/05-testar-mongodb/`
 
 Validação completa MongoDB + Prisma
 
-✅ Testes de integração  
-✅ Testes E2E  
-✅ Cobertura de código  
-✅ Setup automático  
+- Testes de integração  
+- Testes E2E  
+- Cobertura de código  
+- Setup automático  
 
 ```bash
 # Windows
-.\05-testar-mongodb\testar-mongodb.bat
+.\testes\05-testar-mongodb\testar-mongodb.bat
 
 # PowerShell
-.\05-testar-mongodb\testar-mongodb.ps1 [-Quick|-E2E|-Coverage]
+.\testes\05-testar-mongodb\testar-mongodb.ps1 [-Quick|-E2E|-Coverage]
 
 # Linux/Mac
-./05-testar-mongodb/testar-mongodb.sh
+./testes/05-testar-mongodb/testar-mongodb.sh
 ```
 
 ---
 
-### 06. 📊 Testar DynamoDB
-📂 **Pasta:** `06-testar-dynamodb/`
+### 06. Testar DynamoDB
+
+**Pasta:** `testes/06-testar-dynamodb/`
 
 Validação completa DynamoDB Local
 
-✅ Testes de integração  
-✅ Testes E2E  
-✅ Cobertura de código  
-✅ Criação automática de tabelas  
+- Testes de integração  
+- Testes E2E  
+- Cobertura de código  
+- Criação automática de tabelas  
 
 ```bash
 # Windows
-.\06-testar-dynamodb\testar-dynamodb.bat
+.\testes\06-testar-dynamodb\testar-dynamodb.bat
 
 # PowerShell
-.\06-testar-dynamodb\testar-dynamodb.ps1 [-Quick|-E2E|-Coverage]
+.\testes\06-testar-dynamodb\testar-dynamodb.ps1 [-Quick|-E2E|-Coverage]
 
 # Linux/Mac
-./06-testar-dynamodb/testar-dynamodb.sh
+./testes/06-testar-dynamodb/testar-dynamodb.sh
 ```
 
 ---
 
-### 07. 🧪 Testar API Completo
-📂 **Pasta:** `07-testar-api-completo/`
+### 07. Testar API Completo
+
+**Pasta:** `testes/07-testar-api-completo/`
 
 Testa **TODAS** as rotas da API (87+ requisições)
 
-✅ CRUD completo em todos módulos  
-✅ Criação automática de dados de teste  
-✅ Relatório detalhado com estatísticas  
-✅ Limpeza opcional  
+- CRUD completo em todos módulos  
+- Criação automática de dados de teste  
+- Relatório detalhado com estatísticas  
+- Limpeza opcional  
 
 ```bash
 # Windows
-.\07-testar-api-completo\testar-api.bat
+.\testes\07-testar-api-completo\testar-api.bat
 
 # PowerShell
-.\07-testar-api-completo\testar-api.ps1 [-DatabaseProvider DYNAMODB]
+.\testes\07-testar-api-completo\testar-api.ps1 [-DatabaseProvider DYNAMODB]
 
 # Linux/Mac
-./07-testar-api-completo/testar-api.sh
+./testes/07-testar-api-completo/testar-api.sh
 ```
 
 ---
 
-### 08. 🧪 Testar Antes de Deploy
-📂 **Pasta:** `08-testar-antes-deploy/`
+### 08. Testar Antes de Deploy
+
+**Pasta:** `testes/08-testar-antes-deploy/`
 
 Simula ambiente AWS localmente
 
-✅ Configura DynamoDB Local  
-✅ Cria tabelas e popula dados  
-✅ Testa endpoints críticos  
-✅ Relatório de aprovação  
+- Configura DynamoDB Local  
+- Cria tabelas e popula dados  
+- Testa endpoints críticos  
+- Relatório de aprovação  
 
 ```bash
 # Windows
-.\08-testar-antes-deploy\testar-antes-deploy.bat
+.\testes\08-testar-antes-deploy\testar-antes-deploy.bat
 
 # PowerShell
-.\08-testar-antes-deploy\testar-antes-deploy.ps1
+.\testes\08-testar-antes-deploy\testar-antes-deploy.ps1
 
 # Linux/Mac
-./08-testar-antes-deploy/testar-antes-deploy.sh
+./testes/08-testar-antes-deploy/testar-antes-deploy.sh
 ```
 
 ---
 
-### 09. 🔑 Atualizar Credenciais AWS
-📂 **Pasta:** `09-atualizar-aws/`
+### 08. Memória do Projeto
+
+**Pasta:** `08-memoria/`
+
+Gerenciamento de memórias do projeto para IA e ferramentas MCP
+
+- Atualizar memórias
+- Ler memórias
+- Carregar memórias
+- Testar memórias
+
+```bash
+# TypeScript scripts
+npm run memory:update
+npm run memory:read
+npm run memory:read:initial
+npm run memory:read:technical
+npm run memory:read:code
+npm run memory:load
+npm run memory:load:text
+```
+
+---
+
+### 09. Atualizar Credenciais AWS
+
+**Pasta:** `09-atualizar-aws/`
 
 Atualiza credenciais AWS no .env
 
-✅ Entrada interativa segura  
-✅ Mascaramento de Secret Key  
-✅ Backup automático  
-✅ Confirmação antes de salvar  
+- Entrada interativa segura  
+- Mascaramento de Secret Key  
+- Backup automático  
+- Confirmação antes de salvar  
 
 ```bash
 # Windows
@@ -255,15 +291,16 @@ Atualiza credenciais AWS no .env
 
 ---
 
-### 10. ✨ Finalizar Configuração
-📂 **Pasta:** `10-finalizar-configuracao/`
+### 10. Finalizar Configuração
+
+**Pasta:** `10-finalizar-configuracao/`
 
 Preparação completa para produção
 
-✅ Instala AWS CLI  
-✅ Cria tabelas DynamoDB  
-✅ Popula MongoDB  
-✅ Valida ambiente completo  
+- Instala AWS CLI  
+- Cria tabelas DynamoDB  
+- Popula MongoDB  
+- Valida ambiente completo  
 
 ```bash
 # Windows
@@ -278,16 +315,15 @@ Preparação completa para produção
 
 ---
 
-### 11. 🧹 Limpar Ambiente
-📂 **Pasta:** `11-limpar-ambiente/`
+### 11. Limpar Ambiente
+
+**Pasta:** `11-limpar-ambiente/`
 
 Reset completo: containers, volumes, node_modules, .env
 
-⚠️ **ATENÇÃO:** Operação DESTRUTIVA!
-
-✅ Remove tudo (Docker + Node.js)  
-✅ Limpeza rápida ou completa  
-✅ Confirmação antes de executar  
+- Remove tudo (Docker + Node.js)  
+- Limpeza rápida ou completa  
+- Confirmação antes de executar  
 
 ```bash
 # Windows
@@ -302,13 +338,13 @@ Reset completo: containers, volumes, node_modules, .env
 
 ---
 
-## 🚀 Guia Rápido de Uso
+## Guia Rápido de Uso
 
-### 🆕 Primeira Vez no Projeto?
+### Primeira Vez no Projeto?
 
 **Opção Simples (Recomendado):**
 
-⭐ Entre na pasta `scripts/` e execute:
+- Entre na pasta `scripts/` e execute:
 
 ```bash
 # Windows
@@ -336,7 +372,7 @@ cd scripts
 3. **03-alternar-banco-dados/** - Escolher banco (PRISMA ou DYNAMODB)
 4. **10-finalizar-configuracao/** - Preparar tudo
 
-### 💻 Desenvolvimento Diário?
+### Desenvolvimento Diário?
 
 ```bash
 cd scripts  # Entre na pasta scripts/
@@ -345,99 +381,99 @@ cd scripts  # Entre na pasta scripts/
 1. **00-iniciar-ambiente/** - Iniciar tudo rapidamente OU
 2. **02-gerenciar-docker/** start - Iniciar containers
 3. **04-status-containers/** - Ver o que está rodando
-4. **07-testar-api-completo/** - Testar rotas
+4. **testes/07-testar-api-completo/** - Testar rotas
 
-### 🧪 Testando Bancos de Dados?
+### Testando Bancos de Dados?
 
-- **MongoDB/Prisma:** 05-testar-mongodb/
-- **DynamoDB Local:** 06-testar-dynamodb/
-- **API Completa:** 07-testar-api-completo/
+- **MongoDB/Prisma:** testes/05-testar-mongodb/
+- **DynamoDB Local:** testes/06-testar-dynamodb/
+- **API Completa:** testes/07-testar-api-completo/
 
-### 🆘 Problemas?
+### Problemas?
 
 1. **01-verificar-ambiente/** - Diagnosticar
 2. **04-status-containers/** - Ver containers
 3. **11-limpar-ambiente/** - Reset completo (última opção)
 
-### 🚢 Antes de Deploy?
+### Antes de Deploy?
 
-1. **06-testar-dynamodb/** - Validar DynamoDB
-2. **08-testar-antes-deploy/** - Testar localmente
+1. **testes/06-testar-dynamodb/** - Validar DynamoDB
+2. **testes/08-testar-antes-deploy/** - Testar localmente
 3. **09-atualizar-aws/** - Configurar credenciais
 4. **10-finalizar-configuracao/** - Preparar tudo
 
 ---
 
-## 💡 Dicas Úteis
+## Dicas Úteis
 
-**⚠️ Importante:** Todos os comandos devem ser executados dentro da pasta `scripts/`
+**Importante:** Todos os comandos devem ser executados dentro da pasta `scripts/`
 
 ```bash
 # Entre na pasta scripts primeiro
 cd scripts
 
-# 🚀 Iniciar Rapidamente
+# Iniciar Rapidamente
 .\00-iniciar-ambiente\iniciar-mongodb.bat      # Mais rápido para dev
 .\00-iniciar-ambiente\iniciar-completo.bat     # Tudo configurado
 
-# 🔄 Trocar de banco rapidamente
+# Trocar de banco rapidamente
 .\03-alternar-banco-dados\alternar-banco.ps1 PRISMA
 .\03-alternar-banco-dados\alternar-banco.ps1 DYNAMODB
 
-# 📊 Ver status rápido
+# Ver status rápido
 .\04-status-containers\status-containers.bat
 
-# 🧪 Testar API completa
+# Testar API completa
 .\07-testar-api-completo\testar-api.bat
 
-# 🗄️ Testar MongoDB
-.\05-testar-mongodb\testar-mongodb.bat
+# Testar MongoDB
+.\testes\05-testar-mongodb\testar-mongodb.bat
 
-# 📊 Testar DynamoDB
-.\06-testar-dynamodb\testar-dynamodb.bat
+# Testar DynamoDB
+.\testes\06-testar-dynamodb\testar-dynamodb.bat
 
-# 🔍 Diagnosticar problemas
+# Diagnosticar problemas
 .\01-verificar-ambiente\verificar-ambiente.bat
 
-# 🧹 Reset completo
+# Reset completo
 .\11-limpar-ambiente\limpar-ambiente.bat
 ```
 
 ---
 
-## 📋 Formato dos Scripts
+## Formato dos Scripts
 
 Cada pasta contém **4 arquivos**:
 
-### 📄 README.txt
+### README.txt
 - Documentação completa
 - Exemplos de uso
 - Troubleshooting
 - Casos de uso
 
-### 🪟 script.bat
+### script.bat
 - Atalho Windows
 - Duplo clique para executar
 - Mais fácil para iniciantes
 
-### ⚡ script.ps1
+### script.ps1
 - PowerShell (Windows)
 - Aceita parâmetros
 - Mais flexível e poderoso
 
-### 🐧 script.sh
+### script.sh
 - Bash (Linux/Mac/WSL)
 - Compatível com ambientes Unix
 - `chmod +x` antes de usar
 
 ---
 
-## ⚙️ Requisitos
+## Requisitos
 
 ### Ferramentas Necessárias:
-- ✅ Docker Desktop
-- ✅ Node.js v18+ e npm
-- ✅ Git
+- Docker Desktop
+- Node.js v18+ e npm
+- Git
 
 ### Opcional (mas recomendado):
 - AWS CLI (para deploy)
@@ -446,7 +482,7 @@ Cada pasta contém **4 arquivos**:
 
 ---
 
-## 🆘 Ajuda e Suporte
+## Ajuda e Suporte
 
 Cada pasta tem **README.txt completo** com:
 - Descrição detalhada
@@ -462,20 +498,20 @@ Cada pasta tem **README.txt completo** com:
 
 ---
 
-## 📚 Documentação Adicional
+## Documentação Adicional
 
-- 📖 [Documentação principal](../docs/)
-- 📖 [Guia de deploy AWS](../docs/GUIA_DEPLOY_CLOUD.md)
-- 📖 [Troubleshooting](../docs/03-GUIAS/GUIA_TROUBLESHOOTING_SCRIPTS.md)
+- [Documentação principal](../docs/)
+- [Guia de deploy AWS](../docs/GUIA_DEPLOY_CLOUD.md)
+- [Troubleshooting](../docs/03-GUIAS/GUIA_TROUBLESHOOTING_SCRIPTS.md)
 
 ---
 
-## 🎉 Conclusão
+## Conclusão
 
 Todos os scripts foram organizados de forma intuitiva e documentada.  
 Cada pasta é independente e auto-explicativa.
 
-### 📍 Estrutura do Projeto:
+### Estrutura do Projeto:
 
 ```
 rainer-portfolio-backend/
@@ -492,17 +528,28 @@ rainer-portfolio-backend/
       ├─ 02-gerenciar-docker/
       ├─ 03-alternar-banco-dados/
       ├─ 04-status-containers/
-      ├─ 05-testar-mongodb/
-      ├─ 06-testar-dynamodb/
-      ├─ 07-testar-api-completo/
-      ├─ 08-testar-antes-deploy/
+      │
+      ├─ testes/                       ← Scripts de teste organizados
+      │   ├─ 04-testar-api-completo/
+      │   ├─ 05-testar-mongodb/
+      │   ├─ 06-testar-dynamodb/
+      │   ├─ 07-testar-api-completo/
+      │   └─ 08-testar-antes-deploy/
+      │
+      ├─ 08-memoria/                  ← Scripts TypeScript de memória
+      │   ├─ update-memory.ts
+      │   ├─ read-memory.ts
+      │   ├─ memory-loader.ts
+      │   ├─ test-memory-questions.ts
+      │   └─ setup-memory-reader.js
+      │
       ├─ 09-atualizar-aws/
       ├─ 10-finalizar-configuracao/
       └─ 11-limpar-ambiente/
 ```
 
 **🚀 Para começar rapidamente:** `cd scripts` → Execute `00-iniciar-ambiente/`  
-**🔧 Para gerenciar passo a passo:** Use os scripts de `01` a `11` em ordem
+**🔧 Para gerenciar passo a passo:** Use os scripts de `00` a `11` em ordem
 
 ---
 

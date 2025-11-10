@@ -56,11 +56,11 @@ A aplicação **Blog API NestJS** passou por uma validação completa de produç
 *Nota: DynamoDB Local mostra "unhealthy" mas está funcionando (resposta de erro esperada sem credenciais)
 
 ### **URLs de Acesso**
-- **API Principal:** http://localhost:4000
-- **Swagger UI:** http://localhost:4000/docs
-- **Health Check:** http://localhost:4000/health
-- **Prisma Studio:** http://localhost:5555
-- **DynamoDB Admin:** http://localhost:8001
+- **API Principal:** <http://localhost:4000>
+- **Swagger UI:** <http://localhost:4000/docs>
+- **Health Check:** <http://localhost:4000/health>
+- **Prisma Studio:** <http://localhost:5555>
+- **DynamoDB Admin:** <http://localhost:8001>
 
 ---
 
@@ -163,7 +163,7 @@ curl -H "X-Database-Provider: DYNAMODB" http://localhost:4000/health
 - **Resposta:** ID e dados completos retornados
 
 ### **4. Swagger UI Interativo**
-- **URL:** http://localhost:4000/docs
+- **URL:** <http://localhost:4000/docs>
 - **Status:** ✅ Funcionando perfeitamente
 - **Features:**
   - Documentação completa de todos endpoints

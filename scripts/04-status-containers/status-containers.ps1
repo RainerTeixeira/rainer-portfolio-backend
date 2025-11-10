@@ -20,7 +20,7 @@ try {
 Write-Host "🔍 Containers do BlogAPI:`n" -ForegroundColor Yellow
 
 # Listar containers
-$containers = docker ps -a --filter "name=blogapi" --format "{{.Names}}|{{.Status}}|{{.Ports}}"
+$containers = docker ps -a --filter "fullName=blogapi" --format "{{.Names}}|{{.Status}}|{{.Ports}}"
 
 if ($containers) {
     Write-Host "Container                Status                    Portas" -ForegroundColor Cyan
@@ -28,14 +28,14 @@ if ($containers) {
     
     foreach ($container in $containers) {
         $parts = $container -split '\|'
-        $name = $parts[0]
+        $fullName = $parts[0]
         $status = $parts[1]
         $ports = $parts[2]
         
         if ($status -match "Up") {
-            Write-Host "$name  " -NoNewline -ForegroundColor Green
+            Write-Host "$fullName  " -NoNewline -ForegroundColor Green
         } else {
-            Write-Host "$name  " -NoNewline -ForegroundColor Red
+            Write-Host "$fullName  " -NoNewline -ForegroundColor Red
         }
         Write-Host "$status  $ports"
     }
@@ -47,7 +47,7 @@ if ($containers) {
 
 # Resumo
 $total = ($containers | Measure-Object).Count
-$running = (docker ps --filter "name=blogapi" -q | Measure-Object).Count
+$running = (docker ps --filter "fullName=blogapi" -q | Measure-Object).Count
 
 Write-Host "📊 Resumo Geral:" -ForegroundColor Yellow
 Write-Host "   Total de containers BlogAPI: $total"
@@ -56,16 +56,16 @@ Write-Host "   Containers rodando: $running`n" -ForegroundColor Green
 # URLs
 Write-Host "🌐 URLs Disponíveis:`n" -ForegroundColor Yellow
 
-if (docker ps --filter "name=blogapi-mongodb" --filter "status=running" -q) {
+if (docker ps --filter "fullName=blogapi-mongodb" --filter "status=running" -q) {
     Write-Host "   ✅ MongoDB:        mongodb://localhost:27017" -ForegroundColor Green
 }
-if (docker ps --filter "name=blogapi-dynamodb" --filter "status=running" -q) {
+if (docker ps --filter "fullName=blogapi-dynamodb" --filter "status=running" -q) {
     Write-Host "   ✅ DynamoDB:       http://localhost:8000" -ForegroundColor Green
 }
-if (docker ps --filter "name=blogapi-prisma-studio" --filter "status=running" -q) {
+if (docker ps --filter "fullName=blogapi-prisma-studio" --filter "status=running" -q) {
     Write-Host "   ✅ Prisma Studio:  http://localhost:5555" -ForegroundColor Green
 }
-if (docker ps --filter "name=blogapi-dynamodb-admin" --filter "status=running" -q) {
+if (docker ps --filter "fullName=blogapi-dynamodb-admin" --filter "status=running" -q) {
     Write-Host "   ✅ DynamoDB Admin: http://localhost:8001" -ForegroundColor Green
 }
 

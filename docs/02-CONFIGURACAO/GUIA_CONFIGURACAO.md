@@ -33,7 +33,7 @@ cp env.example .env
 
 ```bash
 # 1. Subir MongoDB
-docker run -d --name blogapi-mongodb -p 27017:27017 mongo:7 --replSet rs0
+docker run -d --fullName blogapi-mongodb -p 27017:27017 mongo:7 --replSet rs0
 docker exec blogapi-mongodb mongosh --eval "rs.initiate()"
 
 # 2. Configurar .env
@@ -143,7 +143,7 @@ npm run dev
 
 ```bash
 # Via Docker (recomendado)
-docker run -d --name blogapi-mongodb -p 27017:27017 mongo:7 --replSet rs0
+docker run -d --fullName blogapi-mongodb -p 27017:27017 mongo:7 --replSet rs0
 docker exec blogapi-mongodb mongosh --eval "rs.initiate()"
 
 # Ou via Docker Compose
@@ -367,7 +367,7 @@ Independente do provider, o projeto mantém **7 modelos**:
 
 1. **Users** - Usuários, autores, perfis (cognitoSub, email, username, role)
 2. **Posts** - Artigos do blog (title, slug, content, subcategoryId, authorId)
-3. **Categories** - Categorias hierárquicas (name, slug, parentId)
+3. **Categories** - Categorias hierárquicas (fullName, slug, parentId)
 4. **Comments** - Comentários com threads (content, postId, parentId)
 5. **Likes** - Curtidas (userId, postId)
 6. **Bookmarks** - Posts salvos (userId, postId, collection, notes)

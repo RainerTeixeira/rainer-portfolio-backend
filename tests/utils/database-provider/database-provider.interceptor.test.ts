@@ -344,7 +344,7 @@ describe('DatabaseProviderInterceptor', () => {
 
   describe('Propagação de Resposta', () => {
     it('deve propagar resposta do handler', (done) => {
-      const responseData = { id: '123', name: 'Test' };
+      const responseData = { id: '123', fullName: 'Test' };
       mockCallHandler.handle = jest.fn().mockReturnValue(of(responseData));
       mockExecutionContext = createMockContext({
         'x-database-provider': 'PRISMA',

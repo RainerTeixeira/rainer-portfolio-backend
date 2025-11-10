@@ -32,7 +32,7 @@ echo -e "${YELLOW}🔍 Containers do BlogAPI:${NC}"
 echo ""
 
 # Listar containers
-docker ps -a --filter "name=blogapi" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+docker ps -a --filter "fullName=blogapi" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 
 if [ $? -ne 0 ]; then
     echo -e "${YELLOW}⚠️  Nenhum container BlogAPI encontrado${NC}"
@@ -41,8 +41,8 @@ fi
 echo ""
 
 # Resumo
-TOTAL=$(docker ps -a --filter "name=blogapi" -q | wc -l)
-RUNNING=$(docker ps --filter "name=blogapi" -q | wc -l)
+TOTAL=$(docker ps -a --filter "fullName=blogapi" -q | wc -l)
+RUNNING=$(docker ps --filter "fullName=blogapi" -q | wc -l)
 
 echo -e "${YELLOW}📊 Resumo Geral:${NC}"
 echo "   Total de containers BlogAPI: $TOTAL"
@@ -53,16 +53,16 @@ echo ""
 echo -e "${YELLOW}🌐 URLs Disponíveis:${NC}"
 echo ""
 
-if docker ps --filter "name=blogapi-mongodb" --filter "status=running" -q &> /dev/null; then
+if docker ps --filter "fullName=blogapi-mongodb" --filter "status=running" -q &> /dev/null; then
     echo -e "${GREEN}   ✅ MongoDB:        mongodb://localhost:27017${NC}"
 fi
-if docker ps --filter "name=blogapi-dynamodb" --filter "status=running" -q &> /dev/null; then
+if docker ps --filter "fullName=blogapi-dynamodb" --filter "status=running" -q &> /dev/null; then
     echo -e "${GREEN}   ✅ DynamoDB:       http://localhost:8000${NC}"
 fi
-if docker ps --filter "name=blogapi-prisma-studio" --filter "status=running" -q &> /dev/null; then
+if docker ps --filter "fullName=blogapi-prisma-studio" --filter "status=running" -q &> /dev/null; then
     echo -e "${GREEN}   ✅ Prisma Studio:  http://localhost:5555${NC}"
 fi
-if docker ps --filter "name=blogapi-dynamodb-admin" --filter "status=running" -q &> /dev/null; then
+if docker ps --filter "fullName=blogapi-dynamodb-admin" --filter "status=running" -q &> /dev/null; then
     echo -e "${GREEN}   ✅ DynamoDB Admin: http://localhost:8001${NC}"
 fi
 

@@ -81,8 +81,14 @@ docs/
 ├── 📂 06-RESULTADOS/             📊 Resultados (1 doc consolidado)
 │   └── RESULTADO_QUALIDADE.md         - ⭐ Qualidade, testes, conformidade, certificação
 │
-├── 📂 07-DOCKER/                 🐳 Docker e Containers ⭐ NOVO
+├── 📂 07-DOCKER/                 🐳 Docker e Containers
 │   └── GUIA_DOCKER_COMPOSE.md             - ⭐ Guia Completo Único (800+ linhas)
+│
+├── 📂 08-MIGRACAO/               🔄 Migração Cognito + MongoDB ⭐ NOVO
+│   ├── README.md                          - Índice da pasta
+│   ├── ARQUITETURA_COGNITO_MONGODB.md     - ⭐ Arquitetura completa
+│   ├── GUIA_IMPLEMENTACAO_BACKEND.md      - ⭐ Implementação backend
+│   └── GUIA_PRODUCAO.md                   - ⭐ Checklist de produção
 │
 ├── 📂 98-HISTORICO/              📚 Histórico (65 documentos)
 └── 📂 99-ARQUIVADOS/             🗄️ Arquivos antigos (26+ pastas/arquivos)
@@ -208,9 +214,9 @@ docs/
 
 ### Documentação
 
-- 📂 **7 pastas** ativas + 2 auxiliares
-- 📄 **18 documentos** consolidados (de 36 arquivos)
-- 📝 **12.000+ linhas** de conteúdo otimizado
+- 📂 **8 pastas** ativas + 2 auxiliares
+- 📄 **21 documentos** consolidados
+- 📝 **14.000+ linhas** de conteúdo otimizado
 - ⏱️ **3 horas** de leitura
 - ✅ **0% redundância** - 100% consolidado
 
@@ -262,9 +268,15 @@ docs/
 - [GUIA_DYNAMODB_LOCAL.md](03-GUIAS/GUIA_DYNAMODB_LOCAL.md) - DynamoDB
 - [GUIA_RAPIDO_TESTES.md](03-GUIAS/GUIA_RAPIDO_TESTES.md) - Testes
 
-### Docker: 🆕
+### Docker
 
 - [GUIA_DOCKER_COMPOSE.md](07-DOCKER/GUIA_DOCKER_COMPOSE.md) - ⭐ Guia Completo Docker Compose
+
+### Migração: 🆕
+
+- [ARQUITETURA_COGNITO_MONGODB.md](08-MIGRACAO/ARQUITETURA_COGNITO_MONGODB.md) - ⭐ Arquitetura Cognito + MongoDB
+- [GUIA_IMPLEMENTACAO_BACKEND.md](08-MIGRACAO/GUIA_IMPLEMENTACAO_BACKEND.md) - Implementação backend
+- [GUIA_PRODUCAO.md](08-MIGRACAO/GUIA_PRODUCAO.md) - Checklist de produção
 
 ---
 
@@ -331,7 +343,17 @@ docs/
 
 ## 📝 Histórico de Versões
 
-### v4.1.0 (16/10/2025) - Docker Compose Consolidado ⭐ ATUAL
+### v4.2.0 (Janeiro/2025) - Migração Cognito + MongoDB ⭐ ATUAL
+
+- ✅ Criada pasta 08-MIGRACAO com 3 documentos profissionais
+- ✅ ARQUITETURA_COGNITO_MONGODB.md - Arquitetura completa da integração
+- ✅ GUIA_IMPLEMENTACAO_BACKEND.md - Implementação detalhada
+- ✅ GUIA_PRODUCAO.md - Checklist e scripts de produção
+- ✅ Documentação de fluxos (registro, login, atualização, alteração de email)
+- ✅ Separação clara: Cognito (autenticação) vs MongoDB (perfil)
+- ✅ Sistema 100% implementado e testado
+
+### v4.1.0 (16/10/2025) - Docker Compose Consolidado
 
 - ✅ Documentação Docker consolidada em **1 guia único** (800+ linhas)
 - ✅ Removida redundância (3 arquivos → 1 guia completo)

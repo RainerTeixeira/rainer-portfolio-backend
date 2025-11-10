@@ -24,7 +24,7 @@ describe('UsersController', () => {
             createUser: jest.fn(),
             listUsers: jest.fn(),
             getUserById: jest.fn(),
-            getUserByUsername: jest.fn(),
+            getUserByCognitoSub: jest.fn(),
             updateUser: jest.fn(),
             deleteUser: jest.fn(),
           },
@@ -44,10 +44,9 @@ describe('UsersController', () => {
     it('deve criar usuário com sucesso', async () => {
       const createData = {
         cognitoSub: 'cognito-sub-123',
-        email: 'test@example.com',
+        fullName: 'Test User',
         username: 'testuser',
-        name: 'Test User',
-        password: 'Test@123',
+        email: 'test@example.com',
       };
 
       const mockUser = createMockUser();
@@ -136,17 +135,24 @@ describe('UsersController', () => {
     });
   });
 
-  describe('findByUsername', () => {
-    it('deve buscar usuário por username com sucesso', async () => {
+  describe('findByCognitoSub', () => {
+    it('deve buscar usuário por Cognito Sub com sucesso', async () => {
       const mockUser = createMockUser();
-      service.getUserByUsername.mockResolvedValue(mockUser);
+      // getUserByCognitoSub retorna User com propriedades extras (username, nickname, email, etc.)
+      const userWithExtras = {
+        ...mockUser,
+        username: 'testuser',
+        nickname: 'testuser',
+        email: 'test@example.com',
+      };
+      service.getUserByCognitoSub.mockResolvedValue(userWithExtras as any);
 
-      const result = await controller.findByUsername('testuser');
+      const result = await controller.findByCognitoSub('cognito-sub-123');
 
-      expect(service.getUserByUsername).toHaveBeenCalledWith('testuser');
+      expect(service.getUserByCognitoSub).toHaveBeenCalledWith('cognito-sub-123');
       expect(result).toEqual({
         success: true,
-        data: mockUser,
+        data: userWithExtras,
       });
     });
   });
@@ -154,16 +160,18 @@ describe('UsersController', () => {
   describe('update', () => {
     it('deve atualizar usuário com sucesso', async () => {
       const updateData = {
-        name: 'Updated Name',
+        fullName: 'Updated Name',
         bio: 'Updated bio',
       };
 
       const mockUser = createMockUser(updateData);
       service.updateUser.mockResolvedValue(mockUser);
 
-      const result = await controller.update('user-123', updateData);
+      const mockRequest = {} as any;
+      const result = await controller.update('user-123', updateData, mockRequest);
 
-      expect(service.updateUser).toHaveBeenCalledWith('user-123', updateData);
+      // updateUser recebe (cognitoSub, data, avatarFile?)
+      expect(service.updateUser).toHaveBeenCalledWith('user-123', updateData, undefined);
       expect(result).toEqual({
         success: true,
         data: mockUser,

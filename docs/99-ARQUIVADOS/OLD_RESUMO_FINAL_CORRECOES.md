@@ -140,7 +140,7 @@ repository.delete.mockResolvedValue(true);
 const tokenPayload = {
   sub: 'cognito-sub-123',
   email: 'test@example.com',
-  name: 'Test User',
+  fullName: 'Test User',
 };
 ```
 
@@ -150,7 +150,7 @@ const tokenPayload = {
 const tokenPayload = {
   sub: 'cognito-sub-123',
   email: 'test@example.com',
-  name: 'Test User',
+  fullName: 'Test User',
   email_verified: true, // ✅ Adicionado
 };
 ```

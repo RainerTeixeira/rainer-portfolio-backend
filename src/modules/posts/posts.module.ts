@@ -1,5 +1,5 @@
 /**
- * Posts Module
+ * Módulo de Posts
  * 
  * Módulo NestJS para gerenciamento de posts/artigos.
  * 

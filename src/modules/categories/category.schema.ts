@@ -1,5 +1,5 @@
 /**
- * Category Schemas - Validação Zod
+ * Schemas de Categoria - Validação Zod
  * 
  * Schemas de validação para categorias usando Zod.
  * 

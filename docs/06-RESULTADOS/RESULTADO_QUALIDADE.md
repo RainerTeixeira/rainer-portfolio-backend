@@ -695,12 +695,14 @@ export function validateEnvironment(env) {
 ### **📦 Package.json Otimizado**
 
 #### **Removido (Limpeza):**
+
 - ❌ Scripts duplicados: `seed` (triplicado), `dev` vs `start:dev`
 - ❌ Scripts legados: `*:old` (dev:old, build:old, start:old)
 - ❌ Dependências não usadas: `nestjs-zod`, `nestjs-prisma`, `joi`
 - ❌ Redirecionamento de logs: `> logs/*.log 2>&1` (dificultava debug)
 
 #### **Adicionado:**
+
 - ✅ `@aws-sdk/client-cognito-identity-provider` (dependência faltante)
 - ✅ `test:clear-cache` - Limpar cache do Jest
 - ✅ `docker:ps` - Status dos containers
@@ -711,8 +713,9 @@ export function validateEnvironment(env) {
 - ✅ `typecheck` - Verificação de tipos sem build
 
 #### **Melhorado:**
+
 - ✅ Scripts organizados por categoria (Dev, Tests, Database, Docker, AWS SAM, Logs)
-- ✅ Metadados do autor estruturados (`author: { name, email, url }`)
+- ✅ Metadados do autor estruturados (`author: { fullName, email, url }`)
 - ✅ Keywords atualizadas e relevantes
 - ✅ Engine npm adicionado (`>=9.0.0`)
 - ✅ Versão atualizada para `4.1.0`
@@ -720,6 +723,7 @@ export function validateEnvironment(env) {
 ### **🎯 Cobertura 100% em env.ts**
 
 #### **Problema Original:**
+
 ```typescript
 // 2 linhas não testáveis (Catch-22)
 if (!_env.success) {
@@ -729,6 +733,7 @@ if (!_env.success) {
 ```
 
 #### **Solução Profissional (Método Google):**
+
 ```typescript
 // Função exportada e 100% testável
 export function validateEnvironment(processEnv: NodeJS.ProcessEnv) {
@@ -746,6 +751,7 @@ export const env = validateEnvironment(process.env);
 ```
 
 #### **Novo Arquivo de Testes:**
+
 - 📄 `tests/config/env.error-handling.test.ts` (21 testes)
 - ✅ Testa caminho de sucesso (3 testes)
 - ✅ Testa caminho de erro (7 testes) 🎯
@@ -890,7 +896,7 @@ Após a excelência em qualidade de código, o projeto passou por uma **validaç
    - Alternância perfeita entre bancos por requisição
 
 4. **✅ Swagger UI Interativo**
-   - Documentação completa em http://localhost:4000/docs
+   - Documentação completa em <http://localhost:4000/docs>
    - Teste de endpoints via interface web
    - Headers customizados funcionando
 

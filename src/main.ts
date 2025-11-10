@@ -1,5 +1,5 @@
 /**
- * Entry Point - NestJS Application
+ * Ponto de Entrada da Aplicação - NestJS
  * 
  * Ponto de entrada da aplicação NestJS com Fastify adapter.
  * 
@@ -12,12 +12,34 @@ import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from '@fastify/helmet';
+import multipart from '@fastify/multipart';
 import { AppModule } from './app.module';
 import { env } from './config/env';
 import { DatabaseProviderInterceptor, DatabaseProviderContextService } from './utils/database-provider';
 
 /**
- * Bootstrap da aplicação
+ * Inicializa a aplicação NestJS com Fastify e configura middlewares, CORS, validação, interceptores e Swagger.
+ *
+ * Passos principais:
+ * - Cria `NestFastifyApplication` com `FastifyAdapter` e logger condicional por ambiente.
+ * - Registra `helmet` com ajustes para compatibilidade de APIs e Swagger.
+ * - Registra `@fastify/multipart` com limites adequados para upload.
+ * - Habilita CORS com origem, métodos e headers permitidos.
+ * - Aplica `ValidationPipe` global para transformação e whitelisting.
+ * - Instala `DatabaseProviderInterceptor` para seleção dinâmica de banco por header.
+ * - Define rota raiz (`/`) com metadados da API.
+ * - Configura documentação `Swagger` e UI com CSS customizado.
+ * - Inicia o servidor em `env.PORT` e `env.HOST` com logs de status.
+ *
+ * @returns Promise que resolve quando o servidor está escutando.
+ *
+ * @example
+ * // Entry point padrão
+ * bootstrap().catch((error) => { console.error(error); process.exit(1); });
+ *
+ * @remarks
+ * - `operationIdFactory` define IDs de operação usando o nome do método, útil para clientes gerados.
+ * - O CSS customizado da UI do Swagger melhora legibilidade e organização das tags.
  */
 async function bootstrap() {
   // Criar aplicação NestJS com Fastify
@@ -28,29 +50,29 @@ async function bootstrap() {
 
   // Helmet - Security Headers
   // Configurado para permitir Swagger UI funcionar corretamente
+  // CSP e XSS Protection desabilitados por questões de performance e compatibilidade
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await app.register(helmet as any, {
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: [`'self'`],
-        styleSrc: [`'self'`, `'unsafe-inline'`], // Swagger precisa de inline styles
-        scriptSrc: [`'self'`, `'unsafe-inline'`, `'unsafe-eval'`], // Swagger precisa de inline scripts
-        imgSrc: [`'self'`, 'data:', 'https:', 'http:'], // Permitir imagens externas
-        fontSrc: [`'self'`, 'data:'],
-        connectSrc: [`'self'`],
-        frameSrc: [`'none'`],
-        objectSrc: [`'none'`],
-        baseUri: [`'self'`],
-        formAction: [`'self'`],
-      },
-    },
+    contentSecurityPolicy: false, // Desabilitado - não necessário para APIs REST
+    xssFilter: false, // Desabilitado - header descontinuado pelos navegadores
     crossOriginEmbedderPolicy: false, // Desabilitar para APIs
     crossOriginResourcePolicy: { policy: 'cross-origin' }, // Permitir CORS
+  });
+
+  // Habilitar multipart para upload de arquivos
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await app.register(multipart as any, {
+    limits: {
+      fileSize: 5 * 1024 * 1024, // 5MB para imagens do blog (aumentado de 2MB)
+    },
   });
 
   // Habilitar CORS
   app.enableCors({
     origin: env.CORS_ORIGIN || '*',
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Database-Provider'],
   });
 
   // Global Validation Pipe (Zod)
@@ -68,6 +90,7 @@ async function bootstrap() {
 
   // Rota raiz (/) - Página inicial da API
   const fastifyInstance = app.getHttpAdapter().getInstance();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   fastifyInstance.get('/', async (_request: any, reply: any) => {
     reply.status(200).send({
       success: true,
@@ -169,9 +192,11 @@ Use o header **X-Database-Provider** para escolher o banco em cada requisição:
     )
     .build();
 
+  console.log('📚 Criando documentação Swagger...');
   const document = SwaggerModule.createDocument(app, config, {
     operationIdFactory: (_controllerKey: string, methodKey: string) => methodKey,
   });
+  console.log('✅ Documentação Swagger criada');
 
   // CSS customizado para UI bonita
   const customCss = `
@@ -215,22 +240,37 @@ Use o header **X-Database-Provider** para escolher o banco em cada requisição:
     .swagger-ui select { font-size: 1em; padding: 8px; }
   `;
 
-  SwaggerModule.setup('docs', app, document, {
-    customCss,
-    customSiteTitle: '📝 Blog API - Documentação',
-    swaggerOptions: {
-      persistAuthorization: true,
-      displayRequestDuration: true,
-      filter: true,
-      tryItOutEnabled: true,
-      docExpansion: 'list',
-    },
-  });
+  console.log('🔧 Configurando Swagger UI...');
+  try {
+    SwaggerModule.setup('docs', app, document, {
+      customCss,
+      customSiteTitle: '📝 Blog API - Documentação',
+      swaggerOptions: {
+        persistAuthorization: true,
+        displayRequestDuration: true,
+        filter: true,
+        tryItOutEnabled: true,
+        docExpansion: 'list',
+      },
+    });
+    console.log('✅ Swagger UI configurado');
+  } catch (swaggerError) {
+    console.error('⚠️  Erro ao configurar Swagger UI (continuando...):', swaggerError);
+  }
 
   // Iniciar servidor
-  await app.listen(env.PORT, env.HOST);
-
-  console.log(`
+  console.log(`🔄 Iniciando servidor na porta ${env.PORT} (host: ${env.HOST})...`);
+  
+  try {
+    // Fastify/NestJS: sintaxe correta - usar parâmetros separados ou objeto
+    // Segundo a documentação NestJS: app.listen(port, host)
+    const port = Number(env.PORT);
+    const host = env.HOST || '0.0.0.0';
+    
+    console.log(`📡 Tentando escutar em ${host}:${port}...`);
+    await app.listen(port, host);
+    
+    console.log(`
   ═══════════════════════════════════════════════════════════
     🚀 NestJS + Fastify + MongoDB(Prisma)/DynamoDB + Zod
   ═══════════════════════════════════════════════════════════
@@ -241,7 +281,11 @@ Use o header **X-Database-Provider** para escolher o banco em cada requisição:
     Database:       ${process.env.DATABASE_PROVIDER || 'PRISMA'}
     Segurança:      Helmet ✅ | CORS ✅ | Zod ✅
   ═══════════════════════════════════════════════════════════
-  `);
+    `);
+  } catch (error) {
+    console.error('❌ Erro ao iniciar servidor:', error);
+    throw error;
+  }
 }
 
 bootstrap().catch((error) => {

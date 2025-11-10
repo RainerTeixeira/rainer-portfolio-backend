@@ -122,7 +122,7 @@ echo ""
 if [ ! -f samconfig.toml ]; then
     print_warning "Primeira vez? Usando deploy guiado..."
     sam deploy --guided \
-        --stack-name "${STACK_NAME}" \
+        --stack-fullName "${STACK_NAME}" \
         --parameter-overrides Environment="${ENVIRONMENT}" \
         --capabilities CAPABILITY_IAM \
         --resolve-s3
@@ -143,7 +143,7 @@ print_step "4. Obtendo informações da stack..."
 echo ""
 
 FUNCTION_URL=$(aws cloudformation describe-stacks \
-    --stack-name "${STACK_NAME}" \
+    --stack-fullName "${STACK_NAME}" \
     --query 'Stacks[0].Outputs[?OutputKey==`BlogApiFunctionUrl`].OutputValue' \
     --output text 2>/dev/null || echo "")
 

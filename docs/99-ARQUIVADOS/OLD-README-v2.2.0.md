@@ -27,7 +27,7 @@ API RESTful completa para blog com **arquitetura híbrida**: desenvolvimento loc
 npm run prisma:generate
 
 # 2. Subir MongoDB (Docker)
-docker run -d --name mongodb -p 27017:27017 mongo:7 --replSet rs0 && docker exec mongodb mongosh --eval "rs.initiate()"
+docker run -d --fullName mongodb -p 27017:27017 mongo:7 --replSet rs0 && docker exec mongodb mongosh --eval "rs.initiate()"
 
 # 3. Rodar aplicação
 npm run dev
@@ -243,7 +243,7 @@ GET    /likes/:userId/:postId      # Verificar se curtiu
 POST   /bookmarks                      # Salvar post
 GET    /bookmarks/:id                  # Buscar por ID
 GET    /bookmarks/user/:userId         # Bookmarks do usuário
-GET    /bookmarks/collection/:name     # Por coleção
+GET    /bookmarks/collection/:fullName     # Por coleção
 PUT    /bookmarks/:id                  # Atualizar
 DELETE /bookmarks/:id                  # Deletar
 DELETE /bookmarks/:userId/:postId     # Remover favorito
@@ -277,7 +277,7 @@ interface User {
   cognitoSub: string;            // ID único do Cognito (sincronização)
   email: string;                 // Único
   username: string;              // Único
-  name: string;
+  fullName: string;
   avatar?: string;
   bio?: string;
   website?: string;
@@ -323,7 +323,7 @@ interface Post {
 ```typescript
 interface Category {
   id: string;
-  name: string;                  // Único
+  fullName: string;                  // Único
   slug: string;                  // Único
   description?: string;
   color?: string;                // Hex (#FF5733)
@@ -369,7 +369,7 @@ cp env.example .env
 npm run prisma:generate
 
 # 5. Subir MongoDB
-docker run -d --name mongodb -p 27017:27017 mongo:7 --replSet rs0
+docker run -d --fullName mongodb -p 27017:27017 mongo:7 --replSet rs0
 docker exec mongodb mongosh --eval "rs.initiate()"
 
 # 6. Sincronizar schema
@@ -416,7 +416,7 @@ AWS_SECRET_ACCESS_KEY=your-secret
 
 ```bash
 # Iniciar MongoDB com replica set
-docker run -d --name mongodb -p 27017:27017 mongo:7 --replSet rs0
+docker run -d --fullName mongodb -p 27017:27017 mongo:7 --replSet rs0
 
 # Iniciar replica set
 docker exec mongodb mongosh --eval "rs.initiate()"
@@ -1227,7 +1227,7 @@ GET /posts?status=PUBLISHED&subcategoryId=abc123&page=1&limit=10
 // 1. Criar categoria principal
 POST /categories
 {
-  "name": "Tecnologia",
+  "fullName": "Tecnologia",
   "slug": "tecnologia",
   "color": "#3498DB",
   "icon": "code"
@@ -1237,7 +1237,7 @@ POST /categories
 // 2. Criar subcategoria
 POST /categories
 {
-  "name": "Frontend",
+  "fullName": "Frontend",
   "slug": "frontend",
   "parentId": "cat-tech",  // ← Filho de "Tecnologia"
   "color": "#E74C3C",

@@ -98,12 +98,12 @@ show_status() {
     services=("blogapi-mongodb:27017:MongoDB" "blogapi-dynamodb:8000:DynamoDB Local" "blogapi-prisma-studio:5555:Prisma Studio" "blogapi-dynamodb-admin:8001:DynamoDB Admin")
     
     for service_info in "${services[@]}"; do
-        IFS=: read -r container port name <<< "$service_info"
+        IFS=: read -r container port fullName <<< "$service_info"
         
-        if docker ps --filter "name=$container" --format "{{.Status}}" 2>/dev/null | grep -q "Up"; then
-            print_success "$name - Rodando (Porta: $port)"
+        if docker ps --filter "fullName=$container" --format "{{.Status}}" 2>/dev/null | grep -q "Up"; then
+            print_success "$fullName - Rodando (Porta: $port)"
         else
-            print_warning "$name - Parado"
+            print_warning "$fullName - Parado"
         fi
     done
     

@@ -34,7 +34,7 @@ src/modules/
 ┌─────────────────────────────────────────────┐
 │ 1. REGISTRO                                 │
 │    POST /auth/register                      │
-│    { email, password, name, username }      │
+│    { email, password, fullName, username }      │
 └─────────────────┬───────────────────────────┘
                   │
                   ▼
@@ -59,7 +59,7 @@ src/modules/
 ┌─────────────────────────────────────────────┐
 │ 4. RESPOSTA                                 │
 │    ✅ Usuário criado em ambos os sistemas   │
-│    { userId, email, name, ... }             │
+│    { userId, email, fullName, ... }             │
 └─────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────┐
@@ -141,7 +141,7 @@ model Post {
 
 model Category {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  name        String   @unique
+  fullName        String   @unique
   slug        String   @unique
   parentId    String?  @db.ObjectId  // ← Hierarquia 2 níveis
   // ... 11 campos a mais
@@ -479,7 +479,7 @@ curl -X POST http://localhost:4000/auth/register \
   -d '{
     "email": "teste@exemplo.com",
     "password": "SenhaSegura123!",
-    "name": "Teste",
+    "fullName": "Teste",
     "username": "teste"
   }'
 

@@ -118,7 +118,7 @@ model User {
   cognitoSub String   @unique
   email      String   @unique
   username   String   @unique
-  name       String
+  fullName       String
   // ...
   @@map("users")
 }
@@ -180,7 +180,7 @@ export class CategoriesController { }
 // Prisma Model (inglês)
 model Category {
   id          String    @id @map("_id")
-  name        String    @unique
+  fullName        String    @unique
   slug        String    @unique
   description String?
   parentId    String?   // null = categoria principal
@@ -710,7 +710,7 @@ export class EmailsController {
     summary: '🔍 Buscar Email',
     description: 'Busca um email específico pelo ID'
   })
-  @ApiParam({ name: 'id', description: 'ID do email' })
+  @ApiParam({ fullName: 'id', description: 'ID do email' })
   @ApiResponse({ status: 200, description: 'Email encontrado' })
   @ApiResponse({ status: 404, description: 'Email não encontrado' })
   async findById(@Param('id') id: string) {
@@ -889,13 +889,13 @@ Use o mesmo emoji para ações similares em todos os controllers:
 ```typescript
 // ✅ BOM - Bem documentado
 @ApiParam({ 
-  name: 'id', 
+  fullName: 'id', 
   description: 'ID único do email (UUID v4)',
   example: '550e8400-e29b-41d4-a716-446655440000'
 })
 
 @ApiQuery({ 
-  name: 'status', 
+  fullName: 'status', 
   required: false, 
   type: String,
   description: 'Filtrar por status (sent, delivered, bounced, failed)',
@@ -1087,7 +1087,7 @@ const customCss = `
       success: true,
       data: { 
         id: '123', 
-        name: 'João Silva',
+        fullName: 'João Silva',
         email: 'joao@example.com' 
       }
     }
@@ -1104,7 +1104,7 @@ const customCss = `
   minLength: 3,
   maxLength: 100
 })
-name: string;
+fullName: string;
 
 @ApiProperty({ 
   description: 'Email válido', 

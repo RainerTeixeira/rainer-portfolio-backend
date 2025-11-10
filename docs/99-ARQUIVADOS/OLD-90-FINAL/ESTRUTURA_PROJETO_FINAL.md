@@ -319,11 +319,11 @@ yyyyyyyyy/
 Cada módulo segue a mesma estrutura (7 arquivos):
 
 ```
-module-name/
-├── module-name.module.ts      # @Module() - Configuração do módulo
-├── module-name.controller.ts  # @Controller() - Rotas HTTP
-├── module-name.service.ts     # @Injectable() - Lógica de negócio
-├── module-name.repository.ts  # @Injectable() - Acesso a dados
+module-fullName/
+├── module-fullName.module.ts      # @Module() - Configuração do módulo
+├── module-fullName.controller.ts  # @Controller() - Rotas HTTP
+├── module-fullName.service.ts     # @Injectable() - Lógica de negócio
+├── module-fullName.repository.ts  # @Injectable() - Acesso a dados
 ├── singular.model.ts          # Interfaces TypeScript
 ├── singular.schema.ts         # Validações Zod
 └── index.ts                   # Barrel exports

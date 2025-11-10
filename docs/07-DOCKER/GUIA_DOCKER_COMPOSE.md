@@ -576,7 +576,7 @@ Tamanho:   ~200-300MB
 
 ```bash
 # Listar volumes
-docker volume ls --filter "name=blogapi"
+docker volume ls --filter "fullName=blogapi"
 
 # Inspecionar volume
 docker volume inspect blogapi-mongodb-data

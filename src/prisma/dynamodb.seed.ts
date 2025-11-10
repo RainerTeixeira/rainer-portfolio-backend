@@ -57,11 +57,10 @@ async function seedUsers() {
   
 const users = [
   {
-      id: nanoid(),
-      cognitoSub: nanoid(),
+      cognitoSub: '6488d4d8-9081-7058-108b-07aab2786b43', // CognitoSub fixo para testes com usuário aoline
     email: 'admin@blog.com',
       username: 'admin',
-      name: 'Administrador Sistema',
+      fullName: 'Administrador Sistema',
       avatar: 'https://i.pravatar.cc/150?img=1',
       bio: 'Administrador principal do sistema. Gerencio tudo por aqui!',
       website: 'https://blog.com',
@@ -73,11 +72,10 @@ const users = [
     updatedAt: new Date().toISOString(),
   },
   {
-      id: nanoid(),
-      cognitoSub: nanoid(),
+      cognitoSub: `cognito-${nanoid()}`,
     email: 'editor@blog.com',
       username: 'editor',
-      name: 'Maria Silva',
+      fullName: 'Maria Silva',
       avatar: 'https://i.pravatar.cc/150?img=2',
       bio: 'Editora de conteúdo. Amo revisar e aprovar posts incríveis!',
       website: 'https://mariasilva.com',
@@ -89,11 +87,10 @@ const users = [
     updatedAt: new Date().toISOString(),
   },
   {
-      id: nanoid(),
-      cognitoSub: nanoid(),
+      cognitoSub: `cognito-${nanoid()}`,
       email: 'joao@blog.com',
       username: 'joaodev',
-      name: 'João Desenvolvedor',
+      fullName: 'João Desenvolvedor',
       avatar: 'https://i.pravatar.cc/150?img=3',
       bio: 'Desenvolvedor Full Stack apaixonado por tecnologia e boas práticas.',
       website: 'https://joaodev.com.br',
@@ -110,11 +107,10 @@ const users = [
     updatedAt: new Date().toISOString(),
   },
   {
-      id: nanoid(),
-      cognitoSub: nanoid(),
+      cognitoSub: `cognito-${nanoid()}`,
     email: 'ana@blog.com',
       username: 'anadesigner',
-      name: 'Ana Designer',
+      fullName: 'Ana Designer',
       avatar: 'https://i.pravatar.cc/150?img=4',
       bio: 'Designer UX/UI. Criando experiências digitais incríveis desde 2015.',
       website: 'https://anadesigner.com',
@@ -130,11 +126,10 @@ const users = [
     updatedAt: new Date().toISOString(),
   },
   {
-      id: nanoid(),
-      cognitoSub: nanoid(),
+      cognitoSub: `cognito-${nanoid()}`,
       email: 'carlos@example.com',
       username: 'carlosleitor',
-      name: 'Carlos Leitor',
+      fullName: 'Carlos Leitor',
       avatar: 'https://i.pravatar.cc/150?img=5',
       bio: 'Leitor assíduo de tecnologia e desenvolvimento.',
       role: 'SUBSCRIBER',
@@ -147,11 +142,17 @@ const users = [
 ];
   
   for (const user of users) {
+    // PutCommand sempre sobrescreve/atualiza, garantindo que o administrador fixo seja sempre atualizado
     await dynamodb.send(new PutCommand({
       TableName: TABLES.USERS,
       Item: user,
     }));
-    console.log(`   ✅ ${user.name} (@${user.username}) - ${user.role}`);
+    
+    // Mostrar cognitoSub completo para o administrador fixo
+    const cognitoDisplay = user.cognitoSub === '6488d4d8-9081-7058-108b-07aab2786b43' 
+      ? user.cognitoSub 
+      : `${user.cognitoSub.substring(0, 20)}...`;
+    console.log(`   ✅ ${user.fullName} (@${user.username}) - ${user.role} [cognitoSub: ${cognitoDisplay}]`);
   }
   
   console.log(`✅ ${users.length} usuários inseridos`);
@@ -356,7 +357,7 @@ async function seedPosts(users: any[], categories: any) {
         ],
       },
       subcategoryId: categories.frontend.id,
-      authorId: users[2].id,
+      authorId: users[2].cognitoSub,
       status: 'PUBLISHED',
       featured: true,
       allowComments: true,
@@ -389,7 +390,7 @@ async function seedPosts(users: any[], categories: any) {
         ],
       },
       subcategoryId: categories.frontend.id,
-      authorId: users[2].id,
+      authorId: users[2].cognitoSub,
       status: 'PUBLISHED',
       featured: true,
       allowComments: true,
@@ -421,7 +422,7 @@ async function seedPosts(users: any[], categories: any) {
         ],
       },
       subcategoryId: categories.backend.id,
-      authorId: users[2].id,
+      authorId: users[2].cognitoSub,
       status: 'PUBLISHED',
       featured: false,
       allowComments: true,
@@ -452,7 +453,7 @@ async function seedPosts(users: any[], categories: any) {
         ],
       },
       subcategoryId: categories.backend.id,
-      authorId: users[2].id,
+      authorId: users[2].cognitoSub,
       status: 'PUBLISHED',
       allowComments: true,
       publishedAt: new Date('2024-10-12').toISOString(),
@@ -483,7 +484,7 @@ async function seedPosts(users: any[], categories: any) {
         ],
       },
       subcategoryId: categories.devops.id,
-      authorId: users[2].id,
+      authorId: users[2].cognitoSub,
       status: 'PUBLISHED',
       allowComments: true,
       publishedAt: new Date('2024-10-08').toISOString(),
@@ -514,7 +515,7 @@ async function seedPosts(users: any[], categories: any) {
         ],
       },
       subcategoryId: categories.uxui.id,
-      authorId: users[3].id,
+      authorId: users[3].cognitoSub,
       status: 'PUBLISHED',
       featured: true,
       allowComments: true,
@@ -545,7 +546,7 @@ async function seedPosts(users: any[], categories: any) {
         ],
       },
       subcategoryId: categories.uxui.id,
-      authorId: users[3].id,
+      authorId: users[3].cognitoSub,
       status: 'PUBLISHED',
       allowComments: true,
       publishedAt: new Date('2024-10-07').toISOString(),
@@ -576,7 +577,7 @@ async function seedPosts(users: any[], categories: any) {
         ],
       },
       subcategoryId: categories.produtividade.id,
-      authorId: users[1].id,
+      authorId: users[1].cognitoSub,
       status: 'PUBLISHED',
       allowComments: true,
       publishedAt: new Date('2024-10-09').toISOString(),
@@ -611,7 +612,7 @@ async function seedComments(users: any[], posts: any[]) {
     {
       id: nanoid(),
       content: 'Excelente artigo! O Concurrent Rendering realmente muda o jogo. Já estou usando no meu projeto e a diferença de performance é notável.',
-      authorId: users[4].id,
+      authorId: users[4].cognitoSub,
       postId: posts[0].id,
       isApproved: true,
       isReported: false,
@@ -623,7 +624,7 @@ async function seedComments(users: any[], posts: any[]) {
     {
       id: nanoid(),
       content: 'Que bom que gostou, Carlos! O Concurrent Rendering é mesmo impressionante. Você já experimentou o Suspense para data fetching?',
-      authorId: users[2].id,
+      authorId: users[2].cognitoSub,
       postId: posts[0].id,
       parentId: null, // Será o ID do primeiro comentário se precisar thread
       isApproved: true,
@@ -636,7 +637,7 @@ async function seedComments(users: any[], posts: any[]) {
     {
       id: nanoid(),
       content: 'Server Actions são o futuro! Não preciso mais criar rotas de API separadas. Isso economiza muito tempo e deixa o código mais limpo.',
-      authorId: users[3].id,
+      authorId: users[3].cognitoSub,
       postId: posts[1].id,
       isApproved: true,
       isReported: false,
@@ -648,7 +649,7 @@ async function seedComments(users: any[], posts: any[]) {
     {
       id: nanoid(),
       content: 'NestJS é incrível para projetos grandes. A arquitetura modular facilita muito a manutenção. Estou migrando meu projeto Express para NestJS.',
-      authorId: users[4].id,
+      authorId: users[4].cognitoSub,
       postId: posts[2].id,
       isApproved: true,
       isReported: false,
@@ -660,7 +661,7 @@ async function seedComments(users: any[], posts: any[]) {
     {
       id: nanoid(),
       content: 'Adorei o artigo sobre Figma! Muito útil para iniciantes.',
-      authorId: users[4].id,
+      authorId: users[4].cognitoSub,
       postId: posts[6].id,
       isApproved: false,
       isReported: false,
@@ -690,23 +691,23 @@ async function seedLikes(users: any[], posts: any[]) {
   
   const likes = [
     // Carlos curtiu vários posts
-    { id: nanoid(), userId: users[4].id, postId: posts[0].id, createdAt: new Date().toISOString() },
-    { id: nanoid(), userId: users[4].id, postId: posts[1].id, createdAt: new Date().toISOString() },
-    { id: nanoid(), userId: users[4].id, postId: posts[2].id, createdAt: new Date().toISOString() },
-    { id: nanoid(), userId: users[4].id, postId: posts[4].id, createdAt: new Date().toISOString() },
+    { id: nanoid(), userId: users[4].cognitoSub, postId: posts[0].id, createdAt: new Date().toISOString() },
+    { id: nanoid(), userId: users[4].cognitoSub, postId: posts[1].id, createdAt: new Date().toISOString() },
+    { id: nanoid(), userId: users[4].cognitoSub, postId: posts[2].id, createdAt: new Date().toISOString() },
+    { id: nanoid(), userId: users[4].cognitoSub, postId: posts[4].id, createdAt: new Date().toISOString() },
     
     // Ana curtiu posts de tech
-    { id: nanoid(), userId: users[3].id, postId: posts[0].id, createdAt: new Date().toISOString() },
-    { id: nanoid(), userId: users[3].id, postId: posts[1].id, createdAt: new Date().toISOString() },
-    { id: nanoid(), userId: users[3].id, postId: posts[2].id, createdAt: new Date().toISOString() },
+    { id: nanoid(), userId: users[3].cognitoSub, postId: posts[0].id, createdAt: new Date().toISOString() },
+    { id: nanoid(), userId: users[3].cognitoSub, postId: posts[1].id, createdAt: new Date().toISOString() },
+    { id: nanoid(), userId: users[3].cognitoSub, postId: posts[2].id, createdAt: new Date().toISOString() },
     
     // João curtiu posts de design
-    { id: nanoid(), userId: users[2].id, postId: posts[5].id, createdAt: new Date().toISOString() },
-    { id: nanoid(), userId: users[2].id, postId: posts[6].id, createdAt: new Date().toISOString() },
+    { id: nanoid(), userId: users[2].cognitoSub, postId: posts[5].id, createdAt: new Date().toISOString() },
+    { id: nanoid(), userId: users[2].cognitoSub, postId: posts[6].id, createdAt: new Date().toISOString() },
     
     // Maria curtiu vários
-    { id: nanoid(), userId: users[1].id, postId: posts[0].id, createdAt: new Date().toISOString() },
-    { id: nanoid(), userId: users[1].id, postId: posts[5].id, createdAt: new Date().toISOString() },
+    { id: nanoid(), userId: users[1].cognitoSub, postId: posts[0].id, createdAt: new Date().toISOString() },
+    { id: nanoid(), userId: users[1].cognitoSub, postId: posts[5].id, createdAt: new Date().toISOString() },
   ];
 
   for (const like of likes) {
@@ -729,7 +730,7 @@ async function seedBookmarks(users: any[], posts: any[]) {
   const bookmarks = [
     {
       id: nanoid(),
-      userId: users[4].id,
+      userId: users[4].cognitoSub,
       postId: posts[0].id,
       collection: 'Para Ler Depois',
       notes: 'Preciso estudar Concurrent Rendering com calma',
@@ -738,7 +739,7 @@ async function seedBookmarks(users: any[], posts: any[]) {
     },
     {
       id: nanoid(),
-      userId: users[4].id,
+      userId: users[4].cognitoSub,
       postId: posts[3].id,
       collection: 'Estudar',
       notes: 'Importante para o projeto atual',
@@ -747,7 +748,7 @@ async function seedBookmarks(users: any[], posts: any[]) {
     },
     {
       id: nanoid(),
-      userId: users[3].id,
+      userId: users[3].cognitoSub,
       postId: posts[1].id,
       collection: 'Favoritos',
       createdAt: new Date().toISOString(),
@@ -755,7 +756,7 @@ async function seedBookmarks(users: any[], posts: any[]) {
     },
     {
       id: nanoid(),
-      userId: users[3].id,
+      userId: users[3].cognitoSub,
       postId: posts[2].id,
       collection: 'Aprender Backend',
       notes: 'NestJS parece interessante para projetos grandes',
@@ -764,7 +765,7 @@ async function seedBookmarks(users: any[], posts: any[]) {
     },
     {
       id: nanoid(),
-      userId: users[2].id,
+      userId: users[2].cognitoSub,
       postId: posts[5].id,
       collection: 'Design Inspiration',
       createdAt: new Date().toISOString(),
@@ -796,7 +797,7 @@ async function seedNotifications(users: any[], posts: any[]) {
       title: 'Novo Comentário',
       message: 'Carlos comentou no seu post "Introdução ao React 18"',
       link: `/posts/${posts[0].id}`,
-      userId: users[2].id,
+      userId: users[2].cognitoSub,
       isRead: false,
       metadata: {
         postId: posts[0].id,
@@ -810,7 +811,7 @@ async function seedNotifications(users: any[], posts: any[]) {
       title: 'Novo Like',
       message: 'Ana Designer curtiu seu post "Next.js 14: Server Actions"',
       link: `/posts/${posts[1].id}`,
-      userId: users[2].id,
+      userId: users[2].cognitoSub,
       isRead: true,
       readAt: new Date('2024-10-11').toISOString(),
       metadata: {
@@ -825,7 +826,7 @@ async function seedNotifications(users: any[], posts: any[]) {
       title: 'Post Publicado',
       message: 'Seu post "Prisma ORM: Do Zero à Produção" foi publicado com sucesso!',
       link: `/posts/${posts[3].id}`,
-      userId: users[2].id,
+      userId: users[2].cognitoSub,
       isRead: true,
       readAt: new Date('2024-10-12').toISOString(),
       createdAt: new Date('2024-10-12').toISOString(),
@@ -836,7 +837,7 @@ async function seedNotifications(users: any[], posts: any[]) {
       title: 'Novo Comentário',
       message: 'Carlos comentou no seu post "Figma: Do Básico ao Avançado"',
       link: `/posts/${posts[6].id}`,
-      userId: users[3].id,
+      userId: users[3].cognitoSub,
       isRead: false,
       createdAt: new Date().toISOString(),
     },
@@ -845,7 +846,7 @@ async function seedNotifications(users: any[], posts: any[]) {
       type: 'SYSTEM',
       title: 'Bem-vindo ao Blog!',
       message: 'Obrigado por se cadastrar. Explore nossos artigos e não se esqueça de deixar seus comentários!',
-      userId: users[4].id,
+      userId: users[4].cognitoSub,
       isRead: false,
       createdAt: new Date().toISOString(),
     },

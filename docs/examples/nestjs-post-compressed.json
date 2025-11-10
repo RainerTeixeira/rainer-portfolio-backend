@@ -1,0 +1,122 @@
+{
+  "t": "d",
+  "c": [
+    {
+      "t": "h",
+      "l": 1,
+      "c": [{"t": "NestJS: Framework Node.js Escalável"}]
+    },
+    {
+      "t": "p",
+      "c": [{"t": "NestJS revoluciona desenvolvimento backend com arquitetura modular inspirada no Angular."}]
+    },
+    {
+      "t": "i",
+      "s": "v123/nest-architecture.jpg",
+      "a": "Arquitetura NestJS",
+      "tt": "Diagrama arquitetural"
+    },
+    {
+      "t": "h",
+      "l": 2,
+      "c": [{"t": "Principais Características"}]
+    },
+    {
+      "t": "ul",
+      "c": [
+        {
+          "t": "li",
+          "c": [{"t": "p", "c": [{"t": "Injeção de Dependência nativa"}]}]
+        },
+        {
+          "t": "li",
+          "c": [{"t": "p", "c": [{"t": "Arquitetura Modular"}]}]
+        },
+        {
+          "t": "li",
+          "c": [{"t": "p", "c": [{"t": "Suporte TypeScript"}]}]
+        },
+        {
+          "t": "li",
+          "c": [{"t": "p", "c": [{"t": "Decorators intuitivos"}]}]
+        }
+      ]
+    },
+    {
+      "t": "yt",
+      "vid": "abc123xyz",
+      "st": 0
+    },
+    {
+      "t": "cb",
+      "lang": "javascript",
+      "c": "@Controller('users')\nexport class UsersController {\n  constructor(private usersService: UsersService) {}\n}"
+    },
+    {
+      "t": "h",
+      "l": 2,
+      "c": [{"t": "Performance e Escalabilidade"}]
+    },
+    {
+      "t": "p",
+      "c": [{"t": "Benchmarks mostram ganhos de 40% em throughput comparado a Express puro."}]
+    },
+    {
+      "t": "tb",
+      "c": [
+        {
+          "t": "tr",
+          "c": [
+            {
+              "t": "th",
+              "c": [{"t": "Framework"}]
+            },
+            {
+              "t": "th",
+              "c": [{"t": "RPS"}]
+            },
+            {
+              "t": "th",
+              "c": [{"t": "Latência"}]
+            }
+          ]
+        },
+        {
+          "t": "tr",
+          "c": [
+            {
+              "t": "td",
+              "c": [{"t": "NestJS"}]
+            },
+            {
+              "t": "td",
+              "c": [{"t": "15.2k"}]
+            },
+            {
+              "t": "td",
+              "c": [{"t": "2.1ms"}]
+            }
+          ]
+        },
+        {
+          "t": "tr",
+          "c": [
+            {
+              "t": "td",
+              "c": [{"t": "Express"}]
+            },
+            {
+              "t": "td",
+              "c": [{"t": "10.8k"}]
+            },
+            {
+              "t": "td",
+              "c": [{"t": "3.5ms"}]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+

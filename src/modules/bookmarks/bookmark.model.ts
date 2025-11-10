@@ -14,7 +14,8 @@ export interface Bookmark {
   collection?: string | null;
   notes?: string | null;
   createdAt: Date;
-  updatedAt: Date;
+  /** Data de última atualização (null até primeira atualização real - economia de espaço) */
+  updatedAt: Date | null;
 }
 
 export interface CreateBookmarkData {

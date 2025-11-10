@@ -40,7 +40,10 @@ describe('PrismaService', () => {
 
   describe('onModuleInit', () => {
     it('deve conectar ao banco de dados na inicialização', async () => {
-      await service.onModuleInit();
+      service.onModuleInit();
+
+      // onModuleInit usa setImmediate, então aguardamos um pouco
+      await new Promise(resolve => setImmediate(resolve));
 
       expect(service.$connect).toHaveBeenCalledTimes(1);
     });
@@ -50,7 +53,14 @@ describe('PrismaService', () => {
       service.$connect = jest.fn().mockRejectedValue(error);
 
       // O serviço não propaga o erro, apenas loga um warning
-      await expect(service.onModuleInit()).resolves.not.toThrow();
+      service.onModuleInit();
+      
+      // Aguardar setImmediate
+      await new Promise(resolve => setImmediate(resolve));
+      
+      // Aguardar um pouco mais para a promise de conexão
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       expect(service.$connect).toHaveBeenCalledTimes(1);
     });
   });
@@ -72,7 +82,11 @@ describe('PrismaService', () => {
 
   describe('Lifecycle Completo', () => {
     it('deve conectar e desconectar em sequência', async () => {
-      await service.onModuleInit();
+      service.onModuleInit();
+      
+      // Aguardar setImmediate
+      await new Promise(resolve => setImmediate(resolve));
+      
       await service.onModuleDestroy();
 
       expect(service.$connect).toHaveBeenCalledTimes(1);

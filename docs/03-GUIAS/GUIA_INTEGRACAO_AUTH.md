@@ -38,14 +38,13 @@ Neste guia, você aprenderá:
 {
   "sub": "abc-123-xyz-789",  // ID único do usuário
   "email": "user@example.com",
-  "name": "João Silva"
+  "fullName": "João Silva"
 }
 
 // MongoDB
 {
   "id": "6745abc...",           // MongoDB ObjectId
   "cognitoSub": "abc-123-xyz",  // ← CHAVE DE SINCRONIZAÇÃO
-  "email": "user@example.com",
   "username": "joaosilva",
   "role": "AUTHOR"
 }
@@ -64,7 +63,7 @@ Content-Type: application/json
 {
   "email": "teste@exemplo.com",
   "password": "SenhaSegura123!",
-  "name": "Usuário Teste",
+  "fullName": "Usuário Teste",
   "username": "usuarioteste"
 }
 ```
@@ -84,7 +83,7 @@ async register(data: RegisterData): Promise<RegisterResponse> {
       cognitoSub: cognitoSub,    // ← Chave de sincronização
       email: data.email,
       username: data.username,
-      name: data.name,
+      fullName: data.fullName,
       avatar: data.avatar,
       role: 'AUTHOR',            // Padrão para novos usuários
     });
@@ -100,7 +99,7 @@ async register(data: RegisterData): Promise<RegisterResponse> {
   return {
     userId: cognitoSub,
     email: data.email,
-    name: data.name,
+    fullName: data.fullName,
     emailVerificationRequired: !cognitoResponse.UserConfirmed,
   };
 }
@@ -165,7 +164,7 @@ async login(data: LoginData): Promise<LoginResponse> {
       cognitoSub: payload.sub,
       email: payload.email,
       username: username,
-      name: payload.name || 'Usuário',
+      fullName: payload.fullName || 'Usuário',
     });
   }
 
@@ -177,7 +176,7 @@ async login(data: LoginData): Promise<LoginResponse> {
     expiresIn: ExpiresIn!,
     userId: user.id,       // ✅ ID do MongoDB (ObjectId)
     email: user.email,
-    name: user.name,
+    fullName: user.fullName,
   };
 }
 ```
@@ -200,7 +199,7 @@ async login(data: LoginData): Promise<LoginResponse> {
 ```
 ┌─────────────────────────────────────────────┐
 │  1. POST /auth/register                     │
-│     { email, password, name, username }     │
+│     { email, password, fullName, username }     │
 └────────────────┬────────────────────────────┘
                  ▼
 ┌─────────────────────────────────────────────┐
@@ -221,7 +220,7 @@ async login(data: LoginData): Promise<LoginResponse> {
                  ▼
 ┌─────────────────────────────────────────────┐
 │  4. Retorna sucesso                         │
-│     { userId, email, name, ... }            │
+│     { userId, email, fullName, ... }            │
 └─────────────────────────────────────────────┘
 ```
 
@@ -241,7 +240,7 @@ async login(data: LoginData): Promise<LoginResponse> {
                  ▼
 ┌─────────────────────────────────────────────┐
 │  3. Decodifica IdToken                      │
-│     { sub: "abc-123", email, name }         │
+│     { sub: "abc-123", email, fullName }         │
 └────────────────┬────────────────────────────┘
                  ▼
 ┌─────────────────────────────────────────────┐
@@ -277,7 +276,7 @@ async login(data: LoginData): Promise<LoginResponse> {
 |---------------|---------------|-------------|
 | `sub` | `cognitoSub` | Chave única de sincronização |
 | `email` | `email` | Sincronizado automaticamente |
-| `name` | `name` | Sincronizado automaticamente |
+| `fullName` | `fullName` | Sincronizado automaticamente |
 | `preferred_username` | `username` | Gerado se não existir |
 | `picture` | `avatar` | Opcional |
 | - | `role` | Gerenciado apenas no MongoDB |
@@ -296,7 +295,7 @@ curl -X POST http://localhost:4000/auth/register \
   -d '{
     "email": "teste@exemplo.com",
     "password": "SenhaSegura123!",
-    "name": "Usuário Teste",
+    "fullName": "Usuário Teste",
     "username": "usuarioteste"
   }'
 ```
@@ -309,7 +308,7 @@ curl -X POST http://localhost:4000/auth/register \
   "data": {
     "userId": "abc-123-xyz",
     "email": "teste@exemplo.com",
-    "name": "Usuário Teste",
+    "fullName": "Usuário Teste",
     "emailVerificationRequired": true,
     "message": "Usuário criado. Verifique seu email."
   }
@@ -332,7 +331,7 @@ curl http://localhost:4000/users/username/usuarioteste
     "cognitoSub": "abc-123-...",  // ✅ Cognito Sub
     "email": "teste@exemplo.com",
     "username": "usuarioteste",
-    "name": "Usuário Teste",
+    "fullName": "Usuário Teste",
     "role": "AUTHOR",
     "isActive": true
   }
@@ -362,7 +361,7 @@ curl -X POST http://localhost:4000/auth/login \
     "expiresIn": 3600,
     "userId": "6745abc123...",  // ✅ ID do MongoDB
     "email": "teste@exemplo.com",
-    "name": "Usuário Teste"
+    "fullName": "Usuário Teste"
   }
 }
 ```
@@ -433,7 +432,7 @@ async register(data: RegisterData): Promise<RegisterResponse> {
       cognitoSub: cognitoSub,      // ← Chave de sincronização
       email: data.email,
       username: data.username,
-      name: data.name,
+      fullName: data.fullName,
       avatar: data.avatar,
       role: UserRole.AUTHOR,       // Padrão
     });
@@ -450,7 +449,7 @@ async register(data: RegisterData): Promise<RegisterResponse> {
   return {
     userId: cognitoSub,
     email: data.email,
-    name: data.name,
+    fullName: data.fullName,
     emailVerificationRequired: !cognitoResponse.UserConfirmed,
   };
 }
@@ -477,7 +476,7 @@ async login(data: LoginData): Promise<LoginResponse> {
       cognitoSub: payload.sub,
       email: payload.email,
       username: username,
-      name: payload.name || 'Usuário',
+      fullName: payload.fullName || 'Usuário',
     });
   }
 
@@ -489,7 +488,7 @@ async login(data: LoginData): Promise<LoginResponse> {
     expiresIn: ExpiresIn!,
     userId: user.id,  // ✅ ID do MongoDB (ObjectId)
     email: user.email,
-    name: user.name,
+    fullName: user.fullName,
   };
 }
 ```
@@ -545,7 +544,7 @@ async login(data: LoginData): Promise<LoginResponse> {
 export const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8).regex(/[A-Z]/).regex(/[0-9]/),
-  name: z.string().min(3),
+  fullName: z.string().min(3),
   username: z.string().min(3).regex(/^[a-z0-9_-]+$/),
   avatar: z.string().url().optional(),
 });
@@ -668,7 +667,7 @@ npm run prisma:generate
 - [x] cognitoSub (unique) ✅
 - [x] email (unique) ✅
 - [x] username (unique) ✅
-- [x] name ✅
+- [x] fullName ✅
 - [x] avatar (opcional) ✅
 - [x] role (padrão: AUTHOR) ✅
 
@@ -743,12 +742,12 @@ Criar função Lambda para sync automático após confirmação de email:
 ```typescript
 // Lambda function
 export async function handler(event: any) {
-  const { sub, email, name } = event.request.userAttributes;
+  const { sub, email, fullName } = event.request.userAttributes;
   
   // Criar perfil no MongoDB via API
   await fetch('https://api.blog.com/internal/sync-user', {
     method: 'POST',
-    body: JSON.stringify({ cognitoSub: sub, email, name })
+    body: JSON.stringify({ cognitoSub: sub, email, fullName })
   });
 }
 ```
@@ -763,11 +762,11 @@ async updateUser(id: string, data: UpdateUserData) {
   const user = await this.repository.update(id, data);
   
   // Atualizar Cognito (se email ou nome mudou)
-  if (data.email || data.name) {
+  if (data.email || data.fullName) {
     await this.cognitoClient.updateUserAttributes({
       UserAttributes: [
         { Name: 'email', Value: data.email },
-        { Name: 'name', Value: data.name },
+        { Name: 'fullName', Value: data.fullName },
       ]
     });
   }

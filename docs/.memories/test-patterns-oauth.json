@@ -1,0 +1,154 @@
+{
+  "id": "test-patterns-oauth",
+  "type": "testing-patterns",
+  "content": "Padrões de teste para funcionalidades OAuth com Cognito Hosted UI",
+  "createdAt": "2025-11-06T17:00:00.000Z",
+  "lastModified": "2025-11-06T17:00:00.000Z",
+  "tags": [
+    "testing",
+    "oauth",
+    "cognito",
+    "patterns",
+    "jest"
+  ],
+  "patterns": {
+    "oauthUrlTests": {
+      "description": "Testes de URLs de autorização OAuth",
+      "architecture": "Cognito Hosted UI (não URLs diretas do Google/GitHub)",
+      "validation": {
+        "mustContain": [
+          "amazoncognito.com/oauth2/authorize",
+          "client_id=test-client-id",
+          "response_type=code",
+          "scope=openid+email+profile",
+          "identity_provider=Google ou identity_provider=GitHub"
+        ],
+        "mustNotContain": [
+          "accounts.google.com/o/oauth2/v2/auth",
+          "github.com/login/oauth/authorize"
+        ]
+      },
+      "example": {
+        "test": "it('deve gerar URL de autorização do Google via Cognito Hosted UI', async () => {",
+        "assertions": [
+          "expect(authUrl).toContain('amazoncognito.com/oauth2/authorize');",
+          "expect(authUrl).toContain('client_id=test-client-id');",
+          "expect(authUrl).toContain('identity_provider=Google');"
+        ]
+      },
+      "location": "tests/modules/auth/auth.service.test.ts"
+    },
+    "oauthCallbackTests": {
+      "description": "Testes de callback OAuth",
+      "criticalRules": [
+        "SEMPRE usar códigos únicos por teste",
+        "SEMPRE limpar cache processedCodes no beforeEach",
+        "SEMPRE mockar id_token e access_token do Cognito"
+      ],
+      "codeUniqueness": {
+        "pattern": "const uniqueCode = 'provider-code-' + Date.now();",
+        "reason": "Cache processedCodes impede reutilização de códigos",
+        "location": "tests/modules/auth/auth.service.test.ts"
+      },
+      "cacheManagement": {
+        "pattern": "beforeEach(() => { if (service['processedCodes']) { service['processedCodes'].clear(); } });",
+        "reason": "Evita falsos positivos por códigos já processados",
+        "location": "tests/modules/auth/auth.service.test.ts"
+      },
+      "cognitoMock": {
+        "structure": {
+          "required": ["access_token", "id_token", "refresh_token", "token_type", "expires_in"],
+          "example": "mockResolvedValueOnce({ ok: true, json: async () => ({ access_token: '...', id_token: 'header.payload.signature', refresh_token: '...', token_type: 'Bearer', expires_in: 3600 }) })"
+        },
+        "idTokenFormat": {
+          "pattern": "header.{base64Payload}.signature",
+          "payload": "Buffer.from(JSON.stringify({ sub, email, name, nickname })).toString('base64')",
+          "example": "const mockIdToken = Buffer.from(JSON.stringify({ sub: 'cognito-sub-123', email: 'user@example.com', name: 'User Name', nickname: 'username' })).toString('base64');"
+        },
+        "location": "tests/modules/auth/auth.service.test.ts"
+      }
+    },
+    "controllerOAuthTests": {
+      "description": "Testes de controller OAuth",
+      "unifiedMethod": {
+        "pattern": "Controller usa método único startOAuth(provider, redirectUri, res)",
+        "oldPattern": "startGoogleOAuth / startGithubOAuth (deprecated)",
+        "newPattern": "startOAuth('google', redirectUri, res) ou startOAuth('github', redirectUri, res)",
+        "location": "tests/modules/auth/auth.controller.test.ts"
+      },
+      "callbackData": {
+        "structure": {
+          "required": ["code"],
+          "optional": ["state", "redirectUri"],
+          "example": "const callbackData = { code: 'auth-code-123', state: 'mock-state', redirectUri: 'http://localhost:4000/callback' };"
+        },
+        "serviceCall": {
+          "pattern": "expect(authService.handleOAuthCallback).toHaveBeenCalledWith(provider, callbackData.code, callbackData.state, callbackData.redirectUri);",
+          "reason": "Controller passa todos os parâmetros opcionais para o service"
+        },
+        "location": "tests/modules/auth/auth.controller.test.ts"
+      }
+    },
+    "envValidationTests": {
+      "description": "Testes de validação de variáveis de ambiente",
+      "note": "Testes de validação de COGNITO_CLIENT_ID e COGNITO_DOMAIN foram removidos",
+      "reason": "env é carregado uma vez e fica em cache - difícil de testar sem mockar módulo inteiro",
+      "alternative": "Validação real acontece em runtime quando módulo é carregado",
+      "location": "tests/modules/auth/auth.service.test.ts"
+    }
+  },
+  "commonPitfalls": {
+    "reusingCodes": {
+      "problem": "Reutilizar mesmo código OAuth em múltiplos testes",
+      "symptom": "BadRequestException: Código de autorização já foi usado",
+      "solution": "Sempre usar códigos únicos: const uniqueCode = 'code-' + Date.now();"
+    },
+    "forgettingCache": {
+      "problem": "Não limpar cache processedCodes entre testes",
+      "symptom": "Testes falhando aleatoriamente",
+      "solution": "Sempre limpar no beforeEach: service['processedCodes']?.clear();"
+    },
+    "incompleteMocks": {
+      "problem": "Mock de fetch não inclui id_token ou access_token",
+      "symptom": "BadRequestException: Resposta inválida do Cognito",
+      "solution": "Sempre incluir todos os campos: access_token, id_token, refresh_token, token_type, expires_in"
+    },
+    "wrongUrlValidation": {
+      "problem": "Validar URLs diretas do Google/GitHub",
+      "symptom": "Testes falhando após migração para Cognito Hosted UI",
+      "solution": "Validar URLs do Cognito: amazoncognito.com/oauth2/authorize"
+    },
+    "missingCallbackParams": {
+      "problem": "callbackData sem state ou redirectUri",
+      "symptom": "TypeScript error: Property 'state' does not exist",
+      "solution": "Incluir todos os parâmetros opcionais: { code, state?, redirectUri? }"
+    }
+  },
+  "bestPractices": {
+    "testIsolation": [
+      "Cada teste deve ser independente",
+      "Usar códigos únicos para evitar conflitos",
+      "Limpar cache entre testes",
+      "Resetar mocks no beforeEach"
+    ],
+    "mockStructure": [
+      "Mocks devem refletir estrutura real do Cognito",
+      "Incluir todos os campos obrigatórios",
+      "Usar formatos corretos (JWT para id_token)",
+      "Manter consistência entre testes"
+    ],
+    "assertions": [
+      "Validar estrutura completa da resposta",
+      "Verificar chamadas de métodos com parâmetros corretos",
+      "Testar casos de erro e sucesso",
+      "Validar tipos TypeScript"
+    ]
+  },
+  "relatedFiles": [
+    "tests/modules/auth/auth.service.test.ts",
+    "tests/modules/auth/auth.controller.test.ts",
+    "src/modules/auth/auth.service.ts",
+    "src/modules/auth/auth.controller.ts"
+  ]
+}
+

@@ -35,7 +35,7 @@ Write-Host "✅ MongoDB populado!`n" -ForegroundColor Green
 # FASE 4: Verificar Containers
 Write-Host "📊 FASE 4: Status dos containers..." -ForegroundColor Yellow
 
-docker ps --filter "name=blogapi" --format "table {{.Names}}\t{{.Status}}"
+docker ps --filter "fullName=blogapi" --format "table {{.Names}}\t{{.Status}}"
 Write-Host ""
 
 # FASE 5: Testar API

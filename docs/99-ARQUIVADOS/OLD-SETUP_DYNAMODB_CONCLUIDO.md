@@ -220,7 +220,7 @@ npm run dynamodb:seed
 npm run dynamodb:list-tables
 
 # AWS CLI - Scan tabela
-aws dynamodb scan --table-name blog-users --endpoint-url http://localhost:8000 --region us-east-1
+aws dynamodb scan --table-fullName blog-users --endpoint-url http://localhost:8000 --region us-east-1
 ```
 
 ---

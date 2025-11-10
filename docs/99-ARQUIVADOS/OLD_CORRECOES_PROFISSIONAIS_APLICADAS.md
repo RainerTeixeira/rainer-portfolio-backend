@@ -83,13 +83,13 @@ async findById(id: string): Promise<PostWithRelations | null> {
   return await this.prisma.post.findUnique({
     where: { id },
     include: {
-      author: { select: { id: true, name: true, ... } },
+      author: { select: { id: true, fullName: true, ... } },
       subcategory: {
         select: {
           id: true,
-          name: true,
+          fullName: true,
           parent: {  // ✅ Pega categoria principal também!
-            select: { id: true, name: true, slug: true }
+            select: { id: true, fullName: true, slug: true }
           }
         }
       }
@@ -172,8 +172,8 @@ async getPostById(id: string) {
   summary: '📋 Listar Posts',
   description: 'Lista posts com paginação e filtros opcionais'
 })
-@ApiQuery({ name: 'page', required: false, type: Number, description: 'Número da página (padrão: 1)' })
-@ApiQuery({ name: 'subcategoryId', required: false, type: String, description: 'Filtrar por subcategoria' })
+@ApiQuery({ fullName: 'page', required: false, type: Number, description: 'Número da página (padrão: 1)' })
+@ApiQuery({ fullName: 'subcategoryId', required: false, type: String, description: 'Filtrar por subcategoria' })
 async list(
   @Query('page') page?: number,
   @Query('subcategoryId') subcategoryId?: string,
@@ -216,9 +216,9 @@ include: {
   subcategory: {
     select: {
       id: true,
-      name: true,
+      fullName: true,
       parent: {  // ← Categoria principal
-        select: { id: true, name: true }
+        select: { id: true, fullName: true }
       }
     }
   }
@@ -338,7 +338,7 @@ async create(data: CreatePostData) {
 **Depois (COM LOGS):**
 
 ```typescript
-private readonly logger = new Logger(PostsRepository.name);
+private readonly logger = new Logger(PostsRepository.fullName);
 
 async create(data: CreatePostData) {
   this.logger.log(`Creating post: ${data.title}`);
@@ -365,8 +365,8 @@ async list() { ... }
   summary: '📋 Listar Posts',
   description: 'Lista posts com paginação e filtros opcionais'
 })
-@ApiQuery({ name: 'page', required: false, type: Number, description: 'Número da página (padrão: 1)' })
-@ApiQuery({ name: 'limit', required: false, type: Number, description: 'Itens por página (padrão: 10)' })
+@ApiQuery({ fullName: 'page', required: false, type: Number, description: 'Número da página (padrão: 1)' })
+@ApiQuery({ fullName: 'limit', required: false, type: Number, description: 'Itens por página (padrão: 10)' })
 @ApiResponse({ status: 200, description: 'Lista de posts retornada com sucesso' })
 async list(
   @Query('page') page?: number,

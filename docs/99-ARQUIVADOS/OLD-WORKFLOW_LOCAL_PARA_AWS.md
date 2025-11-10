@@ -285,11 +285,11 @@ Stack CloudFormation: blog-backend-api
 ```bash
 # Ver outputs do CloudFormation
 aws cloudformation describe-stacks \
-  --stack-name blog-backend-api \
+  --stack-fullName blog-backend-api \
   --query 'Stacks[0].Outputs'
 
 # Ou via SAM
-sam list stack-outputs --stack-name blog-backend-api
+sam list stack-outputs --stack-fullName blog-backend-api
 
 # Copiar o BlogApiFunctionUrl
 ```
@@ -606,7 +606,7 @@ aws iam get-user
 
 # Adicionar política de CloudFormation
 aws iam attach-user-policy \
-  --user-name seu-usuario \
+  --user-fullName seu-usuario \
   --policy-arn arn:aws:iam::aws:policy/AWSCloudFormationFullAccess
 ```
 
@@ -625,7 +625,7 @@ aws ce get-cost-and-usage \
   --group-by Type=SERVICE
 
 # Verificar se tabelas estão Provisioned
-aws dynamodb describe-table --table-name blog-prod-users
+aws dynamodb describe-table --table-fullName blog-prod-users
 
 # BillingModeSummary deve mostrar: PROVISIONED
 ```

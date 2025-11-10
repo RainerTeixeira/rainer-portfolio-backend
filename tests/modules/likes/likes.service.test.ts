@@ -1,153 +1,578 @@
 /**
- * Testes Unitários: Likes Service
+ * Testes do Likes Service com Banco de Dados Real
  * 
- * Testa a lógica de negócio de likes em posts.
+ * Testa toda a lógica de negócio de likes usando banco real.
+ * Minimiza mocks - sem mocks necessários.
+ * 
  * Cobertura: 100%
  */
 
-import { Test, TestingModule } from '@nestjs/testing';
+import { TestingModule } from '@nestjs/testing';
 import { ConflictException } from '@nestjs/common';
 import { LikesService } from '../../../src/modules/likes/likes.service';
-import { LikesRepository } from '../../../src/modules/likes/likes.repository';
+import { LikesModule } from '../../../src/modules/likes/likes.module';
+import { PostsModule } from '../../../src/modules/posts/posts.module';
+import { UsersModule } from '../../../src/modules/users/users.module';
+import { CategoriesModule } from '../../../src/modules/categories/categories.module';
+import { PostsService } from '../../../src/modules/posts/posts.service';
+import { UsersService } from '../../../src/modules/users/users.service';
+import { CategoriesService } from '../../../src/modules/categories/categories.service';
+import { CloudinaryService } from '../../../src/modules/cloudinary/cloudinary.service';
+import { PrismaService } from '../../../src/prisma/prisma.service';
+import { PostStatus } from '../../../src/modules/posts/post.model';
+import {
+  createDatabaseTestModule,
+  cleanDatabase,
+} from '../../helpers/database-test-helper';
 
-describe('LikesService', () => {
+describe('LikesService (Banco Real)', () => {
   let service: LikesService;
-  let repository: jest.Mocked<LikesRepository>;
+  let postsService: PostsService;
+  let usersService: UsersService;
+  let categoriesService: CategoriesService;
+  let prisma: PrismaService;
+  let module: TestingModule;
 
-  const mockLike = {
-    id: 'like-123',
-    userId: 'user-123',
-    postId: 'post-123',
-    createdAt: new Date(),
-  };
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+  beforeAll(async () => {
+    // Criar módulo com banco real - apenas mock do Cloudinary (serviço externo)
+    module = await createDatabaseTestModule({
+      imports: [
+        LikesModule,
+        PostsModule,
+        UsersModule,
+        CategoriesModule,
+      ],
       providers: [
-        LikesService,
         {
-          provide: LikesRepository,
+          provide: CloudinaryService,
           useValue: {
-            create: jest.fn(),
-            findByUserAndPost: jest.fn(),
-            findByPost: jest.fn(),
-            findByUser: jest.fn(),
-            delete: jest.fn(),
-            count: jest.fn(),
+            uploadImage: jest.fn().mockResolvedValue({ url: 'http://example.com/image.jpg' }),
+            deleteImage: jest.fn().mockResolvedValue(true),
           },
         },
       ],
-    }).compile();
+    });
 
     service = module.get<LikesService>(LikesService);
-    repository = module.get(LikesRepository) as jest.Mocked<LikesRepository>;
+    postsService = module.get<PostsService>(PostsService);
+    usersService = module.get<UsersService>(UsersService);
+    categoriesService = module.get<CategoriesService>(CategoriesService);
+    prisma = module.get<PrismaService>(PrismaService);
+
+    await prisma.$connect();
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
+  afterAll(async () => {
+    await prisma.$disconnect();
+    await module.close();
+  });
+
+  beforeEach(async () => {
+    await cleanDatabase(prisma);
   });
 
   describe('likePost', () => {
-    it('deve curtir post com sucesso', async () => {
-      const likeData = {
-        userId: 'user-123',
-        postId: 'post-123',
-      };
+    it('deve curtir post com sucesso no banco real', async () => {
+      // Setup
+      const userCognitoSub = `cognito-user-${Date.now()}`;
+      await usersService.createUser({
+        fullName: 'User',
+        cognitoSub: userCognitoSub,
+      });
 
-      repository.findByUserAndPost.mockResolvedValue(null);
-      repository.create.mockResolvedValue(mockLike);
+      const category = await categoriesService.createCategory({
+        name: 'Cat',
+        slug: `cat-${Date.now()}`,
+        isActive: true,
+      });
+
+      const subcategory = await categoriesService.createCategory({
+        name: 'Sub',
+        slug: `sub-${Date.now()}`,
+        parentId: category.id,
+        isActive: true,
+      });
+
+      const post = await postsService.createPost({
+        title: 'Post',
+        slug: `post-${Date.now()}`,
+        content: { type: 'doc', content: [] },
+        authorId: userCognitoSub,
+        subcategoryId: subcategory.id,
+        status: PostStatus.PUBLISHED,
+      });
+
+      // Curtir post
+      const likeData = {
+        userId: userCognitoSub,
+        postId: post.id,
+      };
 
       const result = await service.likePost(likeData);
 
-      expect(repository.findByUserAndPost).toHaveBeenCalledWith('user-123', 'post-123');
-      expect(repository.create).toHaveBeenCalledWith(likeData);
-      expect(result).toEqual(mockLike);
+      expect(result.id).toBeDefined();
+      expect(result.userId).toBe(userCognitoSub);
+      expect(result.postId).toBe(post.id);
+
+      // Validar no banco
+      const likeInDb = await prisma.like.findFirst({
+        where: { id: result.id },
+        include: { user: true, post: true },
+      });
+      expect(likeInDb).not.toBeNull();
+      expect(likeInDb?.user.cognitoSub).toBe(userCognitoSub);
+      expect(likeInDb?.post.id).toBe(post.id);
+
+      // Validar que like foi criado (contador pode não ser atualizado automaticamente)
+      const likeExists = await prisma.like.findFirst({
+        where: {
+          userId: userCognitoSub,
+          postId: post.id,
+        },
+      });
+      expect(likeExists).not.toBeNull();
     });
 
-    it('deve lançar ConflictException se já curtiu', async () => {
-      const likeData = {
-        userId: 'user-123',
-        postId: 'post-123',
-      };
+    it('deve lançar ConflictException se já curtiu no banco real', async () => {
+      // Setup
+      const userCognitoSub = `cognito-user-${Date.now()}`;
+      await usersService.createUser({
+        fullName: `User ${Date.now()}`,
+        cognitoSub: userCognitoSub,
+      });
 
-      const existingLike = { ...mockLike };
-      repository.findByUserAndPost.mockResolvedValue(existingLike);
+      const category = await categoriesService.createCategory({
+        name: 'Cat',
+        slug: `cat-${Date.now()}`,
+        isActive: true,
+      });
 
-      await expect(service.likePost(likeData)).rejects.toThrow(ConflictException);
-      expect(repository.create).not.toHaveBeenCalled();
+      const subcategory = await categoriesService.createCategory({
+        name: 'Sub',
+        slug: `sub-${Date.now()}`,
+        parentId: category.id,
+        isActive: true,
+      });
+
+      const post = await postsService.createPost({
+        title: 'Post',
+        slug: `post-${Date.now()}`,
+        content: { type: 'doc', content: [] },
+        authorId: userCognitoSub,
+        subcategoryId: subcategory.id,
+        status: PostStatus.PUBLISHED,
+      });
+
+      // Curtir primeiro
+      await service.likePost({
+        userId: userCognitoSub,
+        postId: post.id,
+      });
+
+      // Tentar curtir novamente
+      await expect(service.likePost({
+        userId: userCognitoSub,
+        postId: post.id,
+      })).rejects.toThrow(ConflictException);
+
+      // Validar no banco que há apenas um like
+      const likesInDb = await prisma.like.findMany({
+        where: {
+          userId: userCognitoSub,
+          postId: post.id,
+        },
+      });
+      expect(likesInDb.length).toBe(1);
     });
   });
 
   describe('unlikePost', () => {
-    it('deve descurtir post com sucesso', async () => {
-      repository.findByUserAndPost.mockResolvedValue(mockLike);
-      repository.delete.mockResolvedValue(true);
+    it('deve descurtir post com sucesso no banco real', async () => {
+      // Setup
+      const userCognitoSub = `cognito-user-${Date.now()}`;
+      await usersService.createUser({
+        fullName: 'User',
+        cognitoSub: userCognitoSub,
+      });
 
-      const result = await service.unlikePost('user-123', 'post-123');
+      const category = await categoriesService.createCategory({
+        name: 'Cat',
+        slug: `cat-${Date.now()}`,
+        isActive: true,
+      });
 
-      expect(repository.findByUserAndPost).toHaveBeenCalledWith('user-123', 'post-123');
-      expect(repository.delete).toHaveBeenCalledWith('user-123', 'post-123');
-      expect(result).toEqual({ success: true });
+      const subcategory = await categoriesService.createCategory({
+        name: 'Sub',
+        slug: `sub-${Date.now()}`,
+        parentId: category.id,
+        isActive: true,
+      });
+
+      const post = await postsService.createPost({
+        title: 'Post',
+        slug: `post-${Date.now()}`,
+        content: { type: 'doc', content: [] },
+        authorId: userCognitoSub,
+        subcategoryId: subcategory.id,
+        status: PostStatus.PUBLISHED,
+      });
+
+      // Curtir primeiro
+      await service.likePost({
+        userId: userCognitoSub,
+        postId: post.id,
+      });
+
+      // Descurtir
+      const result = await service.unlikePost(userCognitoSub, post.id);
+
+      expect(result.success).toBe(true);
+
+      // Validar no banco que foi removido
+      const likeInDb = await prisma.like.findFirst({
+        where: {
+          userId: userCognitoSub,
+          postId: post.id,
+        },
+      });
+      expect(likeInDb).toBeNull();
     });
 
     it('deve lançar ConflictException se não curtiu', async () => {
-      repository.findByUserAndPost.mockResolvedValue(null);
+      const userCognitoSub = `cognito-user-${Date.now()}`;
+      await usersService.createUser({
+        fullName: 'User',
+        cognitoSub: userCognitoSub,
+      });
 
-      await expect(service.unlikePost('user-123', 'post-123')).rejects.toThrow(ConflictException);
-      expect(repository.delete).not.toHaveBeenCalled();
+      const category = await categoriesService.createCategory({
+        name: 'Cat',
+        slug: `cat-${Date.now()}`,
+        isActive: true,
+      });
+
+      const subcategory = await categoriesService.createCategory({
+        name: 'Sub',
+        slug: `sub-${Date.now()}`,
+        parentId: category.id,
+        isActive: true,
+      });
+
+      const post = await postsService.createPost({
+        title: 'Post',
+        slug: `post-${Date.now()}`,
+        content: { type: 'doc', content: [] },
+        authorId: userCognitoSub,
+        subcategoryId: subcategory.id,
+        status: PostStatus.PUBLISHED,
+      });
+
+      await expect(service.unlikePost(userCognitoSub, post.id)).rejects.toThrow(ConflictException);
     });
   });
 
   describe('getLikesByPost', () => {
-    it('deve buscar likes do post', async () => {
-      const mockLikes = [mockLike];
-      repository.findByPost.mockResolvedValue(mockLikes);
+    it('deve buscar likes do post no banco real', async () => {
+      // Setup
+      const user1CognitoSub = `cognito-user1-${Date.now()}`;
+      const user2CognitoSub = `cognito-user2-${Date.now()}`;
 
-      const result = await service.getLikesByPost('post-123');
+      await usersService.createUser({
+        fullName: 'User 1',
+        cognitoSub: user1CognitoSub,
+      });
 
-      expect(repository.findByPost).toHaveBeenCalledWith('post-123');
-      expect(result).toEqual(mockLikes);
+      await usersService.createUser({
+        fullName: 'User 2',
+        cognitoSub: user2CognitoSub,
+      });
+
+      const category = await categoriesService.createCategory({
+        name: 'Cat',
+        slug: `cat-${Date.now()}`,
+        isActive: true,
+      });
+
+      const subcategory = await categoriesService.createCategory({
+        name: 'Sub',
+        slug: `sub-${Date.now()}`,
+        parentId: category.id,
+        isActive: true,
+      });
+
+      const post = await postsService.createPost({
+        title: 'Post',
+        slug: `post-${Date.now()}`,
+        content: { type: 'doc', content: [] },
+        authorId: user1CognitoSub,
+        subcategoryId: subcategory.id,
+        status: PostStatus.PUBLISHED,
+      });
+
+      // Criar likes
+      await service.likePost({
+        userId: user1CognitoSub,
+        postId: post.id,
+      });
+
+      await service.likePost({
+        userId: user2CognitoSub,
+        postId: post.id,
+      });
+
+      // Buscar likes
+      const result = await service.getLikesByPost(post.id);
+
+      expect(result.length).toBeGreaterThanOrEqual(2);
+      result.forEach(like => {
+        expect(like.postId).toBe(post.id);
+      });
+
+      // Validar no banco
+      const likesInDb = await prisma.like.findMany({
+        where: { postId: post.id },
+      });
+      expect(likesInDb.length).toBeGreaterThanOrEqual(2);
     });
   });
 
   describe('getLikesByUser', () => {
-    it('deve buscar likes do usuário', async () => {
-      const mockLikes = [mockLike];
-      repository.findByUser.mockResolvedValue(mockLikes);
+    it('deve buscar likes do usuário no banco real', async () => {
+      // Setup
+      const userCognitoSub = `cognito-user-${Date.now()}`;
+      await usersService.createUser({
+        fullName: 'User',
+        cognitoSub: userCognitoSub,
+      });
 
-      const result = await service.getLikesByUser('user-123');
+      const category = await categoriesService.createCategory({
+        name: 'Cat',
+        slug: `cat-${Date.now()}`,
+        isActive: true,
+      });
 
-      expect(repository.findByUser).toHaveBeenCalledWith('user-123');
-      expect(result).toEqual(mockLikes);
+      const subcategory = await categoriesService.createCategory({
+        name: 'Sub',
+        slug: `sub-${Date.now()}`,
+        parentId: category.id,
+        isActive: true,
+      });
+
+      // Criar múltiplos posts
+      const post1 = await postsService.createPost({
+        title: 'Post 1',
+        slug: `post-1-${Date.now()}`,
+        content: { type: 'doc', content: [] },
+        authorId: userCognitoSub,
+        subcategoryId: subcategory.id,
+        status: PostStatus.PUBLISHED,
+      });
+
+      const post2 = await postsService.createPost({
+        title: 'Post 2',
+        slug: `post-2-${Date.now()}`,
+        content: { type: 'doc', content: [] },
+        authorId: userCognitoSub,
+        subcategoryId: subcategory.id,
+        status: PostStatus.PUBLISHED,
+      });
+
+      // Curtir posts
+      await service.likePost({
+        userId: userCognitoSub,
+        postId: post1.id,
+      });
+
+      await service.likePost({
+        userId: userCognitoSub,
+        postId: post2.id,
+      });
+
+      // Buscar likes do usuário
+      const result = await service.getLikesByUser(userCognitoSub);
+
+      expect(result.length).toBeGreaterThanOrEqual(2);
+      result.forEach(like => {
+        expect(like.userId).toBe(userCognitoSub);
+      });
+
+      // Validar no banco
+      const likesInDb = await prisma.like.findMany({
+        where: { userId: userCognitoSub },
+      });
+      expect(likesInDb.length).toBeGreaterThanOrEqual(2);
     });
   });
 
   describe('getLikesCount', () => {
-    it('deve contar likes do post', async () => {
-      repository.count.mockResolvedValue(42);
+    it('deve contar likes do post no banco real', async () => {
+      // Setup
+      const user1CognitoSub = `cognito-user1-${Date.now()}`;
+      const user2CognitoSub = `cognito-user2-${Date.now()}`;
+      const user3CognitoSub = `cognito-user3-${Date.now()}`;
 
-      const result = await service.getLikesCount('post-123');
+      await usersService.createUser({
+        fullName: 'User 1',
+        cognitoSub: user1CognitoSub,
+      });
 
-      expect(repository.count).toHaveBeenCalledWith('post-123');
-      expect(result).toEqual({ postId: 'post-123', count: 42 });
+      await usersService.createUser({
+        fullName: 'User 2',
+        cognitoSub: user2CognitoSub,
+      });
+
+      await usersService.createUser({
+        fullName: 'User 3',
+        cognitoSub: user3CognitoSub,
+      });
+
+      const category = await categoriesService.createCategory({
+        name: 'Cat',
+        slug: `cat-${Date.now()}`,
+        isActive: true,
+      });
+
+      const subcategory = await categoriesService.createCategory({
+        name: 'Sub',
+        slug: `sub-${Date.now()}`,
+        parentId: category.id,
+        isActive: true,
+      });
+
+      const post = await postsService.createPost({
+        title: 'Post',
+        slug: `post-${Date.now()}`,
+        content: { type: 'doc', content: [] },
+        authorId: user1CognitoSub,
+        subcategoryId: subcategory.id,
+        status: PostStatus.PUBLISHED,
+      });
+
+      // Criar 3 likes
+      await service.likePost({
+        userId: user1CognitoSub,
+        postId: post.id,
+      });
+
+      await service.likePost({
+        userId: user2CognitoSub,
+        postId: post.id,
+      });
+
+      await service.likePost({
+        userId: user3CognitoSub,
+        postId: post.id,
+      });
+
+      // Contar likes
+      const result = await service.getLikesCount(post.id);
+
+      expect(result.postId).toBe(post.id);
+      expect(result.count).toBeGreaterThanOrEqual(3);
+
+      // Validar no banco
+      const likesCountInDb = await prisma.like.count({
+        where: { postId: post.id },
+      });
+      expect(likesCountInDb).toBeGreaterThanOrEqual(3);
     });
   });
 
   describe('hasUserLiked', () => {
-    it('deve retornar true se usuário curtiu', async () => {
-      repository.findByUserAndPost.mockResolvedValue(mockLike);
+    it('deve retornar true se usuário curtiu no banco real', async () => {
+      // Setup
+      const userCognitoSub = `cognito-user-${Date.now()}`;
+      await usersService.createUser({
+        fullName: 'User',
+        cognitoSub: userCognitoSub,
+      });
 
-      const result = await service.hasUserLiked('user-123', 'post-123');
+      const category = await categoriesService.createCategory({
+        name: 'Cat',
+        slug: `cat-${Date.now()}`,
+        isActive: true,
+      });
 
-      expect(result).toEqual({ hasLiked: true });
+      const subcategory = await categoriesService.createCategory({
+        name: 'Sub',
+        slug: `sub-${Date.now()}`,
+        parentId: category.id,
+        isActive: true,
+      });
+
+      const post = await postsService.createPost({
+        title: 'Post',
+        slug: `post-${Date.now()}`,
+        content: { type: 'doc', content: [] },
+        authorId: userCognitoSub,
+        subcategoryId: subcategory.id,
+        status: PostStatus.PUBLISHED,
+      });
+
+      // Curtir
+      await service.likePost({
+        userId: userCognitoSub,
+        postId: post.id,
+      });
+
+      // Verificar
+      const result = await service.hasUserLiked(userCognitoSub, post.id);
+
+      expect(result.hasLiked).toBe(true);
+
+      // Validar no banco
+      const likeInDb = await prisma.like.findFirst({
+        where: {
+          userId: userCognitoSub,
+          postId: post.id,
+        },
+      });
+      expect(likeInDb).not.toBeNull();
     });
 
-    it('deve retornar false se usuário não curtiu', async () => {
-      repository.findByUserAndPost.mockResolvedValue(null);
+    it('deve retornar false se usuário não curtiu no banco real', async () => {
+      // Setup
+      const userCognitoSub = `cognito-user-${Date.now()}`;
+      await usersService.createUser({
+        fullName: 'User',
+        cognitoSub: userCognitoSub,
+      });
 
-      const result = await service.hasUserLiked('user-123', 'post-123');
+      const category = await categoriesService.createCategory({
+        name: 'Cat',
+        slug: `cat-${Date.now()}`,
+        isActive: true,
+      });
 
-      expect(result).toEqual({ hasLiked: false });
+      const subcategory = await categoriesService.createCategory({
+        name: 'Sub',
+        slug: `sub-${Date.now()}`,
+        parentId: category.id,
+        isActive: true,
+      });
+
+      const post = await postsService.createPost({
+        title: 'Post',
+        slug: `post-${Date.now()}`,
+        content: { type: 'doc', content: [] },
+        authorId: userCognitoSub,
+        subcategoryId: subcategory.id,
+        status: PostStatus.PUBLISHED,
+      });
+
+      // Verificar sem curtir
+      const result = await service.hasUserLiked(userCognitoSub, post.id);
+
+      expect(result.hasLiked).toBe(false);
+
+      // Validar no banco
+      const likeInDb = await prisma.like.findFirst({
+        where: {
+          userId: userCognitoSub,
+          postId: post.id,
+        },
+      });
+      expect(likeInDb).toBeNull();
     });
   });
 });

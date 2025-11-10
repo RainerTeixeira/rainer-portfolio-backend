@@ -170,7 +170,7 @@ model Post {
   subcategoryId String   @db.ObjectId  // ✅ Sempre subcategoria
   
   subcategory Category @relation(
-    name: "SubcategoryPosts",
+    fullName: "SubcategoryPosts",
     fields: [subcategoryId],
     references: [id]
   )

@@ -13,25 +13,28 @@ import type { Comment } from '../../src/modules/comments/comment.model';
 
 /**
  * Mock de Usuário
+ * 
+ * NOTA: updatedAt pode ser null para registros nunca atualizados (economia de espaço)
+ *       createdAt pode ser sincronizado do Cognito
  */
 export const createMockUser = (overrides: Partial<User> = {}): User => ({
-  id: 'user-123',
+  id: 'cognito-sub-123', // id agora é igual a cognitoSub (cognitoSub é chave primária)
   cognitoSub: 'cognito-sub-123',
-  email: 'test@example.com',
-  username: 'testuser',
-  name: 'Test User',
+  fullName: 'Test User',
   role: UserRole.AUTHOR,
   isActive: true,
   isBanned: false,
   postsCount: 0,
   commentsCount: 0,
   createdAt: new Date('2024-01-01'),
-  updatedAt: new Date('2024-01-01'),
+  updatedAt: null, // null até primeira atualização real (economia de espaço)
   ...overrides,
 });
 
 /**
  * Mock de Post
+ * 
+ * NOTA: updatedAt pode ser null para registros nunca atualizados
  */
 export const createMockPost = (overrides: Partial<Post> = {}): Post => ({
   id: 'post-123',
@@ -51,12 +54,14 @@ export const createMockPost = (overrides: Partial<Post> = {}): Post => ({
   bookmarksCount: 0,
   publishedAt: new Date('2024-01-01'),
   createdAt: new Date('2024-01-01'),
-  updatedAt: new Date('2024-01-01'),
+  updatedAt: null, // null até primeira atualização real
   ...overrides,
 });
 
 /**
  * Mock de Categoria
+ * 
+ * NOTA: updatedAt pode ser null para registros nunca atualizados
  */
 export const createMockCategory = (overrides: Partial<Category> = {}): Category => ({
   id: 'cat-123',
@@ -67,12 +72,14 @@ export const createMockCategory = (overrides: Partial<Category> = {}): Category 
   isActive: true,
   postsCount: 0,
   createdAt: new Date('2024-01-01'),
-  updatedAt: new Date('2024-01-01'),
+  updatedAt: null, // null até primeira atualização real
   ...overrides,
 });
 
 /**
  * Mock de Comentário
+ * 
+ * NOTA: updatedAt pode ser null para registros nunca atualizados
  */
 export const createMockComment = (overrides: Partial<Comment> = {}): Comment => ({
   id: 'comment-123',
@@ -85,7 +92,7 @@ export const createMockComment = (overrides: Partial<Comment> = {}): Comment => 
   isEdited: false,
   likesCount: 0,
   createdAt: new Date('2024-01-01'),
-  updatedAt: new Date('2024-01-01'),
+  updatedAt: null, // null até primeira atualização real
   ...overrides,
 });
 
@@ -197,6 +204,11 @@ export const createMockCognitoAuthResponse = () => ({
 export const createMockCognitoSignUpResponse = () => ({
   UserSub: 'cognito-sub-123',
   UserConfirmed: false,
+  CodeDeliveryDetails: {
+    Destination: 'newuser@example.com',
+    DeliveryMedium: 'EMAIL' as const,
+    AttributeName: 'email',
+  },
   $metadata: {
     httpStatusCode: 200,
     requestId: 'mock-request-id',

@@ -311,7 +311,7 @@ if (!user) {
     cognitoSub: payload.sub,
     email: payload.email,
     username: username,
-    name: payload.name || 'Usuário',
+    fullName: payload.fullName || 'Usuário',
   });
 }
 ```

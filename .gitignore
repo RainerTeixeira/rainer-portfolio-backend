@@ -4,7 +4,8 @@ node_modules/
 .pnp.js
 
 # Testing
-coverage/
+tests/coverage/
+test-results/
 *.lcov
 
 # Production
@@ -14,6 +15,7 @@ build/
 # Environment
 .env
 .env.local
+.env.example
 .env.*.local
 
 # Logs
@@ -56,6 +58,9 @@ backend/
 
 # Build artifacts
 *.zip
+
+# TypeScript build info
+tsconfig.tsbuildinfo
 
 # Local testing
 events/

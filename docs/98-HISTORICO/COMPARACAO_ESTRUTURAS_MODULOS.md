@@ -196,12 +196,12 @@ export class NomeRepository {
 ```typescript
 export interface Nome {
   id: string;
-  name: string;
+  fullName: string;
   createdAt: Date;
 }
 
 export interface CreateNomeData {
-  name: string;
+  fullName: string;
 }
 ```
 
@@ -209,7 +209,7 @@ export interface CreateNomeData {
 
 ```typescript
 export const createNomeSchema = z.object({
-  name: z.string().min(1, 'Nome é obrigatório'),
+  fullName: z.string().min(1, 'Nome é obrigatório'),
 });
 
 export type CreateNomeInput = z.infer<typeof createNomeSchema>;

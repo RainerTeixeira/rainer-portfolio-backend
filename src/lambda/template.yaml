@@ -21,19 +21,22 @@ Parameters:
 Globals:
   Function:
     # ⚡ Lambda Free Tier: 1M requests + 400k GB-segundos/mês GRÁTIS
-    Timeout: 30  # Máximo recomendado para API
-    MemorySize: 512  # 512 MB = boa performance sem custo extra
-    Runtime: nodejs20.x  # Node.js 20 (mais recente)
+    Timeout: 30 # Máximo recomendado para API
+    MemorySize: 512 # 512 MB = boa performance sem custo extra
+    Runtime: nodejs20.x # Node.js 20 (mais recente)
     Architectures:
-      - x86_64  # x86 tem Free Tier maior que ARM64
+      - x86_64 # x86 tem Free Tier maior que ARM64
     Environment:
       Variables:
         NODE_ENV: !Ref Environment
         DATABASE_PROVIDER: DYNAMODB
         AWS_REGION: !Ref AWS::Region
-        DYNAMODB_TABLE_PREFIX: !Sub '${AWS::StackName}-${Environment}'
-        LOG_LEVEL: !If [IsProduction, warn, debug]
-    Tracing: Active  # X-Ray grátis (1M traces/mês)
+        DYNAMODB_TABLE_PREFIX: !Sub ${AWS::StackName}-${Environment}
+        LOG_LEVEL: !If
+          - IsProduction
+          - warn
+          - debug
+    Tracing: Active # X-Ray grátis (1M traces/mês)
     Tags:
       Environment: !Ref Environment
       Application: blog-backend-api
@@ -58,20 +61,20 @@ Resources:
         EntryPoints:
           - handler.ts
     Properties:
-      FunctionName: !Sub '${AWS::StackName}-api-${Environment}'
+      FunctionName: !Sub ${AWS::StackName}-api-${Environment}
       Description: API principal do blog usando NestJS + Fastify
       Handler: dist/lambda/handler.lambdaHandler
       CodeUri: ../../
-      
+
       # Function URL (alternativa gratuita ao API Gateway)
       FunctionUrlConfig:
         AuthType: NONE
         Cors:
           AllowOrigin: '*'
-          AllowHeaders: 'Content-Type,Authorization,X-Requested-With'
-          AllowMethods: 'GET,POST,PUT,PATCH,DELETE,OPTIONS'
+          AllowHeaders: Content-Type,Authorization,X-Requested-With
+          AllowMethods: GET,POST,PUT,PATCH,DELETE,OPTIONS
           MaxAge: '86400'
-      
+
       # Permissões IAM
       Policies:
         - DynamoDBCrudPolicy:
@@ -99,21 +102,21 @@ Resources:
   # ─────────────────────────────────────────────────────────────────────────
   # TABELAS DYNAMODB
   # ─────────────────────────────────────────────────────────────────────────
-  
+
   # ═══════════════════════════════════════════════════════════════════════════
   # TABELA: USERS (⭐ 5 RCU/WCU - Mais Acessada)
   # ═══════════════════════════════════════════════════════════════════════════
   UsersTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: !Sub '${AWS::StackName}-${Environment}-users'
-      
+      TableName: !Sub ${AWS::StackName}-${Environment}-users
+
       # 💰 FREE TIER PERMANENTE: Provisioned (não On-Demand!)
       BillingMode: PROVISIONED
       ProvisionedThroughput:
-        ReadCapacityUnits: 5  # ⭐ Mais acessado (auth)
+        ReadCapacityUnits: 5 # ⭐ Mais acessado (auth)
         WriteCapacityUnits: 5
-      
+
       AttributeDefinitions:
         - AttributeName: id
           AttributeType: S
@@ -123,11 +126,11 @@ Resources:
           AttributeType: S
         - AttributeName: cognitoSub
           AttributeType: S
-      
+
       KeySchema:
         - AttributeName: id
           KeyType: HASH
-      
+
       GlobalSecondaryIndexes:
         - IndexName: EmailIndex
           KeySchema:
@@ -138,7 +141,7 @@ Resources:
           ProvisionedThroughput:
             ReadCapacityUnits: 5
             WriteCapacityUnits: 5
-        
+
         - IndexName: UsernameIndex
           KeySchema:
             - AttributeName: username
@@ -148,7 +151,7 @@ Resources:
           ProvisionedThroughput:
             ReadCapacityUnits: 5
             WriteCapacityUnits: 5
-        
+
         - IndexName: CognitoSubIndex
           KeySchema:
             - AttributeName: cognitoSub
@@ -158,11 +161,11 @@ Resources:
           ProvisionedThroughput:
             ReadCapacityUnits: 5
             WriteCapacityUnits: 5
-      
+
       # Backup: grátis até 10 GB (sempre habilitado)
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: false
-      
+
       Tags:
         - Key: Environment
           Value: !Ref Environment
@@ -177,14 +180,14 @@ Resources:
   PostsTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: !Sub '${AWS::StackName}-${Environment}-posts'
-      
+      TableName: !Sub ${AWS::StackName}-${Environment}-posts
+
       # 💰 FREE TIER PERMANENTE
       BillingMode: PROVISIONED
       ProvisionedThroughput:
-        ReadCapacityUnits: 5  # ⭐ Mais acessado (feed, listagens)
+        ReadCapacityUnits: 5 # ⭐ Mais acessado (feed, listagens)
         WriteCapacityUnits: 5
-      
+
       AttributeDefinitions:
         - AttributeName: id
           AttributeType: S
@@ -198,11 +201,11 @@ Resources:
           AttributeType: S
         - AttributeName: createdAt
           AttributeType: S
-      
+
       KeySchema:
         - AttributeName: id
           KeyType: HASH
-      
+
       GlobalSecondaryIndexes:
         - IndexName: SlugIndex
           KeySchema:
@@ -213,7 +216,7 @@ Resources:
           ProvisionedThroughput:
             ReadCapacityUnits: 5
             WriteCapacityUnits: 5
-        
+
         - IndexName: AuthorIndex
           KeySchema:
             - AttributeName: authorId
@@ -225,7 +228,7 @@ Resources:
           ProvisionedThroughput:
             ReadCapacityUnits: 5
             WriteCapacityUnits: 5
-        
+
         - IndexName: SubcategoryIndex
           KeySchema:
             - AttributeName: subcategoryId
@@ -237,7 +240,7 @@ Resources:
           ProvisionedThroughput:
             ReadCapacityUnits: 5
             WriteCapacityUnits: 5
-        
+
         - IndexName: StatusIndex
           KeySchema:
             - AttributeName: status
@@ -249,12 +252,11 @@ Resources:
           ProvisionedThroughput:
             ReadCapacityUnits: 5
             WriteCapacityUnits: 5
-      
-      
+
       # Backup: apenas produção
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: false
-      
+
       Tags:
         - Key: Environment
           Value: !Ref Environment
@@ -269,14 +271,14 @@ Resources:
   CategoriesTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: !Sub '${AWS::StackName}-${Environment}-categories'
-      
+      TableName: !Sub ${AWS::StackName}-${Environment}-categories
+
       # 💰 FREE TIER PERMANENTE
       BillingMode: PROVISIONED
       ProvisionedThroughput:
-        ReadCapacityUnits: 3  # Navegação frequente
+        ReadCapacityUnits: 3 # Navegação frequente
         WriteCapacityUnits: 3
-      
+
       AttributeDefinitions:
         - AttributeName: id
           AttributeType: S
@@ -284,11 +286,11 @@ Resources:
           AttributeType: S
         - AttributeName: parentId
           AttributeType: S
-      
+
       KeySchema:
         - AttributeName: id
           KeyType: HASH
-      
+
       GlobalSecondaryIndexes:
         - IndexName: SlugIndex
           KeySchema:
@@ -299,7 +301,7 @@ Resources:
           ProvisionedThroughput:
             ReadCapacityUnits: 3
             WriteCapacityUnits: 3
-        
+
         - IndexName: ParentIdIndex
           KeySchema:
             - AttributeName: parentId
@@ -309,10 +311,10 @@ Resources:
           ProvisionedThroughput:
             ReadCapacityUnits: 3
             WriteCapacityUnits: 3
-      
+
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: false
-      
+
       Tags:
         - Key: Environment
           Value: !Ref Environment
@@ -327,14 +329,14 @@ Resources:
   CommentsTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: !Sub '${AWS::StackName}-${Environment}-comments'
-      
+      TableName: !Sub ${AWS::StackName}-${Environment}-comments
+
       # 💰 FREE TIER PERMANENTE
       BillingMode: PROVISIONED
       ProvisionedThroughput:
-        ReadCapacityUnits: 3  # Interações médias
+        ReadCapacityUnits: 3 # Interações médias
         WriteCapacityUnits: 3
-      
+
       AttributeDefinitions:
         - AttributeName: id
           AttributeType: S
@@ -344,11 +346,11 @@ Resources:
           AttributeType: S
         - AttributeName: createdAt
           AttributeType: S
-      
+
       KeySchema:
         - AttributeName: id
           KeyType: HASH
-      
+
       GlobalSecondaryIndexes:
         - IndexName: PostIndex
           KeySchema:
@@ -361,7 +363,7 @@ Resources:
           ProvisionedThroughput:
             ReadCapacityUnits: 3
             WriteCapacityUnits: 3
-        
+
         - IndexName: AuthorIndex
           KeySchema:
             - AttributeName: authorId
@@ -373,10 +375,10 @@ Resources:
           ProvisionedThroughput:
             ReadCapacityUnits: 3
             WriteCapacityUnits: 3
-      
+
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: false
-      
+
       Tags:
         - Key: Environment
           Value: !Ref Environment
@@ -389,14 +391,14 @@ Resources:
   LikesTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: !Sub '${AWS::StackName}-${Environment}-likes'
-      
+      TableName: !Sub ${AWS::StackName}-${Environment}-likes
+
       # 💰 FREE TIER PERMANENTE
       BillingMode: PROVISIONED
       ProvisionedThroughput:
-        ReadCapacityUnits: 3  # Curtidas frequentes
+        ReadCapacityUnits: 3 # Curtidas frequentes
         WriteCapacityUnits: 3
-      
+
       AttributeDefinitions:
         - AttributeName: id
           AttributeType: S
@@ -404,11 +406,11 @@ Resources:
           AttributeType: S
         - AttributeName: userId
           AttributeType: S
-      
+
       KeySchema:
         - AttributeName: id
           KeyType: HASH
-      
+
       GlobalSecondaryIndexes:
         - IndexName: PostIndex
           KeySchema:
@@ -419,7 +421,7 @@ Resources:
           ProvisionedThroughput:
             ReadCapacityUnits: 3
             WriteCapacityUnits: 3
-        
+
         - IndexName: UserIndex
           KeySchema:
             - AttributeName: userId
@@ -429,7 +431,7 @@ Resources:
           ProvisionedThroughput:
             ReadCapacityUnits: 3
             WriteCapacityUnits: 3
-      
+
       Tags:
         - Key: Environment
           Value: !Ref Environment
@@ -444,14 +446,14 @@ Resources:
   BookmarksTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: !Sub '${AWS::StackName}-${Environment}-bookmarks'
-      
+      TableName: !Sub ${AWS::StackName}-${Environment}-bookmarks
+
       # 💰 FREE TIER PERMANENTE
       BillingMode: PROVISIONED
       ProvisionedThroughput:
-        ReadCapacityUnits: 3  # Salvamentos médios
+        ReadCapacityUnits: 3 # Salvamentos médios
         WriteCapacityUnits: 3
-      
+
       AttributeDefinitions:
         - AttributeName: id
           AttributeType: S
@@ -459,7 +461,7 @@ Resources:
           AttributeType: S
         - AttributeName: userId
           AttributeType: S
-      
+
       KeySchema:
         - AttributeName: id
           KeyType: HASH
@@ -473,7 +475,7 @@ Resources:
           ProvisionedThroughput:
             ReadCapacityUnits: 3
             WriteCapacityUnits: 3
-        
+
         - IndexName: UserIndex
           KeySchema:
             - AttributeName: userId
@@ -483,7 +485,7 @@ Resources:
           ProvisionedThroughput:
             ReadCapacityUnits: 3
             WriteCapacityUnits: 3
-      
+
       Tags:
         - Key: Environment
           Value: !Ref Environment
@@ -498,14 +500,14 @@ Resources:
   NotificationsTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: !Sub '${AWS::StackName}-${Environment}-notifications'
-      
+      TableName: !Sub ${AWS::StackName}-${Environment}-notifications
+
       # 💰 FREE TIER PERMANENTE
       BillingMode: PROVISIONED
       ProvisionedThroughput:
-        ReadCapacityUnits: 3  # Notificações médias
+        ReadCapacityUnits: 3 # Notificações médias
         WriteCapacityUnits: 3
-      
+
       AttributeDefinitions:
         - AttributeName: id
           AttributeType: S
@@ -513,11 +515,11 @@ Resources:
           AttributeType: S
         - AttributeName: createdAt
           AttributeType: S
-      
+
       KeySchema:
         - AttributeName: id
           KeyType: HASH
-      
+
       GlobalSecondaryIndexes:
         - IndexName: UserIndex
           KeySchema:
@@ -530,8 +532,7 @@ Resources:
           ProvisionedThroughput:
             ReadCapacityUnits: 3
             WriteCapacityUnits: 3
-      
-      
+
       Tags:
         - Key: Environment
           Value: !Ref Environment
@@ -546,7 +547,7 @@ Resources:
   BlogApiLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub '/aws/lambda/${BlogApiFunction}'
+      LogGroupName: !Sub /aws/lambda/${BlogApiFunction}
       RetentionInDays: 7
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -558,56 +559,56 @@ Outputs:
     Description: URL da Function URL (endpoint HTTP da API)
     Value: !GetAtt BlogApiFunctionUrl.FunctionUrl
     Export:
-      Name: !Sub '${AWS::StackName}-api-url'
+      Name: !Sub ${AWS::StackName}-api-url
 
   BlogApiFunctionArn:
     Description: ARN da função Lambda
     Value: !GetAtt BlogApiFunction.Arn
     Export:
-      Name: !Sub '${AWS::StackName}-api-arn'
+      Name: !Sub ${AWS::StackName}-api-arn
 
   # Tabelas DynamoDB
   UsersTableName:
     Description: Nome da tabela de usuários
     Value: !Ref UsersTable
     Export:
-      Name: !Sub '${AWS::StackName}-users-table'
+      Name: !Sub ${AWS::StackName}-users-table
 
   PostsTableName:
     Description: Nome da tabela de posts
     Value: !Ref PostsTable
     Export:
-      Name: !Sub '${AWS::StackName}-posts-table'
+      Name: !Sub ${AWS::StackName}-posts-table
 
   CategoriesTableName:
     Description: Nome da tabela de categorias
     Value: !Ref CategoriesTable
     Export:
-      Name: !Sub '${AWS::StackName}-categories-table'
+      Name: !Sub ${AWS::StackName}-categories-table
 
   CommentsTableName:
     Description: Nome da tabela de comentários
     Value: !Ref CommentsTable
     Export:
-      Name: !Sub '${AWS::StackName}-comments-table'
+      Name: !Sub ${AWS::StackName}-comments-table
 
   LikesTableName:
     Description: Nome da tabela de likes
     Value: !Ref LikesTable
     Export:
-      Name: !Sub '${AWS::StackName}-likes-table'
+      Name: !Sub ${AWS::StackName}-likes-table
 
   BookmarksTableName:
     Description: Nome da tabela de bookmarks
     Value: !Ref BookmarksTable
     Export:
-      Name: !Sub '${AWS::StackName}-bookmarks-table'
+      Name: !Sub ${AWS::StackName}-bookmarks-table
 
   NotificationsTableName:
     Description: Nome da tabela de notificações
     Value: !Ref NotificationsTable
     Export:
-      Name: !Sub '${AWS::StackName}-notifications-table'
+      Name: !Sub ${AWS::StackName}-notifications-table
 
   # Informações de deployment
   StackName:
@@ -617,7 +618,7 @@ Outputs:
   Region:
     Description: Região AWS onde a stack foi deployada
     Value: !Ref AWS::Region
-  
+
   # 💰 Resumo de Custos (FREE TIER PERMANENTE)
   FreeTierSummary:
     Description: Resumo do Free Tier AWS (Custo ZERO Permanente)
@@ -625,7 +626,7 @@ Outputs:
       ═══════════════════════════════════════════════════════════════
       💰 FREE TIER PERMANENTE - CUSTO R$ 0,00 PARA SEMPRE!
       ═══════════════════════════════════════════════════════════════
-      
+
       📊 DynamoDB Provisioned (7 tabelas):
          ⭐ Users: 5 RCU + 5 WCU (autenticação)
          ⭐ Posts: 5 RCU + 5 WCU (feed principal)
@@ -636,31 +637,30 @@ Outputs:
          🔔 Notifications: 3 RCU + 3 WCU (notificações)
          ────────────────────────────────────────────
          TOTAL: 25 RCU + 25 WCU = GRÁTIS SEMPRE! ✅
-      
+
       ⚡ Lambda:
          • 1 milhão de requests/mês = GRÁTIS
          • 400k GB-segundos compute = GRÁTIS
          • Runtime: Node.js 20.x (x86_64)
-      
+
       🔐 Cognito User Pool:
          • 50.000 MAU (usuários ativos) = GRÁTIS
-      
+
       📝 CloudWatch Logs:
          • 5 GB ingest/mês = GRÁTIS
          • Retenção: 7 dias (dev), 30 dias (prod)
-      
+
       🌐 Lambda Function URL:
          • 100% GRÁTIS (sem API Gateway)
-      
+
       🛡️ Para NÃO Ultrapassar Free Tier:
          1. Use CloudFront/cache (reduz leituras)
          2. Itens ≤ 1 KB (escrita), ≤ 4 KB (leitura)
          3. Mídia no S3, metadados no DynamoDB
          4. Configure CloudWatch Alarms
-      
+
       ═══════════════════════════════════════════════════════════════
 
   Environment:
     Description: Ambiente de deployment
     Value: !Ref Environment
-

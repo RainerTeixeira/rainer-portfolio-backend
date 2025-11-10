@@ -261,12 +261,12 @@ describe('DynamoDB Client', () => {
     it('deve suportar PutCommand para criar/atualizar item', () => {
       const itemData = {
         TableName: 'test-Users',
-        Item: { id: '123', name: 'João', email: 'joao@test.com' },
+        Item: { id: '123', fullName: 'João', email: 'joao@test.com' },
       };
 
       expect(itemData.TableName).toBe('test-Users');
       expect(itemData.Item).toHaveProperty('id');
-      expect(itemData.Item).toHaveProperty('name');
+      expect(itemData.Item).toHaveProperty('fullName');
     });
 
     it('deve suportar GetCommand para buscar item', () => {
@@ -295,13 +295,13 @@ describe('DynamoDB Client', () => {
       const updateData = {
         TableName: 'test-Users',
         Key: { id: '123' },
-        UpdateExpression: 'SET #name = :name',
-        ExpressionAttributeNames: { '#name': 'name' },
-        ExpressionAttributeValues: { ':name': 'João Silva' },
+        UpdateExpression: 'SET #fullName = :fullName',
+        ExpressionAttributeNames: { '#fullName': 'fullName' },
+        ExpressionAttributeValues: { ':fullName': 'João Silva' },
       };
 
       expect(updateData.UpdateExpression).toContain('SET');
-      expect(updateData.ExpressionAttributeValues).toHaveProperty(':name');
+      expect(updateData.ExpressionAttributeValues).toHaveProperty(':fullName');
     });
 
     it('deve suportar DeleteCommand para remover item', () => {

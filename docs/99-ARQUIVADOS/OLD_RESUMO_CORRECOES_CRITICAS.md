@@ -78,10 +78,10 @@ include: {
   subcategory: {
     select: {
       id: true,
-      name: true,
+      fullName: true,
       slug: true,
       parent: {  // ← Categoria principal também!
-        select: { id: true, name: true, slug: true }
+        select: { id: true, fullName: true, slug: true }
       }
     }
   }
@@ -146,7 +146,7 @@ async createPost(data: CreatePostData) {
 **✅ Adicionado:**
 
 ```typescript
-private readonly logger = new Logger(PostsRepository.name);
+private readonly logger = new Logger(PostsRepository.fullName);
 
 async create(data: CreatePostData) {
   this.logger.log(`Creating post: ${data.title}`);
@@ -173,8 +173,8 @@ async list() { ... }
   summary: '📋 Listar Posts',
   description: 'Lista posts com paginação e filtros'
 })
-@ApiQuery({ name: 'page', required: false, type: Number, description: 'Página' })
-@ApiQuery({ name: 'subcategoryId', required: false, description: 'Filtrar por subcategoria' })
+@ApiQuery({ fullName: 'page', required: false, type: Number, description: 'Página' })
+@ApiQuery({ fullName: 'subcategoryId', required: false, description: 'Filtrar por subcategoria' })
 @ApiResponse({ status: 200, description: 'Lista retornada' })
 async list(
   @Query('page') page?: number,
@@ -223,18 +223,18 @@ async getPostsByAuthor(authorId: string)
 export interface PostWithRelations extends Post {
   author?: {
     id: string;
-    name: string;
+    fullName: string;
     username: string;
     avatar?: string;
   };
   subcategory?: {
     id: string;
-    name: string;
+    fullName: string;
     slug: string;
     color?: string;
     parent?: {
       id: string;
-      name: string;
+      fullName: string;
       slug: string;
     };
   };

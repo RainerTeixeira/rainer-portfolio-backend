@@ -1,5 +1,5 @@
 /**
- * App Module - Módulo Raiz NestJS
+ * Módulo Raiz da Aplicação - NestJS
  * 
  * Módulo principal que importa todos os outros módulos da aplicação.
  * 
@@ -13,12 +13,14 @@ import { DatabaseProviderModule } from './utils/database-provider/index.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { UsersModule } from './modules/users/users.module.js';
+import { CloudinaryModule } from './modules/cloudinary/cloudinary.module.js';
 import { PostsModule } from './modules/posts/posts.module.js';
 import { CategoriesModule } from './modules/categories/categories.module.js';
 import { CommentsModule } from './modules/comments/comments.module.js';
 import { LikesModule } from './modules/likes/likes.module.js';
 import { BookmarksModule } from './modules/bookmarks/bookmarks.module.js';
 import { NotificationsModule } from './modules/notifications/notifications.module.js';
+import { DashboardModule } from './modules/dashboard/dashboard.module.js';
 
 /**
  * Módulo raiz da aplicação
@@ -47,12 +49,14 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     HealthModule,
     AuthModule,
     UsersModule,
+    CloudinaryModule, // Adicionar CloudinaryModule aqui
     PostsModule,
     CategoriesModule,
     CommentsModule,
     LikesModule,
     BookmarksModule,
     NotificationsModule,
+    DashboardModule,
   ],
 })
 export class AppModule {}

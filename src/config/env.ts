@@ -202,7 +202,21 @@ export const envSchema = z.object({
   COGNITO_CLIENT_SECRET: z.string().optional(),
   COGNITO_REGION: z.string().optional(),
   COGNITO_ISSUER: z.string().url().optional(),
+  COGNITO_DOMAIN: z.string().optional(), // Domínio do Hosted UI (sem protocolo)
+  OAUTH_REDIRECT_SIGN_IN: z.string().url().optional(), // URL de callback no frontend
   JWT_SECRET: z.string().optional().default('your-secret-key-change-in-production'),
+  
+  // OAuth Providers (Google/GitHub via Cognito Hosted UI)
+  // Nota: Estes são mantidos para compatibilidade, mas o fluxo OAuth é mediado pelo Cognito
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
+  GOOGLE_REDIRECT_URI: z.string().url().optional(),
+  GITHUB_CLIENT_ID: z.string().optional(),
+  GITHUB_CLIENT_SECRET: z.string().optional(),
+  GITHUB_REDIRECT_URI: z.string().url().optional(),
+  
+  // Cloudinary Configuration
+  CLOUDINARY_URL: z.string().optional(), // Formato: cloudinary://api_key:api_secret@cloud_name
 });
 
 // ═══════════════════════════════════════════════════════════════════════════

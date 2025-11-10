@@ -303,11 +303,11 @@ model Like {
 
 ```prisma
 model Like {
-  @@unique([userId, postId], name: "unique_user_post_like")
+  @@unique([userId, postId], fullName: "unique_user_post_like")
 }
 
 model Bookmark {
-  @@unique([userId, postId], name: "unique_user_post_bookmark")
+  @@unique([userId, postId], fullName: "unique_user_post_bookmark")
 }
 ```
 
@@ -339,7 +339,7 @@ author User @relation(fields: [authorId], references: [id])
 author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
 /// Subcategoria do post
-subcategory Category @relation(name: "SubcategoryPosts", fields: [subcategoryId], references: [id], onDelete: Restrict)
+subcategory Category @relation(fullName: "SubcategoryPosts", fields: [subcategoryId], references: [id], onDelete: Restrict)
 ```
 
 **Estratégias:**
@@ -375,13 +375,13 @@ model Category {
   parentId String? @db.ObjectId
   
   /// Posts que pertencem a esta subcategoria (quando parentId != null)
-  posts Post[] @relation(name: "SubcategoryPosts")
+  posts Post[] @relation(fullName: "SubcategoryPosts")
   
   /// Categoria pai (quando esta é uma subcategoria)
-  parent Category? @relation(name: "CategoryHierarchy", ...)
+  parent Category? @relation(fullName: "CategoryHierarchy", ...)
   
   /// Subcategorias filhas (quando esta é uma categoria principal)
-  children Category[] @relation(name: "CategoryHierarchy")
+  children Category[] @relation(fullName: "CategoryHierarchy")
 }
 ```
 

@@ -146,7 +146,7 @@ src/
 npm run prisma:generate
 
 # 2. Subir MongoDB
-docker run -d --name mongodb -p 27017:27017 mongo:7 --replSet rs0
+docker run -d --fullName mongodb -p 27017:27017 mongo:7 --replSet rs0
 docker exec mongodb mongosh --eval "rs.initiate()"
 
 # 3. Rodar NestJS

@@ -1,5 +1,5 @@
 /**
- * Posts Controller
+ * Controlador de Posts
  * 
  * Controller NestJS para endpoints de posts.
  * Implementa rotas REST com validação e documentação Swagger.
@@ -41,6 +41,20 @@ import type { CreatePostData, UpdatePostData } from './post.model.js';
  */
 @ApiTags('📄 Posts')
 @Controller('posts')
+/**
+ * Controlador NestJS responsável por gerenciar recursos de posts.
+ *
+ * Função: expõe endpoints REST para criação, listagem, busca, atualização,
+ * exclusão e controle de publicação de posts.
+ *
+ * Convenções de resposta:
+ * - Retorna objetos com `success`, e opcionalmente `data`, `message` e `pagination`.
+ * - Erros e validação são tratados por pipes/guards e códigos HTTP padronizados.
+ *
+ * Observações:
+ * - A documentação OpenAPI/Swagger é aplicada em cada método via decorators.
+ * - Este bloco é apenas documentação JSDoc; nenhuma lógica foi alterada.
+ */
 export class PostsController {
   constructor(private readonly postsService: PostsService) {}
 

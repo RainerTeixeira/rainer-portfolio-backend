@@ -51,7 +51,7 @@ describe('PostsController', () => {
         slug: 'test-post',
         content: 'Test content',
         subcategoryId: 'subcat-123',
-        authorId: 'user-123',
+        authorId: 'cognito-user-123',
       };
 
       const mockPost = createMockPost();

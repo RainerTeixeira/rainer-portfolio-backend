@@ -1,5 +1,5 @@
 /**
- * Post Model
+ * Modelo de Post
  * 
  * Modelo de dados para posts/artigos do blog.
  * Implementa hierarquia: Post → Subcategory → Category Principal
@@ -66,8 +66,8 @@ export interface Post {
   /** Data de criação */
   createdAt: Date;
   
-  /** Data de última atualização */
-  updatedAt: Date;
+  /** Data de última atualização (null até primeira atualização real - economia de espaço) */
+  updatedAt: Date | null;
   
   /** Contador de visualizações */
   views: number;
@@ -146,9 +146,8 @@ export interface UpdatePostData {
  */
 export interface PostWithRelations extends Post {
   author?: {
-    id: string;
-    name: string;
-    username: string;
+    cognitoSub: string; // cognitoSub é a chave primária agora
+    fullName: string;
     avatar?: string;
   };
   subcategory?: {

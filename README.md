@@ -47,7 +47,7 @@ npm run dev
 npm run prisma:generate
 
 # 2. Subir MongoDB
-docker run -d --name blogapi-mongodb -p 27017:27017 mongo:7 --replSet rs0 && docker exec blogapi-mongodb mongosh --eval "rs.initiate()"
+docker run -d --fullName blogapi-mongodb -p 27017:27017 mongo:7 --replSet rs0 && docker exec blogapi-mongodb mongosh --eval "rs.initiate()"
 
 # 3. Rodar aplicação
 npm run dev
@@ -306,36 +306,189 @@ logs/
 
 ## 🔐 Autenticação (AWS Cognito)
 
-### Integração Cognito ↔ MongoDB
+### 🏗️ Arquitetura de Autenticação: Cognito + MongoDB
 
-O projeto usa uma arquitetura híbrida:
+**Princípio Fundamental**: Cognito é a **fonte única de verdade** para dados de autenticação.
 
-- **AWS Cognito**: Gerencia credenciais, senha, MFA, verificação de email
-- **MongoDB**: Armazena perfil complementar, dados de domínio, estatísticas
-- **Sincronização**: Campo `cognitoSub` conecta ambos os sistemas
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    AMAZON COGNITO                           │
+│              (Fonte Única de Verdade)                       │
+├─────────────────────────────────────────────────────────────┤
+│  • sub (ID único do usuário)                                │
+│  • email (verificado)                                       │
+│  • username                                                 │
+│  • password (hash seguro)                                   │
+│  • email_verified (status)                                  │
+│  • MFA, recuperação de senha                                │
+└─────────────────────────────────────────────────────────────┘
+                            ↓
+                    cognitoSub (chave)
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│                       MONGODB                               │
+│              (Dados Complementares)                         │
+├─────────────────────────────────────────────────────────────┤
+│  • cognitoSub (referência ao Cognito)                       │
+│  • fullName, bio, avatar, website                               │
+│  • socialLinks, role                                        │
+│  • postsCount, commentsCount                                │
+│  • isActive, isBanned                                       │
+│  • createdAt, updatedAt                                     │
+│                                                             │
+│  ❌ NÃO armazena: email, password, username                │
+└─────────────────────────────────────────────────────────────┘
+```
 
-### Endpoints de Autenticação
+### 📊 Separação de Responsabilidades
+
+| Sistema | Responsabilidade | Dados Armazenados |
+|---------|------------------|-------------------|
+| **Cognito** | Autenticação e identidade | `sub`, `email`, `username`, `password`, `email_verified` |
+| **MongoDB** | Perfil e dados de domínio | `cognitoSub`, `fullName`, `bio`, `avatar`, `role`, estatísticas |
+
+**Benefícios desta arquitetura:**
+- ✅ **Segurança**: Dados sensíveis gerenciados por serviço AWS certificado
+- ✅ **Consistência**: Email sempre sincronizado (fonte única)
+- ✅ **Escalabilidade**: Cognito gerencia milhões de usuários
+- ✅ **Compliance**: GDPR e SOC 2 compliant via AWS
+- ✅ **Manutenibilidade**: Menos lógica de sincronização
+
+### 🔄 Fluxos de Autenticação
+
+#### 1. Registro de Novo Usuário
+
+```typescript
+// POST /auth/register
+{
+  email: "usuario@example.com",
+  password: "senha123",
+  fullName: "João Silva",
+  username: "joaosilva"
+}
+
+// Fluxo:
+1. Backend → Cognito.signUp()
+   ↓ Retorna: { sub: "cognito-abc123" }
+   
+2. Backend → MongoDB.create({
+     cognitoSub: "cognito-abc123",
+     fullName: "João Silva",
+     username: "joaosilva"
+     // ❌ email NÃO é salvo no MongoDB
+   })
+   
+3. Cognito → Envia email de verificação
+
+4. Resposta → {
+     userId: "mongo_id",
+     email: "usuario@example.com",
+     requiresEmailConfirmation: true
+   }
+```
+
+#### 2. Login
+
+```typescript
+// POST /auth/login
+{
+  email: "usuario@example.com",
+  password: "senha123"
+}
+
+// Fluxo:
+1. Backend → Cognito.initiateAuth()
+   ↓ Retorna: JWT { sub, email, email_verified }
+   
+2. Backend → MongoDB.findByCognitoSub(sub)
+   ↓ Retorna: { fullName, bio, avatar, role, ... }
+   
+3. Backend → Mescla dados:
+   {
+     ...mongoData,
+     email: jwtData.email,  // ← do Cognito
+     emailVerified: jwtData.email_verified
+   }
+   
+4. Resposta → { tokens, user: mergedData }
+```
+
+#### 3. Atualização de Perfil
+
+```typescript
+// PATCH /users/:id
+{
+  fullName: "João Silva Atualizado",
+  bio: "Desenvolvedor Full Stack"
+  // ❌ email NÃO pode ser enviado aqui
+}
+
+// Fluxo:
+1. Backend → Valida que email não está no payload
+2. Backend → MongoDB.update(id, data)
+3. Resposta → Perfil atualizado (email vem do JWT)
+```
+
+#### 4. Alteração de Email
+
+```typescript
+// POST /auth/change-email
+{
+  cognitoSub: "cognito-abc123",
+  newEmail: "novo@example.com"
+}
+
+// Fluxo:
+1. Backend → Cognito.adminUpdateUserAttributes()
+   ↓ Atualiza email no Cognito
+   ↓ Define email_verified = false
+   ↓ Envia código de verificação
+   
+2. Usuário → Recebe código por email
+
+3. POST /auth/verify-email-change { code: "123456" }
+   ↓ Cognito.verifyUserAttribute()
+   ↓ Define email_verified = true
+   
+4. MongoDB → NÃO é atualizado (email vem do JWT)
+```
+
+### 🔑 Endpoints de Autenticação
 
 ```text
-POST   /auth/register          # Registrar usuário (Cognito + MongoDB)
+POST   /auth/register          # Registrar (Cognito + MongoDB)
 POST   /auth/login             # Login (retorna JWT)
 POST   /auth/confirm-email     # Confirmar email
 POST   /auth/refresh           # Renovar token
 POST   /auth/forgot-password   # Recuperação de senha
 POST   /auth/reset-password    # Redefinir senha
+POST   /auth/change-email      # Alterar email (Cognito)
+POST   /auth/verify-email-change # Verificar código
+POST   /auth/check-username    # Verificar disponibilidade de username
+POST   /auth/change-username   # Alterar username (Cognito)
 ```
 
-### Fluxo de Registro
+### 🔍 Endpoints de Usuários
 
 ```text
-1. POST /auth/register
-   ↓
-2. Cria usuário no Cognito
-   ↓
-3. Cria perfil no MongoDB (com cognitoSub)
-   ↓
-4. Retorna userId e tokens
+GET    /users/cognito/:cognitoSub  # Buscar por cognitoSub
+PATCH  /users/:id                   # Atualizar perfil (sem email)
 ```
+
+### ⚠️ Regras Importantes
+
+1. **Email no MongoDB**: ❌ NUNCA armazenar
+2. **Email no Frontend**: ✅ SEMPRE vem do token JWT
+3. **Alteração de Email**: ✅ APENAS via `/auth/change-email`
+4. **CognitoSub**: ✅ Chave de ligação entre sistemas
+5. **Sincronização**: ✅ Automática via `cognitoSub`
+
+### 📚 Documentação Adicional
+
+- **[Guia de Integração Auth](docs/03-GUIAS/GUIA_INTEGRACAO_AUTH.md)** - Integração completa Cognito ↔ MongoDB
+- **[Migração: Arquitetura](docs/08-MIGRACAO/ARQUITETURA_COGNITO_MONGODB.md)** - Arquitetura detalhada
+- **[Migração: Implementação](docs/08-MIGRACAO/GUIA_IMPLEMENTACAO_BACKEND.md)** - Guia de implementação
+- **[Migração: Produção](docs/08-MIGRACAO/GUIA_PRODUCAO.md)** - Checklist de produção
 
 ---
 
@@ -416,7 +569,7 @@ DYNAMODB_TABLE_PREFIX=blog-prod
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # CENÁRIO 1: MongoDB + Prisma (Desenvolvimento)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-docker run -d --name blogapi-mongodb -p 27017:27017 mongo:7 --replSet rs0
+docker run -d --fullName blogapi-mongodb -p 27017:27017 mongo:7 --replSet rs0
 docker exec blogapi-mongodb mongosh --eval "rs.initiate()"
 npm run prisma:generate
 npm run prisma:push
@@ -480,7 +633,7 @@ if (process.env.DYNAMODB_ENDPOINT) {
 
 ---
 
-## 📡 API Endpoints (65 endpoints)
+## 📡 API Endpoints (64 endpoints)
 
 ### 💚 Health Check (2)
 
@@ -489,16 +642,16 @@ GET    /health              # Status básico
 GET    /health/detailed     # Status detalhado (memory, uptime, DB)
 ```
 
-### 👤 Users (7)
+### 👤 Users (6)
 
 ```text
-POST   /users               # Criar usuário
-GET    /users               # Listar (paginado)
-GET    /users/:id           # Buscar por ID
-GET    /users/username/:username  # Buscar por username
-PUT    /users/:id           # Atualizar perfil
-DELETE /users/:id           # Deletar
-PATCH  /users/:id/ban       # Banir/Desbanir
+POST   /users                    # Criar usuário
+GET    /users                    # Listar (paginado)
+GET    /users/:id                # Buscar por ID
+GET    /users/cognito/:cognitoSub # Buscar por Cognito Sub
+PUT    /users/:id                # Atualizar perfil
+DELETE /users/:id               # Deletar
+PATCH  /users/:id/ban           # Banir/Desbanir
 ```
 
 ### 📄 Posts (10)
@@ -558,7 +711,7 @@ GET    /likes/:userId/:postId      # Verificar se curtiu
 POST   /bookmarks                      # Salvar post
 GET    /bookmarks/:id                  # Buscar por ID
 GET    /bookmarks/user/:userId         # Bookmarks do usuário
-GET    /bookmarks/collection/:name     # Por coleção
+GET    /bookmarks/collection/:fullName     # Por coleção
 PUT    /bookmarks/:id                  # Atualizar
 DELETE /bookmarks/:id                  # Deletar
 DELETE /bookmarks/:userId/:postId     # Remover favorito
@@ -590,9 +743,7 @@ GET    /notifications/user/:userId?unread=true  # Apenas não lidas
 interface User {
   id: string;                    // MongoDB ObjectId
   cognitoSub: string;            // ID único do Cognito (sincronização)
-  email: string;                 // Único
-  username: string;              // Único
-  name: string;
+  fullName: string;                  // Nome completo
   avatar?: string;
   bio?: string;
   website?: string;
@@ -638,7 +789,7 @@ interface Post {
 ```typescript
 interface Category {
   id: string;
-  name: string;                  // Único
+  fullName: string;                  // Único
   slug: string;                  // Único
   description?: string;
   color?: string;                // Hex (#FF5733)
@@ -655,6 +806,8 @@ interface Category {
 ```
 
 **Outros models**: Comment, Like, Bookmark, Notification (veja `src/prisma/schema.prisma`)
+
+**⚠️ Importante**: `email` e `username` são gerenciados pelo **Amazon Cognito**, não pelo MongoDB. O campo `cognitoSub` é a chave de ligação entre os sistemas.
 
 ---
 
@@ -684,7 +837,7 @@ cp env.example .env
 npm run prisma:generate
 
 # 5. Subir MongoDB
-docker run -d --name blogapi-mongodb -p 27017:27017 mongo:7 --replSet rs0
+docker run -d --fullName blogapi-mongodb -p 27017:27017 mongo:7 --replSet rs0
 docker exec blogapi-mongodb mongosh --eval "rs.initiate()"
 
 # 6. Sincronizar schema
@@ -744,7 +897,7 @@ COGNITO_ISSUER=https://cognito-idp.us-east-1.amazonaws.com/us-east-1_XXXXXXXXX
 
 ```bash
 # Iniciar MongoDB com replica set
-docker run -d --name blogapi-mongodb -p 27017:27017 mongo:7 --replSet rs0
+docker run -d --fullName blogapi-mongodb -p 27017:27017 mongo:7 --replSet rs0
 
 # Iniciar replica set
 docker exec blogapi-mongodb mongosh --eval "rs.initiate()"
@@ -1880,7 +2033,7 @@ GET /posts?status=PUBLISHED&subcategoryId=abc123&page=1&limit=10
 // 1. Criar categoria principal
 POST /categories
 {
-  "name": "Tecnologia",
+  "fullName": "Tecnologia",
   "slug": "tecnologia",
   "color": "#3498DB",
   "icon": "code"
@@ -1890,7 +2043,7 @@ POST /categories
 // 2. Criar subcategoria
 POST /categories
 {
-  "name": "Frontend",
+  "fullName": "Frontend",
   "slug": "frontend",
   "parentId": "cat-tech",  // ← Filho de "Tecnologia"
   "color": "#E74C3C",
@@ -2639,9 +2792,10 @@ if (this.databaseContext.isPrisma()) {
 **Stack Dev**: NestJS 11 + Fastify 4 + Prisma 6 + MongoDB 7  
 **Stack Prod**: AWS Lambda + DynamoDB + Cognito + SAM  
 **IaC**: AWS SAM (template.yaml)  
+**Autenticação**: Cognito (fonte única) + MongoDB (perfil) 🔐  
 **Segurança**: Helmet + CORS + Zod + JWT + Cognito (7 camadas)  
 **Features**: 🗄️ Seleção Dinâmica de Banco | 🔒 Helmet | 📦 Package.json Otimizado  
 **Testes**: 893/900 (99.2%) | 100% Functions | env.ts 100% 🎯  
 **Conformidade**: ✅ **100%** (README ↔ Código)  
 **Status**: ✅ **Production Ready + Optimized** 🚀  
-**Última Atualização**: 18 de Outubro de 2025
+**Última Atualização**: Janeiro de 2025

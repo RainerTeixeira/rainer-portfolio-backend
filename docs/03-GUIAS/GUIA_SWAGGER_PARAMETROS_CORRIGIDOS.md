@@ -76,7 +76,7 @@ Example Value:
 
 | Método | Rota | Parâmetros Documentados |
 |--------|------|------------------------|
-| POST | `/auth/register` | email, password, username, name |
+| POST | `/auth/register` | email, password, username, fullName |
 | POST | `/auth/confirm-email` | email, code |
 | POST | `/auth/login` | email, password |
 | POST | `/auth/refresh` | refreshToken |
@@ -87,8 +87,8 @@ Example Value:
 
 | Método | Rota | Parâmetros Documentados |
 |--------|------|------------------------|
-| POST | `/users` | username, email, password, name, bio, avatar, role |
-| PUT | `/users/:id` | name, bio, avatar, role |
+| POST | `/users` | username, email, password, fullName, bio, avatar, role |
+| PUT | `/users/:id` | fullName, bio, avatar, role |
 
 ### 📄 Posts (2 endpoints)
 
@@ -101,8 +101,8 @@ Example Value:
 
 | Método | Rota | Parâmetros Documentados |
 |--------|------|------------------------|
-| POST | `/categories` | name, slug, description, parentId |
-| PUT | `/categories/:id` | name, slug, description |
+| POST | `/categories` | fullName, slug, description, parentId |
+| PUT | `/categories/:id` | fullName, slug, description |
 
 ### 💬 Comentários (2 endpoints)
 
@@ -139,7 +139,7 @@ O decorador `@ApiBody` suporta:
 
 ```typescript
 properties: {
-  name: { type: 'string' },      // String
+  fullName: { type: 'string' },      // String
   age: { type: 'number' },       // Number
   active: { type: 'boolean' },   // Boolean
   tags: { 

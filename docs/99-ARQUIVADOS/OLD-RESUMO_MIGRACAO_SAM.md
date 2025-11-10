@@ -262,7 +262,7 @@ npm run sam:deploy:guided
 ```bash
 # Obter URL da função
 aws cloudformation describe-stacks \
-  --stack-name blog-backend-api \
+  --stack-fullName blog-backend-api \
   --query 'Stacks[0].Outputs[?OutputKey==`BlogApiFunctionUrl`].OutputValue' \
   --output text
 

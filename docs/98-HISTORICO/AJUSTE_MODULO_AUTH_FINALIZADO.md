@@ -162,7 +162,7 @@ export interface LoginResponse {
   expiresIn: number;
   userId: string;
   email: string;
-  name?: string;
+  fullName?: string;
 }
 // ... outros tipos
 ```

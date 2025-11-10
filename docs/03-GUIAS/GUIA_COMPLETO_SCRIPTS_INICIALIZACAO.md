@@ -362,13 +362,13 @@ Execute: iniciar-servidor-completo.bat
 
 ⚡ Comandos Úteis:
    Ver logs de um container:
-   docker-compose logs -f [container-name]
+   docker-compose logs -f [container-fullName]
 
    Parar todos os containers:
    docker-compose down
 
    Reiniciar um container:
-   docker-compose restart [service-name]
+   docker-compose restart [service-fullName]
 ```
 
 #### 🎯 Quando Usar

@@ -273,7 +273,7 @@ Commands you can use next
 =========================
 [*] Validate SAM template: sam validate
 [*] Invoke Function: sam local invoke
-[*] Test Function in the Cloud: sam sync --stack-name {{stack-name}} --watch
+[*] Test Function in the Cloud: sam sync --stack-fullName {{stack-fullName}} --watch
 [*] Deploy: sam deploy --guided
 ```
 
@@ -356,7 +356,7 @@ npm run sam:logs
 
 # Ou diretamente
 cd src/lambda
-sam logs -n BlogApiFunction --stack-name blog-backend-api --tail
+sam logs -n BlogApiFunction --stack-fullName blog-backend-api --tail
 ```
 
 ### 7. Deletar Stack
@@ -369,7 +369,7 @@ npm run sam:delete
 
 # Ou diretamente
 cd src/lambda
-sam delete --stack-name blog-backend-api
+sam delete --stack-fullName blog-backend-api
 ```
 
 ---
@@ -701,7 +701,7 @@ dist/
 
 ```bash
 # Cada ambiente pode ter:
-# - Stack name diferente
+# - Stack fullName diferente
 # - Parâmetros diferentes
 # - Region diferente
 # - Configuração no samconfig.toml
@@ -830,23 +830,23 @@ sam deploy --parameter-overrides Environment=staging
 
 ```bash
 # Ver logs em tempo real
-sam logs -n BlogApiFunction --stack-name blog-backend-api --tail
+sam logs -n BlogApiFunction --stack-fullName blog-backend-api --tail
 
 # Ver logs das últimas 2 horas
-sam logs -n BlogApiFunction --stack-name blog-backend-api --start-time '2h ago'
+sam logs -n BlogApiFunction --stack-fullName blog-backend-api --start-time '2h ago'
 
 # Filtrar logs
-sam logs -n BlogApiFunction --stack-name blog-backend-api --filter ERROR
+sam logs -n BlogApiFunction --stack-fullName blog-backend-api --filter ERROR
 ```
 
 ### sam delete
 
 ```bash
 # Deletar stack
-sam delete --stack-name blog-backend-api
+sam delete --stack-fullName blog-backend-api
 
 # Sem confirmação
-sam delete --stack-name blog-backend-api --no-prompts
+sam delete --stack-fullName blog-backend-api --no-prompts
 ```
 
 ---
@@ -900,7 +900,7 @@ npm run sam:deploy:dev
 
 # 3. Obter URL da função
 aws cloudformation describe-stacks \
-  --stack-name blog-backend-api-dev \
+  --stack-fullName blog-backend-api-dev \
   --query 'Stacks[0].Outputs[?OutputKey==`FunctionUrl`].OutputValue' \
   --output text
 

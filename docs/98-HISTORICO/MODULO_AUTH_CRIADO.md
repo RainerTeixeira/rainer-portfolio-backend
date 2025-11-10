@@ -177,7 +177,7 @@ curl -X POST http://localhost:4000/auth/register \
   -d '{
     "email": "teste@exemplo.com",
     "password": "SenhaSegura123!",
-    "name": "Usuário Teste"
+    "fullName": "Usuário Teste"
   }'
 ```
 
@@ -249,7 +249,7 @@ getUserId(@CurrentUser('userId') userId: string) {
 interface AuthenticatedUser {
   userId: string;           // ID único do usuário
   email: string;            // Email
-  name?: string;            // Nome completo
+  fullName?: string;            // Nome completo
   username?: string;        // Username
   emailVerified: boolean;   // Email verificado?
   groups: string[];         // Grupos do Cognito

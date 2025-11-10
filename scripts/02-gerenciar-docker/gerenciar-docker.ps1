@@ -101,7 +101,7 @@ function Show-Status {
     )
     
     foreach ($service in $services) {
-        $status = docker ps --filter "name=$($service.Container)" --format "{{.Status}}" 2>$null
+        $status = docker ps --filter "fullName=$($service.Container)" --format "{{.Status}}" 2>$null
         
         if ($status) {
             Write-Success "$($service.Name) - Rodando (Porta: $($service.Port))"

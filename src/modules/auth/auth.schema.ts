@@ -32,7 +32,7 @@ export const registerSchema = z.object({
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
       'Senha deve conter letras maiúsculas, minúsculas, números e caracteres especiais'
     ),
-  name: z.string().min(3, 'Nome deve ter no mínimo 3 caracteres'),
+  fullName: z.string().min(3, 'Nome deve ter no mínimo 3 caracteres'),
   username: z.string().min(3, 'Username deve ter no mínimo 3 caracteres'),  // Obrigatório
   phoneNumber: z
     .string()

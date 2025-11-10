@@ -404,7 +404,7 @@ describe('DynamoDB Tables Script', () => {
             await mockClient.send(command);
             return true;
           } catch (error: any) {
-            if (error.name === 'ResourceNotFoundException') {
+            if (error.fullName === 'ResourceNotFoundException') {
               return false;
             }
             throw error;
@@ -417,7 +417,7 @@ describe('DynamoDB Tables Script', () => {
 
       it('deve retornar false quando tabela não existe', async () => {
         mockSend.mockRejectedValueOnce({
-          name: 'ResourceNotFoundException',
+          fullName: 'ResourceNotFoundException',
           message: 'Table not found',
         });
 
@@ -427,7 +427,7 @@ describe('DynamoDB Tables Script', () => {
             await mockClient.send(command);
             return true;
           } catch (error: any) {
-            if (error.name === 'ResourceNotFoundException') {
+            if (error.fullName === 'ResourceNotFoundException') {
               return false;
             }
             throw error;
@@ -440,7 +440,7 @@ describe('DynamoDB Tables Script', () => {
 
       it('deve propagar outros erros', async () => {
         mockSend.mockRejectedValueOnce({
-          name: 'AccessDeniedException',
+          fullName: 'AccessDeniedException',
           message: 'Access denied',
         });
 
@@ -450,7 +450,7 @@ describe('DynamoDB Tables Script', () => {
             await mockClient.send(command);
             return true;
           } catch (error: any) {
-            if (error.name === 'ResourceNotFoundException') {
+            if (error.fullName === 'ResourceNotFoundException') {
               return false;
             }
             throw error;
@@ -458,7 +458,7 @@ describe('DynamoDB Tables Script', () => {
         };
 
         await expect(checkIfExists('test-table')).rejects.toMatchObject({
-          name: 'AccessDeniedException',
+          fullName: 'AccessDeniedException',
         });
       });
     });

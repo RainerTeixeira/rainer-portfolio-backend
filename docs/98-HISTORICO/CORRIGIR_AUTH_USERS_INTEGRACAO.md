@@ -20,7 +20,7 @@ Integrar o módulo `auth` com o módulo `users` para que:
 export interface RegisterData {
   email: string;
   password: string;
-  name: string;
+  fullName: string;
   username: string;        // ← TORNAR OBRIGATÓRIO
   phoneNumber?: string;
   avatar?: string;          // ← ADICIONAR (opcional)
@@ -89,7 +89,7 @@ async register(data: RegisterData): Promise<RegisterResponse> {
         cognitoSub: cognitoSub,
         email: data.email,
         username: data.username,
-        name: data.name,
+        fullName: data.fullName,
         avatar: data.avatar,
         role: 'AUTHOR',  // Padrão para novos usuários
       });
@@ -109,7 +109,7 @@ async register(data: RegisterData): Promise<RegisterResponse> {
     return {
       userId: cognitoSub,
       email: data.email,
-      name: data.name,
+      fullName: data.fullName,
       emailVerificationRequired: !cognitoResponse.UserConfirmed,
       message: cognitoResponse.UserConfirmed
         ? 'Usuário criado com sucesso!'
@@ -117,13 +117,13 @@ async register(data: RegisterData): Promise<RegisterResponse> {
     };
   } catch (error: any) {
     // Tratamento de erros existente...
-    if (error.name === 'UsernameExistsException') {
+    if (error.fullName === 'UsernameExistsException') {
       throw new BadRequestException('Email já cadastrado no Cognito');
     }
-    if (error.name === 'InvalidPasswordException') {
+    if (error.fullName === 'InvalidPasswordException') {
       throw new BadRequestException('Senha não atende aos requisitos de segurança');
     }
-    if (error.name === 'InvalidParameterException') {
+    if (error.fullName === 'InvalidParameterException') {
       throw new BadRequestException('Parâmetros inválidos: ' + error.message);
     }
     if (error instanceof BadRequestException || error instanceof ConflictException) {
@@ -163,7 +163,7 @@ async login(data: LoginData): Promise<LoginResponse> {
         cognitoSub: payload.sub,
         email: payload.email,
         username: username,
-        name: payload.name || 'Usuário',
+        fullName: payload.fullName || 'Usuário',
       });
     }
 
@@ -174,13 +174,13 @@ async login(data: LoginData): Promise<LoginResponse> {
       expiresIn: ExpiresIn!,
       userId: user.id,  // ← ID do MongoDB (não do Cognito!)
       email: user.email,
-      name: user.name,
+      fullName: user.fullName,
     };
   } catch (error: any) {
-    if (error.name === 'NotAuthorizedException') {
+    if (error.fullName === 'NotAuthorizedException') {
       throw new UnauthorizedException('Email ou senha incorretos');
     }
-    if (error.name === 'UserNotConfirmedException') {
+    if (error.fullName === 'UserNotConfirmedException') {
       throw new UnauthorizedException('Email não confirmado. Verifique seu email.');
     }
     if (error instanceof UnauthorizedException) {
@@ -272,7 +272,7 @@ Após as correções:
 |---------|---------|
 | `sub` (UUID) | `cognitoSub` |
 | `email` | `email` |
-| `name` | `name` |
+| `fullName` | `fullName` |
 | `cognito:username` | `username` |
 
 ---
@@ -288,7 +288,7 @@ curl -X POST http://localhost:4000/auth/register \
   -d '{
     "email": "teste@exemplo.com",
     "password": "SenhaSegura123!",
-    "name": "Usuário Teste",
+    "fullName": "Usuário Teste",
     "username": "usuarioteste"
   }'
 

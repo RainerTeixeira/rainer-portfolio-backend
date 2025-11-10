@@ -310,7 +310,7 @@ http://localhost:8001        # DynamoDB Admin
    - Aguarde dependências ficarem `healthy`
 
 4. **Volumes Nomeados**
-   - Sempre use `name:` explícito
+   - Sempre use `fullName:` explícito
    - Separe dados, configs e caches
    - Adicione labels explicativas
 
@@ -352,7 +352,7 @@ docker-compose down -v
 docker inspect blogapi-mongodb | grep -A 20 Labels
 
 # Ver volumes
-docker volume ls --filter "name=blogapi"
+docker volume ls --filter "fullName=blogapi"
 
 # Ver uso de recursos
 docker stats blogapi-mongodb blogapi-app

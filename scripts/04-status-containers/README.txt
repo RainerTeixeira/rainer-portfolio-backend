@@ -74,13 +74,13 @@ LINUX/MAC/WSL:
 
 ⚡ Comandos Úteis:
    Ver logs de um container:
-   docker-compose logs -f [container-name]
+   docker-compose logs -f [container-fullName]
 
    Parar todos os containers:
    docker-compose down
 
    Reiniciar um container:
-   docker-compose restart [service-name]
+   docker-compose restart [service-fullName]
 
 
 🎯 CASOS DE USO
@@ -125,13 +125,13 @@ LINUX/MAC/WSL:
 ═══════════════════════════════════════════════════════════════════════════
 
 Ver logs em tempo real:
-  docker-compose logs -f [service-name]
+  docker-compose logs -f [service-fullName]
   
 Parar todos containers:
   docker-compose down
   
 Reiniciar container específico:
-  docker-compose restart [service-name]
+  docker-compose restart [service-fullName]
   
 Ver logs de todos:
   docker-compose logs -f

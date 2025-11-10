@@ -1,5 +1,5 @@
 /**
- * Error Handler
+ * Middleware de Erros
  * 
  * Middleware global para tratamento padronizado de erros.
  * 

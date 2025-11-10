@@ -1,0 +1,306 @@
+{
+  "id": "technical-details-backend",
+  "type": "technical",
+  "content": "Detalhes técnicos completos do rainer-portfolio-backend",
+  "createdAt": "2025-10-20T16:30:00.000Z",
+  "lastModified": "2025-11-08T20:04:37.697Z",
+  "tags": [
+    "technical",
+    "endpoints",
+    "modules",
+    "scripts",
+    "configuration"
+  ],
+  "technicalDetails": {
+    "endpoints": {
+      "total": 69,
+      "categories": {
+        "health": 2,
+        "users": 7,
+        "posts": 10,
+        "categories": 7,
+        "comments": 8,
+        "likes": 6,
+        "bookmarks": 7,
+        "notifications": 9,
+        "auth": 8,
+        "dashboard": 2,
+        "cloudinary": 1
+      },
+      "examples": {
+        "health": [
+          "GET /health - Status básico",
+          "GET /health/detailed - Status detalhado"
+        ],
+        "posts": [
+          "POST /posts - Criar post",
+          "GET /posts - Listar com filtros",
+          "GET /posts/:id - Buscar por ID",
+          "PUT /posts/:id - Atualizar",
+          "PATCH /posts/:id/publish - Publicar"
+        ],
+        "auth": [
+          "POST /auth/register - Registrar usuário",
+          "POST /auth/login - Login",
+          "POST /auth/refresh - Renovar token",
+          "GET /auth/oauth/:provider - Iniciar OAuth (Google/GitHub) via Cognito Hosted UI",
+          "POST /auth/oauth/:provider/callback - Processar callback OAuth",
+          "GET /auth/needs-nickname/:cognitoSub - Verificar se precisa escolher nickname",
+          "POST /auth/change-nickname - Alterar nickname no Cognito"
+        ],
+        "testing": [
+          "OAuth tests: 43 testes passando, 5 skipped (100% success rate)",
+          "Test patterns: Códigos únicos, cache management, Cognito mocks",
+          "URL validation: Cognito Hosted UI (amazoncognito.com/oauth2/authorize)",
+          "Test documentation: docs/.memories/test-patterns-oauth.json"
+        ]
+      }
+    },
+    "modules": {
+      "auth": {
+        "purpose": "Autenticação via AWS Cognito",
+        "files": 7,
+        "features": [
+          "Login/Registro",
+          "JWT tokens",
+          "Refresh tokens",
+          "Verificação email",
+          "OAuth Google/GitHub via Cognito Hosted UI",
+          "Gerenciamento de nickname (apenas Cognito, não MongoDB)",
+          "Fluxo de escolha de nickname para usuários OAuth",
+          "Testes OAuth: 43 testes passando com padrões documentados"
+        ],
+        "oauth": {
+          "architecture": "Cognito Hosted UI (não URLs diretas do Google/GitHub)",
+          "flow": "startOAuth → Cognito → callback → handleOAuthCallback",
+          "nickname": {
+            "storage": "Apenas no Cognito (atributo do usuário)",
+            "check": "Verificação em tempo real via AWS SDK",
+            "update": "AdminUpdateUserAttributesCommand",
+            "flag": "needsNickname calculado dinamicamente na resposta do login OAuth"
+          }
+        }
+      },
+      "users": {
+        "purpose": "Gerenciamento de usuários",
+        "files": 7,
+        "features": [
+          "CRUD completo",
+          "Roles (ADMIN, EDITOR, AUTHOR, SUBSCRIBER)",
+          "Ban/Unban"
+        ]
+      },
+      "posts": {
+        "purpose": "Artigos do blog",
+        "files": 7,
+        "features": [
+          "Rich text (Tiptap JSON)",
+          "Status workflow",
+          "Estatísticas",
+          "Featured posts"
+        ]
+      },
+      "categories": {
+        "purpose": "Organização hierárquica",
+        "files": 7,
+        "features": [
+          "2 níveis (categoria → subcategoria)",
+          "Cores e ícones",
+          "Ordenação"
+        ]
+      },
+      "comments": {
+        "purpose": "Sistema de comentários",
+        "files": 7,
+        "features": [
+          "Threads (respostas aninhadas)",
+          "Moderação",
+          "Anti-spam"
+        ]
+      },
+      "likes": {
+        "purpose": "Curtidas em posts",
+        "files": 7,
+        "features": [
+          "Like/Unlike",
+          "Contador",
+          "Validação duplicação"
+        ]
+      },
+      "bookmarks": {
+        "purpose": "Posts salvos",
+        "files": 7,
+        "features": [
+          "Coleções personalizadas",
+          "Notas privadas"
+        ]
+      },
+      "notifications": {
+        "purpose": "Sistema de notificações",
+        "files": 7,
+        "features": [
+          "6 tipos",
+          "Marcar como lida",
+          "Contador não lidas"
+        ]
+      },
+      "health": {
+        "purpose": "Monitoramento",
+        "files": 7,
+        "features": [
+          "Status da API",
+          "Métricas sistema",
+          "Status banco"
+        ]
+      },
+      "dashboard": {
+        "purpose": "Estatísticas e analytics do dashboard",
+        "files": 5,
+        "features": [
+          "Estatísticas gerais (posts, views, likes, comments)",
+          "Analytics por período (7d, 30d, 90d)",
+          "Séries temporais de views e engajamento",
+          "Cálculo de variações percentuais",
+          "Integração com Prisma para agregação de dados"
+        ],
+        "endpoints": [
+          "GET /api/dashboard/stats - Estatísticas gerais",
+          "GET /api/dashboard/analytics?period=7d|30d|90d - Analytics por período"
+        ],
+        "service": {
+          "location": "src/modules/dashboard/dashboard.service.ts",
+          "methods": [
+            "getStats() - Agrega estatísticas de posts, views, likes e comments",
+            "getAnalytics(period) - Retorna séries temporais de views e engajamento"
+          ]
+        }
+      },
+      "cloudinary": {
+        "purpose": "Upload e gerenciamento de imagens",
+        "files": 3,
+        "features": [
+          "Upload de imagens",
+          "Transformações de imagem",
+          "CDN integration"
+        ]
+      }
+    },
+    "scripts": {
+      "structure": {
+        "utilities": "scripts/00-11 - Scripts de ambiente, Docker, AWS, etc.",
+        "testing": "scripts/testes/ - Scripts de teste organizados em subpasta",
+        "organization": "Scripts utilitários separados de scripts de teste"
+      },
+      "development": [
+        "npm run dev - Servidor com hot reload",
+        "npm run start:debug - Debug mode",
+        "npm run start:dev - NestJS CLI watch"
+      ],
+      "database": [
+        "npm run prisma:generate - Gerar Prisma Client",
+        "npm run prisma:push - Sync schema → MongoDB",
+        "npm run seed - Popular banco",
+        "npm run dynamodb:create-tables - Criar tabelas DynamoDB",
+        "npm run dynamodb:seed - Popular DynamoDB"
+      ],
+      "testing": [
+        "npm test - Todos os testes",
+        "npm run test:coverage - Com cobertura (salvo em tests/coverage/)",
+        "npm run test:watch - Watch mode",
+        "scripts/testes/ - Scripts de teste organizados"
+      ],
+      "deployment": [
+        "npm run sam:validate - Validar template SAM",
+        "npm run sam:build - Build aplicação",
+        "npm run sam:deploy - Deploy produção",
+        "npm run sam:local - Testar localmente"
+      ],
+      "docker": [
+        "npm run docker:up - Subir ambiente completo",
+        "npm run docker:mongodb - Apenas MongoDB",
+        "npm run docker:dynamodb - Apenas DynamoDB"
+      ]
+    },
+    "configuration": {
+      "environments": {
+        "development": {
+          "database": "MongoDB + Prisma",
+          "port": 4000,
+          "swagger": "http://localhost:4000/docs"
+        },
+        "production": {
+          "database": "DynamoDB AWS",
+          "deployment": "AWS Lambda",
+          "monitoring": "CloudWatch"
+        }
+      },
+      "variables": {
+        "DATABASE_PROVIDER": "PRISMA ou DYNAMODB",
+        "DATABASE_URL": "MongoDB connection string",
+        "DYNAMODB_ENDPOINT": "DynamoDB endpoint (local ou AWS)",
+        "COGNITO_USER_POOL_ID": "AWS Cognito User Pool ID",
+        "COGNITO_CLIENT_ID": "AWS Cognito Client ID"
+      }
+    },
+    "organization": {
+      "structure": {
+        "tests": "tests/ - Todos os testes organizados (unit, integration, e2e)",
+        "testCoverage": "tests/coverage/ - Relatórios de cobertura",
+        "testReports": "tests/test-reports/ - Relatórios de execução",
+        "testScripts": "tests/scripts/ - Scripts Node.js de teste manual",
+        "docs": "docs/ - Toda documentação organizada",
+        "memories": "docs/.memories/ - Memórias do projeto (code-analysis, initial-memory, technical-details)",
+        "scripts": "scripts/ - Scripts utilitários organizados",
+        "testScriptsUtils": "scripts/testes/ - Scripts de teste separados dos utilitários"
+      },
+      "gitignore": {
+        "testResults": "test-results/ - Adicionado ao .gitignore",
+        "coverage": "tests/coverage/ - Ignorado no Git",
+        "buildInfo": "tsconfig.tsbuildinfo - Ignorado no Git"
+      },
+      "rules": {
+        "documentation": {
+          "markdown": "Todas as documentações geradas em markdown (.md) devem ser salvas na pasta docs/",
+          "reason": "Manter organização e facilitar navegação",
+          "enforcement": "Obrigatório - documentações .md na raiz devem ser movidas para docs/"
+        }
+      }
+    },
+    "quality": {
+      "metrics": {
+        "testSuites": "55/57 passing (96.5%)",
+        "tests": "893/900 passing (99.2%)",
+        "coverage": {
+          "statements": "99.57%",
+          "branches": "90.54%",
+          "functions": "100%",
+          "lines": "99.57%"
+        }
+      },
+      "tools": {
+        "linting": "ESLint com 0 erros",
+        "formatting": "Prettier",
+        "typeChecking": "TypeScript strict mode",
+        "testing": "Jest com ts-jest"
+      }
+    },
+    "deployment": {
+      "awsSam": {
+        "template": "src/lambda/template.yaml",
+        "functions": [
+          "BlogApiFunction"
+        ],
+        "resources": [
+          "DynamoDB tables",
+          "IAM roles",
+          "CloudWatch logs"
+        ]
+      },
+      "environments": {
+        "dev": "Development environment",
+        "staging": "Staging environment",
+        "prod": "Production environment"
+      }
+    }
+  }
+}

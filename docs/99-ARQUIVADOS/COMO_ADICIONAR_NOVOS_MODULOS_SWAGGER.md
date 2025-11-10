@@ -183,9 +183,9 @@ export class EmailsController {
     summary: '📋 Listar Emails',
     description: 'Lista todos os emails enviados com filtros opcionais'
   })
-  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Página' })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items por página' })
-  @ApiQuery({ name: 'status', required: false, type: String, description: 'Filtrar por status' })
+  @ApiQuery({ fullName: 'page', required: false, type: Number, description: 'Página' })
+  @ApiQuery({ fullName: 'limit', required: false, type: Number, description: 'Items por página' })
+  @ApiQuery({ fullName: 'status', required: false, type: String, description: 'Filtrar por status' })
   async list(
     @Query('page') page?: number,
     @Query('limit') limit?: number,
@@ -203,7 +203,7 @@ export class EmailsController {
     summary: '🔍 Buscar Email',
     description: 'Busca um email específico pelo ID'
   })
-  @ApiParam({ name: 'id', description: 'ID do email' })
+  @ApiParam({ fullName: 'id', description: 'ID do email' })
   @ApiResponse({ status: 200, description: 'Email encontrado' })
   @ApiResponse({ status: 404, description: 'Email não encontrado' })
   async findById(@Param('id') id: string) {
@@ -219,7 +219,7 @@ export class EmailsController {
     summary: '📊 Status de Entrega',
     description: 'Verifica o status de entrega do email (enviado, entregue, bounce, etc)'
   })
-  @ApiParam({ name: 'id', description: 'ID do email' })
+  @ApiParam({ fullName: 'id', description: 'ID do email' })
   async getStatus(@Param('id') id: string) {
     const status = await this.emailsService.getDeliveryStatus(id);
     return { success: true, data: status };
@@ -233,7 +233,7 @@ export class EmailsController {
     summary: '🔄 Reenviar Email',
     description: 'Reenvia um email que falhou ou precisa ser enviado novamente'
   })
-  @ApiParam({ name: 'id', description: 'ID do email original' })
+  @ApiParam({ fullName: 'id', description: 'ID do email original' })
   async resend(@Param('id') id: string) {
     const result = await this.emailsService.resendEmail(id);
     return { 
@@ -314,13 +314,13 @@ Use o mesmo emoji para ações similares:
 ```typescript
 // ✅ BOM - Parâmetros bem documentados
 @ApiParam({ 
-  name: 'id', 
+  fullName: 'id', 
   description: 'ID único do email (UUID v4)',
   example: '550e8400-e29b-41d4-a716-446655440000'
 })
 
 @ApiQuery({ 
-  name: 'status', 
+  fullName: 'status', 
   required: false, 
   type: String,
   description: 'Filtrar por status (sent, delivered, bounced, failed)',

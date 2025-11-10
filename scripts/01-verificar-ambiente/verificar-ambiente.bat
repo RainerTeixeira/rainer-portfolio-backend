@@ -109,12 +109,12 @@ echo.
 :: Verificar containers Docker
 echo !BOLD!!CYAN![6/6]!RESET! !YELLOW!Verificando containers Docker...!RESET!
 if "!DOCKER_OK!"=="1" (
-    docker ps --filter "name=blogapi" --format "table {{.Names}}\t{{.Status}}" >nul 2>&1
+    docker ps --filter "fullName=blogapi" --format "table {{.Names}}\t{{.Status}}" >nul 2>&1
     if errorlevel 1 (
         echo !YELLOW!     ⚠️  Nenhum container BlogAPI rodando!RESET!
     ) else (
         echo !GREEN!     ✅ Containers BlogAPI encontrados:!RESET!
-        docker ps --filter "name=blogapi" --format "     - {{.Names}}: {{.Status}}"
+        docker ps --filter "fullName=blogapi" --format "     - {{.Names}}: {{.Status}}"
     )
 ) else (
     echo !RED!     ❌ Não foi possível verificar (Docker não está rodando)!RESET!

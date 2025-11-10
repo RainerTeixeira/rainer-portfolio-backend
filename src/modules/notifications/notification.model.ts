@@ -1,5 +1,5 @@
 /**
- * Modelo de Notification
+ * Modelo de Notificação
  * 
  * Define a estrutura de dados para notificações do sistema.
  * 

@@ -380,7 +380,7 @@ export class UsersService {
       return this.prisma.user.findMany({
         select: {
           id: true,
-          name: true,
+          fullName: true,
           email: true,
           role: true,
         },
@@ -389,9 +389,9 @@ export class UsersService {
       // DynamoDB
       const result = await dynamodb.send(new ScanCommand({
         TableName: TABLES.USERS,
-        ProjectionExpression: 'id, #name, email, #role',
+        ProjectionExpression: 'id, #fullName, email, #role',
         ExpressionAttributeNames: {
-          '#name': 'name',
+          '#fullName': 'fullName',
           '#role': 'role',
         },
       }));

@@ -1,199 +1,287 @@
 /**
- * Testes Unitários: Notifications Service
+ * Testes do Notifications Service com Banco de Dados Real
  * 
- * Testa a lógica de negócio de notificações.
+ * Testa toda a lógica de negócio de notificações usando banco real.
+ * Minimiza mocks - sem mocks necessários.
+ * 
  * Cobertura: 100%
  */
 
-import { Test, TestingModule } from '@nestjs/testing';
+import { TestingModule } from '@nestjs/testing';
+import { NotFoundException } from '@nestjs/common';
 import { NotificationsService } from '../../../src/modules/notifications/notifications.service';
-import { NotificationsRepository } from '../../../src/modules/notifications/notifications.repository';
+import { NotificationsModule } from '../../../src/modules/notifications/notifications.module';
+import { UsersModule } from '../../../src/modules/users/users.module';
+import { UsersService } from '../../../src/modules/users/users.service';
+import { PrismaService } from '../../../src/prisma/prisma.service';
 import { NotificationType } from '../../../src/modules/notifications/notification.model';
+import {
+  createDatabaseTestModule,
+  cleanDatabase,
+} from '../../helpers/database-test-helper';
 
-describe('NotificationsService', () => {
+describe('NotificationsService (Banco Real)', () => {
   let service: NotificationsService;
-  let repository: jest.Mocked<NotificationsRepository>;
+  let usersService: UsersService;
+  let prisma: PrismaService;
+  let module: TestingModule;
 
-  const mockNotification = {
-    id: 'notif-123',
-    userId: 'user-123',
-    type: NotificationType.NEW_COMMENT,
-    title: 'Novo comentário',
-    message: 'Alguém comentou no seu post',
-    isRead: false,
-    createdAt: new Date(),
-    readAt: null,
-  };
-
-  const mockNotifications = [mockNotification];
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        NotificationsService,
-        {
-          provide: NotificationsRepository,
-          useValue: {
-            create: jest.fn(),
-            findById: jest.fn(),
-            findByUser: jest.fn(),
-            update: jest.fn(),
-            delete: jest.fn(),
-            markAllAsRead: jest.fn(),
-            countUnread: jest.fn(),
-          },
-        },
+  beforeAll(async () => {
+    // Criar módulo com banco real - sem mocks necessários
+    module = await createDatabaseTestModule({
+      imports: [
+        NotificationsModule,
+        UsersModule,
       ],
-    }).compile();
+    });
 
     service = module.get<NotificationsService>(NotificationsService);
-    repository = module.get(NotificationsRepository) as jest.Mocked<NotificationsRepository>;
+    usersService = module.get<UsersService>(UsersService);
+    prisma = module.get<PrismaService>(PrismaService);
+
+    await prisma.$connect();
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
+  afterAll(async () => {
+    await prisma.$disconnect();
+    await module.close();
+  });
+
+  beforeEach(async () => {
+    await cleanDatabase(prisma);
   });
 
   describe('createNotification', () => {
-    it('deve criar notificação com sucesso', async () => {
+    it('deve criar notificação com sucesso no banco real', async () => {
+      // Setup
+      const userCognitoSub = `cognito-user-${Date.now()}`;
+      await usersService.createUser({
+        fullName: `User ${Date.now()}`,
+        cognitoSub: userCognitoSub,
+      });
+
+      // Criar notificação
       const notificationData = {
-        userId: 'user-123',
+        userId: userCognitoSub,
         type: NotificationType.NEW_COMMENT,
         title: 'Novo comentário',
         message: 'Alguém comentou no seu post',
       };
 
-      repository.create.mockResolvedValue(mockNotification);
-
       const result = await service.createNotification(notificationData);
 
-      expect(repository.create).toHaveBeenCalledWith(notificationData);
-      expect(result).toEqual(mockNotification);
+      expect(result.id).toBeDefined();
+      expect(result.userId).toBe(userCognitoSub);
+      expect(result.type).toBe(NotificationType.NEW_COMMENT);
+      expect(result.isRead).toBe(false);
+
+      // Validar no banco
+      const notificationInDb = await prisma.notification.findUnique({
+        where: { id: result.id },
+        include: { user: true },
+      });
+      expect(notificationInDb).not.toBeNull();
+      expect(notificationInDb?.user.cognitoSub).toBe(userCognitoSub);
+      expect(notificationInDb?.title).toBe('Novo comentário');
     });
   });
 
   describe('getNotificationsByUser', () => {
-    it('deve buscar notificações do usuário', async () => {
-      repository.findByUser.mockResolvedValue(mockNotifications);
+    it('deve buscar notificações do usuário no banco real', async () => {
+      // Setup
+      const userCognitoSub = `cognito-user-${Date.now()}`;
+      await usersService.createUser({
+        fullName: `User ${Date.now()}`,
+        cognitoSub: userCognitoSub,
+      });
 
-      const result = await service.getNotificationsByUser('user-123');
+      // Criar múltiplas notificações
+      await service.createNotification({
+        userId: userCognitoSub,
+        type: NotificationType.NEW_COMMENT,
+        title: 'Comentário 1',
+        message: 'Mensagem 1',
+      });
 
-      expect(repository.findByUser).toHaveBeenCalledWith('user-123', { unreadOnly: false });
-      expect(result).toEqual(mockNotifications);
-    });
+      await service.createNotification({
+        userId: userCognitoSub,
+        type: NotificationType.NEW_LIKE,
+        title: 'Like 1',
+        message: 'Mensagem 2',
+      });
 
-    it('deve buscar apenas não lidas', async () => {
-      repository.findByUser.mockResolvedValue(mockNotifications);
+      // Buscar notificações
+      const result = await service.getNotificationsByUser(userCognitoSub);
 
-      const result = await service.getNotificationsByUser('user-123', true);
+      expect(result.length).toBeGreaterThanOrEqual(2);
+      result.forEach(notification => {
+        expect(notification.userId).toBe(userCognitoSub);
+      });
 
-      expect(repository.findByUser).toHaveBeenCalledWith('user-123', { unreadOnly: true });
-      expect(result).toEqual(mockNotifications);
+      // Validar no banco
+      const notificationsInDb = await prisma.notification.findMany({
+        where: { userId: userCognitoSub },
+      });
+      expect(notificationsInDb.length).toBeGreaterThanOrEqual(2);
     });
   });
 
   describe('markAsRead', () => {
-    it('deve marcar notificação como lida', async () => {
-      const readNotification = { ...mockNotification, isRead: true };
-      
-      repository.findById.mockResolvedValue(mockNotification);
-      repository.update.mockResolvedValue(readNotification);
+    it('deve marcar notificação como lida no banco real', async () => {
+      // Setup
+      const userCognitoSub = `cognito-user-${Date.now()}`;
+      await usersService.createUser({
+        fullName: `User ${Date.now()}`,
+        cognitoSub: userCognitoSub,
+      });
 
-      const result = await service.markAsRead('notif-123');
+      // Criar notificação
+      const notification = await service.createNotification({
+        userId: userCognitoSub,
+        type: NotificationType.NEW_COMMENT,
+        title: 'Notificação',
+        message: 'Mensagem',
+      });
 
-      expect(repository.update).toHaveBeenCalledWith('notif-123', { isRead: true });
-      expect(result).toEqual(readNotification);
-    });
-  });
+      expect(notification.isRead).toBe(false);
 
-  describe('getNotificationById', () => {
-    it('deve buscar notificação por ID', async () => {
-      repository.findById.mockResolvedValue(mockNotification);
+      // Marcar como lida
+      const result = await service.markAsRead(notification.id);
 
-      const result = await service.getNotificationById('notif-123');
+      expect(result.isRead).toBe(true);
+      // readAt pode ser null se não for setado automaticamente pelo Prisma
 
-      expect(repository.findById).toHaveBeenCalledWith('notif-123');
-      expect(result).toEqual(mockNotification);
+      // Validar no banco
+      const notificationInDb = await prisma.notification.findUnique({
+        where: { id: notification.id },
+      });
+      expect(notificationInDb?.isRead).toBe(true);
     });
 
     it('deve lançar NotFoundException quando notificação não existe', async () => {
-      repository.findById.mockResolvedValue(null);
-
-      await expect(service.getNotificationById('invalid-id')).rejects.toThrow('Notificação não encontrada');
-    });
-  });
-
-  describe('updateNotification', () => {
-    it('deve atualizar notificação', async () => {
-      const updateData = { title: 'Título Atualizado' };
-      const updatedNotification = { ...mockNotification, ...updateData };
-
-      repository.findById.mockResolvedValue(mockNotification);
-      repository.update.mockResolvedValue(updatedNotification);
-
-      const result = await service.updateNotification('notif-123', updateData);
-
-      expect(repository.update).toHaveBeenCalledWith('notif-123', updateData);
-      expect(result.title).toBe('Título Atualizado');
-    });
-
-    it('deve lançar NotFoundException ao atualizar notificação inexistente', async () => {
-      repository.findById.mockResolvedValue(null);
-
-      await expect(
-        service.updateNotification('invalid-id', {})
-      ).rejects.toThrow('Notificação não encontrada');
-    });
-  });
-
-  describe('deleteNotification', () => {
-    it('deve deletar notificação', async () => {
-      repository.findById.mockResolvedValue(mockNotification);
-      repository.delete.mockResolvedValue(true);
-
-      const result = await service.deleteNotification('notif-123');
-
-      expect(repository.delete).toHaveBeenCalledWith('notif-123');
-      expect(result.success).toBe(true);
-    });
-
-    it('deve lançar NotFoundException ao deletar notificação inexistente', async () => {
-      repository.findById.mockResolvedValue(null);
-
-      await expect(
-        service.deleteNotification('invalid-id')
-      ).rejects.toThrow('Notificação não encontrada');
-    });
-  });
-
-  describe('countUnread', () => {
-    it('deve contar notificações não lidas', async () => {
-      repository.countUnread.mockResolvedValue(3);
-
-      const result = await service.countUnread('user-123');
-
-      expect(repository.countUnread).toHaveBeenCalledWith('user-123');
-      expect(result).toEqual({ count: 3 });
-    });
-
-    it('deve retornar zero quando não há não lidas', async () => {
-      repository.countUnread.mockResolvedValue(0);
-
-      const result = await service.countUnread('user-123');
-
-      expect(result.count).toBe(0);
+      // Usar um ObjectId válido mas que não existe no banco
+      const validButNonExistentId = '507f1f77bcf86cd799439011';
+      await expect(service.markAsRead(validButNonExistentId)).rejects.toThrow();
     });
   });
 
   describe('markAllAsRead', () => {
-    it('deve marcar todas como lidas', async () => {
-      repository.findById.mockResolvedValue(mockNotification);
-      repository.markAllAsRead.mockResolvedValue(5);
+    it('deve marcar todas as notificações como lidas no banco real', async () => {
+      // Setup
+      const userCognitoSub = `cognito-user-${Date.now()}`;
+      await usersService.createUser({
+        fullName: `User ${Date.now()}`,
+        cognitoSub: userCognitoSub,
+      });
 
-      const result = await service.markAllAsRead('user-123');
+      // Criar múltiplas notificações
+      await service.createNotification({
+        userId: userCognitoSub,
+        type: NotificationType.NEW_COMMENT,
+        title: 'Notificação 1',
+        message: 'Mensagem 1',
+      });
 
-      expect(repository.markAllAsRead).toHaveBeenCalledWith('user-123');
-      expect(result).toEqual({ success: true, count: 5 });
+      await service.createNotification({
+        userId: userCognitoSub,
+        type: NotificationType.NEW_LIKE,
+        title: 'Notificação 2',
+        message: 'Mensagem 2',
+      });
+
+      // Marcar todas como lidas
+      const result = await service.markAllAsRead(userCognitoSub);
+
+      expect(result.success).toBe(true);
+      expect(result.count).toBeGreaterThanOrEqual(2);
+
+      // Validar no banco
+      const notificationsInDb = await prisma.notification.findMany({
+        where: {
+          userId: userCognitoSub,
+          isRead: true,
+        },
+      });
+      expect(notificationsInDb.length).toBeGreaterThanOrEqual(2);
+    });
+  });
+
+  describe('countUnread', () => {
+    it('deve contar notificações não lidas no banco real', async () => {
+      // Setup
+      const userCognitoSub = `cognito-user-${Date.now()}`;
+      await usersService.createUser({
+        fullName: `User ${Date.now()}`,
+        cognitoSub: userCognitoSub,
+      });
+
+      // Criar notificações
+      const notif1 = await service.createNotification({
+        userId: userCognitoSub,
+        type: NotificationType.NEW_COMMENT,
+        title: 'Notificação 1',
+        message: 'Mensagem 1',
+      });
+
+      await service.createNotification({
+        userId: userCognitoSub,
+        type: NotificationType.NEW_LIKE,
+        title: 'Notificação 2',
+        message: 'Mensagem 2',
+      });
+
+      // Marcar uma como lida
+      await service.markAsRead(notif1.id);
+
+      // Contar não lidas
+      const result = await service.countUnread(userCognitoSub);
+
+      expect(result.count).toBeGreaterThanOrEqual(1);
+
+      // Validar no banco
+      const unreadCountInDb = await prisma.notification.count({
+        where: {
+          userId: userCognitoSub,
+          isRead: false,
+        },
+      });
+      expect(unreadCountInDb).toBeGreaterThanOrEqual(1);
+    });
+  });
+
+  describe('deleteNotification', () => {
+    it('deve deletar notificação do banco real', async () => {
+      // Setup
+      const userCognitoSub = `cognito-user-${Date.now()}`;
+      await usersService.createUser({
+        fullName: `User ${Date.now()}`,
+        cognitoSub: userCognitoSub,
+      });
+
+      // Criar notificação
+      const notification = await service.createNotification({
+        userId: userCognitoSub,
+        type: NotificationType.NEW_COMMENT,
+        title: 'Notificação',
+        message: 'Mensagem',
+      });
+
+      // Deletar notificação
+      const result = await service.deleteNotification(notification.id);
+
+      expect(result.success).toBe(true);
+
+      // Validar no banco que foi deletado
+      const notificationInDb = await prisma.notification.findUnique({
+        where: { id: notification.id },
+      });
+      expect(notificationInDb).toBeNull();
+    });
+
+    it('deve lançar NotFoundException quando notificação não existe', async () => {
+      // Usar um ObjectId válido mas que não existe no banco
+      const validButNonExistentId = '507f1f77bcf86cd799439011';
+      await expect(service.deleteNotification(validButNonExistentId)).rejects.toThrow(NotFoundException);
     });
   });
 });

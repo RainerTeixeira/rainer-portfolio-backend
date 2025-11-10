@@ -85,10 +85,10 @@ sam deploy
 sam deploy --parameter-overrides Environment=dev
 
 # Staging
-sam deploy --parameter-overrides Environment=staging --stack-name blog-backend-api-staging
+sam deploy --parameter-overrides Environment=staging --stack-fullName blog-backend-api-staging
 
 # Production
-sam deploy --parameter-overrides Environment=prod --stack-name blog-backend-api-prod
+sam deploy --parameter-overrides Environment=prod --stack-fullName blog-backend-api-prod
 ```
 
 ## 🧪 Teste Local
@@ -152,16 +152,16 @@ Todas com:
 sam validate
 
 # Ver logs em tempo real
-sam logs -n BlogApiFunction --stack-name blog-backend-api --tail
+sam logs -n BlogApiFunction --stack-fullName blog-backend-api --tail
 
 # Listar stacks
 aws cloudformation list-stacks
 
 # Ver outputs da stack
-aws cloudformation describe-stacks --stack-name blog-backend-api --query 'Stacks[0].Outputs'
+aws cloudformation describe-stacks --stack-fullName blog-backend-api --query 'Stacks[0].Outputs'
 
 # Deletar stack (cuidado!)
-sam delete --stack-name blog-backend-api
+sam delete --stack-fullName blog-backend-api
 ```
 
 ## 🔐 Variáveis de Ambiente
@@ -215,7 +215,7 @@ aws iam get-user
 
 ```bash
 # Verificar URL criada
-aws cloudformation describe-stacks --stack-name blog-backend-api \
+aws cloudformation describe-stacks --stack-fullName blog-backend-api \
   --query 'Stacks[0].Outputs[?OutputKey==`BlogApiFunctionUrl`].OutputValue' \
   --output text
 ```

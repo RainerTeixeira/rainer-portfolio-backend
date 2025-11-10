@@ -94,7 +94,7 @@ echo ""
 
 # 6. Containers
 echo -e "${CYAN}[6/6] Verificando containers Docker...${NC}"
-CONTAINERS=$(docker ps --filter "name=blogapi" --format "{{.Names}}: {{.Status}}" 2>/dev/null)
+CONTAINERS=$(docker ps --filter "fullName=blogapi" --format "{{.Names}}: {{.Status}}" 2>/dev/null)
 if [ -n "$CONTAINERS" ]; then
     echo -e "${GREEN}     ✅ Containers BlogAPI encontrados:${NC}"
     while IFS= read -r line; do

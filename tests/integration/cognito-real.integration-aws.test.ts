@@ -98,26 +98,26 @@ describe('🧪 TESTE DIRETO: AWS COGNITO REAL', () => {
         console.log('✅ SUCESSO! Recebeu resposta do AWS Cognito!');
         console.log('═══════════════════════════════════════════════════════════');
         console.log('');
-        console.log('📦 Tipo de Erro:', error.name);
+        console.log('📦 Tipo de Erro:', error.fullName);
         console.log('📝 Mensagem:', error.message);
         console.log('🌐 Código HTTP:', error.$metadata?.httpStatusCode || 'N/A');
         console.log('🆔 Request ID:', error.$metadata?.requestId || 'N/A');
         console.log('');
         
-        if (error.name === 'NotAuthorizedException') {
+        if (error.fullName === 'NotAuthorizedException') {
           console.log('✅ CONFIRMADO: Cognito autenticou a requisição');
           console.log('   O erro é esperado (credenciais inválidas)');
-        } else if (error.name === 'UserNotFoundException') {
+        } else if (error.fullName === 'UserNotFoundException') {
           console.log('✅ CONFIRMADO: Cognito processou a requisição');
           console.log('   O erro é esperado (usuário não existe)');
-        } else if (error.name === 'InvalidParameterException') {
+        } else if (error.fullName === 'InvalidParameterException') {
           console.log('⚠️  ATENÇÃO: Parâmetro inválido');
           console.log('   Cognito respondeu, mas pode haver problema na configuração');
-        } else if (error.name === 'ResourceNotFoundException') {
+        } else if (error.fullName === 'ResourceNotFoundException') {
           console.log('❌ ERRO: User Pool não encontrado');
           console.log('   Verifique se o User Pool ID está correto');
         } else {
-          console.log('⚠️  Erro inesperado:', error.name);
+          console.log('⚠️  Erro inesperado:', error.fullName);
         }
         
         console.log('');

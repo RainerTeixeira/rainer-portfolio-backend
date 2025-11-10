@@ -1,5 +1,5 @@
 /**
- * Posts Service
+ * Serviço de Posts
  * 
  * Camada de lógica de negócio para posts.
  * Implementa validações e regras de negócio.
@@ -16,6 +16,11 @@ import { PostStatus } from './post.model.js';
  * Serviço de Posts
  * Orquestra regras de negócio e valida dados
  */
+/**
+ * PostsService
+ *
+ * Orquestra regras de negócio de posts (CRUD, publicação, consultas, métricas).
+ */
 @Injectable()
 export class PostsService {
   private readonly logger = new Logger(PostsService.name);
@@ -28,6 +33,13 @@ export class PostsService {
    * @param data - Dados do post a ser criado
    * @returns Post criado
    * @throws BadRequestException se dados inválidos
+   */
+  /**
+   * Cria um novo post com validações de conteúdo, subcategoria e autor.
+   *
+   * @param data Dados do post (título, `content`, `subcategoryId`, `authorId`, etc.).
+   * @returns Post criado.
+   * @throws BadRequestException quando dados obrigatórios estão ausentes.
    */
   async createPost(data: CreatePostData) {
     this.logger.log(`Creating post: ${data.title}`);
@@ -57,6 +69,15 @@ export class PostsService {
    * @returns Post encontrado
    * @throws NotFoundException se post não existir
    */
+  /**
+   * Busca post por ID e incrementa views de forma assíncrona.
+   *
+   * Incremento de views não bloqueia a resposta e é tratado com logging.
+   *
+   * @param id ID do post.
+   * @returns Post encontrado.
+   * @throws NotFoundException quando o post não existe.
+   */
   async getPostById(id: string) {
     this.logger.log(`Getting post: ${id}`);
     
@@ -81,6 +102,13 @@ export class PostsService {
    * @returns Post encontrado
    * @throws NotFoundException se post não existir
    */
+  /**
+   * Busca post por slug.
+   *
+   * @param slug Slug do post.
+   * @returns Post encontrado.
+   * @throws NotFoundException quando não existe post com o slug informado.
+   */
   async getPostBySlug(slug: string) {
     this.logger.log(`Getting post by slug: ${slug}`);
     
@@ -98,6 +126,15 @@ export class PostsService {
    * 
    * @param params - Parâmetros de busca
    * @returns Posts paginados
+   */
+  /**
+   * Lista posts com filtros e paginação.
+   *
+   * Parâmetros aceitos: `page`, `limit`, `status`, `subcategoryId`, `authorId`,
+   * `featured`.
+   *
+   * @param params Filtros e paginação.
+   * @returns Coleção paginada de posts.
    */
   async listPosts(params?: {
     page?: number;
@@ -120,6 +157,14 @@ export class PostsService {
    * @returns Post atualizado
    * @throws NotFoundException se post não existir
    */
+  /**
+   * Atualiza um post existente (verifica existência previamente).
+   *
+   * @param id ID do post.
+   * @param data Campos a atualizar.
+   * @returns Post atualizado.
+   * @throws NotFoundException quando o post não existe.
+   */
   async updatePost(id: string, data: UpdatePostData) {
     this.logger.log(`Updating post: ${id}`);
     
@@ -135,6 +180,13 @@ export class PostsService {
    * @param id - ID do post
    * @returns Confirmação de deleção
    * @throws NotFoundException se post não existir
+   */
+  /**
+   * Deleta um post (verifica existência previamente).
+   *
+   * @param id ID do post.
+   * @returns Objeto `{ success: true, message }` de confirmação.
+   * @throws NotFoundException quando o post não existe.
    */
   async deletePost(id: string) {
     this.logger.log(`Deleting post: ${id}`);
@@ -153,6 +205,12 @@ export class PostsService {
    * @returns Post publicado
    * @throws NotFoundException se post não existir
    */
+  /**
+   * Publica um post (altera `status` para `PUBLISHED`).
+   *
+   * @param id ID do post.
+   * @returns Post com `status` publicado e `publishedAt` definido.
+   */
   async publishPost(id: string) {
     this.logger.log(`Publishing post: ${id}`);
     
@@ -167,6 +225,12 @@ export class PostsService {
    * 
    * @param id - ID do post
    * @returns Post despublicado
+   */
+  /**
+   * Despublica um post (altera `status` para `DRAFT`).
+   *
+   * @param id ID do post.
+   * @returns Post com `status` rascunho e `publishedAt` nulo.
    */
   async unpublishPost(id: string) {
     this.logger.log(`Unpublishing post: ${id}`);
@@ -183,6 +247,12 @@ export class PostsService {
    * @param subcategoryId - ID da subcategoria
    * @returns Posts da subcategoria
    */
+  /**
+   * Lista posts por subcategoria.
+   *
+   * @param subcategoryId ID da subcategoria.
+   * @returns Coleção de posts da subcategoria.
+   */
   async getPostsBySubcategory(subcategoryId: string) {
     this.logger.log(`Getting posts by subcategory: ${subcategoryId}`);
     
@@ -194,6 +264,12 @@ export class PostsService {
    * 
    * @param authorId - ID do autor
    * @returns Posts do autor
+   */
+  /**
+   * Lista posts por autor.
+   *
+   * @param authorId ID do autor.
+   * @returns Coleção de posts do autor.
    */
   async getPostsByAuthor(authorId: string) {
     this.logger.log(`Getting posts by author: ${authorId}`);

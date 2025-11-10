@@ -207,7 +207,7 @@ export class UsersController {
 ```typescript
 @ApiTags('users')
 @ApiOperation({ summary: '...' })
-@ApiParam({ name: 'id' })
+@ApiParam({ fullName: 'id' })
 ```
 
 ### 4. Global Modules ✅
@@ -294,7 +294,7 @@ const app = await NestFactory.create<NestFastifyApplication>(
 npm run prisma:generate
 
 # 2. Rodar MongoDB
-docker run -d --name mongodb -p 27017:27017 mongo:7 --replSet rs0
+docker run -d --fullName mongodb -p 27017:27017 mongo:7 --replSet rs0
 docker exec mongodb mongosh --eval "rs.initiate()"
 
 # 3. Rodar NestJS

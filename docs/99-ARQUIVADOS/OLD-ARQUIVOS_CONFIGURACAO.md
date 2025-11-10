@@ -201,9 +201,9 @@ const result = await dynamodb.send(new QueryCommand({
 await dynamodb.send(new UpdateCommand({
   TableName: TABLES.USERS,
   Key: { id: '123' },
-  UpdateExpression: 'SET #name = :name',
-  ExpressionAttributeNames: { '#name': 'name' },
-  ExpressionAttributeValues: { ':name': 'Novo Nome' }
+  UpdateExpression: 'SET #fullName = :fullName',
+  ExpressionAttributeNames: { '#fullName': 'fullName' },
+  ExpressionAttributeValues: { ':fullName': 'Novo Nome' }
 }));
 ```
 

@@ -353,7 +353,7 @@ auth/
    ✅ Email, senha, verificação
    ↓
 3. Cria no MongoDB (perfil)
-   ✅ cognitoSub, email, username, name
+   ✅ cognitoSub, email, username, fullName
    ↓
 4. Usuário confirma email (opcional)
    POST /auth/confirm-email
@@ -388,7 +388,7 @@ auth/
 | `cognitoSub` | `cognitoSub` | String @unique | string | ✅ |
 | `email` | `email` | String @unique | string | ✅ |
 | `username` | `username` | String @unique | string | ✅ |
-| `name` | `name` | String | string | ✅ |
+| `fullName` | `fullName` | String | string | ✅ |
 | `avatar` | `avatar` | String? | string? | ✅ |
 | `bio` | `bio` | String? | string? | ✅ |
 | `website` | `website` | String? | string? | ✅ |

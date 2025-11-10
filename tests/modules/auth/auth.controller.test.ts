@@ -26,6 +26,8 @@ describe('AuthController', () => {
             refreshToken: jest.fn(),
             forgotPassword: jest.fn(),
             resetPassword: jest.fn(),
+            startOAuth: jest.fn(),
+            handleOAuthCallback: jest.fn(),
           },
         },
       ],
@@ -45,13 +47,14 @@ describe('AuthController', () => {
         email: 'test@example.com',
         password: 'Test@123',
         username: 'testuser',
-        name: 'Test User',
+        fullName: 'Test User',
+        nickname: 'testuser',
       };
 
       const mockResponse = {
         userId: 'user-123',
         email: registerData.email,
-        name: registerData.name,
+        fullName: registerData.fullName,
         emailVerificationRequired: true,
         message: 'Usuário criado com sucesso',
       };
@@ -72,6 +75,7 @@ describe('AuthController', () => {
     it('deve confirmar email com sucesso', async () => {
       const confirmData = {
         email: 'test@example.com',
+        username: 'testuser',
         code: '123456',
       };
 
@@ -97,13 +101,28 @@ describe('AuthController', () => {
       };
 
       const mockResponse = {
-        accessToken: 'mock-access-token',
-        refreshToken: 'mock-refresh-token',
-        tokenType: 'Bearer',
-        expiresIn: 3600,
-        userId: 'user-123',
-        email: loginData.email,
-        name: 'Test User',
+        tokens: {
+          accessToken: 'mock-access-token',
+          refreshToken: 'mock-refresh-token',
+          idToken: 'mock-id-token',
+          tokenType: 'Bearer',
+          expiresIn: 3600,
+        },
+        user: {
+          id: 'user-123',
+          cognitoSub: 'cognito-sub-123',
+          email: loginData.email,
+          fullName: 'Test User',
+          avatar: undefined,
+          bio: undefined,
+          website: undefined,
+          socialLinks: undefined,
+          role: 'subscriber',
+          isActive: true,
+          isBanned: false,
+          postsCount: 0,
+          commentsCount: 0,
+        },
       };
 
       authService.login.mockResolvedValue(mockResponse);
@@ -127,6 +146,7 @@ describe('AuthController', () => {
       const mockResponse = {
         accessToken: 'new-access-token',
         refreshToken: 'mock-refresh-token',
+        idToken: 'mock-id-token',
         tokenType: 'Bearer',
         expiresIn: 3600,
       };
@@ -182,6 +202,115 @@ describe('AuthController', () => {
 
       expect(authService.resetPassword).toHaveBeenCalledWith(resetData);
       expect(result).toEqual(mockResponse);
+    });
+  });
+
+  describe('OAuth', () => {
+    describe('startOAuth', () => {
+      it('deve redirecionar para Google OAuth via Cognito Hosted UI', async () => {
+        const redirectUri = 'http://localhost:2600/auth/oauth/callback?provider=google';
+        const mockAuthUrl = 'https://cognito-domain.auth.region.amazoncognito.com/oauth2/authorize?...';
+        
+        const res = {
+          redirect: jest.fn(),
+        } as any;
+
+        authService.startOAuth.mockResolvedValue(mockAuthUrl);
+
+        await controller.startOAuth('google', redirectUri, res);
+
+        expect(authService.startOAuth).toHaveBeenCalledWith('google', redirectUri);
+        expect(res.redirect).toHaveBeenCalledWith(mockAuthUrl);
+      });
+
+      it('deve redirecionar para GitHub OAuth via Cognito Hosted UI', async () => {
+        const redirectUri = 'http://localhost:2600/auth/oauth/callback?provider=github';
+        const mockAuthUrl = 'https://cognito-domain.auth.region.amazoncognito.com/oauth2/authorize?...';
+        
+        const res = {
+          redirect: jest.fn(),
+        } as any;
+
+        authService.startOAuth.mockResolvedValue(mockAuthUrl);
+
+        await controller.startOAuth('github', redirectUri, res);
+
+        expect(authService.startOAuth).toHaveBeenCalledWith('github', redirectUri);
+        expect(res.redirect).toHaveBeenCalledWith(mockAuthUrl);
+      });
+
+      it('deve lançar erro se redirect_uri não for fornecido', async () => {
+        const res = {
+          redirect: jest.fn(),
+        } as any;
+
+        await expect(
+          controller.startOAuth('google', '', res)
+        ).rejects.toThrow('redirect_uri é obrigatório');
+      });
+    });
+
+    describe('handleOAuthCallback', () => {
+      it('deve processar callback OAuth com sucesso', async () => {
+        const callbackData = { 
+          code: 'auth-code-123',
+          state: 'mock-state',
+          redirectUri: 'http://localhost:4000/callback'
+        };
+        const provider = 'google';
+
+        const mockResponse = {
+          tokens: {
+            accessToken: 'mock-access-token',
+            refreshToken: 'mock-refresh-token',
+            idToken: 'mock-id-token',
+            tokenType: 'Bearer',
+            expiresIn: 3600,
+          },
+          user: {
+            id: 'user-123',
+            cognitoSub: 'cognito-sub-123',
+            email: 'user@example.com',
+            fullName: 'Test User',
+            avatar: undefined,
+            bio: undefined,
+            website: undefined,
+            socialLinks: undefined,
+            role: 'subscriber',
+            isActive: true,
+            isBanned: false,
+            postsCount: 0,
+            commentsCount: 0,
+          },
+        };
+
+        authService.handleOAuthCallback.mockResolvedValue(mockResponse);
+
+        const result = await controller.handleOAuthCallback(callbackData, provider);
+
+        expect(authService.handleOAuthCallback).toHaveBeenCalledWith(
+          provider,
+          callbackData.code,
+          callbackData.state,
+          callbackData.redirectUri
+        );
+        expect(result).toEqual({
+          success: true,
+          data: mockResponse,
+        });
+      });
+
+      it('deve lançar erro se código não for fornecido', async () => {
+        await expect(
+          controller.handleOAuthCallback({ code: '' }, 'google')
+        ).rejects.toThrow('Código de autorização é obrigatório');
+      });
+
+      it('deve lançar erro se provider for inválido', async () => {
+        await expect(
+          controller.handleOAuthCallback({ code: 'auth-code-123' }, 'invalid-provider')
+        ).rejects.toThrow('Provedor OAuth inválido');
+      });
     });
   });
 });

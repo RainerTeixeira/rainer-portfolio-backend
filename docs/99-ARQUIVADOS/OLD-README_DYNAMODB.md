@@ -118,10 +118,10 @@ http://localhost:8001
 aws dynamodb list-tables --endpoint-url http://localhost:8000 --region us-east-1
 
 # Scan tabela
-aws dynamodb scan --table-name blog-users --endpoint-url http://localhost:8000 --region us-east-1
+aws dynamodb scan --table-fullName blog-users --endpoint-url http://localhost:8000 --region us-east-1
 
 # Descrever tabela
-aws dynamodb describe-table --table-name blog-users --endpoint-url http://localhost:8000 --region us-east-1
+aws dynamodb describe-table --table-fullName blog-users --endpoint-url http://localhost:8000 --region us-east-1
 ```
 
 ## 🐛 Solução de Problemas

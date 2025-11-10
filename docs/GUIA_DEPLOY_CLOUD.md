@@ -230,7 +230,7 @@ No AWS Console:
 ```powershell
 # Habilitar Point-in-Time Recovery
 aws dynamodb update-continuous-backups \
-  --table-name blog-users \
+  --table-fullName blog-users \
   --point-in-time-recovery-specification PointInTimeRecoveryEnabled=true
 ```
 
@@ -270,7 +270,7 @@ Region: us-east-1
 npm run sam:logs
 
 # Ou manualmente
-sam logs -n BlogApiFunction --stack-name blog-backend-api --tail
+sam logs -n BlogApiFunction --stack-fullName blog-backend-api --tail
 ```
 
 ### 2. CloudWatch Dashboards
@@ -317,7 +317,7 @@ Armazenar secrets de forma segura:
 ```powershell
 # Criar secret
 aws secretsmanager create-secret \
-  --name blog-backend/jwt-secret \
+  --fullName blog-backend/jwt-secret \
   --secret-string "seu-jwt-secret-aqui"
 
 # Recuperar no código

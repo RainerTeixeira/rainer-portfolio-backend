@@ -237,7 +237,7 @@ DATABASE_URL="mongodb://localhost:27017/blog?replicaSet=rs0"
 ```bash
 iniciar-ambiente-local.bat  # Windows
 # ou
-docker run -d --name mongodb -p 27017:27017 mongo:7 --replSet rs0
+docker run -d --fullName mongodb -p 27017:27017 mongo:7 --replSet rs0
 npm run prisma:generate
 npm run dev
 ```

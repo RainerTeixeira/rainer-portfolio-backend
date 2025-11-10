@@ -626,7 +626,7 @@ npm run sam:deploy
 ```bash
 # Obter URL da Lambda
 aws cloudformation describe-stacks \
-  --stack-name blog-backend-api \
+  --stack-fullName blog-backend-api \
   --query 'Stacks[0].Outputs[?OutputKey==`ApiUrl`].OutputValue' \
   --output text
 

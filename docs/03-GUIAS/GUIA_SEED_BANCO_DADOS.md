@@ -222,7 +222,7 @@ const users = [
     cognitoSub: nanoid(),
     email: 'novo@email.com',
     username: 'novousuario',
-    name: 'Novo Usuário',
+    fullName: 'Novo Usuário',
     role: 'AUTHOR',
   },
 ];

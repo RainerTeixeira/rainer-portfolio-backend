@@ -125,7 +125,7 @@ Write-Host ""
 if (!(Test-Path samconfig.toml)) {
     Write-Warning-Custom "Primeira vez? Usando deploy guiado..."
     sam deploy --guided `
-        --stack-name $StackName `
+        --stack-fullName $StackName `
         --parameter-overrides "Environment=$Environment" `
         --capabilities CAPABILITY_IAM `
         --resolve-s3
@@ -147,7 +147,7 @@ Write-Host ""
 
 try {
     $FunctionUrl = aws cloudformation describe-stacks `
-        --stack-name $StackName `
+        --stack-fullName $StackName `
         --query 'Stacks[0].Outputs[?OutputKey==`BlogApiFunctionUrl`].OutputValue' `
         --output text
 

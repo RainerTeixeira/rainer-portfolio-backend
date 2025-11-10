@@ -43,7 +43,7 @@ echo ""
 
 # FASE 4: Containers
 echo -e "${YELLOW}📊 FASE 4: Status dos containers...${NC}"
-docker ps --filter "name=blogapi" --format "{{.Names}}\t{{.Status}}"
+docker ps --filter "fullName=blogapi" --format "{{.Names}}\t{{.Status}}"
 echo ""
 
 # FASE 5: API

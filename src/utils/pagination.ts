@@ -1,5 +1,5 @@
 /**
- * Pagination
+ * Utilitários de Paginação
  * 
  * Utilitários para paginação de listagens.
  * 

@@ -190,7 +190,7 @@ src/
 
 ```typescript
 // 1. Request HTTP
-POST /users { email, password, name }
+POST /users { email, password, fullName }
     ↓
 // 2. routes/index.ts → registra userRoutes
     ↓

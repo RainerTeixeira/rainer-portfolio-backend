@@ -1,5 +1,5 @@
 /**
- * Modelo de Comment
+ * Modelo de Comentário
  * 
  * Define a estrutura de dados para comentários em posts.
  * Suporta threads (parentId) e moderação.
@@ -20,7 +20,8 @@ export interface Comment {
   isEdited: boolean;
   likesCount: number;
   createdAt: Date;
-  updatedAt: Date;
+  /** Data de última atualização (null até primeira atualização real - economia de espaço) */
+  updatedAt: Date | null;
   editedAt?: Date | null;
 }
 

@@ -1,5 +1,5 @@
 /**
- * User Model
+ * Modelo de Usuário
  * 
  * Modelo de dados para usuários com integração Amazon Cognito.
  * 
@@ -38,14 +38,8 @@ export interface User {
    */
   cognitoSub: string;
 
-  /** Email do usuário (sincronizado do Cognito) */
-  email: string;
-
-  /** Nome de usuário único (@username) */
-  username: string;
-
-  /** Nome completo ou nome de exibição (sincronizado do Cognito) */
-  name: string;
+  /** Nome completo ou nome de exibição */
+  fullName: string;
 
   /** URL do avatar (CDN, S3, ou caminho local) */
   avatar?: string;
@@ -83,11 +77,11 @@ export interface User {
   /** Contador de comentários feitos (calculado) */
   commentsCount: number;
 
-  /** Data de criação do perfil na aplicação */
+  /** Data de criação do perfil na aplicação (sincronizado com Cognito quando disponível) */
   createdAt: Date;
 
-  /** Última atualização do perfil */
-  updatedAt: Date;
+  /** Última atualização do perfil (null até primeira atualização real - economia de espaço) */
+  updatedAt: Date | null;
 }
 
 /**
@@ -98,31 +92,31 @@ export interface User {
  * - Admin cria usuário manualmente via painel
  */
 export interface CreateUserData {
-  /** ID único do Cognito (sub claim) - OBRIGATÓRIO */
+  /** ID do usuário no Cognito (sub claim) */
   cognitoSub: string;
 
-  /** Email (sincronizado do Cognito) - OBRIGATÓRIO */
-  email: string;
+  /** Nome completo do usuário */
+  fullName: string;
 
-  /** Username único - OBRIGATÓRIO */
-  username: string;
+  /** Nome de usuário único (não usado; Cognito gerencia) */
+  username?: string;
 
-  /** Nome completo - OBRIGATÓRIO */
-  name: string;
+  /** Email do usuário (não persistido; Cognito gerencia) */
+  email?: string;
 
-  /** Avatar (opcional) */
+  /** URL do avatar (opcional) */
   avatar?: string;
 
-  /** Bio (opcional) */
+  /** Biografia (opcional) */
   bio?: string;
 
   /** Website (opcional) */
   website?: string;
 
-  /** Links sociais (opcional) */
+  /** Links de redes sociais (opcional) */
   socialLinks?: Record<string, string>;
 
-  /** Role (opcional, padrão: AUTHOR) */
+  /** Papel do usuário (padrão: AUTHOR) */
   role?: UserRole;
 }
 
@@ -134,14 +128,8 @@ export interface CreateUserData {
  * mas devem ser sincronizados com Cognito via API
  */
 export interface UpdateUserData {
-  /** Email (sincronizar com Cognito) */
-  email?: string;
-
-  /** Username */
-  username?: string;
-
   /** Nome completo */
-  name?: string;
+  fullName?: string;
 
   /** Avatar */
   avatar?: string;
@@ -155,13 +143,13 @@ export interface UpdateUserData {
   /** Links sociais */
   socialLinks?: Record<string, string>;
 
-  /** Role (apenas ADMIN pode alterar) */
+  /** Papel do usuário */
   role?: UserRole;
 
-  /** Status ativo (apenas ADMIN pode alterar) */
+  /** Usuário ativo */
   isActive?: boolean;
 
-  /** Status banido (apenas ADMIN pode alterar) */
+  /** Usuário banido */
   isBanned?: boolean;
 
   /** Motivo do banimento */
@@ -195,7 +183,7 @@ export interface CognitoTokenPayload {
   /** Email verificado */
   email_verified: boolean;
 
-  /** Nome */
+  /** Nome (do Cognito) */
   name?: string;
 
   /** Username (custom attribute) */
@@ -213,12 +201,6 @@ export interface SyncCognitoUserData {
   /** Sub do Cognito */
   cognitoSub: string;
 
-  /** Email do Cognito */
-  email: string;
-
   /** Nome do Cognito */
-  name: string;
-
-  /** Username (derivado do email ou custom attribute) */
-  username?: string;
+  fullName: string;
 }

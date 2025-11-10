@@ -1,5 +1,5 @@
 /**
- * Schemas de Validação para Notifications
+ * Schemas de Validação para Notificações
  * 
  * Define schemas Zod para validação de dados de notificações.
  * 

@@ -84,7 +84,7 @@ if (Test-Path "../package.json") {
 # 6. Containers
 Write-Host "[6/6] Verificando containers Docker..." -ForegroundColor Cyan
 try {
-    $containers = docker ps --filter "name=blogapi" --format "{{.Names}}: {{.Status}}"
+    $containers = docker ps --filter "fullName=blogapi" --format "{{.Names}}: {{.Status}}"
     if ($containers) {
         Write-Host "     ✅ Containers BlogAPI encontrados:" -ForegroundColor Green
         foreach ($container in $containers) {

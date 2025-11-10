@@ -58,8 +58,8 @@ const validData: CreatePostData = {
 
 ### ✅ 3. user.schema.test.ts - CORRIGIDO
 
-**Problema**: Campo obrigatório `name` faltando  
-**Solução**: Adicionar campo `name` ao criar usuário
+**Problema**: Campo obrigatório `fullName` faltando  
+**Solução**: Adicionar campo `fullName` ao criar usuário
 
 ```typescript
 // ANTES (erro)
@@ -73,7 +73,7 @@ const minimalData: CreateUserData = {
 const minimalData: CreateUserData = {
   email: 'test@example.com',
   username: 'testuser',
-  name: 'Test User', // campo obrigatório
+  fullName: 'Test User', // campo obrigatório
   cognitoSub: 'cognito-123',
 };
 ```
@@ -102,8 +102,8 @@ expect(result.postId).toBe(postId);
 
 ### ✅ 5. users-posts-comments.integration.test.ts - CORRIGIDO
 
-**Problema**: Campo obrigatório `name` faltando  
-**Solução**: Adicionar campo `name` ao criar usuário
+**Problema**: Campo obrigatório `fullName` faltando  
+**Solução**: Adicionar campo `fullName` ao criar usuário
 
 ```typescript
 // ANTES (erro)
@@ -117,7 +117,7 @@ const user = await usersService.createUser({
 const user = await usersService.createUser({
   email: 'test@example.com',
   username: 'testuser',
-  name: 'Test User', // adicionado
+  fullName: 'Test User', // adicionado
   cognitoSub: 'cognito-123',
 });
 ```

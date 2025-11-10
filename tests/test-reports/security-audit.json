@@ -1,0 +1,105 @@
+{
+  "auditReportVersion": 2,
+  "vulnerabilities": {
+    "fast-redact": {
+      "name": "fast-redact",
+      "severity": "low",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1108265,
+          "name": "fast-redact",
+          "dependency": "fast-redact",
+          "title": "fast-redact vulnerable to prototype pollution",
+          "url": "https://github.com/advisories/GHSA-ffrw-9mx8-89p8",
+          "severity": "low",
+          "cwe": [
+            "CWE-1321"
+          ],
+          "cvss": {
+            "score": 0,
+            "vectorString": null
+          },
+          "range": "<=3.5.0"
+        }
+      ],
+      "effects": [
+        "pino"
+      ],
+      "range": "*",
+      "nodes": [
+        "node_modules/fast-redact"
+      ],
+      "fixAvailable": {
+        "name": "pino",
+        "version": "10.1.0",
+        "isSemVerMajor": true
+      }
+    },
+    "pino": {
+      "name": "pino",
+      "severity": "low",
+      "isDirect": true,
+      "via": [
+        "fast-redact"
+      ],
+      "effects": [],
+      "range": "5.0.0-rc.1 - 9.11.0",
+      "nodes": [
+        "node_modules/pino"
+      ],
+      "fixAvailable": {
+        "name": "pino",
+        "version": "10.1.0",
+        "isSemVerMajor": true
+      }
+    },
+    "validator": {
+      "name": "validator",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1109241,
+          "name": "validator",
+          "dependency": "validator",
+          "title": "validator.js has a URL validation bypass vulnerability in its isURL function",
+          "url": "https://github.com/advisories/GHSA-9965-vmph-33xx",
+          "severity": "moderate",
+          "cwe": [
+            "CWE-79"
+          ],
+          "cvss": {
+            "score": 6.1,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:L/I:L/A:N"
+          },
+          "range": "<13.15.20"
+        }
+      ],
+      "effects": [],
+      "range": "<13.15.20",
+      "nodes": [
+        "node_modules/validator"
+      ],
+      "fixAvailable": true
+    }
+  },
+  "metadata": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 2,
+      "moderate": 1,
+      "high": 0,
+      "critical": 0,
+      "total": 3
+    },
+    "dependencies": {
+      "prod": 461,
+      "dev": 560,
+      "optional": 31,
+      "peer": 24,
+      "peerOptional": 0,
+      "total": 1036
+    }
+  }
+}

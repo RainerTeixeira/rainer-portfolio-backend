@@ -142,7 +142,7 @@ Se desejar melhorar ainda mais, você pode:
   schema: {
     example: {
       success: true,
-      data: { id: '123', name: 'João' }
+      data: { id: '123', fullName: 'João' }
     }
   }
 })
@@ -152,7 +152,7 @@ Se desejar melhorar ainda mais, você pode:
 
 ```typescript
 @ApiProperty({ description: 'Nome completo', example: 'João Silva' })
-name: string;
+fullName: string;
 ```
 
 ### **3. Agrupar Endpoints Relacionados**
