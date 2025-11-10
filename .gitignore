@@ -67,3 +67,6 @@ events/
 
 # Ignora a pasta FUTURO na raiz e tudo dentro dela
 /FUTURO/
+
+# Ignora a pasta .vscode
+.vscode 
