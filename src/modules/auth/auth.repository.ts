@@ -1,8 +1,8 @@
 /**
  * Repositório de Autenticação
- * 
+ *
  * Camada de acesso a dados para autenticação via AWS Cognito.
- * 
+ *
  * @module modules/auth/auth.repository
  */
 
@@ -18,8 +18,11 @@ import {
   AdminDisableUserCommand,
   AdminEnableUserCommand,
   AdminGetUserCommand,
+  AdminInitiateAuthCommand,
+  AdminRespondToAuthChallengeCommand,
+  RespondToAuthChallengeCommand,
 } from '@aws-sdk/client-cognito-identity-provider';
-import { createHmac } from 'crypto';
+import { createHmac } from 'node:crypto';
 import { cognitoConfig } from '../../config/cognito.config.js';
 import { env } from '../../config/env.js';
 import type {
@@ -118,7 +121,10 @@ export class AuthRepository {
       return response;
     } catch (error) {
       const err = error as Error & { fullName?: string };
-      this.logger.error(`Erro ao registrar usuário ${identifier}: ${err.name} - ${err.message}`, err.stack);
+      this.logger.error(
+        `Erro ao registrar usuário ${identifier}: ${err.name} - ${err.message}`,
+        err.stack
+      );
       throw error;
     }
   }
@@ -208,7 +214,10 @@ export class AuthRepository {
       return response;
     } catch (error) {
       const err = error as Error & { fullName?: string };
-      this.logger.error(`Erro ao reenviar código para ${emailOrUsername}: ${err.name} - ${err.message}`, err.stack);
+      this.logger.error(
+        `Erro ao reenviar código para ${emailOrUsername}: ${err.name} - ${err.message}`,
+        err.stack
+      );
       throw error;
     }
   }
@@ -239,15 +248,17 @@ export class AuthRepository {
    * @throws Error com fullName `UserNotFoundException` quando não encontrado
    */
   async getUserByUsername(username: string) {
-    const { CognitoIdentityProviderClient, AdminGetUserCommand } = await import('@aws-sdk/client-cognito-identity-provider');
+    const { CognitoIdentityProviderClient, AdminGetUserCommand } = await import(
+      '@aws-sdk/client-cognito-identity-provider'
+    );
     const client = new CognitoIdentityProviderClient({ region: env.AWS_REGION });
-    
+
     try {
       const command = new AdminGetUserCommand({
         UserPoolId: env.COGNITO_USER_POOL_ID!,
-        Username: username
+        Username: username,
       });
-      
+
       const response = await client.send(command);
       return response;
     } catch (error) {
@@ -256,13 +267,18 @@ export class AuthRepository {
       if (cognitoError.name === 'UserNotFoundException') {
         throw cognitoError;
       }
-      this.logger.error(`Erro ao buscar usuário no Cognito: ${cognitoError.message}`, cognitoError.stack);
+      this.logger.error(
+        `Erro ao buscar usuário no Cognito: ${cognitoError.message}`,
+        cognitoError.stack
+      );
       throw new Error('Erro ao buscar usuário');
     }
   }
 
   async getUsernameByEmail(email: string): Promise<string | null> {
-    const { CognitoIdentityProviderClient, ListUsersCommand } = await import('@aws-sdk/client-cognito-identity-provider');
+    const { CognitoIdentityProviderClient, ListUsersCommand } = await import(
+      '@aws-sdk/client-cognito-identity-provider'
+    );
     const client = new CognitoIdentityProviderClient({ region: env.AWS_REGION });
 
     const command = new ListUsersCommand({
@@ -285,7 +301,9 @@ export class AuthRepository {
    * @returns Username do usuário ou null se não encontrado
    */
   async getUsernameBySub(cognitoSub: string): Promise<string | null> {
-    const { CognitoIdentityProviderClient, AdminGetUserCommand, ListUsersCommand } = await import('@aws-sdk/client-cognito-identity-provider');
+    const { CognitoIdentityProviderClient, AdminGetUserCommand, ListUsersCommand } = await import(
+      '@aws-sdk/client-cognito-identity-provider'
+    );
     const client = new CognitoIdentityProviderClient({ region: env.AWS_REGION });
 
     // Primeiro tenta usar o cognitoSub como username diretamente
@@ -294,16 +312,18 @@ export class AuthRepository {
         UserPoolId: env.COGNITO_USER_POOL_ID! || cognitoConfig.userPoolId,
         Username: cognitoSub,
       });
-      
+
       const response = await client.send(command);
       // Se encontrou, verifica se o sub corresponde
-      const sub = response.UserAttributes?.find(attr => attr.Name === 'sub')?.Value;
+      const sub = response.UserAttributes?.find((attr) => attr.Name === 'sub')?.Value;
       if (sub === cognitoSub) {
         return response.Username || cognitoSub;
       }
     } catch (error) {
       // Se falhou, continua para buscar via ListUsersCommand
-      this.logger.debug(`Não foi possível usar cognitoSub como username diretamente, buscando via ListUsersCommand`);
+      this.logger.debug(
+        `Não foi possível usar cognitoSub como username diretamente, buscando via ListUsersCommand`
+      );
     }
 
     // Se não funcionou, busca via ListUsersCommand (sem filtro, já que não suporta filtro por sub)
@@ -318,8 +338,8 @@ export class AuthRepository {
       if (!response.Users) return null;
 
       // Busca o usuário cujo atributo 'sub' corresponde ao cognitoSub
-      const user = response.Users.find(u => {
-        const sub = u.Attributes?.find(attr => attr.Name === 'sub')?.Value;
+      const user = response.Users.find((u) => {
+        const sub = u.Attributes?.find((attr) => attr.Name === 'sub')?.Value;
         return sub === cognitoSub;
       });
 
@@ -337,7 +357,9 @@ export class AuthRepository {
    * @returns Usuário do Cognito ou null
    */
   async getUserByEmail(email: string) {
-    const { CognitoIdentityProviderClient, ListUsersCommand } = await import('@aws-sdk/client-cognito-identity-provider');
+    const { CognitoIdentityProviderClient, ListUsersCommand } = await import(
+      '@aws-sdk/client-cognito-identity-provider'
+    );
     const client = new CognitoIdentityProviderClient({ region: env.AWS_REGION });
 
     const command = new ListUsersCommand({
@@ -374,5 +396,164 @@ export class AuthRepository {
     });
 
     return await this.cognitoClient.send(command);
+  }
+
+  /**
+   * Verifica se um usuário existe no Cognito pelo email.
+   * @param email Email do usuário
+   * @returns true se o usuário existe, false caso contrário
+   */
+  async userExistsByEmail(email: string): Promise<boolean> {
+    try {
+      const user = await this.getUserByEmail(email);
+      return user !== null;
+    } catch (error) {
+      this.logger.error(`Erro ao verificar existência do usuário ${email}:`, error);
+      return false;
+    }
+  }
+
+  /**
+   * Inicia autenticação passwordless usando CUSTOM_AUTH flow.
+   * Requer Lambda triggers configurados no Cognito (CreateAuthChallenge, DefineAuthChallenge).
+   * @param email Email do usuário
+   * @returns Resposta do Cognito com Session e ChallengeName
+   */
+  async initiatePasswordlessAuth(email: string) {
+    const secretHash = this.calculateSecretHash(email);
+
+    const command = new InitiateAuthCommand({
+      AuthFlow: 'CUSTOM_AUTH',
+      ClientId: cognitoConfig.clientId,
+      AuthParameters: {
+        USERNAME: email,
+        ...(secretHash && { SECRET_HASH: secretHash }),
+      },
+    });
+
+    try {
+      const response = await this.cognitoClient.send(command);
+      this.logger.log(`Autenticação passwordless iniciada para: ${email}`);
+      return response;
+    } catch (error) {
+      const err = error as Error & { name: string };
+      this.logger.error(
+        `Erro ao iniciar autenticação passwordless para ${email}: ${err.name} - ${err.message}`,
+        err.stack
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Verifica código de autenticação passwordless usando RespondToAuthChallenge.
+   * @param email Email do usuário
+   * @param code Código de verificação
+   * @param session Session ID retornado na inicialização
+   * @returns Tokens de autenticação
+   */
+  async respondToPasswordlessChallenge(
+    email: string,
+    code: string,
+    session: string
+  ) {
+    const secretHash = this.calculateSecretHash(email);
+
+    const command = new RespondToAuthChallengeCommand({
+      ClientId: cognitoConfig.clientId,
+      ChallengeName: 'CUSTOM_CHALLENGE',
+      Session: session,
+      ChallengeResponses: {
+        USERNAME: email,
+        ANSWER: code,
+        ...(secretHash && { SECRET_HASH: secretHash }),
+      },
+    });
+
+    try {
+      const response = await this.cognitoClient.send(command);
+      this.logger.log(`Código passwordless verificado para: ${email}`);
+      return response;
+    } catch (error) {
+      const err = error as Error & { name: string };
+      this.logger.error(
+        `Erro ao verificar código passwordless para ${email}: ${err.name} - ${err.message}`,
+        err.stack
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Inicia autenticação passwordless usando AdminInitiateAuth (requer permissões admin).
+   * Alternativa quando Lambda triggers não estão configurados.
+   * @param email Email do usuário
+   * @returns Resposta do Cognito com Session
+   */
+  async adminInitiatePasswordlessAuth(email: string) {
+    const secretHash = this.calculateSecretHash(email);
+
+    const command = new AdminInitiateAuthCommand({
+      UserPoolId: cognitoConfig.userPoolId,
+      ClientId: cognitoConfig.clientId,
+      AuthFlow: 'CUSTOM_AUTH',
+      AuthParameters: {
+        USERNAME: email,
+        ...(secretHash && { SECRET_HASH: secretHash }),
+      },
+    });
+
+    try {
+      const response = await this.cognitoClient.send(command);
+      this.logger.log(`Autenticação passwordless admin iniciada para: ${email}`);
+      return response;
+    } catch (error) {
+      const err = error as Error & { name: string };
+      this.logger.error(
+        `Erro ao iniciar autenticação passwordless admin para ${email}: ${err.name} - ${err.message}`,
+        err.stack
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Responde ao desafio passwordless usando AdminRespondToAuthChallenge (requer permissões admin).
+   * @param email Email do usuário
+   * @param code Código de verificação
+   * @param session Session ID retornado na inicialização
+   * @returns Tokens de autenticação
+   */
+  async adminRespondToPasswordlessChallenge(
+    email: string,
+    code: string,
+    session: string
+  ) {
+    const secretHash = this.calculateSecretHash(email);
+
+    const command = new AdminRespondToAuthChallengeCommand({
+      UserPoolId: cognitoConfig.userPoolId,
+      ClientId: cognitoConfig.clientId,
+      ChallengeName: 'CUSTOM_CHALLENGE',
+      Session: session,
+      ChallengeResponses: {
+        USERNAME: email,
+        ANSWER: code,
+        ...(secretHash && { SECRET_HASH: secretHash }),
+      },
+    });
+
+    try {
+      const response = await this.cognitoClient.send(command);
+      this.logger.log(`Código passwordless admin verificado para: ${email}`);
+      return response;
+    } catch (error) {
+      const err = error as Error & { name: string };
+      this.logger.error(
+        `Erro ao verificar código passwordless admin para ${email}: ${err.name} - ${err.message}`,
+        err.stack
+      );
+      throw error;
+    }
   }
 }

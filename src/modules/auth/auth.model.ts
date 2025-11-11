@@ -1,9 +1,9 @@
 /**
  * Modelo de Autenticação
- * 
+ *
  * Define a estrutura de dados para autenticação de usuários.
  * Integração com AWS Cognito.
- * 
+ *
  * @module modules/auth/auth.model
  */
 
@@ -22,13 +22,13 @@ export interface LoginData {
 }
 
 export interface RegisterData {
-  email: string;         // Email do usuário (usado como username no Cognito)
-  password: string;      // Senha do usuário
-  fullName: string;          // Nome completo do usuário
-  nickname?: string;      // Nickname do usuário (apenas letras e números) - opcional
-  username?: string;     // Mantido para compatibilidade (pode ser removido no futuro)
-  phoneNumber?: string;  // Número de telefone (opcional)
-  avatar?: string;       // URL do avatar (opcional)
+  email: string; // Email do usuário (usado como username no Cognito)
+  password: string; // Senha do usuário
+  fullName: string; // Nome completo do usuário
+  nickname?: string; // Nickname do usuário (apenas letras e números) - opcional
+  username?: string; // Mantido para compatibilidade (pode ser removido no futuro)
+  phoneNumber?: string; // Número de telefone (opcional)
+  avatar?: string; // URL do avatar (opcional)
 }
 
 export interface LoginResponseTokens {
@@ -84,7 +84,7 @@ export interface RefreshTokenResponse {
 
 export interface ConfirmEmailData {
   email: string;
-  username: string;  // Necessário para confirmar no Cognito
+  username: string; // Necessário para confirmar no Cognito
   code: string;
 }
 
@@ -98,3 +98,32 @@ export interface ResetPasswordData {
   newPassword: string;
 }
 
+/**
+ * Dados para iniciar autenticação passwordless
+ */
+export interface PasswordlessLoginInitData {
+  email: string;
+}
+
+/**
+ * Resposta ao iniciar autenticação passwordless
+ */
+export interface PasswordlessLoginInitResponse {
+  success: boolean;
+  message: string;
+  session?: string; // Session ID para verificação posterior
+}
+
+/**
+ * Dados para verificar código de autenticação passwordless
+ */
+export interface PasswordlessLoginVerifyData {
+  email: string;
+  code: string;
+  session?: string; // Session ID recebido na inicialização
+}
+
+/**
+ * Resposta da verificação passwordless (mesma estrutura do login normal)
+ */
+export type PasswordlessLoginVerifyResponse = LoginResponse;

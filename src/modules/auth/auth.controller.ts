@@ -7,7 +7,18 @@
  *
  * @module modules/auth/auth.controller
  */
-import { Controller, Post, Body, Get, Query, HttpCode, HttpStatus, Res, BadRequestException, Param } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Query,
+  HttpCode,
+  HttpStatus,
+  Res,
+  BadRequestException,
+  Param,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBody, ApiResponse, ApiQuery, ApiParam } from '@nestjs/swagger';
 import { Response } from 'express';
 import { AuthService } from './auth.service.js';
@@ -18,6 +29,8 @@ import type {
   ConfirmEmailData,
   ForgotPasswordData,
   ResetPasswordData,
+  PasswordlessLoginInitData,
+  PasswordlessLoginVerifyData,
 } from './auth.model.js';
 
 @ApiTags('🔐 Autenticação')
@@ -34,9 +47,7 @@ import type {
  *
  */
 export class AuthController {
-  constructor(
-    private readonly authService: AuthService,
-  ) {}
+  constructor(private readonly authService: AuthService) {}
 
   /**
    * Verifica se um nickname (nickname) está disponível
@@ -59,27 +70,23 @@ export class AuthController {
   /**
    * Verifica disponibilidade de nickname (nickname).
    */
-  async checkNickname(
-    @Body() data: { nickname: string; excludeCognitoSub?: string },
-  ) {
+  async checkNickname(@Body() data: { nickname: string; excludeCognitoSub?: string }) {
     if (!data.nickname) {
       return { success: false, message: 'O parâmetro nickname é obrigatório' };
     }
 
     const isAvailable = await this.authService.checkUsernameAvailability(
-      data.nickname, 
+      data.nickname,
       data.excludeCognitoSub
     );
-    
-    return { 
-      success: true, 
-      data: { 
+
+    return {
+      success: true,
+      data: {
         available: isAvailable,
-        message: isAvailable 
-          ? 'Este nickname está disponível' 
-          : 'Este nickname já está em uso',
-        nickname: data.nickname
-      } 
+        message: isAvailable ? 'Este nickname está disponível' : 'Este nickname já está em uso',
+        nickname: data.nickname,
+      },
     };
   }
 
@@ -103,24 +110,20 @@ export class AuthController {
   /**
    * Verifica disponibilidade de nome completo.
    */
-  async checkName(
-    @Body() data: { fullName: string },
-  ) {
+  async checkName(@Body() data: { fullName: string }) {
     if (!data.fullName) {
       return { success: false, message: 'O parâmetro fullName é obrigatório' };
     }
 
     const isAvailable = await this.authService.checkNameAvailability(data.fullName);
-    
-    return { 
-      success: true, 
-      data: { 
+
+    return {
+      success: true,
+      data: {
         available: isAvailable,
-        message: isAvailable 
-          ? 'Este nome está disponível' 
-          : 'Este nome já está em uso',
-        fullName: data.fullName
-      } 
+        message: isAvailable ? 'Este nome está disponível' : 'Este nome já está em uso',
+        fullName: data.fullName,
+      },
     };
   }
 
@@ -132,41 +135,41 @@ export class AuthController {
       type: 'object',
       required: ['email', 'password', 'fullName'],
       properties: {
-        email: { 
-          type: 'string', 
-          format: 'email', 
+        email: {
+          type: 'string',
+          format: 'email',
           example: 'user@example.com',
-          description: 'Único no Cognito (email não pode se repetir)'
+          description: 'Único no Cognito (email não pode se repetir)',
         },
-        password: { 
-          type: 'string', 
+        password: {
+          type: 'string',
           example: 'SenhaForte123!',
-          minLength: 8 
+          minLength: 8,
         },
-        fullName: { 
-          type: 'string', 
+        fullName: {
+          type: 'string',
           example: 'Nome Completo',
           minLength: 3,
-          description: 'Único no MongoDB (fullName não pode se repetir)'
+          description: 'Único no MongoDB (fullName não pode se repetir)',
         },
-        nickname: { 
-          type: 'string', 
+        nickname: {
+          type: 'string',
           example: 'nickname',
           minLength: 3,
           maxLength: 30,
           pattern: '^[a-zA-Z0-9_]+$',
-          description: 'Opcional. Pode conter letras, números e underscore'
+          description: 'Opcional. Pode conter letras, números e underscore',
         },
-        phoneNumber: { 
-          type: 'string', 
-          example: '+5511999999999' 
+        phoneNumber: {
+          type: 'string',
+          example: '+5511999999999',
         },
-        avatar: { 
-          type: 'string', 
-          format: 'uri', 
-          example: 'https://example.com/avatar.jpg' 
-        }
-      }
+        avatar: {
+          type: 'string',
+          format: 'uri',
+          example: 'https://example.com/avatar.jpg',
+        },
+      },
     },
   })
   /**
@@ -337,16 +340,16 @@ export class AuthController {
     return await this.authService.verifyEmailChange(data.cognitoSub, data.code);
   }
 
-
   @Get('needs-nickname/:cognitoSub')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: '❓ Verifica se Usuário Precisa Escolher Nickname',
-    description: 'Verifica se usuário OAuth (Google/GitHub) precisa escolher um nickname na primeira vez'
+    description:
+      'Verifica se usuário OAuth (Google/GitHub) precisa escolher um nickname na primeira vez',
   })
   @ApiParam({ name: 'cognitoSub', description: 'CognitoSub do usuário' })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'Retorna se precisa escolher nickname',
     schema: {
       type: 'object',
@@ -357,11 +360,11 @@ export class AuthController {
           properties: {
             needsNickname: { type: 'boolean', description: 'true se precisa escolher nickname' },
             hasNickname: { type: 'boolean', description: 'true se já tem nickname no Cognito' },
-            cognitoSub: { type: 'string', description: 'CognitoSub do usuário' }
-          }
-        }
-      }
-    }
+            cognitoSub: { type: 'string', description: 'CognitoSub do usuário' },
+          },
+        },
+      },
+    },
   })
   @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
   /**
@@ -374,9 +377,10 @@ export class AuthController {
 
   @Post('change-nickname')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: '✏️ Altera o Nickname do Usuário',
-    description: 'Altera o nickname do usuário e salva no Cognito. Use após login OAuth quando needsNickname=true'
+    description:
+      'Altera o nickname do usuário e salva no Cognito. Use após login OAuth quando needsNickname=true',
   })
   @ApiBody({
     description: 'Dados para alteração de nickname',
@@ -384,7 +388,10 @@ export class AuthController {
       type: 'object',
       properties: {
         cognitoSub: { type: 'string', description: 'ID do usuário no Cognito' },
-        newNickname: { type: 'string', description: 'Novo nickname (apenas letras e números, 3-30 caracteres)' },
+        newNickname: {
+          type: 'string',
+          description: 'Novo nickname (apenas letras e números, 3-30 caracteres)',
+        },
       },
       required: ['cognitoSub', 'newNickname'],
     },
@@ -403,10 +410,10 @@ export class AuthController {
     schema: {
       type: 'object',
       properties: {
-        identifier: { 
-          type: 'string', 
-          example: 'f48854d8-7081-704a-1756-077f177aee4e', 
-          description: 'ID do usuário no Cognito (sub) ou username' 
+        identifier: {
+          type: 'string',
+          example: 'f48854d8-7081-704a-1756-077f177aee4e',
+          description: 'ID do usuário no Cognito (sub) ou username',
         },
       },
       required: ['identifier'],
@@ -430,13 +437,20 @@ export class AuthController {
   @HttpCode(HttpStatus.TEMPORARY_REDIRECT)
   @ApiOperation({ summary: '🔐 Iniciar Login OAuth (backend-mediated)' })
   @ApiParam({ name: 'provider', enum: ['google', 'github'] })
-  @ApiQuery({ name: 'redirect_uri', required: true, description: 'URI de callback após autenticação (frontend)' })
-  @ApiResponse({ status: 302, description: 'Redireciona para Cognito Hosted UI com o provedor escolhido' })
+  @ApiQuery({
+    name: 'redirect_uri',
+    required: true,
+    description: 'URI de callback após autenticação (frontend)',
+  })
+  @ApiResponse({
+    status: 302,
+    description: 'Redireciona para Cognito Hosted UI com o provedor escolhido',
+  })
   @ApiResponse({ status: 400, description: 'Parâmetros inválidos' })
   async startOAuth(
     @Param('provider') provider: 'google' | 'github',
     @Query('redirect_uri') redirectUri: string,
-    @Res() res: Response,
+    @Res() res: Response
   ) {
     if (!redirectUri) {
       throw new BadRequestException('redirect_uri é obrigatório');
@@ -466,7 +480,7 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Falha na autenticação OAuth' })
   async handleOAuthCallback(
     @Body() data: { code: string; state?: string; redirectUri?: string },
-    @Param('provider') provider: string,
+    @Param('provider') provider: string
   ) {
     if (!data.code) {
       throw new BadRequestException('Código de autorização é obrigatório');
@@ -480,9 +494,140 @@ export class AuthController {
       provider as 'google' | 'github',
       data.code,
       data.state,
-      data.redirectUri,
+      data.redirectUri
     );
 
+    return { success: true, data: result };
+  }
+
+  /**
+   * Inicia autenticação passwordless enviando código por email
+   */
+  @Post('passwordless/init')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: '🔑 Iniciar Autenticação Passwordless',
+    description:
+      'Inicia autenticação sem senha usando código de verificação por email. Usa fluxo nativo ForgotPassword do Cognito (sem Lambda triggers). O Cognito envia código de verificação por email automaticamente. O código expira em alguns minutos.',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        email: {
+          type: 'string',
+          format: 'email',
+          example: 'usuario@exemplo.com',
+          description: 'Email do usuário cadastrado',
+        },
+      },
+      required: ['email'],
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Código enviado com sucesso',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: true },
+        data: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean', example: true },
+            message: { type: 'string', example: 'Código de verificação enviado para seu email.' },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Email inválido ou não fornecido' })
+  @ApiResponse({ status: 500, description: 'Erro ao enviar código de verificação' })
+  async initiatePasswordlessLogin(@Body() data: PasswordlessLoginInitData) {
+    if (!data.email) {
+      throw new BadRequestException('Email é obrigatório');
+    }
+
+    const result = await this.authService.initiatePasswordlessLogin(data);
+    return { success: true, data: result };
+  }
+
+  /**
+   * Verifica código de autenticação passwordless e autentica o usuário
+   */
+  @Post('passwordless/verify')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: '✅ Verificar Código Passwordless',
+    description:
+      'Verifica o código enviado por email e autentica o usuário. Usa fluxo nativo ConfirmForgotPassword do Cognito para verificar o código, define uma senha temporária e autentica automaticamente. Retorna tokens de acesso e dados do usuário.',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        email: {
+          type: 'string',
+          format: 'email',
+          example: 'usuario@exemplo.com',
+          description: 'Email do usuário',
+        },
+        code: {
+          type: 'string',
+          example: '123456',
+          description: 'Código de verificação enviado por email',
+        },
+      },
+      required: ['email', 'code'],
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Autenticação bem-sucedida',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: true },
+        data: {
+          type: 'object',
+          properties: {
+            tokens: {
+              type: 'object',
+              properties: {
+                accessToken: { type: 'string' },
+                refreshToken: { type: 'string' },
+                idToken: { type: 'string' },
+                tokenType: { type: 'string', example: 'Bearer' },
+                expiresIn: { type: 'number', example: 3600 },
+              },
+            },
+            user: {
+              type: 'object',
+              properties: {
+                id: { type: 'string' },
+                cognitoSub: { type: 'string' },
+                fullName: { type: 'string' },
+                email: { type: 'string' },
+                role: { type: 'string', example: 'subscriber' },
+              },
+            },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Código inválido, expirado ou número máximo de tentativas excedido',
+  })
+  @ApiResponse({ status: 401, description: 'Usuário não encontrado' })
+  @ApiResponse({ status: 500, description: 'Erro ao verificar código de autenticação' })
+  async verifyPasswordlessCode(@Body() data: PasswordlessLoginVerifyData) {
+    if (!data.email || !data.code) {
+      throw new BadRequestException('Email e código são obrigatórios');
+    }
+
+    const result = await this.authService.verifyPasswordlessCode(data);
     return { success: true, data: result };
   }
 }
