@@ -8,7 +8,7 @@
 Script UNIFICADO que testa TODAS as rotas da API com operações CRUD completas.
 Inclui testes de criação, leitura, atualização e deleção em todos os módulos.
 
-✅ 87+ requisições testadas
+✅ 120+ requisições testadas
 ✅ Criação automática de dados de teste
 ✅ Extração automática de IDs para testes dependentes
 ✅ Relatório detalhado com estatísticas
@@ -19,15 +19,17 @@ Inclui testes de criação, leitura, atualização e deleção em todos os módu
 ═══════════════════════════════════════════════════════════════════════════
 
  1. ❤️  Health Check (crítico - aborta se falhar)
- 2. 🔐 Autenticação (registro, login, refresh token)
+ 2. 🔐 Autenticação (registro, login, refresh, OAuth, passwordless, etc.)
  3. 👤 Usuários (criar, listar, buscar, atualizar, deletar)
  4. 🏷️  Categorias e Subcategorias (CRUD completo)
  5. 📄 Posts (CRUD, publicar/despublicar, buscar por autor/slug)
  6. 💬 Comentários (CRUD, aprovar/reprovar)
  7. ❤️  Likes (curtir, descurtir, contar)
- 8. 🔖 Bookmarks (salvar, organizar em coleções)
+ 8. 🔖 Bookmarks (salvar, organizar em coleções, remover)
  9. 🔔 Notificações (criar, listar, marcar como lida)
-10. 🗑️  Limpeza (opcional - deleta dados de teste)
+10. 📸 Cloudinary (upload de imagens e avatares)
+11. 📊 Dashboard (estatísticas e analytics)
+12. 🗑️  Limpeza (opcional - deleta dados de teste)
 
 
 🚀 COMO USAR
@@ -51,13 +53,13 @@ LINUX/MAC/WSL:
 ═══════════════════════════════════════════════════════════════════════════
 
 1. ✅ Servidor rodando:
-      npm run start:dev
+      pnpm run dev
 
 2. ✅ DATABASE_PROVIDER configurado no .env:
       DATABASE_PROVIDER=PRISMA
 
 3. ⚠️  (Opcional) Banco populado:
-      npm run seed
+      pnpm run seed
       
    Nota: O script cria seus próprios dados de teste!
 
@@ -81,7 +83,7 @@ LINUX/MAC/WSL:
 [1] 📍 GET /health
     Health Check Básico
     ✅ OK (Status: 200)
-    📄 {"status":"ok","timestamp":"2024-..."}
+    📄 {"status":"ok","timestamp":"2025-..."}
 
 ✅ API ESTÁ SAUDÁVEL! Continuando...
 

@@ -50,8 +50,8 @@ Sistema de autenticação híbrido usando **Amazon Cognito** como fonte única d
   isActive: true,
   postsCount: 10,
   commentsCount: 25,
-  createdAt: "2024-01-01T00:00:00Z",
-  updatedAt: "2024-01-15T10:30:00Z"
+  createdAt: "2025-01-01T00:00:00Z",
+  updatedAt: "2025-01-15T10:30:00Z"
 }
 ```
 

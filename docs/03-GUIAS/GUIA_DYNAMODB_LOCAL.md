@@ -306,8 +306,8 @@ O script `dynamodb.tables.ts` cria as seguintes tabelas:
   "role": "AUTHOR",
   "bio": "Desenvolvedora Full Stack",
   "avatar": "https://i.pravatar.cc/150?img=5",
-  "createdAt": "2024-01-15T10:30:00.000Z",
-  "updatedAt": "2024-01-15T10:30:00.000Z"
+  "createdAt": "2025-01-15T10:30:00.000Z",
+  "updatedAt": "2025-01-15T10:30:00.000Z"
 }
 ```
 
@@ -432,7 +432,7 @@ aws dynamodb put-item \
     "id": {"S": "test-123"},
     "fullName": {"S": "Test User"},
     "email": {"S": "test@example.com"},
-    "createdAt": {"S": "2024-01-15T10:00:00Z"}
+    "createdAt": {"S": "2025-01-15T10:00:00Z"}
   }' \
   --endpoint-url http://localhost:8000 \
   --region us-east-1
@@ -760,6 +760,6 @@ Antes de fazer deploy para produção, verifique:
 
 ---
 
-**Criado em:** 16/10/2024  
+**Criado em:** 16/10/2025  
 **Última atualização:** 16/10/2025  
 **Versão:** 2.0.0 (Atualizado com novos scripts e configurações)

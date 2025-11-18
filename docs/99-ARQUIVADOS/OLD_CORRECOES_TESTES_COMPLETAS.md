@@ -22,10 +22,10 @@
 
 ```typescript
 // ANTES (erro)
-const date = new Date('2024-02-29');
+const date = new Date('2025-02-29');
 
 // DEPOIS (correto)
-const date = new Date(2024, 1, 29); // Ano, Mês (0-indexed), Dia
+const date = new Date(2025, 1, 29); // Ano, Mês (0-indexed), Dia
 ```
 
 ### ✅ 2. post.schema.test.ts - CORRIGIDO

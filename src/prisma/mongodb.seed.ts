@@ -374,7 +374,7 @@ async function seedPosts(users: any[], categories: any) {
       status: 'PUBLISHED',
       featured: true,
       allowComments: true,
-      publishedAt: new Date('2024-10-01'),
+      publishedAt: new Date('2025-10-01'),
     },
     {
       title: 'Next.js 14: Server Actions e App Router na Prática',
@@ -397,7 +397,7 @@ async function seedPosts(users: any[], categories: any) {
       authorId: users[2].cognitoSub,
       status: 'PUBLISHED',
       featured: true,
-      publishedAt: new Date('2024-10-05'),
+      publishedAt: new Date('2025-10-05'),
     },
     // Posts de Backend
     {
@@ -421,7 +421,7 @@ async function seedPosts(users: any[], categories: any) {
       authorId: users[2].cognitoSub,
       status: 'PUBLISHED',
       featured: false,
-      publishedAt: new Date('2024-10-10'),
+      publishedAt: new Date('2025-10-10'),
     },
     {
       title: 'Prisma ORM: Do Zero à Produção com MongoDB',
@@ -443,7 +443,7 @@ async function seedPosts(users: any[], categories: any) {
       subcategoryId: categories.backend.id,
       authorId: users[2].cognitoSub,
       status: 'PUBLISHED',
-      publishedAt: new Date('2024-10-12'),
+      publishedAt: new Date('2025-10-12'),
     },
     // Posts de DevOps
     {
@@ -466,7 +466,7 @@ async function seedPosts(users: any[], categories: any) {
       subcategoryId: categories.devops.id,
       authorId: users[2].cognitoSub,
       status: 'PUBLISHED',
-      publishedAt: new Date('2024-10-08'),
+      publishedAt: new Date('2025-10-08'),
     },
     // Posts de UX/UI
     {
@@ -490,7 +490,7 @@ async function seedPosts(users: any[], categories: any) {
       authorId: users[3].cognitoSub, // Ana Designer
       status: 'PUBLISHED',
       featured: true,
-      publishedAt: new Date('2024-10-03'),
+      publishedAt: new Date('2025-10-03'),
     },
     {
       title: 'Figma: Do Básico ao Avançado em Design Systems',
@@ -512,7 +512,7 @@ async function seedPosts(users: any[], categories: any) {
       subcategoryId: categories.uxui.id,
       authorId: users[3].cognitoSub,
       status: 'PUBLISHED',
-      publishedAt: new Date('2024-10-07'),
+      publishedAt: new Date('2025-10-07'),
     },
     // Posts de Produtividade
     {
@@ -535,7 +535,7 @@ async function seedPosts(users: any[], categories: any) {
       subcategoryId: categories.produtividade.id,
       authorId: users[1].cognitoSub, // Maria Editor
       status: 'PUBLISHED',
-      publishedAt: new Date('2024-10-09'),
+      publishedAt: new Date('2025-10-09'),
     },
     // Post em rascunho
     {
@@ -833,7 +833,7 @@ async function seedNotifications(users: any[], posts: any[]) {
       link: `/posts/${posts[1].id}`,
       userId: users[2].cognitoSub,
       isRead: true,
-      readAt: new Date('2024-10-11'),
+      readAt: new Date('2025-10-11'),
       metadata: {
         postId: posts[1].id,
         likeAuthor: 'Ana Designer',
@@ -847,7 +847,7 @@ async function seedNotifications(users: any[], posts: any[]) {
       link: `/posts/${posts[3].id}`,
       userId: users[2].cognitoSub,
       isRead: true,
-      readAt: new Date('2024-10-12'),
+      readAt: new Date('2025-10-12'),
     },
     // Notificação para Ana
     {

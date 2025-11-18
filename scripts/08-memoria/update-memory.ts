@@ -5,7 +5,7 @@
  * com informações atualizadas do projeto.
  * 
  * Uso:
- *   npm run memory:update
+ *   pnpm run memory:update
  *   tsx scripts/08-memoria/update-memory.ts
  */
 

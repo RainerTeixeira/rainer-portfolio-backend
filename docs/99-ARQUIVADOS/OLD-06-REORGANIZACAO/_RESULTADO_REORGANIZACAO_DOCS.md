@@ -175,7 +175,7 @@ docs/
 4. **_ORGANIZACAO_COMPLETA.md** - Organização
 5. **CHECKLIST_ORGANIZACAO.md** - Checklist
 
-### Configuração (4 arquivos novos - 2024)
+### Configuração (4 arquivos novos - 2025)
 
 6. **GUIA_DECISAO_DATABASE.md** - Qual banco usar?
 7. **ATUALIZACAO_ENV_CONFIG.md** - Guia completo

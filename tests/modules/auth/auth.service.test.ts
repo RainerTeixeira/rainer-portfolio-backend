@@ -925,7 +925,7 @@ describe('AuthService (Banco Real)', () => {
             ...existingUser,
             username: 'existinguser',
             nickname: 'existinguser',
-            userCreateDate: new Date('2024-01-01'),
+            userCreateDate: new Date('2025-01-01'),
           } as any);
 
         const result = await service.handleOAuthCallback('google', uniqueCode);

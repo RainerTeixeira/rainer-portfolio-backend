@@ -12,8 +12,9 @@
   "license": "MIT",
   "engines": {
     "node": ">=18.0.0",
-    "npm": ">=9.0.0"
+    "pnpm": ">=9.0.0"
   },
+  "packageManager": "pnpm@9.0.0",
   "scripts": {
     "dev": "nest start --watch",
     "build": "nest build",
@@ -32,10 +33,14 @@
     "prisma:studio": "prisma studio --schema=src/prisma/schema.prisma",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
-    "sam:build": "npm run build && cd src/lambda && sam build",
-    "sam:deploy": "npm run build && cd src/lambda && sam deploy",
-    "clean": "rimraf dist coverage .aws-sam node_modules/.cache",
-    "postinstall": "npm run prisma:generate"
+    "sam:build": "pnpm run build && cd src/lambda && sam build",
+    "sam:deploy": "pnpm run build && cd src/lambda && sam deploy",
+    "clean": "pnpm exec rimraf dist coverage .aws-sam node_modules/.cache",
+    "clean:all": "pnpm run clean && pnpm exec rimraf node_modules",
+    "postinstall": "pnpm run prisma:generate",
+    "version:update": "tsx scripts/08-memoria/update-version.ts",
+    "memory:update": "tsx scripts/08-memoria/update-memory.ts",
+    "memory:sync": "pnpm run version:update && pnpm run memory:update"
   },
   "dependencies": {
     "@aws-sdk/client-cognito-identity-provider": "^3.913.0",

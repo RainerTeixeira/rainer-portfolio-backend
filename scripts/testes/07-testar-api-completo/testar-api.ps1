@@ -99,6 +99,8 @@ $script:CommentID = $null
 $script:BookmarkID = $null
 $script:NotificationID = $null
 $script:AccessToken = $null
+$script:CognitoSub = $null
+$script:Nickname = $null
 
 # ========================================
 # 🎯 FUNÇÕES AUXILIARES
@@ -214,7 +216,7 @@ function Invoke-ApiRequest {
         
         if ($Critical) {
             Write-Host "`n⛔ ERRO CRÍTICO! Verifique se o servidor está rodando:" -ForegroundColor $Red
-            Write-Host "   npm run start:dev`n" -ForegroundColor $Green
+            Write-Host "   pnpm run dev`n" -ForegroundColor $Green
             exit 1
         }
         
@@ -250,7 +252,7 @@ $detailedResult = Invoke-ApiRequest -Method GET -Route "/health/detailed" -Descr
 if ($healthResult.Success) {
     Write-Host "`n✅ API ESTÁ SAUDÁVEL! Continuando..." -ForegroundColor $Green
 } else {
-    Write-Host "`n❌ API NÃO ESTÁ RESPONDENDO! Execute: npm run start:dev" -ForegroundColor $Red
+    Write-Host "`n❌ API NÃO ESTÁ RESPONDENDO! Execute: pnpm run dev" -ForegroundColor $Red
     exit 1
 }
 
@@ -259,8 +261,16 @@ if ($healthResult.Success) {
 # ========================================
 Write-Section "🔐" "2. AUTENTICAÇÃO"
 
-# Registrar usuário de teste
+# Verificar disponibilidade de nickname
 $randomNum = Get-Random -Maximum 99999
+$checkNicknameBody = @{ nickname = "user$randomNum" }
+Invoke-ApiRequest -Method POST -Route "/auth/check-nickname" -Description "Verificar Disponibilidade de Nickname" -Body $checkNicknameBody | Out-Null
+
+# Verificar disponibilidade de nome
+$checkFullNameBody = @{ fullName = "Usuario Teste $randomNum" }
+Invoke-ApiRequest -Method POST -Route "/auth/check-fullName" -Description "Verificar Disponibilidade de Nome" -Body $checkFullNameBody | Out-Null
+
+# Registrar usuário de teste
 $registerBody = @{
     email = "teste$randomNum@example.com"
     password = "Senha123!@#"
@@ -268,6 +278,20 @@ $registerBody = @{
     fullName = "Usuario Teste $randomNum"
 }
 $registerResult = Invoke-ApiRequest -Method POST -Route "/auth/register" -Description "Registrar Usuário" -Body $registerBody
+
+if ($registerResult.Success -and $registerResult.Data) {
+    $script:CognitoSub = $registerResult.Data.cognitoSub
+    if ($script:CognitoSub) {
+        Write-Host "    🔑 CognitoSub: $script:CognitoSub" -ForegroundColor $Cyan
+    }
+}
+
+# Confirmar email (simulado - pode falhar se não houver código real)
+$confirmEmailBody = @{
+    email = $registerBody.email
+    code = "123456"
+}
+Invoke-ApiRequest -Method POST -Route "/auth/confirm-email" -Description "Confirmar Email" -Body $confirmEmailBody | Out-Null
 
 # Login
 $loginBody = @{
@@ -283,9 +307,86 @@ if ($loginResult.Success -and $loginResult.Data) {
     }
 }
 
+# Refresh token
+if ($loginResult.Success -and $loginResult.Data.refreshToken) {
+    $refreshBody = @{ refreshToken = $loginResult.Data.refreshToken }
+    Invoke-ApiRequest -Method POST -Route "/auth/refresh" -Description "Renovar Token" -Body $refreshBody | Out-Null
+}
+
 # Esqueci minha senha
 $forgotBody = @{ email = $registerBody.email }
 Invoke-ApiRequest -Method POST -Route "/auth/forgot-password" -Description "Esqueci Minha Senha" -Body $forgotBody | Out-Null
+
+# Reenviar código de confirmação
+$resendBody = @{ email = $registerBody.email }
+Invoke-ApiRequest -Method POST -Route "/auth/resend-confirmation-code" -Description "Reenviar Código de Confirmação" -Body $resendBody | Out-Null
+
+# Reset password (simulado)
+$resetPasswordBody = @{
+    email = $registerBody.email
+    code = "123456"
+    newPassword = "NovaSenha123!@#"
+}
+Invoke-ApiRequest -Method POST -Route "/auth/reset-password" -Description "Redefinir Senha" -Body $resetPasswordBody | Out-Null
+
+# Change email (simulado)
+$changeEmailBody = @{
+    currentEmail = $registerBody.email
+    newEmail = "novo$randomNum@example.com"
+}
+Invoke-ApiRequest -Method POST -Route "/auth/change-email" -Description "Alterar Email" -Body $changeEmailBody | Out-Null
+
+# Verify email change (simulado)
+$verifyEmailChangeBody = @{
+    email = $registerBody.email
+    code = "123456"
+}
+Invoke-ApiRequest -Method POST -Route "/auth/verify-email-change" -Description "Verificar Alteração de Email" -Body $verifyEmailChangeBody | Out-Null
+
+# Verificar se precisa de nickname
+if ($script:CognitoSub) {
+    Invoke-ApiRequest -Method GET -Route "/auth/needs-nickname/$script:CognitoSub" -Description "Verifica se Usuário Precisa Escolher Nickname" | Out-Null
+    
+    # Change nickname
+    $changeNicknameBody = @{
+        cognitoSub = $script:CognitoSub
+        nickname = "novo_nickname_$randomNum"
+    }
+    $changeNicknameResult = Invoke-ApiRequest -Method POST -Route "/auth/change-nickname" -Description "Altera o Nickname do Usuário" -Body $changeNicknameBody
+    if ($changeNicknameResult.Success) {
+        $script:Nickname = $changeNicknameBody.nickname
+    }
+}
+
+# Verify email admin (simulado)
+$verifyEmailAdminBody = @{
+    email = $registerBody.email
+    code = "123456"
+}
+Invoke-ApiRequest -Method POST -Route "/auth/verify-email-admin" -Description "Verificar E-mail Administrativamente" -Body $verifyEmailAdminBody | Out-Null
+
+# OAuth - iniciar login (simulado)
+Invoke-ApiRequest -Method GET -Route "/auth/oauth/google" -Description "Iniciar Login OAuth Google" | Out-Null
+
+# OAuth callback (simulado)
+$oauthCallbackBody = @{
+    code = "oauth_code_123"
+    state = "state_123"
+}
+Invoke-ApiRequest -Method POST -Route "/auth/oauth/google/callback" -Description "Processar Callback OAuth" -Body $oauthCallbackBody | Out-Null
+
+# Passwordless - iniciar
+$passwordlessInitBody = @{
+    email = $registerBody.email
+}
+Invoke-ApiRequest -Method POST -Route "/auth/passwordless/init" -Description "Iniciar Autenticação Passwordless" -Body $passwordlessInitBody | Out-Null
+
+# Passwordless - verificar
+$passwordlessVerifyBody = @{
+    email = $registerBody.email
+    code = "123456"
+}
+Invoke-ApiRequest -Method POST -Route "/auth/passwordless/verify" -Description "Verificar Código Passwordless" -Body $passwordlessVerifyBody | Out-Null
 
 # ========================================
 # 👤 3. USUÁRIOS
@@ -331,6 +432,11 @@ if ($script:Username) {
     Invoke-ApiRequest -Method GET -Route "/users/username/$script:Username" -Description "Buscar por Username" | Out-Null
 }
 
+# Buscar por Cognito Sub
+if ($script:CognitoSub) {
+    Invoke-ApiRequest -Method GET -Route "/users/cognito/$script:CognitoSub" -Description "Buscar por Cognito Sub" | Out-Null
+}
+
 # ========================================
 # 🏷️ 4. CATEGORIAS E SUBCATEGORIAS
 # ========================================
@@ -367,6 +473,7 @@ if ($script:CategoryID) {
 
 # Listar e buscar
 Invoke-ApiRequest -Method GET -Route "/categories" -Description "Listar Categorias Principais" | Out-Null
+Invoke-ApiRequest -Method GET -Route "/categories/subcategories/all" -Description "Listar Todas as Subcategorias" | Out-Null
 
 if ($script:CategoryID) {
     Invoke-ApiRequest -Method GET -Route "/categories/$script:CategoryID" -Description "Buscar Categoria" | Out-Null
@@ -425,6 +532,9 @@ if ($script:PostID) {
     
     # Publicar post
     Invoke-ApiRequest -Method PATCH -Route "/posts/$script:PostID/publish" -Description "Publicar Post" | Out-Null
+    
+    # Despublicar post
+    Invoke-ApiRequest -Method PATCH -Route "/posts/$script:PostID/unpublish" -Description "Despublicar Post" | Out-Null
 }
 
 # Posts por autor e subcategoria
@@ -473,6 +583,9 @@ if ($script:CommentID) {
     
     # Aprovar comentário
     Invoke-ApiRequest -Method PATCH -Route "/comments/$script:CommentID/approve" -Description "Aprovar Comentário" | Out-Null
+    
+    # Reprovar comentário
+    Invoke-ApiRequest -Method PATCH -Route "/comments/$script:CommentID/disapprove" -Description "Reprovar Comentário" | Out-Null
     
     # Atualizar comentário
     $updateCommentBody = @{
@@ -546,6 +659,11 @@ if ($script:BookmarkID) {
     Invoke-ApiRequest -Method PUT -Route "/bookmarks/$script:BookmarkID" -Description "Atualizar Bookmark" -Body $updateBookmarkBody | Out-Null
 }
 
+# Remover post dos favoritos
+if ($script:UserID -and $script:PostID) {
+    Invoke-ApiRequest -Method DELETE -Route "/bookmarks/user/$script:UserID/post/$script:PostID" -Description "Remover dos Favoritos" | Out-Null
+}
+
 # ========================================
 # 🔔 9. NOTIFICAÇÕES
 # ========================================
@@ -593,10 +711,41 @@ if ($script:UserID) {
 }
 
 # ========================================
-# 🗑️ 10. LIMPEZA (OPCIONAL)
+# 📸 10. CLOUDINARY
 # ========================================
+Write-Section "📸" "10. CLOUDINARY (UPLOAD DE IMAGENS)"
+
+# Upload de imagem para blog (simulado - pode falhar sem arquivo real)
+$blogImageBody = @{
+    image = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+    folder = "blog"
+}
+Invoke-ApiRequest -Method POST -Route "/cloudinary/upload/blog-image" -Description "Upload de Imagem para Blog" -Body $blogImageBody | Out-Null
+
+# Upload de avatar (simulado)
+$avatarBody = @{
+    image = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+    userId = $script:UserID
+}
+Invoke-ApiRequest -Method POST -Route "/cloudinary/upload/avatar" -Description "Upload de Avatar" -Body $avatarBody | Out-Null
+
+# ========================================
+# 📊 11. DASHBOARD
+# ========================================
+Write-Section "📊" "11. DASHBOARD"
+
+# Estatísticas do dashboard
+Invoke-ApiRequest -Method GET -Route "/api/dashboard/stats" -Description "Obter Estatísticas do Dashboard" | Out-Null
+
+# Analytics do dashboard
+Invoke-ApiRequest -Method GET -Route "/api/dashboard/analytics" -Description "Obter Analytics do Dashboard" | Out-Null
+
+# ========================================
+# 🗑️ 12. LIMPEZA (OPCIONAL)
+# ========================================
+
 if (-not $SkipDelete) {
-    Write-Section "🗑️" "10. LIMPEZA DE DADOS DE TESTE (OPCIONAL)"
+    Write-Section "🗑️" "12. LIMPEZA DE DADOS DE TESTE (OPCIONAL)"
     
     Write-Host "`n⚠️  Deseja deletar os dados de teste criados? " -ForegroundColor $Yellow -NoNewline
     Write-Host "[S/N]: " -ForegroundColor $White -NoNewline
@@ -665,7 +814,10 @@ Write-Host "   Requisições com falha:  $script:TotalFailed" -ForegroundColor $
 Write-Host "   Taxa de sucesso:  $successRate%" -ForegroundColor $(if ($successRate -ge 90) { $Green } elseif ($successRate -ge 70) { $Yellow } else { $Red })
 
 Write-Host "`n🎯 IDs Gerados:" -ForegroundColor $Cyan
+Write-Host "   CognitoSub:     $script:CognitoSub" -ForegroundColor $White
 Write-Host "   UserID:         $script:UserID" -ForegroundColor $White
+Write-Host "   Username:       $script:Username" -ForegroundColor $White
+Write-Host "   Nickname:       $script:Nickname" -ForegroundColor $White
 Write-Host "   CategoryID:     $script:CategoryID" -ForegroundColor $White
 Write-Host "   SubcategoryID:  $script:SubcategoryID" -ForegroundColor $White
 Write-Host "   PostID:         $script:PostID" -ForegroundColor $White

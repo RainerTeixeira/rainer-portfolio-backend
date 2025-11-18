@@ -49,7 +49,7 @@ describe('Date Formatter Utility', () => {
 
   describe('Formatação Básica', () => {
     it('deve formatar data no formato brasileiro', () => {
-      const date = new Date('2024-01-15');
+      const date = new Date('2025-01-15');
       const formatted = formatDateBR(date);
 
       expect(formatted).toContain('/');
@@ -57,7 +57,7 @@ describe('Date Formatter Utility', () => {
     });
 
     it('deve formatar data e hora', () => {
-      const date = new Date('2024-01-15T14:30:00');
+      const date = new Date('2025-01-15T14:30:00');
       const formatted = formatDateTime(date);
 
       expect(formatted).toContain('/');
@@ -141,15 +141,15 @@ describe('Date Formatter Utility', () => {
     });
 
     it('deve lidar com anos bissextos', () => {
-      const date = new Date(2024, 1, 29); // Ano, Mês (0-indexed), Dia
+      const date = new Date(2025, 1, 29); // Ano, Mês (0-indexed), Dia
 
       expect(date.getDate()).toBe(29);
       expect(date.getMonth()).toBe(1); // Fevereiro (0-indexed)
-      expect(date.getFullYear()).toBe(2024);
+      expect(date.getFullYear()).toBe(2025);
     });
 
     it('deve lidar com mudança de fuso horário', () => {
-      const date = new Date('2024-01-15T00:00:00Z');
+      const date = new Date('2025-01-15T00:00:00Z');
 
       expect(date).toBeInstanceOf(Date);
       expect(date.getTime()).toBeGreaterThan(0);
@@ -158,15 +158,15 @@ describe('Date Formatter Utility', () => {
 
   describe('Comparação de Datas', () => {
     it('deve comparar duas datas corretamente', () => {
-      const date1 = new Date('2024-01-01');
-      const date2 = new Date('2024-01-15');
+      const date1 = new Date('2025-01-01');
+      const date2 = new Date('2025-01-15');
 
       expect(date1.getTime()).toBeLessThan(date2.getTime());
     });
 
     it('deve identificar datas iguais', () => {
-      const date1 = new Date('2024-01-15T12:00:00');
-      const date2 = new Date('2024-01-15T12:00:00');
+      const date1 = new Date('2025-01-15T12:00:00');
+      const date2 = new Date('2025-01-15T12:00:00');
 
       expect(date1.getTime()).toBe(date2.getTime());
     });

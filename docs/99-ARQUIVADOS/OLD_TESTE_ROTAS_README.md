@@ -200,7 +200,7 @@ sudo dnf install jq
 [1] 📍 GET /health
     Health Check Básico
     ✅ OK (Status: 200)
-    📄 {"status":"ok","timestamp":"2024-..."}
+    📄 {"status":"ok","timestamp":"2025-..."}
 
 [2] 📍 GET /health/detailed
     Health Check Detalhado

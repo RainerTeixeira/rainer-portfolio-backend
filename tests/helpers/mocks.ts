@@ -26,7 +26,7 @@ export const createMockUser = (overrides: Partial<User> = {}): User => ({
   isBanned: false,
   postsCount: 0,
   commentsCount: 0,
-  createdAt: new Date('2024-01-01'),
+  createdAt: new Date('2025-01-01'),
   updatedAt: null, // null até primeira atualização real (economia de espaço)
   ...overrides,
 });
@@ -52,8 +52,8 @@ export const createMockPost = (overrides: Partial<Post> = {}): Post => ({
   likesCount: 0,
   commentsCount: 0,
   bookmarksCount: 0,
-  publishedAt: new Date('2024-01-01'),
-  createdAt: new Date('2024-01-01'),
+  publishedAt: new Date('2025-01-01'),
+  createdAt: new Date('2025-01-01'),
   updatedAt: null, // null até primeira atualização real
   ...overrides,
 });
@@ -71,7 +71,7 @@ export const createMockCategory = (overrides: Partial<Category> = {}): Category 
   order: 0,
   isActive: true,
   postsCount: 0,
-  createdAt: new Date('2024-01-01'),
+  createdAt: new Date('2025-01-01'),
   updatedAt: null, // null até primeira atualização real
   ...overrides,
 });
@@ -91,7 +91,7 @@ export const createMockComment = (overrides: Partial<Comment> = {}): Comment => 
   isReported: false,
   isEdited: false,
   likesCount: 0,
-  createdAt: new Date('2024-01-01'),
+  createdAt: new Date('2025-01-01'),
   updatedAt: null, // null até primeira atualização real
   ...overrides,
 });

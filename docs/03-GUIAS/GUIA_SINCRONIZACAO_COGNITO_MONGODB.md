@@ -162,16 +162,16 @@ await this.usersService.createUser({
 
 ### Antes (updatedAt sempre presente)
 ```
-User 1: createdAt: 2024-01-01, updatedAt: 2024-01-01  (8 bytes desnecessários)
-User 2: createdAt: 2024-01-02, updatedAt: 2024-01-02  (8 bytes desnecessários)
-User 3: createdAt: 2024-01-03, updatedAt: 2024-01-03  (8 bytes desnecessários)
+User 1: createdAt: 2025-01-01, updatedAt: 2025-01-01  (8 bytes desnecessários)
+User 2: createdAt: 2025-01-02, updatedAt: 2025-01-02  (8 bytes desnecessários)
+User 3: createdAt: 2025-01-03, updatedAt: 2025-01-03  (8 bytes desnecessários)
 ```
 
 ### Depois (updatedAt apenas quando necessário)
 ```
-User 1: createdAt: 2024-01-01, updatedAt: null        (economia: 8 bytes)
-User 2: createdAt: 2024-01-02, updatedAt: null        (economia: 8 bytes)
-User 3: createdAt: 2024-01-03, updatedAt: 2024-01-10  (atualizado realmente)
+User 1: createdAt: 2025-01-01, updatedAt: null        (economia: 8 bytes)
+User 2: createdAt: 2025-01-02, updatedAt: null        (economia: 8 bytes)
+User 3: createdAt: 2025-01-03, updatedAt: 2025-01-10  (atualizado realmente)
 ```
 
 ## 📊 Exemplos Práticos
@@ -179,11 +179,11 @@ User 3: createdAt: 2024-01-03, updatedAt: 2024-01-10  (atualizado realmente)
 ### Exemplo 1: Usuário nunca atualizado
 
 ```javascript
-// Criado em 01/01/2024
+// Criado em 01/01/2025
 {
   cognitoSub: "abc123",
   fullName: "João Silva",
-  createdAt: "2024-01-01T10:00:00Z",  // Do Cognito
+  createdAt: "2025-01-01T10:00:00Z",  // Do Cognito
   updatedAt: null                      // Nunca foi atualizado
 }
 ```
@@ -191,12 +191,12 @@ User 3: createdAt: 2024-01-03, updatedAt: 2024-01-10  (atualizado realmente)
 ### Exemplo 2: Usuário atualizado
 
 ```javascript
-// Criado em 01/01/2024, atualizado em 15/01/2024
+// Criado em 01/01/2025, atualizado em 15/01/2025
 {
   cognitoSub: "abc123",
   fullName: "João Silva Santos",  // Nome atualizado
-  createdAt: "2024-01-01T10:00:00Z",  // Do Cognito
-  updatedAt: "2024-01-15T14:30:00Z"   // Data da atualização real
+  createdAt: "2025-01-01T10:00:00Z",  // Do Cognito
+  updatedAt: "2025-01-15T14:30:00Z"   // Data da atualização real
 }
 ```
 

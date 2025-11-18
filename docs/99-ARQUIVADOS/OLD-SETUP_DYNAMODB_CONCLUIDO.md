@@ -358,6 +358,6 @@ iniciar-ambiente-dynamodb.bat
 
 ---
 
-**Criado em:** 16/10/2024  
+**Criado em:** 16/10/2025  
 **Versão:** 1.0.0  
 **Status:** ✅ PRODUÇÃO

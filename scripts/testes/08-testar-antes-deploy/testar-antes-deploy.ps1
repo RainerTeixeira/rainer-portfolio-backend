@@ -44,12 +44,12 @@ Write-Host "✅ DynamoDB Local iniciado`n" -ForegroundColor Green
 
 # Criar tabelas
 Write-Host "🗄️  Criando tabelas DynamoDB..." -ForegroundColor Yellow
-npm run dynamodb:create-tables
+pnpm run dynamodb:create-tables
 Write-Host "✅ Tabelas criadas`n" -ForegroundColor Green
 
 # Popular dados
 Write-Host "🌱 Populando dados..." -ForegroundColor Yellow
-npm run dynamodb:seed
+pnpm run dynamodb:seed
 Write-Host "✅ Dados inseridos`n" -ForegroundColor Green
 
 # Testar endpoints

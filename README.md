@@ -32,25 +32,25 @@ docker-compose up -d
 docker-compose ps
 
 # 3. Gerar Prisma Client e popular banco
-npm run prisma:generate
-npm run prisma:push
-npm run seed
+pnpm run prisma:generate
+pnpm run prisma:push
+pnpm run seed
 
 # 4. Rodar aplicação
-npm run dev
+pnpm run dev
 ```
 
 ### Opção 2: Docker Manual (3 Comandos)
 
 ```bash
 # 1. Gerar Prisma Client
-npm run prisma:generate
+pnpm run prisma:generate
 
 # 2. Subir MongoDB
 docker run -d --fullName blogapi-mongodb -p 27017:27017 mongo:7 --replSet rs0 && docker exec blogapi-mongodb mongosh --eval "rs.initiate()"
 
 # 3. Rodar aplicação
-npm run dev
+pnpm run dev
 ```
 
 **🎉 Pronto!**
@@ -281,16 +281,16 @@ logs/
 │   ├── analyze-logs.ps1        #    Analisar erros (Windows)
 │   └── README.md               #    Documentação dos scripts
 │
-├── dev.log                     # 🔄 npm run dev (criado automaticamente)
-├── build.log                   # 🏗️ npm run build
-├── test.log                    # 🧪 npm test
-├── test-coverage.log           # 📊 npm run test:coverage
-├── prisma-generate.log         # 🗄️ npm run prisma:generate
-├── prisma-push.log             # 📤 npm run prisma:push
-├── seed.log                    # 🌱 npm run seed
-├── sam-deploy.log              # ☁️ npm run sam:deploy
-├── dynamodb-create-tables.log  # 📦 npm run dynamodb:create-tables
-└── dynamodb-seed.log           # 🌱 npm run dynamodb:seed
+├── dev.log                     # 🔄 pnpm run dev (criado automaticamente)
+├── build.log                   # 🏗️ pnpm run build
+├── test.log                    # 🧪 pnpm test
+├── test-coverage.log           # 📊 pnpm run test:coverage
+├── prisma-generate.log         # 🗄️ pnpm run prisma:generate
+├── prisma-push.log             # 📤 pnpm run prisma:push
+├── seed.log                    # 🌱 pnpm run seed
+├── sam-deploy.log              # ☁️ pnpm run sam:deploy
+├── dynamodb-create-tables.log  # 📦 pnpm run dynamodb:create-tables
+└── dynamodb-seed.log           # 🌱 pnpm run dynamodb:seed
 ```
 
 **🎯 Recursos:**
@@ -571,10 +571,10 @@ DYNAMODB_TABLE_PREFIX=blog-prod
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 docker run -d --fullName blogapi-mongodb -p 27017:27017 mongo:7 --replSet rs0
 docker exec blogapi-mongodb mongosh --eval "rs.initiate()"
-npm run prisma:generate
-npm run prisma:push
-npm run seed
-npm run dev
+pnpm run prisma:generate
+pnpm run prisma:push
+pnpm run seed
+pnpm run dev
 
 # Ou use o script automatizado (Windows):
 iniciar-ambiente-local.bat
@@ -582,11 +582,11 @@ iniciar-ambiente-local.bat
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # CENÁRIO 2: DynamoDB Local (Testes)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-npm run docker:dynamodb                 # Subir DynamoDB Local
-npm run dynamodb:create-tables          # Criar tabelas
-npm run dynamodb:seed                   # Popular dados
-npm run dynamodb:list-tables            # Verificar
-npm run dev
+pnpm run docker:dynamodb                 # Subir DynamoDB Local
+pnpm run dynamodb:create-tables          # Criar tabelas
+pnpm run dynamodb:seed                   # Popular dados
+pnpm run dynamodb:list-tables            # Verificar
+pnpm run dev
 
 # Ou use o script automatizado (Windows):
 iniciar-ambiente-dynamodb.bat
@@ -594,8 +594,8 @@ iniciar-ambiente-dynamodb.bat
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # CENÁRIO 3: DynamoDB AWS (Produção Serverless)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-npm run build
-npm run sam:deploy:prod                 # Deploy via AWS SAM
+pnpm run build
+pnpm run sam:deploy:prod                 # Deploy via AWS SAM
 # Tabelas DynamoDB criadas automaticamente pelo CloudFormation
 ```
 
@@ -827,27 +827,27 @@ git clone <seu-repositorio>
 cd yyyyyyyyy
 
 # 2. Instalar dependências
-npm install
+pnpm install
 
 # 3. Configurar ambiente
 cp env.example .env
 # Edite .env com suas configurações
 
 # 4. Gerar Prisma Client
-npm run prisma:generate
+pnpm run prisma:generate
 
 # 5. Subir MongoDB
 docker run -d --fullName blogapi-mongodb -p 27017:27017 mongo:7 --replSet rs0
 docker exec blogapi-mongodb mongosh --eval "rs.initiate()"
 
 # 6. Sincronizar schema
-npm run prisma:push
+pnpm run prisma:push
 
 # 7. (Opcional) Popular banco
-npm run seed
+pnpm run seed
 
 # 8. Rodar aplicação
-npm run dev
+pnpm run dev
 ```
 
 ---
@@ -913,77 +913,82 @@ docker exec blogapi-mongodb mongosh --eval "rs.status()"
 ### Desenvolvimento
 
 ```bash
-npm run dev              # Servidor com hot reload (tsx)
-npm run start:dev        # NestJS CLI watch mode
-npm run start:debug      # Debug mode (port 9229)
+pnpm run dev              # Servidor com hot reload (tsx)
+pnpm run start:dev        # NestJS CLI watch mode
+pnpm run start:debug      # Debug mode (port 9229)
 ```
 
 ### Build & Produção
 
 ```bash
-npm run build            # Build com NestJS CLI
-npm run start:prod       # Produção (dist/main.js)
+pnpm run build            # Build com NestJS CLI
+pnpm run start:prod       # Produção (dist/main.js)
 ```
 
 ### Database (Prisma)
 
 ```bash
-npm run prisma:generate  # Gerar Prisma Client
-npm run prisma:push      # Sync schema → MongoDB
-npm run prisma:studio    # Prisma Studio (GUI)
-npm run prisma:format    # Formatar schema
-npm run seed             # Popular banco (Prisma)
+pnpm run prisma:generate  # Gerar Prisma Client
+pnpm run prisma:push      # Sync schema → MongoDB
+pnpm run prisma:studio    # Prisma Studio (GUI)
+pnpm run prisma:format    # Formatar schema
+pnpm run seed             # Popular banco (Prisma)
 ```
 
 ### Database (DynamoDB)
 
 ```bash
-npm run docker:dynamodb         # Subir DynamoDB Local
-npm run dynamodb:create-tables  # Criar tabelas
-npm run dynamodb:seed           # Popular dados
-npm run dynamodb:list-tables    # Listar tabelas
-npm run dynamodb:admin          # Instalar DynamoDB Admin
+pnpm run docker:dynamodb         # Subir DynamoDB Local
+pnpm run dynamodb:create-tables  # Criar tabelas
+pnpm run dynamodb:seed           # Popular dados
+pnpm run dynamodb:list-tables    # Listar tabelas
+pnpm run dynamodb:admin          # Instalar DynamoDB Admin
 ```
 
 ### AWS SAM (Deploy)
 
 ```bash
-npm run sam:validate        # Validar template.yaml
-npm run sam:build           # Build da aplicação
-npm run sam:local           # Testar localmente (porta 4000)
-npm run sam:deploy          # Deploy (usa samconfig.toml)
-npm run sam:deploy:dev      # Deploy ambiente dev
-npm run sam:deploy:staging  # Deploy ambiente staging
-npm run sam:deploy:prod     # Deploy ambiente produção
-npm run sam:deploy:guided   # Deploy interativo (primeira vez)
-npm run sam:logs            # Ver logs do CloudWatch
-npm run sam:delete          # Deletar stack
+pnpm run sam:validate        # Validar template.yaml
+pnpm run sam:build           # Build da aplicação
+pnpm run sam:local           # Testar localmente (porta 4000)
+pnpm run sam:deploy          # Deploy (usa samconfig.toml)
+pnpm run sam:deploy:dev      # Deploy ambiente dev
+pnpm run sam:deploy:staging  # Deploy ambiente staging
+pnpm run sam:deploy:prod     # Deploy ambiente produção
+pnpm run sam:deploy:guided   # Deploy interativo (primeira vez)
+pnpm run sam:logs            # Ver logs do CloudWatch
+pnpm run sam:delete          # Deletar stack
 ```
 
 ### Testes
 
 ```bash
-npm test                 # Rodar todos os testes
-npm run test:watch       # Watch mode
-npm run test:coverage    # Cobertura de código
+pnpm test                 # Rodar todos os testes
+pnpm run test:watch       # Watch mode
+pnpm run test:coverage    # Cobertura de código
 ```
 
 ### Qualidade
 
 ```bash
-npm run lint             # ESLint
-npm run lint:fix         # Fix automático
-npm run format           # Prettier
+pnpm run lint             # ESLint
+pnpm run lint:fix         # Fix automático
+pnpm run format           # Prettier
 ```
 
 ### Docker
 
 ```bash
-npm run docker:up        # Subir containers (MongoDB + DynamoDB)
-npm run docker:down      # Parar containers
-npm run docker:logs      # Ver logs
-npm run docker:mongodb   # Apenas MongoDB
-npm run docker:dynamodb  # Apenas DynamoDB
+pnpm run docker:up        # Subir containers (MongoDB + DynamoDB)
+pnpm run docker:down      # Parar containers
+pnpm run docker:logs      # Ver logs
+pnpm run docker:mongodb   # Apenas MongoDB
+pnpm run docker:dynamodb  # Apenas DynamoDB
+
+### Memórias
+pnpm run version:update   # Atualiza versão e sincroniza memórias automaticamente
+pnpm run memory:update    # Atualiza informações gerais das memórias
+pnpm run memory:sync      # Sincroniza versão + memórias completas
 ```
 
 💡 **Para ambiente completo:** Veja a seção [Docker Compose - Ambiente Completo](#-docker-compose---ambiente-completo) com 5 serviços, GUIs e health checks configurados.
@@ -991,16 +996,16 @@ npm run docker:dynamodb  # Apenas DynamoDB
 ### Logs
 
 ```bash
-npm run logs:view        # Ver logs em tempo real (app.log)
-npm run logs:clean       # Limpar todos os arquivos .log
+pnpm run logs:view        # Ver logs em tempo real (app.log)
+pnpm run logs:clean       # Limpar todos os arquivos .log
 ```
 
 **📁 Todos os scripts salvam logs automaticamente** em `logs/`:
 
-- `npm run dev` → `logs/dev.log`
-- `npm run build` → `logs/build.log`
-- `npm test` → `logs/test.log`
-- `npm run sam:deploy` → `logs/sam-deploy.log`
+- `pnpm run dev` → `logs/dev.log`
+- `pnpm run build` → `logs/build.log`
+- `pnpm test` → `logs/test.log`
+- `pnpm run sam:deploy` → `logs/sam-deploy.log`
 
 **📖 Ver documentação completa**: `logs/README.md`
 
@@ -2120,6 +2125,49 @@ MIT
 ---
 
 ## 🎉 Histórico de Alterações
+
+### Versão 4.1.0 (28/01/2025) - Sistema de Atualização Automática 🚀
+
+#### 🎯 Sistema de Gerenciamento de Versão e Memórias
+
+**Resumo**: Implementação de sistema automatizado para sincronização de versão entre `package.json` e arquivos de memória do projeto.
+
+**Novos Recursos**:
+
+- ✅ **Atualização Automática de Versão** (`scripts/08-memoria/update-version.ts`)
+  - Detecta mudanças de versão no `package.json`
+  - Atualiza automaticamente todas as memórias quando versão muda
+  - Mantém cache da última versão processada (`.version-cache.json`)
+  - Atualiza `lastModified` em todos os arquivos de memória
+
+- ✅ **Scripts NPM Integrados**
+  - `pnpm run version:update` - Atualiza versão e memórias automaticamente
+  - `pnpm run memory:update` - Atualiza informações gerais das memórias
+  - `pnpm run memory:sync` - Sincronização completa (versão + memórias)
+
+- ✅ **Arquivos Atualizados Automaticamente**
+  - `docs/.memories/initial-memory.json`
+  - `docs/.memories/technical-details.json`
+  - `docs/.memories/code-analysis.json`
+  - `docs/.memories/consolidated-memory.json`
+
+**Fluxo de Trabalho**:
+
+1. Desenvolvedor atualiza versão no `package.json`
+2. Executa `pnpm run version:update`
+3. Sistema detecta mudança e atualiza todas as memórias
+4. Cache é atualizado para evitar processamento desnecessário
+
+**Benefícios**:
+
+- 🔄 Sincronização automática entre versão e documentação
+- ⚡ Processamento inteligente (só atualiza quando necessário)
+- 📊 Rastreamento de histórico de versões
+- 🎯 Zero redundância manual
+
+**Documentação**: Ver `scripts/08-memoria/README.md` para detalhes completos.
+
+---
 
 ### Versão 4.2.0 (18/10/2025)
 

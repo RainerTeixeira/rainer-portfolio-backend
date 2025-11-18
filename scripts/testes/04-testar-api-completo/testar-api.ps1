@@ -214,7 +214,7 @@ function Invoke-ApiRequest {
         
         if ($Critical) {
             Write-Host "`n⛔ ERRO CRÍTICO! Verifique se o servidor está rodando:" -ForegroundColor $Red
-            Write-Host "   npm run start:dev`n" -ForegroundColor $Green
+            Write-Host "   pnpm run dev`n" -ForegroundColor $Green
             exit 1
         }
         
@@ -250,7 +250,7 @@ $detailedResult = Invoke-ApiRequest -Method GET -Route "/health/detailed" -Descr
 if ($healthResult.Success) {
     Write-Host "`n✅ API ESTÁ SAUDÁVEL! Continuando..." -ForegroundColor $Green
 } else {
-    Write-Host "`n❌ API NÃO ESTÁ RESPONDENDO! Execute: npm run start:dev" -ForegroundColor $Red
+    Write-Host "`n❌ API NÃO ESTÁ RESPONDENDO! Execute: pnpm run dev" -ForegroundColor $Red
     exit 1
 }
 
