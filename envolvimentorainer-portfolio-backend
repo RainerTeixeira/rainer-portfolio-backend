@@ -1,0 +1,238 @@
+[33m5a12292[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mdevelopment[m[33m)[m chore: migração para pnpm e atualização completa do sistema de testes
+[33m198ab4e[m chore: atualizar dicionário de palavras e remover arquivos obsoletos
+[33m122bc42[m feat: implementar autenticação passwordless com envio de código por email
+[33m3181f55[m chore: atualizar .gitignore para incluir a pasta .vscode
+[33mb8328c4[m docs: adicionar .env.example com dados genéricos seguros
+[33m4fc05f2[m docs: adicionar env.example com dados genéricos seguros
+[33md973fb5[m[33m ([m[1;32mmaster[m[33m)[m Merge branch 'development' into master - Release v4.1.0
+[33m9baa69d[m chore: preparar release v4.1.0 - atualização completa do código de produção
+[33m0ca7b24[m refactor: atualizar configuração do ambiente e aprimorar documentação
+[33mdb09ab9[m refactor: remover arquivos obsoletos e atualizar configuração do ambiente
+[33md9fb0e0[m refactor: atualizar documentação e remover arquivos obsoletos
+[33maafdcb1[m refactor: atualizar configuração do Docker e aprimorar documentação
+[33maa2fa7b[m refactor: aprimorar a documentação e a legibilidade do código no módulo de categorias e comentários
+[33m7311987[m merge: integração das atualizações da branch development
+[33m0555a0c[m feat: atualização completa dos arquivos do projeto
+[33md45286e[m refactor: remover entidade e repositório de subcategoria, simplificando a lógica de serviço e utilizando DTOs para operações
+[33m31bb82d[m refactor: adicionar documentação ao método formatDate para melhor compreensão
+[33m6ff8a5c[m refactor: remover função generateId e implementar formatDate para formatação de datas na criação de categorias
+[33m31a9e7e[m refactor: simplificação dos módulos de autor e categoria
+[33m679bbb3[m Refactor: Aprimoramento da documentação e melhoria da legibilidade do código no módulo de blog
+[33maa1dc8e[m refactor: adicionar documentação Swagger e melhorar DTOs de autores, subcategorias e autenticação
+[33m17b4ba0[m refactor: melhorar a estrutura do repositório de autores, adicionando tratamento de erros e otimizando métodos, além de atualizar a entidade Author para extrair o ID corretamente
+[33m691178d[m refactor: remover interface de posts paginados, melhorar documentação e implementar paginação nas operações de busca de posts
+[33ma3beb7e[m refactor: atualizar nomes de tabelas nos repositórios e melhorar tratamento de erros no serviço de posts
+[33m5008b14[m refactor: atualizar a entidade Subcategory, melhorando a documentação e a estrutura, além de otimizar métodos no repositório e serviço
+[33md53595c[m refactor: atualizar a estrutura do módulo de posts, melhorando a documentação, integrando o CacheModule e otimizando métodos de busca
+[33mfa2d235[m refactor: melhorar a documentação e anotações nos controladores e entidades de comentários, além de corrigir importações e formatação
+[33m153afb8[m refactor: corrigir nomes de arquivos e referências no módulo de comentários, melhorando a consistência e a legibilidade do código
+[33mb1656c3[m refactor: corrigir importações e melhorar a estrutura do módulo de categorias, ajustando a integração com o CacheModule e otimizando a entidade CategoryEntity para conversão com DynamoDB
+[33m1bab372[m refactor: atualizar PostsModule para integrar o PostsRepository e substituir o ConfigModule pelo CacheModule, melhorando a gestão de cache e a documentação
+[33m8ec287b[m refactor: atualizar módulos de subcategorias, categorias e comentários para integrar o CacheModule, melhorando a gestão de cache e a documentação das responsabilidades
+[33m1182435[m refactor: melhorar a documentação das entidades Author e Comment, ajustando a formatação das chaves primárias e adicionando anotações para os endpoints no CategoryController
+[33mcb6a9b8[m Refatoração: Atualização do módulo de post do blog com a adoção de novos decoradores na PostEntity, implementação do PostRepository para gerenciamento de acesso a dados, e otimização do PostService e PostController para aprimorar a organização e a funcionalidade. Inclusão de utilitário para geração de IDs únicos e correção na nomenclatura do método de exclusão no DynamoDB.
+[33mc3b6c98[m feat: refatorar SummaryPostDto para herdar de BasePostDto, simplificando a estrutura e mantendo os campos necessários
+[33ma65a913[m feat: refatorar DTOs de posts, removendo arquivos obsoletos e reorganizando a estrutura para melhor manutenção
+[33me8bfc57[m feat: implementar PostEntity, repositório, serviço e controlador para gerenciamento de posts de blog
+[33mc8ee174[m feat: refatora entidades de autores e categorias com melhorias na estrutura, adição de índices e ajustes nos atributos para integração com DynamoDB
+[33mf544141[m feat: refatora módulo de comentários com implementação de repositório, DTOs base e melhorias na estrutura do serviço, incluindo integração com DynamoDB
+[33me51853c[m feat: implementar gerenciamento de autor, categoria, subcategoria e comentários com integração ao DynamoDB
+[33mdbcfaa7[m feat: atualiza a documentação dos módulos de autores com informações detalhadas sobre endpoints e responsabilidades
+[33mcd0b86f[m feat: refatora o módulo de autores com melhorias na estrutura, validação e gerenciamento de cache, além de implementar repositório para operações no DynamoDB
+[33m454b1d4[m feat: reimplementa o serviço de autores com CRUD completo, gerenciamento de cache e integração com DynamoDB
+[33mfd66f17[m feat: refatoração dos DTOs de autor com novas propriedades e métodos, além de melhorias na validação e operações do DynamoDB
+[33mce17fa7[m feat: adicionar paginação, manipulação de slug e melhorias no gerenciamento de erros
+[33m300dbee[m feat: atualiza DTOs de categoria para incluir validações e tornar propriedades de SEO obrigatórias
+[33m75ca813[m fix: corrige a estrutura do objeto de parâmetros na função de tratamento de erros do DynamoDbService
+[33mac02354[m refactor: melhora o tratamento de erros no serviço DynamoDB com verificações de tipo e mensagens mais claras
+[33m26f6a9c[m feat: refatoração das entidades do módulo de blog e serviço de cache
+[33m47fb8ba[m feat: reorganiza funções utilitárias e adiciona novas entidades para gerenciamento de posts e comentários
+[33m4a8f23e[m feat: adiciona classe de log com suporte a AWS CloudWatch e gravação em arquivo
+[33m1473711[m feat: adiciona suporte a compressão HTTP e implementa novos DTOs e serviços para gerenciamento de posts e comentários
+[33m9035b02[m fix: remove interceptor global e ajusta consulta no serviço de posts para usar scan com filtro
+[33m4618f57[m fix: adiciona modelo extra de resposta ao Swagger e ajusta comentários no serviço de posts
+[33m08cd6d9[m fix: adiciona modelo extra de resposta ao Swagger e ajusta comentários no serviço de posts
+[33m026daca[m fix: refatora filtro de exceção HTTP para melhorar o tratamento de erros e a estrutura da resposta
+[33m37bbf91[m fix: ajusta o método de scan no DynamoDB para usar ScanCommand e melhora a filtragem de ExpressionAttributeNames
+[33md189bf4[m fix: ajusta a projeção de atributos no DynamoDB e adiciona novo campo SEO no DTO de subcategoria
+[33m4c74039[m fix: ajusta a atualização de itens no DynamoDB para usar atributos mapeados e melhora o tratamento de erros
+[33mf919d2e[m fix: adiciona campo status no DTO de comentário e implementa extração de dados nas respostas dos serviços
+[33m1798140[m fix: adiciona campo success e ajusta estrutura de resposta da API para consistência
+[33m07097e4[m fix: remove constructors from DTOs para evitar instanciação e instanciar objetos diretamente nos serviços
+[33m98686f6[m fix: remove constructors from DTOs para evitar instanciação e instanciar objetos diretamente nos serviços
+[33m583a4c2[m fix: ajusta a expressão de projeção no DynamoDB para incluir aliases para 'status' e 'views'
+[33m6eecd23[m fix: adiciona propriedades metaTitle e priority nos DTOs de categoria e subcategoria, e ajusta a configuração da tabela DynamoDB
+[33m61cebec[m fix: ajusta configuração do handler e melhora tratamento de valores no DynamoDB
+[33m76c36d5[m fix: refatora serviço de autenticação e atualiza métodos do controlador de subcategorias
+[33m8f2078b[m fix: adiciona propriedades 'content', 'postId' e 'publishDate' nos DTOs de post e subcategoria
+[33m6b0741b[m fix: ajusta validação de token e melhora a atualização de comentários e categorias
+[33m10606b4[m fix: corrige capitalização de nomes de arquivos e atualiza dependências no package.json
+[33m91ab002[m fix: adiciona suporte para execução manual do fluxo de trabalho de deploy
+[33med9ae36[m fix: atualiza ação de checkout para a versão 4 e remove etapa de instalação de dependências
+[33m39d7925[m fix: atualiza versão do checkout action e adiciona etapa para instalação de dependências
+[33md78512c[m fix: corrige formatação do arquivo deploy.yml para manter consistência
+[33m8257919[m docs: atualiza o README.md com descrição do projeto, tecnologias utilizadas e estrutura de pastas
+[33mf08e242[m feat: adiciona workflow de deploy para AWS e atualiza dependências no package.json
+[33m0e4da8e[m refactor: atualiza configurações do serverless.yml para otimizar uso de recursos e remove dependência do plugin serverless-esbuild
+[33mc736ba1[m refactor: atualiza .gitignore e remove referência ao plugin serverless-esbuild no serverless.yml
+[33m40e218a[m refactor: ajusta formato das chaves no serviço de comentários e adiciona logs para busca de comentários
+[33md194998[m feat: adiciona campo slug ao PostFullDto e ajusta métodos relacionados no PostsService e PostsController
+[33m7c72026[m fix: corrige o caminho de importação do CategoryDto no post-full.dto.ts
+[33mc551b16[m refactor: remove módulo e serviços de categorias, simplificando a estrutura do blog
+[33m196ce15[m refactor: melhora a estrutura e a documentação do PostsController, ajusta métodos e remove código desnecessário no PostsService
+[33mc553fc1[m refactor: melhora a documentação e a estrutura do serviço DynamoDb, ajusta importações e configurações do módulo de posts
+[33m30cd73c[m feat: adiciona serviço de autenticação e controlador, implementa guardas de autenticação e configurações de ambiente
+[33m0b38c10[m refactor: melhora a documentação e a estrutura do PostsService, removendo imports desnecessários
+[33m1f4d38c[m refactor: ajusta importações e melhora a configuração do CacheModule e DynamoDbService
+[33m6e661c7[m refactor: adiciona cache-manager e ajusta imports com forwardRef para resolver dependências circulares
+[33m4e71c5d[m refactor: adiciona DynamoDbService aos módulos de categoria, autores e comentários
+[33m75c6058[m refactor: otimiza estrutura de módulos e melhora a legibilidade do código
+[33m4198286[m refactor: remove validações desnecessárias e ajusta tipos em DTOs
+[33m49e6e2e[m refactor: atualiza imports e adiciona ConfigModule e CacheModule ao módulo de postagens
+[33mc05788d[m refactor: organiza imports e adiciona configuração do Swagger UI para documentação da API
+[33mef89150[m refactor: reorganiza estrutura de módulos e atualiza funções utilitárias de geração de ID e limpeza de cache
+[33mcca40eb[m fix: atualiza versão do passport-cognito e refatora módulo de postagens e função de limpeza de cache
+[33m19e0cf1[m refactor: remove cache-related imports e ajustes na configuração do módulo de postagens
+[33m048ed68[m feat: adiciona funções utilitárias para geração de ID de post e limpeza de cache
+[33m4a4c471[m feat: Adiciona nova funcionalidade de autenticação via Cognito
+[33m10634b6[m feat: integra estratégia de autenticação Cognito com suporte a configuração via módulo e protege rotas do controlador de postagens
+[33m5628225[m feat: adiciona autenticação JWT com Cognito e protege rotas de categorias, subcategorias e autores
+[33m2fad791[m feat: aprimora o filtro de exceção HTTP para suportar Fastify e melhora o tratamento de erros na atualização de postagens
+[33m72fd3f1[m refactor: aprimora filtro de exceção HTTP e remove código comentado no serviço DynamoDb
+[33m55417a7[m feat: implementa filtro de exceção global e interceptor de resposta, além de aprimorar a documentação da API
+[33m26b0347[m feat: adiciona filtro de exceção global e configurações de módulo, além de corrigir parâmetros em métodos de serviço
+[33mad45084[m fix: adiciona campo de data de modificação nas expressões de atualização e corrige a extração de atributos no serviço de subcategorias
+[33mb7da177[m fix: ajusta comentário sobre o índice no DynamoDB e corrige o formato do valor na busca de postagens
+[33mefee47f[m fix: ajusta o acesso e o formato dos valores nos DTOs de autores e comentários, além de renomear serviços e módulos para consistência
+[33mddb2d4a[m fix: corrige o formato dos valores nas chaves primárias nos serviços de categorias, subcategorias, autores e comentários
+[33m0249364[m fix: corrige o acesso aos valores do DynamoDB nos DTOs e serviços de autores, categorias e comentários
+[33m120d0c0[m fix: corrige o formato dos valores nas chaves primárias nos serviços de subcategorias, autores, categorias, comentários e postagens
+[33m65ae69a[m feat: adiciona método getCategoryById no serviço de categorias e cria DTO PostFullDto para postagens completas
+[33m446d5b1[m fix: corrige a sintaxe do arquivo category.dto.ts removendo colchetes desnecessários
+[33m4bac341[m fix: melhora a formatação da documentação do guardião de métodos permitidos
+[33me09dd28[m fix: ajusta terminologia de deleção para exclusão nos métodos de remoção de posts
+[33m0ce6134[m fix: corrige a capitalização dos nomes dos arquivos DTO e ajusta o retorno do método findAll no serviço de autores
+[33m4b402da[m feat: adiciona documentação Swagger para o módulo de comentários com operações CRUD
+[33m136d94b[m feat: adiciona documentação Swagger para o módulo de subcategorias com operações CRUD
+[33m71f3609[m feat: adiciona módulo de categorias com operações CRUD e documentação Swagger
+[33m57ffb15[m feat: adiciona documentação Swagger para o controller e serviço de categorias com operações CRUD
+[33m874866c[m feat: adiciona documentação Swagger para o controller de autores com operações CRUD
+[33m1df6dbd[m feat: adiciona documentação Swagger para DTOs de autor e aprimora validação de provas sociais
+[33mb6c6948[m feat: adiciona documentação para o módulo de autenticação e a estratégia Cognito
+[33m3382170[m feat: adiciona DynamoDbService como provedor no módulo de posts e aprimora a documentação dos métodos no serviço DynamoDb
+[33m6c28122[m feat: adiciona log de rastreamento para dados de entrada na atualização de post e torna o módulo global
+[33ma0919f5[m feat: adiciona campo readingTime e define valor padrão para modifiedDate no DTO de atualização de post
+[33mfce0b39[m feat: adiciona documentação Swagger para a API e configura o Swagger UI
+[33mbce7dfe[m feat: aprimora documentação e segurança no controlador de posts com guardas de método HTTP e anotações do Swagger
+[33m122bcb9[m feat: corrige inicialização de arrays para keywords e tags no serviço de posts
+[33mb45ed67[m feat: renomeia campo createdAt para publishDate e aprimora consultas no serviço de posts
+[33m255b3fb[m feat: adiciona guardas de método HTTP ao controlador de posts e aprimora a documentação
+[33mdc20d69[m feat: aprimora tratamento de erros e documentação nos métodos do controlador e serviço de posts
+[33m017b257[m feat: adiciona documentação detalhada aos métodos do controlador e serviço de posts, melhorando a clareza e manutenção do código
+[33mbee80d5[m feat: atualiza rotas do controlador de posts para incluir o prefixo 'blog' e melhora a documentação das operações
+[33m21229ad[m feat: adiciona campo authorId ao DTO de criação de posts e organiza importações no controlador de posts
+[33md68c9a0[m feat: implementa controlador de posts com métodos para criação, busca, atualização e remoção de posts
+[33m1336c49[m feat: adiciona novos DTOs para criação, atualização e conteúdo de posts, melhorando a estrutura e documentação
+[33m100f32d[m refactor: remove DTOs obsoletos e introduz novos DTOs para criação e atualização de posts
+[33m5fe336f[m refactor: reorganiza e melhora a estrutura dos DTOs para posts
+[33m8353e4c[m feat: adiciona interceptor de resposta e decorator CacheClear para gerenciamento de cache nos posts
+[33mfa033bf[m feat: adiciona interceptor de resposta para padronização e formatação de respostas HTTP refactor: implementa método de cache para otimização de consultas e pré-cache de posts populares refactor: atualiza DTOs para correção de importações e validações
+[33m5a112c6[m feat: adiciona suporte a listagem paginada e busca de posts com filtros
+[33mff8776a[m refactor: adiciona novos DTOs e implementa métodos para busca e mapeamento de posts
+[33m7cda3c0[m refactor: adiciona documentação detalhada aos métodos do serviço de posts e melhora a configuração do cache
+[33m3645432[m feat: adiciona decorator CacheClear e atualiza controlador de posts para gerenciamento de cache
+[33mfdc8be3[m refactor: adiciona novos DTOs para operações de post e melhora a estrutura de dados
+[33m9f2fcf4[m refactor: ajusta a validação e documentação dos DTOs de autores e posts
+[33mfb90359[m refactor: atualiza DTOs de usuários e melhora a validação nos métodos do controlador
+[33m8b8f459[m refactor: atualiza DTOs de posts, remove campo excerpt e melhora documentação
+[33mc9e2c56[m refactor: atualiza DTOs de autores para AuthorDetailDto e ajusta métodos do controlador
+[33md96e1f3[m refactor: remove DTOs obsoletos e implementa validação personalizada para socialProof
+[33mf5450c2[m refactor: melhora a formatação e documentação dos métodos do controlador de posts
+[33m4190d77[m refactor: atualiza DTOs de posts para PostDetailDto e PostSummaryDto, ajusta métodos de criação e busca
+[33m4a5a90f[m refactor: remove espaço em branco desnecessário no serviço de posts
+[33m9ed65b5[m refactor: corrige importações de DTOs e adiciona documentação aos métodos do controlador de posts
+[33med1f1b1[m refactor: renomeia e reorganiza DTOs de posts, removendo classes obsoletas e adicionando novas
+[33m8582b9e[m refactor: adiciona construtor à classe FullPostDto para incluir autor e comentários
+[33m1ca92f0[m refactor: adiciona logging e documentação aos métodos de criação, busca, atualização e deleção de posts
+[33mca03402[m refactor: atualiza método getAllPosts para suportar paginação e novo índice no DynamoDB
+[33m6132f89[m refactor: atualiza método getAllPosts para suportar paginação e novo índice no DynamoDB
+[33mbe3481c[m refactor: melhora a consulta de posts no DynamoDB com parâmetros dinâmicos e adiciona logging para depuração
+[33m2a6e26d[m refactor: altera validação de contentHTML para objeto aninhado usando ValidateNested e Type
+[33mf91e100[m refactor: remove importação do CacheModule do BlogModule e adiciona verificação de segurança no PostsService
+[33m1504b04[m refactor: organiza DTOs de posts em um único arquivo e atualiza importações nos controllers e services
+[33m86d2615[m refactor: adiciona suporte a cache com CacheModule e atualiza a configuração no AppModule
+[33m123874c[m refactor: atualiza dependências no package.json e adiciona configuração do Swagger UI para documentação da API
+[33m814d8b2[m refactor: melhora a documentação e comentários no PostsController e PostsModule
+[33m569f370[m refactor: adiciona comentários iniciais no PostsController para melhor compreensão do código
+[33ma8e4495[m refactor: melhora a documentação e adiciona logs no PostsController para operações de posts
+[33m5446f80[m refactor: ajusta CommentDto e melhora a documentação no AuthorsController
+[33mcf5f300[m refactor: adiciona FullPostDto para incluir autor e comentários, ajusta rotas no PostsController
+[33m5bc5a12[m refactor: remove logs desnecessários no método getPostById e adiciona AuthorDto ao PostInfoDto
+[33m41ca4e5[m refactor: melhora a documentação e formatação dos módulos principais, incluindo o uso de forwardRef para dependências circulares
+[33m63570ac[m refactor: corrige formatação de comentários no método mapErrorMessage para melhor legibilidade
+[33mc28b907[m refactor: adiciona PostContentDto para simplificar a transferência de conteúdo HTML e atualiza DTOs relacionados
+[33m33d6a28[m refactor: ajusta PostDto para tornar postInfo obrigatório e atualiza PostsService para usar DynamoDbService
+[33m6403362[m refactor: utiliza forwardRef para resolver dependência circular no módulo de comentários e ajusta importações do DynamoDbService
+[33maceff53[m refactor: ajusta importações para usar forwardRef em módulos de subcategorias, categorias, comentários e posts
+[33m8846f03[m refactor: ajusta importações do BlogModule em módulos de subcategorias, categorias, comentários e posts para resolver dependências circulares
+[33m070e7ef[m refactor: adiciona importação do BlogModule em módulos de subcategorias, categorias, comentários e posts para melhorar a estrutura do projeto
+[33ma207901[m refactor: remove DTOs obsoletos e ajusta importações para melhorar a estrutura do projeto
+[33m0bc7eff[m refactor: ajusta importações e scripts de inicialização para melhorar a clareza e a estrutura do projeto
+[33me185a35[m refactor: atualiza serviços e controladores para melhorar a clareza e correção de nomes de métodos, adicionando comentários explicativos
+[33m24133cb[m refactor: atualiza DTO de subcategoria e serviços para melhorar a estrutura e nomenclatura, adicionando verificações e corrigindo rotas
+[33m031a3b7[m refactor: atualiza PostsController e PostsService para melhorar a estrutura das rotas e métodos, corrigindo nomes de funções e adicionando verificações de resultado
+[33m76dee42[m refactor: atualiza DTOs de post e post-info para melhorar a estrutura e validações, removendo propriedades obsoletas
+[33mae9ba6b[m refactor: atualiza DTOs de post para incluir validações e estrutura mais clara, removendo propriedades obsoletas
+[33m691dad3[m refactor: adiciona novos DTOs para autor, post e informações de SEO, e remove DTOs obsoletos para simplificar a estrutura de dados
+[33m03a4a17[m refactor: adiciona DTOs para categorias, comentários e autores, e atualiza a estrutura de dados para melhor organização
+[33m8a5a879[m refactor: remove DTOs desnecessários e simplifica a estrutura de dados em categorias e comentários
+[33m98d793d[m refactor: remove postId do método findOne em PostsController e atualiza PostDto para incluir enum PostStatus
+[33mf56581f[m refactor: corrige nomes de arquivos e classes de subcategoria para manter consistência na nomenclatura
+[33m1ec4f1c[m refactor: remove argumento postId de métodos findOne e create no PostsService para simplificar a lógica
+[33m5fb84ed[m refactor: atualiza PostDto para incluir enum PostStatus e reorganiza parâmetros do construtor para melhor legibilidade
+[33m05227f4[m refactor: ajusta tipos de parâmetros em métodos do CommentsController para garantir a validação correta e melhorar a segurança
+[33m2018a5e[m refactor: remove validações obrigatórias e atualiza DTOs de categorias e posts para melhorar a flexibilidade e a estrutura
+[33m4320e02[m refactor: adiciona construtores aos DTOs de categoria, comentário, autor, post e subcategoria, melhorando a estrutura de dados
+[33m902554a[m refactor: atualiza serviços de autores e categorias para usar tipos do AWS SDK, melhora mapeamento e tratamento de erros
+[33m3b76210[m refactor: adiciona construtores e atualiza DTOs de comentários, categorias, autores e subcategorias
+[33m68a7190[m refactor: corrige nomenclatura de subcategoria para subcategory e atualiza imports para usar alias @src
+[33m66737e4[m refactor: corrige nomenclatura de serviços e atualiza imports para usar alias @src
+[33m9367e1b[m refactor: renomeia módulo de categorias para categoria, atualiza imports para usar alias @src e remove módulo de subcategorias
+[33m44c54dd[m refactor: reorganiza DTOs de categoria, atualiza imports para usar alias @src e remove duplicatas
+[33mb5de5a1[m refactor: corrige nomenclatura de subcategoria e atualiza imports para usar alias @src
+[33md188c8c[m refactor: remove DTO de subcategoria e atualiza imports para usar alias @src
+[33m6520873[m refactor: corrige imports nos DTOs de subcategorias para usar alias @src
+[33m0fc3858[m refactor: atualiza imports no serviço de subcategorias para usar alias @src e corrige nomenclatura
+[33mc40f76c[m refactor: cria módulo e controllers para subcategorias, atualiza imports para usar alias @src
+[33m835b2f8[m refactor: adiciona módulo e DTOs para subcategorias, atualiza imports para usar alias @src
+[33md4d3532[m refactor: atualiza imports nos módulos de subcategorias e posts para usar alias @src
+[33m2cd6a01[m refactor: atualiza imports nos módulos de posts para usar alias @src
+[33md32b088[m refactor: atualiza imports nos módulos de categorias e comentários para usar alias @src
+[33m1703c3b[m refactor: adiciona DTOs para posts, autores, comentários e categorias, e atualiza imports para usar alias @src
+[33m5d160fd[m refactor: atualiza módulo principal para incluir AppController, AppService e DynamoDbService
+[33m763a52e[m refactor: renomeia módulo de subcategorias para subcategoria, atualiza controladores e serviços correspondentes
+[33mb6b733b[m refactor: reorganiza módulo de posts, movendo controladores e serviços para novas pastas e simplificando a lógica de serviço
+[33mf49e050[m refactor: reestrutura módulo de comentários, movendo controladores e serviços para novas pastas e simplificando a lógica de serviço
+[33m680b84a[m refactor: reorganiza módulo de categorias, movendo controladores e serviços para novas pastas e simplificando a lógica de serviço
+[33m8b2c2c2[m refactor: reorganiza estrutura do módulo de autores, movendo controladores e serviços para novas pastas
+[33mb6f5ba8[m feat: adiciona DTOs para comentários e subcategorias, incluindo novos campos e validações
+[33m84bbf82[m feat: atualiza DTOs de categoria para usar categoryId como string e simplifica a estrutura de SEO
+[33md23f522[m feat: atualiza DTOs de autor para incluir novos campos e validações
+[33m43d4848[m feat: substitui DTO de atualização de autor por novo DTO de autor com campos adicionais
+[33mfb589f0[m feat: adiciona DTOs para módulos de autores, categorias e subcategorias, incluindo controladores e serviços
+[33me23bc59[m feat: adiciona módulo de subcategorias com controladores e serviços, integrando o DynamoDbService
+[33m9bfc0f3[m feat: adiciona módulos de comentários e categorias com controladores e serviços, integrando o DynamoDbService
+[33mda611bd[m feat: adiciona módulo de autores com controladores e serviços, removendo DTOs obsoletos de posts
+[33m9e9e2cd[m refactor: remove DTOs obsoletos e reorganiza a estrutura do módulo de posts
+[33m3768c39[m refactor: remove DTOs e arquivos desnecessários, adicionando o módulo de autenticação com Cognito
+[33mdd9d850[m feat: adiciona estrutura de DTOs e controladores para gerenciamento de posts no blog
+[33mdd69c29[m fix: formata o código para melhorar a legibilidade e a consistência em vários arquivos
+[33m4565cf6[m fix: melhora a legibilidade do código e simplifica o tratamento de erros nos controladores de posts
+[33m0fb6552[m fix: remove conflitos de merge e código desnecessário nos DTOs e no controlador de posts
+[33m88f7d44[m fix: remove código desnecessário e conflitos de merge no arquivo main.ts
+[33mb175bb4[m fix: remove código desnecessário e conflitos de merge no arquivo main.ts
+[33m413e76d[m fix: corrige pontuação no comentário de exportação do handler para AWS Lambda
+[33m055b7bd[m fix: corrige espaçamento na mensagem de log de tabelas disponíveis
+[33md7d3b0f[m fix: adiciona comentário descritivo no módulo de blog
+[33m37b1787[m Forçando atualização para o GitHub
+[33mabdc5cf[m fix: corrige pontuação na mensagem de inicialização do app NestJS
