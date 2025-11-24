@@ -463,6 +463,24 @@ export class AuthService {
         this.logger.error(`[Login] Erro desconhecido: ${JSON.stringify(error)}`);
       }
 
+      // Caso específico: fluxo USER_PASSWORD_AUTH não habilitado para o App Client do Cognito
+      // Esse é um erro de configuração interna, não culpa do usuário final.
+      if (
+        (error as Error)?.name === 'InvalidParameterException' &&
+        (error as Error)?.message?.includes('USER_PASSWORD_AUTH flow not enabled for this client')
+      ) {
+        this.logger.error(
+          '[Login] Configuração do Cognito inválida: fluxo USER_PASSWORD_AUTH não habilitado para o clientId atual'
+        );
+
+        // Mensagem amigável para o frontend exibir ao usuário
+        throw new InternalServerErrorException(
+          'Serviço de login temporariamente indisponível por erro de configuração interna. ' +
+            'O fluxo de login por senha ainda não está habilitado no provedor de autenticação. ' +
+            'Tente novamente mais tarde ou entre em contato com o suporte se o problema persistir.'
+        );
+      }
+
       throw new InternalServerErrorException('Erro ao realizar login');
     }
   }
