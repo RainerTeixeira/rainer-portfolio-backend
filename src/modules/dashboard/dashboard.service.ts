@@ -52,7 +52,10 @@ export class DashboardService {
         where: { status: 'PUBLISHED' },
         select: { views: true },
       });
-      const totalViews = postsWithViews.reduce((sum, post) => sum + (post.views || 0), 0);
+      const totalViews = postsWithViews.reduce(
+        (sum: number, post: { views?: number | null }) => sum + (post.views || 0),
+        0,
+      );
 
       // Contar likes
       const totalLikes = await this.prisma.like.count({
@@ -196,11 +199,14 @@ export class DashboardService {
 
         // Views de posts criados nesta data
         const dayViews = posts
-          .filter((post) => {
+          .filter((post: { createdAt: Date; views?: number | null }) => {
             const postDate = post.createdAt.toISOString().split('T')[0];
             return postDate === date;
           })
-          .reduce((sum, post) => sum + (post.views || 0), 0);
+          .reduce(
+            (sum: number, post: { views?: number | null }) => sum + (post.views || 0),
+            0,
+          );
 
         // Adicionar views incrementais (simplificado)
         const baseViews = dayViews + Math.floor(Math.random() * 50) + 20;
@@ -219,12 +225,12 @@ export class DashboardService {
         const dateEnd = new Date(dateStart);
         dateEnd.setDate(dateEnd.getDate() + 1);
 
-        const dayLikes = likes.filter((like) => {
+        const dayLikes = likes.filter((like: { createdAt: Date }) => {
           const likeDate = like.createdAt.toISOString().split('T')[0];
           return likeDate === date;
         }).length;
 
-        const dayComments = comments.filter((comment) => {
+        const dayComments = comments.filter((comment: { createdAt: Date }) => {
           const commentDate = comment.createdAt.toISOString().split('T')[0];
           return commentDate === date;
         }).length;

@@ -24,7 +24,8 @@
     "strictPropertyInitialization": false,
     "baseUrl": "./",
     "incremental": true,
-    "removeComments": true
+    "removeComments": true,
+    "types": ["node"]
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "tests"]

@@ -10,10 +10,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import type { Post, CreatePostData, UpdatePostData, PostWithRelations } from './post.model.js';
-import { Prisma } from '@prisma/client';
 
-// Tipo auxiliar para posts com includes
-type PostWithIncludes = Prisma.PostGetPayload<{
+// Tipo auxiliar para posts com includes (simplificado como any para evitar dependência forte de tipos do Prisma)
+type PostWithIncludes = {
   include: {
     author: {
       select: {
@@ -38,7 +37,7 @@ type PostWithIncludes = Prisma.PostGetPayload<{
       };
     };
   };
-}>;
+} & Record<string, any>;
 
 /**
  * Repositório de Posts
@@ -59,7 +58,7 @@ export class PostsRepository {
   async create(data: CreatePostData): Promise<Post> {
     this.logger.log(`Creating post: ${data.title}`);
     
-    const postData: Prisma.PostCreateInput = {
+    const postData: any = {
       title: data.title,
       slug: data.slug,
       content: data.content,
@@ -134,7 +133,7 @@ export class PostsRepository {
         } : undefined,
         // Se subcategory não foi encontrada (foi deletada), retorna undefined
         subcategory: post.subcategory || undefined,
-      } as PostWithRelations;
+      } as unknown as PostWithRelations;
     } catch (error: any) {
       // Se o erro for relacionado a subcategory não encontrada, busca sem include
       if (error?.code === 'P2025' || error?.message?.includes('subcategory')) {
@@ -214,7 +213,7 @@ export class PostsRepository {
         } : undefined,
         // Se subcategory não foi encontrada (foi deletada), retorna undefined
         subcategory: post.subcategory || undefined,
-      } as PostWithRelations;
+      } as unknown as PostWithRelations;
     } catch (error: any) {
       // Se o erro for relacionado a subcategory não encontrada, busca sem include
       if (error?.code === 'P2025' || error?.message?.includes('subcategory')) {
@@ -267,9 +266,9 @@ export class PostsRepository {
     const limit = params.limit || 10;
     const skip = (page - 1) * limit;
 
-    const where: Prisma.PostWhereInput = {};
+    const where: any = {};
     
-    if (params.status) where.status = params.status as Prisma.EnumPostStatusFilter;
+    if (params.status) where.status = params.status as any;
     if (params.subcategoryId) where.subcategoryId = params.subcategoryId;
     if (params.authorId) where.authorId = params.authorId;
     if (params.featured !== undefined) where.featured = params.featured;
@@ -303,7 +302,7 @@ export class PostsRepository {
 
     // Mapeia os posts para transformar cognitoSub em id no author (formato esperado pelo frontend)
     // Nota: nickname não está no MongoDB (gerenciado apenas pelo Cognito), usa primeira palavra do fullName como fallback
-    const mappedPosts = posts.map(post => ({
+    const mappedPosts = posts.map((post: any) => ({
       ...post,
       author: post.author ? {
         id: post.author.cognitoSub, // Mapeia cognitoSub para id
@@ -334,7 +333,7 @@ export class PostsRepository {
   async update(id: string, data: UpdatePostData): Promise<Post> {
     this.logger.log(`Updating post: ${id}`);
     
-    const updateData: Prisma.PostUpdateInput = {};
+    const updateData: any = {};
     
     if (data.title !== undefined) updateData.title = data.title;
     if (data.slug !== undefined) updateData.slug = data.slug;

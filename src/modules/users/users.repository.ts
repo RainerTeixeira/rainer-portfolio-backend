@@ -11,7 +11,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { UserRole } from './user.model.js';
 import type { User, CreateUserData, UpdateUserData } from './user.model.js';
-import { Prisma } from '@prisma/client';
 import { env } from '../../config/env.js';
 
 /**
@@ -45,7 +44,7 @@ export class UsersRepository {
     this.logger.log(`Creating user: ${data.fullName} (Cognito Sub: ${data.cognitoSub})`);
     
     // Mapear os dados para o formato esperado pelo Prisma
-    const userData: Prisma.UserCreateInput = {
+    const userData: any = {
       cognitoSub: data.cognitoSub,
       fullName: data.fullName,
       // email is not part of the User model in Prisma schema
@@ -158,7 +157,7 @@ export class UsersRepository {
     const limit = params.limit || 10;
     const skip = (page - 1) * limit;
 
-    const where: Prisma.UserWhereInput = {};
+    const where: any = {};
     
     if (params.role) where.role = params.role as UserRole;
     if (params.isActive !== undefined) where.isActive = params.isActive;
@@ -203,7 +202,7 @@ export class UsersRepository {
   async update(cognitoSub: string, data: UpdateUserData): Promise<User> {
     this.logger.log(`Updating user: ${cognitoSub}`);
 
-    const updateData: Prisma.UserUpdateInput = {};
+    const updateData: any = {};
     
     // Não atualizamos o nickname aqui, pois ele é gerenciado apenas pelo Cognito
     // fullName é obrigatório no schema, então não pode ser null

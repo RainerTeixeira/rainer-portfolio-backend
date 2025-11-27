@@ -84,6 +84,7 @@
     "@playwright/test": "^1.56.1",
     "@types/aws-lambda": "^8.10.143",
     "@types/jest": "^29.5.12",
+    "@types/minimatch": "^6.0.0",
     "@types/node": "^22.2.0",
     "@types/passport-jwt": "^4.0.1",
     "@types/supertest": "^6.0.2",

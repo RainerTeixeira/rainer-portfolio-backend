@@ -444,7 +444,7 @@ export class UsersService {
   async updateUser(
     cognitoSub: string, 
     data: UpdateUserData,
-    avatarFile?: Express.Multer.File
+    avatarFile?: any
   ) {
     this.logger.log(`Updating user: ${cognitoSub}`);
 

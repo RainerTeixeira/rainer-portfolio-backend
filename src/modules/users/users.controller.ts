@@ -187,8 +187,8 @@ export class UsersController {
     // Obter arquivo do request (adicionado pelo interceptor)
     const avatarFile = (request as any).file as FastifyUploadedFile | undefined;
 
-    // Converter FastifyUploadedFile para formato compatível com Express.Multer.File
-    let expressFile: Express.Multer.File | undefined;
+    // Converter FastifyUploadedFile para um formato genérico de arquivo
+    let expressFile: any;
     if (avatarFile) {
       expressFile = {
         fieldname: avatarFile.fieldname,

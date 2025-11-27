@@ -69,7 +69,7 @@ export class CloudinaryService {
    * @throws BadRequestException quando Cloudinary não está configurado ou arquivo inválido.
   */
   async uploadImage(
-    file: Buffer | Express.Multer.File,
+    file: Buffer | any,
     folder: string = 'avatars',
     publicId?: string
   ): Promise<string> {
