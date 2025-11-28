@@ -41,6 +41,9 @@ export interface User {
   /** Nome completo ou nome de exibição */
   fullName: string;
 
+  /** Nickname público do usuário (único na aplicação) */
+  nickname?: string;
+
   /** URL do avatar (CDN, S3, ou caminho local) */
   avatar?: string;
 
@@ -98,6 +101,9 @@ export interface CreateUserData {
   /** Nome completo do usuário */
   fullName: string;
 
+  /** Nickname público do usuário (único na aplicação) */
+  nickname?: string;
+
   /** Nome de usuário único (não usado; Cognito gerencia) */
   username?: string;
 
@@ -154,6 +160,9 @@ export interface UpdateUserData {
 
   /** Motivo do banimento */
   banReason?: string;
+
+  /** Nickname público do usuário*/
+  nickname?: string;
 }
 
 /**

@@ -438,7 +438,7 @@ export class AuthService {
         },
       };
     } catch (error: unknown) {
-      this.logger.error(`[Login] ❌ Erro ao realizar login`);
+      this.logger.error(`[Login] ❌ Erro ao realizar login (serviço de autenticação)`);
 
       if (error instanceof Error) {
         this.logger.error(`[Login] Tipo do erro: ${error.constructor.name}`);
@@ -481,7 +481,9 @@ export class AuthService {
         );
       }
 
-      throw new InternalServerErrorException('Erro ao realizar login');
+      throw new InternalServerErrorException(
+        'Erro ao realizar login (serviço de autenticação)'
+      );
     }
   }
 
@@ -503,13 +505,17 @@ export class AuthService {
       // 0) Checar email já existente no Cognito
       const existingEmailUser = await this.authRepository.getUserByEmail(data.email);
       if (existingEmailUser) {
-        throw new ConflictException('Este email já está em uso');
+        throw new ConflictException(
+          'Este email já está em uso (serviço de autenticação)'
+        );
       }
 
       // 0.1) Checar nome já existente no MongoDB
       const nameTaken = await this.usersService.isNameTaken(data.fullName);
       if (nameTaken) {
-        throw new ConflictException('Já existe usuário com este nome');
+        throw new ConflictException(
+          'Já existe usuário com este nome (serviço de autenticação)'
+        );
       }
 
       // 1) Gerar Username a partir do Nome Completo (substitui espaços por '_', remove inválidos)
@@ -537,7 +543,7 @@ export class AuthService {
             break;
           }
           throw new InternalServerErrorException(
-            'Erro ao verificar disponibilidade do nome de usuário'
+            'Erro ao verificar disponibilidade do nome de usuário (serviço de autenticação)'
           );
         }
       }
@@ -656,6 +662,7 @@ export class AuthService {
           {
             cognitoSub: cognitoSub,
             fullName: data.fullName,
+            nickname: cleanNickname || data.nickname,
           },
           cognitoCreatedAt
         );
@@ -692,7 +699,10 @@ export class AuthService {
         if (error.name === 'InvalidParameterException') {
           throw new BadRequestException('Parâmetros inválidos: ' + error.message);
         }
-        this.logger.error(`Erro ao registrar usuário: ${error.message}`, error.stack);
+        this.logger.error(
+          `Erro ao registrar usuário (serviço de autenticação): ${error.message}`,
+          error.stack
+        );
       }
       if (
         error instanceof BadRequestException ||
@@ -701,7 +711,9 @@ export class AuthService {
       ) {
         throw error;
       }
-      throw new InternalServerErrorException('Erro ao registrar usuário');
+      throw new InternalServerErrorException(
+        'Erro ao registrar usuário (serviço de autenticação)'
+      );
     }
   }
 
@@ -773,9 +785,13 @@ export class AuthService {
     } catch (error: unknown) {
       const err = error as Error;
       if (err.name === 'NotAuthorizedException') {
-        throw new UnauthorizedException('Refresh token inválido');
+        throw new UnauthorizedException(
+          'Refresh token inválido (serviço de autenticação)'
+        );
       }
-      throw new InternalServerErrorException('Erro ao renovar token');
+      throw new InternalServerErrorException(
+        'Erro ao renovar token de autenticação (refreshToken, serviço de autenticação)'
+      );
     }
   }
 
@@ -1301,87 +1317,26 @@ export class AuthService {
         throw new BadRequestException('O caractere @ não é permitido no nickname');
       }
 
-      // 1. Verificar se o novo nickname está disponível ANTES de salvar
-      this.logger.debug(`Verificando disponibilidade do nickname: ${newNickname}`);
-      const isAvailable = await this.checkNicknameAvailability(newNickname, cognitoSub);
+      // 1. Verificar se o novo nickname está disponível ANTES de salvar (Mongo)
+      this.logger.debug(
+        `[changeNickname] Verificando disponibilidade do nickname (Mongo): ${newNickname}`,
+      );
+      const isAvailable = await this.usersService.checkNicknameAvailability(
+        newNickname,
+        cognitoSub,
+      );
       if (!isAvailable) {
         this.logger.warn(`Nickname ${newNickname} já está em uso por outro usuário`);
         throw new ConflictException('Este nickname já está em uso. Escolha outro.');
       }
-      this.logger.debug(`Nickname ${newNickname} está disponível`);
+      this.logger.debug(`[changeNickname] Nickname ${newNickname} está disponível no MongoDB`);
 
-      // 2. Buscar o username correto do Cognito usando o cognitoSub
-      let username = await this.authRepository.getUsernameBySub(cognitoSub);
+      // 2. Atualizar apenas no MongoDB (Prisma/Mongo é fonte da verdade do nickname)
+      await this.usersService.updateUserNickname(cognitoSub, newNickname);
 
-      // Se não encontrou via getUsernameBySub, tenta usar o cognitoSub diretamente
-      // (no OAuth, o username geralmente é o cognitoSub ou o email)
-      if (!username) {
-        this.logger.warn(
-          `Username não encontrado via getUsernameBySub, tentando usar cognitoSub diretamente: ${cognitoSub}`
-        );
-        username = cognitoSub;
-      }
-
-      this.logger.debug(`Alterando nickname para usuário ${username} (cognitoSub: ${cognitoSub})`);
-
-      // 3. Atualizar no Cognito usando o username correto
-      const { CognitoIdentityProviderClient, AdminUpdateUserAttributesCommand } = await import(
-        '@aws-sdk/client-cognito-identity-provider'
+      this.logger.log(
+        `[changeNickname] Nickname atualizado com sucesso no MongoDB para cognitoSub ${cognitoSub}`,
       );
-
-      const client = new CognitoIdentityProviderClient({ region: env.AWS_REGION });
-
-      try {
-        const command = new AdminUpdateUserAttributesCommand({
-          UserPoolId: env.COGNITO_USER_POOL_ID!,
-          Username: username,
-          UserAttributes: [{ Name: 'nickname', Value: newNickname }],
-        });
-
-        await client.send(command);
-      } catch (updateError) {
-        const updateErr = updateError as Error & { name?: string };
-
-        // Se falhou com username=cognitoSub, tenta buscar o email do usuário e usar como username
-        if (updateErr.name === 'UserNotFoundException' && username === cognitoSub) {
-          this.logger.warn(
-            `Falhou ao atualizar com cognitoSub, tentando buscar email do usuário...`
-          );
-
-          // Buscar usuário no MongoDB para pegar o email
-          const user = await this.usersService.getUserByCognitoSub(cognitoSub);
-          if (user && user.email) {
-            this.logger.debug(`Tentando usar email como username: ${user.email}`);
-
-            try {
-              const emailCommand = new AdminUpdateUserAttributesCommand({
-                UserPoolId: env.COGNITO_USER_POOL_ID!,
-                Username: user.email,
-                UserAttributes: [{ Name: 'nickname', Value: newNickname }],
-              });
-
-              await client.send(emailCommand);
-              this.logger.log(`Nickname atualizado usando email como username: ${user.email}`);
-            } catch (emailError) {
-              this.logger.error(
-                `Erro ao atualizar nickname usando email: ${(emailError as Error).message}`
-              );
-              throw new InternalServerErrorException(
-                `Não foi possível encontrar o usuário no Cognito. ` +
-                  `Tente fazer logout e login novamente.`
-              );
-            }
-          } else {
-            throw new InternalServerErrorException(
-              `Usuário não encontrado no Cognito. ` + `Tente fazer logout e login novamente.`
-            );
-          }
-        } else {
-          throw updateError;
-        }
-      }
-
-      this.logger.log(`Nickname atualizado com sucesso para usuário ${username}`);
 
       return { success: true, message: 'Nickname atualizado com sucesso!' };
     } catch (error: unknown) {
@@ -1392,8 +1347,8 @@ export class AuthService {
       }
 
       this.logger.error(
-        `Erro ao alterar nickname para cognitoSub ${cognitoSub}: ${err.message}`,
-        err.stack
+        `Erro ao alterar nickname (Mongo only) para cognitoSub ${cognitoSub}: ${err.message}`,
+        err.stack,
       );
       throw new InternalServerErrorException('Erro ao alterar nickname: ' + err.message);
     }

@@ -50,85 +50,36 @@ export class UsersService {
    * @returns `true` se disponível; `false` caso contrário.
   */
   async checkNicknameAvailability(nickname: string, excludeCognitoSub?: string): Promise<boolean> {
-    this.logger.log(`Checking nickname availability: ${nickname}${excludeCognitoSub ? ` (excluding user ${excludeCognitoSub})` : ''}`);
-    
+    this.logger.log(`Checking nickname availability (Mongo only): ${nickname}${
+      excludeCognitoSub ? ` (excluding user ${excludeCognitoSub})` : ''
+    }`);
+
     // Validações básicas
     if (!nickname || nickname.length < 3) {
       return false;
     }
-    
+
     try {
-      // 1. Verifica no MongoDB
+      // Verifica apenas no MongoDB se já existe usuário com esse nickname
       const existingUser = await this.usersRepository.findByUsername(nickname);
-      
-      // Se encontrou um usuário e não é o usuário atual (se excludeCognitoSub for fornecido)
-      if (existingUser) {
-        if (excludeCognitoSub && existingUser.cognitoSub === excludeCognitoSub) {
-          // É o próprio usuário, mas ainda precisa verificar no Cognito
-          // Continua para verificar no Cognito
-        } else {
-          return false; // Nome já está em uso por outro usuário no MongoDB
-        }
+
+      if (!existingUser) {
+        return true; // disponível
       }
-      
-      // 2. Verifica no Cognito usando ListUsersCommand
-      // Cognito não suporta OR em filtros, então fazemos duas buscas separadas
-      try {
-        const { CognitoIdentityProviderClient, ListUsersCommand } = await import('@aws-sdk/client-cognito-identity-provider');
-        const client = new CognitoIdentityProviderClient({ region: env.AWS_REGION });
-        
-        // Busca 1: Verificar preferred_username
-        this.logger.debug(`Verificando preferred_username no Cognito: ${nickname}`);
-        const preferredUsernameCommand = new ListUsersCommand({
-          UserPoolId: env.COGNITO_USER_POOL_ID!,
-          Filter: `preferred_username = "${nickname}"`,
-          Limit: 10,
-        });
-        
-        const preferredUsernameResponse = await client.send(preferredUsernameCommand);
-        if (preferredUsernameResponse.Users && preferredUsernameResponse.Users.length > 0) {
-          // Verificar se algum dos usuários encontrados não é o usuário atual
-          for (const user of preferredUsernameResponse.Users) {
-            const sub = user.Attributes?.find(attr => attr.Name === 'sub')?.Value;
-            if (sub && sub !== excludeCognitoSub) {
-              this.logger.warn(`Nickname ${nickname} já está em uso como preferred_username por usuário ${sub}`);
-              return false;
-            }
-          }
-        }
-        
-        // Busca 2: Verificar nickname
-        this.logger.debug(`Verificando nickname no Cognito: ${nickname}`);
-        const nicknameCommand = new ListUsersCommand({
-          UserPoolId: env.COGNITO_USER_POOL_ID!,
-          Filter: `nickname = "${nickname}"`,
-          Limit: 10,
-        });
-        
-        const nicknameResponse = await client.send(nicknameCommand);
-        if (nicknameResponse.Users && nicknameResponse.Users.length > 0) {
-          // Verificar se algum dos usuários encontrados não é o usuário atual
-          for (const user of nicknameResponse.Users) {
-            const sub = user.Attributes?.find(attr => attr.Name === 'sub')?.Value;
-            if (sub && sub !== excludeCognitoSub) {
-              this.logger.warn(`Nickname ${nickname} já está em uso como nickname por usuário ${sub}`);
-              return false;
-            }
-          }
-        }
-        
-        this.logger.debug(`Nickname ${nickname} está disponível no Cognito`);
-      } catch (error: unknown) {
-        const cognitoError = error as Error & { name: string; message: string };
-        this.logger.error(`Erro ao verificar nickname no Cognito: ${cognitoError.message}`, cognitoError.stack);
-        // Em caso de erro no Cognito, retorna false por segurança (não permite usar nickname que pode estar em uso)
-        return false;
+
+      // Se for o próprio usuário (mesmo cognitoSub), considerar disponível
+      if (excludeCognitoSub && existingUser.cognitoSub === excludeCognitoSub) {
+        return true;
       }
-      
-      return true; // Nome disponível
+
+      // Já está em uso por outro usuário
+      return false;
     } catch (error: unknown) {
       const err = error as Error;
-      this.logger.error(`Erro ao verificar disponibilidade do nickname: ${err.message}`, err.stack);
+      this.logger.error(
+        `Erro ao verificar disponibilidade do nickname (Mongo): ${err.message}`,
+        err.stack,
+      );
       throw error;
     }
   }
@@ -204,6 +155,7 @@ export class UsersService {
     const userData: CreateUserData = {
       cognitoSub: data.cognitoSub,
       fullName: data.fullName,
+      ...(data.nickname && { nickname: data.nickname }),
       ...(data.avatar && { avatar: data.avatar }),
       ...(data.bio && { bio: data.bio }),
       ...(data.website && { website: data.website }),
@@ -370,9 +322,27 @@ export class UsersService {
         cognitoEmail = cognitoEmail.replace('Verificado', '').trim();
       }
       
+      // Se ainda não houver nickname salvo no Mongo, migrar o do Cognito
+      if (!user.nickname && cognitoNickname) {
+        try {
+          await this.usersRepository.update(user.cognitoSub, {
+            nickname: cognitoNickname,
+          });
+          this.logger.log(
+            `Migrated nickname from Cognito to Mongo for user ${user.cognitoSub}: ${cognitoNickname}`,
+          );
+        } catch (updateError) {
+          this.logger.warn(
+            `Falha ao migrar nickname do Cognito para Mongo para ${user.cognitoSub}: ${
+              updateError instanceof Error ? updateError.message : String(updateError)
+            }`,
+          );
+        }
+      }
+
       // Incluir nickname, email e data de criação na resposta
-      // Priorizar dados do Cognito (nickname só existe no Cognito)
-      const finalNickname = cognitoNickname || undefined;
+      // Priorizar sempre o nickname salvo no Mongo; Cognito vira apenas fonte de migração
+      const finalNickname = user.nickname || cognitoNickname || undefined;
       const finalEmail = cognitoEmail || undefined;
       
       return {
@@ -668,6 +638,21 @@ export class UsersService {
   async changePassword(cognitoSub: string, _oldPassword: string, newPassword: string): Promise<void> {
     this.logger.log(`Changing password for user: ${cognitoSub}`);
     await this.usersRepository.changePassword(cognitoSub, _oldPassword, newPassword);
+  }
+
+  /**
+   * Atualiza apenas o nickname do usuário no MongoDB.
+   *
+   * Usado pelo fluxo de /auth/change-nickname, após validação e atualização
+   * no Cognito. O Mongo/Prisma é a fonte de verdade do nickname para a
+   * aplicação, então mantemos o campo sincronizado aqui.
+   */
+  async updateUserNickname(cognitoSub: string, nickname: string) {
+    this.logger.log(`Updating user nickname in MongoDB: ${cognitoSub} -> ${nickname}`);
+
+    await this.usersRepository.update(cognitoSub, {
+      nickname,
+    });
   }
 }
 

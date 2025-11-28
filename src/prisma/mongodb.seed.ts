@@ -80,8 +80,9 @@ async function seedUsers() {
   
   const users: any[] = [
     {
-      cognitoSub: '6488d4d8-9081-7058-108b-07aab2786b43', // CognitoSub fixo para testes com usuário aoline
+      cognitoSub: '44085408-7021-7051-e274-ae704499cd72', // CognitoSub fixo para testes com usuário aoline
       fullName: 'Administrador Sistema',
+      nickname: 'admin',
       avatar: 'https://i.pravatar.cc/150?img=1',
       bio: 'Administrador principal do sistema. Gerencio tudo por aqui!',
       website: 'https://blog.com',
@@ -91,6 +92,7 @@ async function seedUsers() {
     {
       cognitoSub: `cognito-${nanoid()}`,
       fullName: 'Maria Silva',
+      nickname: 'editor',
       avatar: 'https://i.pravatar.cc/150?img=2',
       bio: 'Editora de conteúdo. Amo revisar e aprovar posts incríveis!',
       website: 'https://mariasilva.com',
@@ -100,6 +102,7 @@ async function seedUsers() {
     {
       cognitoSub: `cognito-${nanoid()}`,
       fullName: 'João Desenvolvedor',
+      nickname: 'joaodev',
       avatar: 'https://i.pravatar.cc/150?img=3',
       bio: 'Desenvolvedor Full Stack apaixonado por tecnologia e boas práticas.',
       website: 'https://joaodev.com.br',
@@ -114,6 +117,7 @@ async function seedUsers() {
     {
       cognitoSub: `cognito-${nanoid()}`,
       fullName: 'Ana Designer',
+      nickname: 'anadesigner',
       avatar: 'https://i.pravatar.cc/150?img=4',
       bio: 'Designer UX/UI. Criando experiências digitais incríveis desde 2015.',
       website: 'https://anadesigner.com',
@@ -127,6 +131,7 @@ async function seedUsers() {
     {
       cognitoSub: `cognito-${nanoid()}`,
       fullName: 'Carlos Leitor',
+      nickname: 'carlosleitor',
       avatar: 'https://i.pravatar.cc/150?img=5',
       bio: 'Leitor assíduo de tecnologia e desenvolvimento.',
       role: 'SUBSCRIBER',
@@ -152,7 +157,7 @@ async function seedUsers() {
     createdUsers.push(user);
     
     // Mostrar cognitoSub completo para o administrador fixo
-    const cognitoDisplay = cognitoSub === '6488d4d8-9081-7058-108b-07aab2786b43' 
+    const cognitoDisplay = cognitoSub === '44085408-7021-7051-e274-ae704499cd72' 
       ? cognitoSub 
       : `${user.cognitoSub.substring(0, 20)}...`;
     console.log(`   ✅ ${user.fullName} - ${user.role} [cognitoSub: ${cognitoDisplay}]`);

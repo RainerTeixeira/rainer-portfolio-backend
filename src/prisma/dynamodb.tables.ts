@@ -99,7 +99,8 @@ const baseTableDefinitions = [
     AttributeDefinitions: [
       { AttributeName: 'cognitoSub', AttributeType: 'S' },
       { AttributeName: 'email', AttributeType: 'S' },
-      { AttributeName: 'username', AttributeType: 'S' },
+      // Novo mundo: nickname salvo na aplicação (Mongo/Prisma/Dynamo)
+      { AttributeName: 'nickname', AttributeType: 'S' },
     ],
     GlobalSecondaryIndexes: [
       {
@@ -114,9 +115,9 @@ const baseTableDefinitions = [
         },
       },
       {
-        IndexName: 'UsernameIndex',
+        IndexName: 'NicknameIndex',
         KeySchema: [
-          { AttributeName: 'username', KeyType: 'HASH' },
+          { AttributeName: 'nickname', KeyType: 'HASH' },
         ],
         Projection: { ProjectionType: 'ALL' },
         ProvisionedThroughput: {

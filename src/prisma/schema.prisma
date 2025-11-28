@@ -78,10 +78,14 @@ model User {
   // ─────────────────────────────────────────────────────────────────────────
   // PERFIL BÁSICO (Gerenciado pela aplicação)
   // ─────────────────────────────────────────────────────────────────────────
-  // NOTA: email e nickname são gerenciados pelo Cognito, não armazenados aqui
+  // ATUALIZADO: nickname agora é salvo no Mongo/Prisma (fonte de verdade),
+  // Cognito é apenas provedor de autenticação.
 
   /// Nome completo ou nome de exibição
   fullName String @unique
+
+  /// Nickname público do usuário (único na aplicação)
+  nickname String? @unique
 
   // ─────────────────────────────────────────────────────────────────────────
   // PERFIL COMPLEMENTAR (Gerenciado pela aplicação)

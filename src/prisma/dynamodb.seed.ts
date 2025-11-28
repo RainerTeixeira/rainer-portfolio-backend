@@ -55,16 +55,16 @@ const dynamodb = DynamoDBDocumentClient.from(client);
 async function seedUsers() {
   console.log('\n👥 Inserindo usuários...');
   
-const users = [
-  {
-      cognitoSub: '6488d4d8-9081-7058-108b-07aab2786b43', // CognitoSub fixo para testes com usuário aoline
-    email: 'admin@blog.com',
-      username: 'admin',
+  const users = [
+    {
+      cognitoSub: '44085408-7021-7051-e274-ae704499cd72', // CognitoSub fixo para testes com usuário aoline
+      email: 'admin@blog.com',
+      nickname: 'admin',
       fullName: 'Administrador Sistema',
       avatar: 'https://i.pravatar.cc/150?img=1',
       bio: 'Administrador principal do sistema. Gerencio tudo por aqui!',
       website: 'https://blog.com',
-    role: 'ADMIN',
+      role: 'ADMIN',
       isActive: true,
       postsCount: 0,
       commentsCount: 0,
@@ -74,7 +74,7 @@ const users = [
   {
       cognitoSub: `cognito-${nanoid()}`,
     email: 'editor@blog.com',
-      username: 'editor',
+      nickname: 'editor',
       fullName: 'Maria Silva',
       avatar: 'https://i.pravatar.cc/150?img=2',
       bio: 'Editora de conteúdo. Amo revisar e aprovar posts incríveis!',
@@ -89,7 +89,7 @@ const users = [
   {
       cognitoSub: `cognito-${nanoid()}`,
       email: 'joao@blog.com',
-      username: 'joaodev',
+      nickname: 'joaodev',
       fullName: 'João Desenvolvedor',
       avatar: 'https://i.pravatar.cc/150?img=3',
       bio: 'Desenvolvedor Full Stack apaixonado por tecnologia e boas práticas.',
@@ -109,7 +109,7 @@ const users = [
   {
       cognitoSub: `cognito-${nanoid()}`,
     email: 'ana@blog.com',
-      username: 'anadesigner',
+      nickname: 'anadesigner',
       fullName: 'Ana Designer',
       avatar: 'https://i.pravatar.cc/150?img=4',
       bio: 'Designer UX/UI. Criando experiências digitais incríveis desde 2015.',
@@ -128,7 +128,7 @@ const users = [
   {
       cognitoSub: `cognito-${nanoid()}`,
       email: 'carlos@example.com',
-      username: 'carlosleitor',
+      nickname: 'carlosleitor',
       fullName: 'Carlos Leitor',
       avatar: 'https://i.pravatar.cc/150?img=5',
       bio: 'Leitor assíduo de tecnologia e desenvolvimento.',
@@ -152,7 +152,7 @@ const users = [
     const cognitoDisplay = user.cognitoSub === '6488d4d8-9081-7058-108b-07aab2786b43' 
       ? user.cognitoSub 
       : `${user.cognitoSub.substring(0, 20)}...`;
-    console.log(`   ✅ ${user.fullName} (@${user.username}) - ${user.role} [cognitoSub: ${cognitoDisplay}]`);
+    console.log(`   ✅ ${user.fullName} (@${user.nickname}) - ${user.role} [cognitoSub: ${cognitoDisplay}]`);
   }
   
   console.log(`✅ ${users.length} usuários inseridos`);
@@ -901,7 +901,8 @@ async function main() {
 
     console.log('💡 Credenciais de teste:');
     users.forEach(user => {
-      console.log(`   • ${user.email} (@${user.username}) - ${user.role}`);
+      const displayNickname = user.nickname || 'usuario';
+      console.log(`   • ${user.email} (@${displayNickname}) - ${user.role}`);
     });
     
     console.log('\n🌐 Próximos passos:');
