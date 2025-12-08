@@ -117,12 +117,12 @@
 
 ### Avatar
 ```
-https://res.cloudinary.com/dkt0xccga/image/upload/v1234567890/avatars/1736082360-abc123.webp
+https://res.cloudinary.com/rainersoft/image/upload/v1234567890/avatars/1736082360-abc123.webp
 ```
 
 ### Blog
 ```
-https://res.cloudinary.com/dkt0xccga/image/upload/v1234567890/blog/1736082360-xyz789.webp
+https://res.cloudinary.com/rainersoft/image/upload/v1234567890/blog/1736082360-xyz789.webp
 ```
 
 ---

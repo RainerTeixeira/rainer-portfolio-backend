@@ -156,7 +156,7 @@ export class UsersService {
       cognitoSub: data.cognitoSub,
       fullName: data.fullName,
       ...(data.nickname && { nickname: data.nickname }),
-      ...(data.avatar && { avatar: data.avatar }),
+      // Avatar não é mais persistido; sempre derivado de cognitoSub
       ...(data.bio && { bio: data.bio }),
       ...(data.website && { website: data.website }),
       ...(data.socialLinks && { socialLinks: data.socialLinks }),
@@ -197,8 +197,14 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException(`Usuário com CognitoSub ${cognitoSub} não encontrado`);
     }
-    
-    return user;
+
+    // Montar URL pública do avatar a partir do cognitoSub (sem campo avatar no banco)
+    const avatarUrl = this.cloudinaryService.getPublicUrlFromId(user.cognitoSub);
+
+    return {
+      ...user,
+      ...(avatarUrl ? { avatar: avatarUrl } : {}),
+    };
   }
 
   /**
@@ -340,26 +346,30 @@ export class UsersService {
         }
       }
 
-      // Incluir nickname, email e data de criação na resposta
+      // Incluir nickname, email, avatar e data de criação na resposta
       // Priorizar sempre o nickname salvo no Mongo; Cognito vira apenas fonte de migração
       const finalNickname = user.nickname || cognitoNickname || undefined;
       const finalEmail = cognitoEmail || undefined;
+      const avatarUrl = this.cloudinaryService.getPublicUrlFromId(user.cognitoSub);
       
       return {
         ...user,
         username: finalNickname,
         nickname: finalNickname,
         email: finalEmail,
+        ...(avatarUrl ? { avatar: avatarUrl } : {}),
         userCreateDate: userCreateDate || undefined,
       };
     } catch (error) {
       // Se falhar ao buscar do Cognito, retornar usuário sem nickname (pois só existe no Cognito)
       this.logger.warn(`Erro ao buscar dados do Cognito para ${cognitoSub}: ${error instanceof Error ? error.message : String(error)}`);
+      const avatarUrl = this.cloudinaryService.getPublicUrlFromId(user.cognitoSub);
       return {
         ...user,
         username: undefined,
         nickname: undefined,
         email: undefined,
+        ...(avatarUrl ? { avatar: avatarUrl } : {}),
         userCreateDate: undefined,
       };
     }
@@ -418,34 +428,29 @@ export class UsersService {
   ) {
     this.logger.log(`Updating user: ${cognitoSub}`);
 
-    // Verificar se usuário existe
-    const user = await this.getUserById(cognitoSub);
-
     // Nota: nickname não pode ser atualizado aqui, pois é gerenciado apenas pelo Cognito
     // Use o endpoint /auth/change-nickname para alterar nickname
 
     // Se houver arquivo de avatar, fazer upload para Cloudinary
+    let avatarUrl: string | undefined;
     if (avatarFile) {
       try {
-        // Deletar avatar antigo se existir
-        if (user.avatar) {
-          const oldPublicId = this.cloudinaryService.extractPublicId(user.avatar);
-          if (oldPublicId) {
-            await this.cloudinaryService.deleteImage(oldPublicId);
-          }
+        // Deletar avatar antigo (ignora erro se não existir)
+        try {
+          await this.cloudinaryService.deleteImage(`avatars/${cognitoSub}`);
+        } catch {
+          // Ignora se não existir
         }
 
-        // Upload novo avatar
-        const publicId = `avatars/${cognitoSub}`;
-        const avatarUrl = await this.cloudinaryService.uploadImage(
+        // Upload novo avatar: pasta "avatars", public_id = cognitoSub
+        // Resultado final no Cloudinary: avatars/cognitoSub.webp
+        avatarUrl = await this.cloudinaryService.uploadImage(
           avatarFile,
-          'avatars',
-          publicId
+          'avatars',  // pasta
+          cognitoSub  // public_id (sem a pasta)
         );
 
-        // Adicionar URL do avatar aos dados de atualização
-        data.avatar = avatarUrl;
-        this.logger.log(`Avatar enviado para Cloudinary: ${avatarUrl}`);
+        this.logger.log(`✅ Avatar salvo: ${avatarUrl}`);
       } catch (error) {
         const err = error as Error;
         this.logger.error(`Erro ao fazer upload do avatar: ${err.message}`, err.stack);
@@ -454,7 +459,15 @@ export class UsersService {
     }
 
     // Persistência somente no MongoDB/Prisma (fullName não é atualizado no Cognito aqui)
-    return await this.usersRepository.update(cognitoSub, data);
+    const updatedUser = await this.usersRepository.update(cognitoSub, data);
+
+    // Usar URL do upload se disponível, senão tentar construir a partir do cognitoSub
+    const finalAvatarUrl = avatarUrl || this.cloudinaryService.getPublicUrlFromId(updatedUser.cognitoSub);
+
+    return {
+      ...updatedUser,
+      ...(finalAvatarUrl ? { avatar: finalAvatarUrl } : {}),
+    };
   }
 
   /**

@@ -15,7 +15,7 @@
 
 ### 3. ✅ Configuração Cloudinary
 **Arquivo:** `.env`
-- `CLOUDINARY_URL=cloudinary://934767314247937:3pZivUQy8fbIwelf11FxR5NrHcw@dkt0xccga`
+- `CLOUDINARY_URL=cloudinary://934767314247937:3pZivUQy8fbIwelf11FxR5NrHcw@rainersoft`
 - Configurado e testado no CloudinaryService
 
 ## Para Testar o Upload de Imagens

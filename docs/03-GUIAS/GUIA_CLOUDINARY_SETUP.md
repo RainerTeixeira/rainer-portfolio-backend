@@ -5,7 +5,7 @@
 Adicione ao arquivo `.env`:
 
 ```env
-CLOUDINARY_URL=cloudinary://934767314247937:3pZivUQy8fbIwelf11FxR5NrHcw@dkt0xccga
+CLOUDINARY_URL=cloudinary://934767314247937:3pZivUQy8fbIwelf11FxR5NrHcw@rainersoft
 ```
 
 ## Funcionalidades Implementadas
@@ -42,7 +42,7 @@ CLOUDINARY_URL=cloudinary://934767314247937:3pZivUQy8fbIwelf11FxR5NrHcw@dkt0xccg
 
 As URLs do Cloudinary seguem o formato:
 ```
-https://res.cloudinary.com/dkt0xccga/image/upload/v[timestamp]/avatars/[cognitoSub].webp
+https://res.cloudinary.com/rainersoft/image/upload/v[timestamp]/avatars/[cognitoSub].webp
 ```
 
 Acessível diretamente via API do Cloudinary com todas as otimizações aplicadas.

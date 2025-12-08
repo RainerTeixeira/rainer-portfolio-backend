@@ -12,7 +12,6 @@ import { TestingModule } from '@nestjs/testing';
 import {
   UnauthorizedException,
   BadRequestException,
-  InternalServerErrorException,
   ConflictException,
 } from '@nestjs/common';
 import { AuthService } from '../../../src/modules/auth/auth.service';
@@ -240,11 +239,11 @@ describe('AuthService (Banco Real)', () => {
       expect(user?.cognitoSub).toBe('cognito-sub-456');
     });
 
-    it('deve lançar InternalServerErrorException quando não há AuthenticationResult', async () => {
+    it('deve lançar UnauthorizedException quando não há AuthenticationResult', async () => {
       authRepository.login.mockResolvedValue({ $metadata: {} } as any);
 
-      await expect(service.login(loginData)).rejects.toThrow(InternalServerErrorException);
-      await expect(service.login(loginData)).rejects.toThrow('Erro ao realizar login');
+      await expect(service.login(loginData)).rejects.toThrow(UnauthorizedException);
+      await expect(service.login(loginData)).rejects.toThrow('Falha na autenticação');
     });
 
     it('deve lançar UnauthorizedException quando credenciais incorretas', async () => {
@@ -388,7 +387,9 @@ describe('AuthService (Banco Real)', () => {
 
       jest.spyOn<any, any>(service as any, 'checkNicknameAvailability').mockResolvedValue(true);
       await expect(service.register(registerData)).rejects.toThrow(ConflictException);
-      await expect(service.register(registerData)).rejects.toThrow('Este email já está em uso');
+      await expect(service.register(registerData)).rejects.toThrow(
+        'Este email já está em uso (serviço de autenticação)'
+      );
     });
 
     it('deve verificar nickname disponível quando checkNicknameAvailability retorna false', async () => {

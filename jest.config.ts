@@ -45,6 +45,8 @@ const config: Config = {
           moduleResolution: 'node',
           esModuleInterop: true,
           allowSyntheticDefaultImports: true,
+          // Garantir que os testes enxerguem os tipos globais do Jest
+          types: ['node', 'jest'],
         },
       },
     ],

@@ -144,10 +144,9 @@ export class UsersController {
   @Put(':id')
   @UseInterceptors(
     new FastifyFileInterceptor('avatar', {
-      limits: { fileSize: 2 * 1024 * 1024 }, // 2MB
-      fileFilter: (file: FastifyUploadedFile) => {
-        return !!file.mimetype.match(/\/(jpg|jpeg|png|gif|webp)$/);
-      },
+      limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+      // Aceita qualquer imagem (image/*); CloudinaryService se encarrega de converter/comprimir para WebP
+      fileFilter: (file: FastifyUploadedFile) => file.mimetype.startsWith('image/'),
     })
   )
   @ApiOperation({ 
@@ -204,17 +203,20 @@ export class UsersController {
       };
     }
 
+    // Garantir que sempre temos um objeto de dados seguro, mesmo em uploads só de avatar
+    const safeData: UpdateUserData = (data || {}) as UpdateUserData;
+
     // Processar socialLinks se for string JSON
-    if (typeof data.socialLinks === 'string') {
+    if (typeof safeData.socialLinks === 'string') {
       try {
-        data.socialLinks = JSON.parse(data.socialLinks);
+        safeData.socialLinks = JSON.parse(safeData.socialLinks);
       } catch {
         // Ignorar se não for JSON válido
-        data.socialLinks = undefined;
+        safeData.socialLinks = undefined;
       }
     }
 
-    const user = await this.usersService.updateUser(cognitoSub, data, expressFile);
+    const user = await this.usersService.updateUser(cognitoSub, safeData, expressFile);
     return { success: true, data: user };
   }
 

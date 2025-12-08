@@ -46,7 +46,7 @@ export class CloudinaryController {
   @HttpCode(HttpStatus.OK)
   @UseInterceptors(
     new FastifyFileInterceptor('image', {
-      limits: { fileSize: 5 * 1024 * 1024 }, // 5MB para imagens do blog
+      limits: { fileSize: 10 * 1024 * 1024 }, // 10MB para imagens do blog (Cloudinary fará compressão)
       fileFilter: (file: FastifyUploadedFile) => {
         return !!file.mimetype.match(/\/(jpg|jpeg|png|gif|webp)$/);
       },
@@ -79,7 +79,7 @@ export class CloudinaryController {
         success: { type: 'boolean', example: true },
         url: {
           type: 'string',
-          example: 'https://res.cloudinary.com/dkt0xccga/image/upload/v1234567890/blog/image_id.webp',
+          example: 'https://res.cloudinary.com/rainersoft/image/upload/v1234567890/blog/image_id.webp',
         },
       },
     },
@@ -188,10 +188,9 @@ export class CloudinaryController {
   @HttpCode(HttpStatus.OK)
   @UseInterceptors(
     new FastifyFileInterceptor('image', {
-      limits: { fileSize: 2 * 1024 * 1024 }, // 2MB para avatares
-      fileFilter: (file: FastifyUploadedFile) => {
-        return !!file.mimetype.match(/\/(jpg|jpeg|png|gif|webp)$/);
-      },
+      limits: { fileSize: 10 * 1024 * 1024 }, // 10MB para avatares (Cloudinary fará compressão)
+      // Aceita qualquer imagem (image/*); CloudinaryService cuida da conversão/compressão para WebP otimizado
+      fileFilter: (file: FastifyUploadedFile) => file.mimetype.startsWith('image/'),
     })
   )
   @ApiOperation({
@@ -221,7 +220,7 @@ export class CloudinaryController {
         success: { type: 'boolean', example: true },
         url: {
           type: 'string',
-          example: 'https://res.cloudinary.com/dkt0xccga/image/upload/v1234567890/avatars/avatar_id.webp',
+          example: 'https://res.cloudinary.com/rainersoft/image/upload/v1234567890/avatars/avatar_id.webp',
         },
       },
     },

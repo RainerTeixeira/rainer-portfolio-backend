@@ -4,7 +4,7 @@
 
 ### Backend (.env)
 ```env
-CLOUDINARY_URL=cloudinary://934767314247937:3pZivUQy8fbIwelf11FxR5NrHcw@dkt0xccga
+CLOUDINARY_URL=cloudinary://934767314247937:3pZivUQy8fbIwelf11FxR5NrHcw@rainersoft
 ```
 
 ### Frontend (.env.local)
@@ -44,7 +44,7 @@ NEXT_PUBLIC_API_URL=http://localhost:4000
 ```json
 {
   "success": true,
-  "url": "https://res.cloudinary.com/dkt0xccga/image/upload/v1234567890/blog/timestamp-random.webp"
+  "url": "https://res.cloudinary.com/rainersoft/image/upload/v1234567890/blog/timestamp-random.webp"
 }
 ```
 
@@ -84,7 +84,7 @@ NEXT_PUBLIC_API_URL=http://localhost:4000
 ## Estrutura no Cloudinary
 
 ```
-cloudinary://dkt0xccga/
+cloudinary://rainersoft/
 ├── avatars/
 │   └── {cognitoSub}.webp (512x512px)
 └── blog/
@@ -95,7 +95,7 @@ cloudinary://dkt0xccga/
 
 As URLs seguem o formato otimizado:
 ```
-https://res.cloudinary.com/dkt0xccga/image/upload/
+https://res.cloudinary.com/rainersoft/image/upload/
   v{timestamp}/
   blog/
   {timestamp}-{random}.webp

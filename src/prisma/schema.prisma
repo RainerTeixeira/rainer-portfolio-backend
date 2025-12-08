@@ -91,9 +91,6 @@ model User {
   // PERFIL COMPLEMENTAR (Gerenciado pela aplicação)
   // ─────────────────────────────────────────────────────────────────────────
 
-  /// URL do avatar (CDN, S3, ou upload local)
-  avatar String?
-
   /// Biografia curta do usuário (recomendado: max 500 caracteres)
   bio String?
 

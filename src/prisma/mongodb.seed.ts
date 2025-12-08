@@ -83,7 +83,6 @@ async function seedUsers() {
       cognitoSub: '44085408-7021-7051-e274-ae704499cd72', // CognitoSub fixo para testes com usuário aoline
       fullName: 'Administrador Sistema',
       nickname: 'admin',
-      avatar: 'https://i.pravatar.cc/150?img=1',
       bio: 'Administrador principal do sistema. Gerencio tudo por aqui!',
       website: 'https://blog.com',
       role: 'ADMIN',
@@ -93,7 +92,6 @@ async function seedUsers() {
       cognitoSub: `cognito-${nanoid()}`,
       fullName: 'Maria Silva',
       nickname: 'editor',
-      avatar: 'https://i.pravatar.cc/150?img=2',
       bio: 'Editora de conteúdo. Amo revisar e aprovar posts incríveis!',
       website: 'https://mariasilva.com',
       role: 'EDITOR',
@@ -103,7 +101,6 @@ async function seedUsers() {
       cognitoSub: `cognito-${nanoid()}`,
       fullName: 'João Desenvolvedor',
       nickname: 'joaodev',
-      avatar: 'https://i.pravatar.cc/150?img=3',
       bio: 'Desenvolvedor Full Stack apaixonado por tecnologia e boas práticas.',
       website: 'https://joaodev.com.br',
       socialLinks: {
@@ -118,7 +115,6 @@ async function seedUsers() {
       cognitoSub: `cognito-${nanoid()}`,
       fullName: 'Ana Designer',
       nickname: 'anadesigner',
-      avatar: 'https://i.pravatar.cc/150?img=4',
       bio: 'Designer UX/UI. Criando experiências digitais incríveis desde 2015.',
       website: 'https://anadesigner.com',
       socialLinks: {
@@ -132,7 +128,6 @@ async function seedUsers() {
       cognitoSub: `cognito-${nanoid()}`,
       fullName: 'Carlos Leitor',
       nickname: 'carlosleitor',
-      avatar: 'https://i.pravatar.cc/150?img=5',
       bio: 'Leitor assíduo de tecnologia e desenvolvimento.',
       role: 'SUBSCRIBER',
       isActive: true,

@@ -9,6 +9,7 @@
 
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import { CloudinaryService } from '../cloudinary/cloudinary.service.js';
 import type { Post, CreatePostData, UpdatePostData, PostWithRelations } from './post.model.js';
 
 // Tipo auxiliar para posts com includes (simplificado como any para evitar dependência forte de tipos do Prisma)
@@ -18,7 +19,6 @@ type PostWithIncludes = {
       select: {
         cognitoSub: true;
         fullName: true;
-        avatar: true;
       };
     };
     subcategory: {
@@ -47,7 +47,10 @@ type PostWithIncludes = {
 export class PostsRepository {
   private readonly logger = new Logger(PostsRepository.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cloudinaryService: CloudinaryService,
+  ) {}
 
   /**
    * Cria um novo post
@@ -98,7 +101,6 @@ export class PostsRepository {
             select: {
               cognitoSub: true, // cognitoSub é a chave primária agora
               fullName: true,
-              avatar: true,
             }
           },
           subcategory: {
@@ -129,7 +131,7 @@ export class PostsRepository {
           id: post.author.cognitoSub, // Mapeia cognitoSub para id
           nickname: post.author.fullName.split(' ')[0] || '', // Usa primeira palavra do fullName como fallback
           fullName: post.author.fullName,
-          avatar: post.author.avatar || undefined,
+          avatar: this.cloudinaryService.getPublicUrlFromId(post.author.cognitoSub) || undefined,
         } : undefined,
         // Se subcategory não foi encontrada (foi deletada), retorna undefined
         subcategory: post.subcategory || undefined,
@@ -145,7 +147,6 @@ export class PostsRepository {
               select: {
                 cognitoSub: true,
                 fullName: true,
-                avatar: true,
               }
             },
           },
@@ -159,7 +160,7 @@ export class PostsRepository {
             id: post.author.cognitoSub,
             nickname: post.author.fullName.split(' ')[0] || '',
             fullName: post.author.fullName,
-            avatar: post.author.avatar || undefined,
+            avatar: this.cloudinaryService.getPublicUrlFromId(post.author.cognitoSub) || undefined,
           } : undefined,
           subcategory: undefined,
         } as PostWithRelations;
@@ -185,7 +186,6 @@ export class PostsRepository {
             select: {
               cognitoSub: true, // cognitoSub é a chave primária agora
               fullName: true,
-              avatar: true,
             }
           },
           subcategory: {
@@ -225,7 +225,6 @@ export class PostsRepository {
               select: {
                 cognitoSub: true,
                 fullName: true,
-                avatar: true,
               }
             },
           },
@@ -284,7 +283,6 @@ export class PostsRepository {
             select: {
               cognitoSub: true, // cognitoSub é a chave primária agora
               fullName: true,
-              avatar: true,
             }
           },
           subcategory: {
@@ -308,7 +306,7 @@ export class PostsRepository {
         id: post.author.cognitoSub, // Mapeia cognitoSub para id
         nickname: post.author.fullName.split(' ')[0] || '', // Usa primeira palavra do fullName como fallback
         fullName: post.author.fullName,
-        avatar: post.author.avatar || undefined,
+        avatar: this.cloudinaryService.getPublicUrlFromId(post.author.cognitoSub) || undefined,
       } : undefined,
     }));
 

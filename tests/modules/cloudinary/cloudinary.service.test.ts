@@ -87,12 +87,12 @@ describe('CloudinaryService', () => {
     });
 
     it('deve fazer parse correto da URL do Cloudinary', () => {
-      configService.get.mockReturnValue('cloudinary://934767314247937:secret@dkt0xccga');
+      configService.get.mockReturnValue('cloudinary://934767314247937:secret@rainersoft');
       
       new CloudinaryService(configService);
       
       expect(cloudinary.config).toHaveBeenCalledWith({
-        cloud_name: 'dkt0xccga',
+        cloud_name: 'rainersoft',
         api_key: '934767314247937',
         api_secret: 'secret',
         secure: true,
