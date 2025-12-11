@@ -44,11 +44,14 @@ export class UsersRepository {
     this.logger.log(`Creating user: ${data.fullName} (Cognito Sub: ${data.cognitoSub})`);
     
     // Mapear os dados para o formato esperado pelo Prisma
+    // Importante: o modelo User no Prisma NÃO possui coluna avatar. A URL do avatar
+    // é sempre derivada do cognitoSub via CloudinaryService.
     const userData: any = {
       cognitoSub: data.cognitoSub,
       fullName: data.fullName,
+      // Nickname público único da aplicação (persistido no Mongo/Prisma)
+      ...(data.nickname && { nickname: data.nickname }),
       // email is not part of the User model in Prisma schema
-      ...(data.avatar && { avatar: data.avatar }),
       ...(data.bio && { bio: data.bio }),
       ...(data.website && { website: data.website }),
       ...(data.socialLinks && { socialLinks: data.socialLinks }),
@@ -204,15 +207,15 @@ export class UsersRepository {
 
     const updateData: any = {};
     
-    // Não atualizamos o nickname aqui, pois ele é gerenciado apenas pelo Cognito
+    // Nickname pode ser atualizado explicitamente (via fluxo /auth/change-nickname)
+    if (data.nickname !== undefined) {
+      updateData.nickname = data.nickname ?? null;
+    }
     // fullName é obrigatório no schema, então não pode ser null
     if (data.fullName !== undefined && data.fullName && data.fullName.trim()) {
       updateData.fullName = data.fullName.trim();
     }
-    // Campos opcionais podem ser null
-    if (data.avatar !== undefined) {
-      updateData.avatar = data.avatar || null;
-    }
+    // Campos opcionais podem ser null (exceto avatar, que não existe no schema)
     if (data.bio !== undefined) {
       // Converte string vazia em null para economizar espaço no banco
       if (typeof data.bio === 'string') {

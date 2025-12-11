@@ -428,8 +428,25 @@ export class UsersService {
   ) {
     this.logger.log(`Updating user: ${cognitoSub}`);
 
-    // Nota: nickname não pode ser atualizado aqui, pois é gerenciado apenas pelo Cognito
-    // Use o endpoint /auth/change-nickname para alterar nickname
+    // Validar nickname (quando fornecido) antes de prosseguir
+    if (data.nickname !== undefined && data.nickname !== null) {
+      const trimmedNickname = data.nickname.trim();
+
+      if (!trimmedNickname) {
+        throw new ConflictException('Nickname não pode ser vazio.');
+      }
+
+      const isAvailable = await this.checkNicknameAvailability(
+        trimmedNickname,
+        cognitoSub,
+      );
+
+      if (!isAvailable) {
+        throw new ConflictException('Já existe usuário com este nickname.');
+      }
+
+      data.nickname = trimmedNickname;
+    }
 
     // Se houver arquivo de avatar, fazer upload para Cloudinary
     let avatarUrl: string | undefined;
@@ -453,8 +470,13 @@ export class UsersService {
         this.logger.log(`✅ Avatar salvo: ${avatarUrl}`);
       } catch (error) {
         const err = error as Error;
-        this.logger.error(`Erro ao fazer upload do avatar: ${err.message}`, err.stack);
-        throw new ConflictException(`Erro ao fazer upload do avatar: ${err.message}`);
+        // Não bloquear atualização de perfil se o avatar falhar.
+        // Apenas loga o erro e segue usando o avatar anterior (ou URL derivada).
+        this.logger.warn(
+          `Erro ao fazer upload do avatar para ${cognitoSub}: ${err.message}`,
+          err.stack,
+        );
+        avatarUrl = undefined;
       }
     }
 
