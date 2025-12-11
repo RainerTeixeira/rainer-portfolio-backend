@@ -229,6 +229,53 @@ export class AuthService {
   }
 
   /**
+   * Gera um nickname estável a partir do nome completo ou, em último caso, do sub.
+   * - Remove acentos e caracteres inválidos
+   * - Usa apenas letras, números, ponto, underscore e hífen
+   * - Concatena primeiro e último nome quando possível
+   * - Garante tamanho máximo razoável e fallback mínimo
+   */
+  private generateNicknameFromFullNameOrSub(fullName: string | undefined, sub: string): string {
+    const normalize = (value: string): string => {
+      return value
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-zA-Z0-9_.-]/g, '')
+        .toLowerCase();
+    };
+
+    if (fullName && fullName.trim().length > 0) {
+      const parts = fullName
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean)
+        .map(normalize)
+        .filter(Boolean);
+
+      let base = '';
+      if (parts.length === 1) {
+        base = parts[0];
+      } else if (parts.length > 1) {
+        const first = parts[0];
+        const last = parts[parts.length - 1];
+        base = last && last !== first ? `${first}${last}` : first;
+      }
+
+      if (base.length >= 3) {
+        return base.substring(0, 30);
+      }
+    }
+
+    // Fallback: usa o sub do Cognito normalizado
+    const safeSub = normalize(sub);
+    if (safeSub.length >= 6) {
+      return safeSub.substring(0, 30);
+    }
+
+    return `user_${Date.now().toString(36)}`;
+  }
+
+  /**
    * Atualiza o e-mail do usuário no Cognito e dispara verificação.
    *
    * @param cognitoSub ID do usuário no Cognito (claim sub)
@@ -724,8 +771,11 @@ export class AuthService {
    */
   async confirmEmail(data: ConfirmEmailData) {
     try {
-      // Se não vier username, resolvemos pelo email (pois usamos username gerado no signup)
-      if (!data.username && data.email) {
+      // Sempre resolvemos o username real pelo email, pois no signup usamos um username gerado
+      // (candidate) que pode ser diferente do próprio email. Isso garante que o mesmo Username
+      // usado no SignUp seja utilizado na confirmação, evitando erros de código inválido/expirado
+      // quando, na verdade, o problema é apenas identificar o usuário errado no Cognito.
+      if (data.email) {
         const resolvedUsername = await this.authRepository.getUsernameByEmail(data.email);
         if (resolvedUsername) {
           data = { ...data, username: resolvedUsername };
@@ -1538,9 +1588,12 @@ export class AuthService {
         }
 
         try {
+          const nickname = this.generateNicknameFromFullNameOrSub(fullName, payload.sub);
+
           await this.usersService.createUser({
             cognitoSub: payload.sub,
             fullName,
+            nickname,
             email,
           });
 
