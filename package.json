@@ -42,6 +42,9 @@
     "memory:update": "tsx scripts/08-memoria/update-memory.ts",
     "memory:sync": "pnpm run version:update && pnpm run memory:update"
   },
+  "prisma": {
+    "schema": "src/prisma/schema.prisma"
+  },
   "dependencies": {
     "@aws-sdk/client-cognito-identity-provider": "^3.913.0",
     "@aws-sdk/client-dynamodb": "^3.621.0",
