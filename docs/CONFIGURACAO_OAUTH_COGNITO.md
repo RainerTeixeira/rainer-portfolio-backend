@@ -18,12 +18,12 @@ Este documento descreve como configurar os provedores OAuth (Google e GitHub) no
 
 ### Provedores OAuth Configurados
 1. **Google OAuth**
-   - Client ID: `637461699994-8gj9b3vd3t1skbl9eu7b70c27ifsq0rj.apps.googleusercontent.com`
-   - Client Secret: `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`
+   - Client ID: `<SEU_GOOGLE_CLIENT_ID>`
+   - Client Secret: `<SEU_GOOGLE_CLIENT_SECRET>`
 
 2. **GitHub OAuth**
-   - Client ID: `Ov23liDlJMbTCYQSHSOq`
-   - Client Secret: `fd307b98b423110a7cc9ee6c6aea54ea3c786a40`
+   - Client ID: `<SEU_GITHUB_CLIENT_ID>`
+   - Client Secret: `<SEU_GITHUB_CLIENT_SECRET>`
 
 ## 🚀 Passo a Passo - Configuração no AWS Console
 
@@ -79,8 +79,8 @@ http://localhost:3000
 3. Selecione **Google**
 
 **Configurações**:
-- **Client ID**: `637461699994-8gj9b3vd3t1skbl9eu7b70c27ifsq0rj.apps.googleusercontent.com`
-- **Client secret**: `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`
+- **Client ID**: `<SEU_GOOGLE_CLIENT_ID>`
+- **Client secret**: `<SEU_GOOGLE_CLIENT_SECRET>`
 - **Authorized scopes**: `profile email openid`
 
 **Mapeamento de Atributos**:
@@ -98,8 +98,8 @@ http://localhost:3000
 3. Selecione **GitHub** (ou configure como OIDC/SAML se GitHub não estiver disponível)
 
 **Configurações**:
-- **Client ID**: `Ov23liDlJMbTCYQSHSOq`
-- **Client secret**: `fd307b98b423110a7cc9ee6c6aea54ea3c786a40`
+- **Client ID**: `<SEU_GITHUB_CLIENT_ID>`
+- **Client secret**: `<SEU_GITHUB_CLIENT_SECRET>`
 - **Authorized scopes**: `user:email read:user`
 
 **Mapeamento de Atributos**:
