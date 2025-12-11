@@ -1,5 +1,5 @@
 {
-  "name": "@rainer/portfolio-backend",
+  "name": "@rainersoft/portfolio-backend",
   "version": "4.1.1",
   "description": "Blog Backend com NestJS + Fastify + DynamoDB + MongoDB + AWS Lambda",
   "main": "dist/main.js",
