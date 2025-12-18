@@ -16,7 +16,7 @@ module.exports = {
     jest: true,
     es2022: true,
   },
-  ignorePatterns: ['.eslintrc.cjs', 'dist', 'node_modules'],
+  ignorePatterns: ['.eslintrc.cjs', 'dist', 'node_modules', 'scripts/**/*'],
   rules: {
     '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
     '@typescript-eslint/explicit-function-return-type': 'off',

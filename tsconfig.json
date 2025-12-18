@@ -25,8 +25,14 @@
     "baseUrl": "./",
     "incremental": true,
     "removeComments": true,
-    "types": ["node"]
+    "types": ["node", "jest"]
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "tests"]
+  "exclude": [
+    "node_modules", 
+    "dist", 
+    "tests",
+    "src/**/OLD_*",
+    "src/**/*OLD*"
+  ]
 }

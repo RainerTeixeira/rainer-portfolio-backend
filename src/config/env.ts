@@ -5,16 +5,14 @@
  * variáveis de ambiente, com validação rigorosa usando Zod.
  * 
  * Arquitetura de Banco de Dados:
- * - DESENVOLVIMENTO: Prisma + MongoDB (rápido, produtivo, schema visual)
- * - PRODUÇÃO/LAMBDA: DynamoDB (serverless, escalável, pay-per-request)
- * - Autenticação: AWS Cognito (credenciais) + MongoDB/DynamoDB (perfil)
+ * - MongoDB via Prisma ORM (desenvolvimento e produção)
+ * - Autenticação: AWS Cognito (credenciais) + MongoDB (perfil)
  * 
  * Funcionalidades:
  * - Validação de variáveis de ambiente em runtime
  * - Type-safety com TypeScript
  * - Valores padrão inteligentes por ambiente
  * - Detecção de configurações inválidas
- * - Suporte para múltiplos provedores de banco
  * 
  * Benefícios:
  * - Falha rápida: Erros de configuração detectados na inicialização
@@ -22,7 +20,7 @@
  * - Type-safe: TypeScript garante uso correto
  * - Documentado: Schema Zod documenta campos esperados
  * 
- * Arquivo .env (desenvolvimento - Prisma + MongoDB):
+ * Arquivo .env (desenvolvimento - MongoDB):
  * ```
  * NODE_ENV=development
  * PORT=4000
@@ -30,27 +28,10 @@
  * LOG_LEVEL=info
  * CORS_ORIGIN=*
  * 
- * # Database - MongoDB (Desenvolvimento)
- * DATABASE_PROVIDER=PRISMA
- * DATABASE_URL="mongodb://localhost:27017/blog?replicaSet=rs0&directConnection=true"
+ * # Database - MongoDB
+ * DATABASE_URL="mongodb://localhost:27017/rainer-portfolio?replicaSet=rs0&directConnection=true"
  * 
  * # AWS Cognito (Autenticação)
- * COGNITO_USER_POOL_ID=us-east-1_XXXXXXXXX
- * COGNITO_CLIENT_ID=xxxxxxxxxxxxxxxxxxxxxxxxxx
- * COGNITO_REGION=us-east-1
- * ```
- * 
- * Arquivo .env (produção - DynamoDB):
- * ```
- * NODE_ENV=production
- * PORT=4000
- * 
- * # Database - DynamoDB (Produção/Lambda)
- * DATABASE_PROVIDER=DYNAMODB
- * AWS_REGION=us-east-1
- * DYNAMODB_TABLE_PREFIX=blog-prod
- * 
- * # AWS Cognito
  * COGNITO_USER_POOL_ID=us-east-1_XXXXXXXXX
  * COGNITO_CLIENT_ID=xxxxxxxxxxxxxxxxxxxxxxxxxx
  * COGNITO_REGION=us-east-1
@@ -142,59 +123,28 @@ dotenv.config();
  * - Par da ACCESS_KEY_ID
  * - Nunca commitar no Git
  * 
- * DYNAMODB_ENDPOINT:
- * - URL do DynamoDB (opcional)
- * - Desenvolvimento: 'http://localhost:8000' (DynamoDB Local)
- * - Produção: undefined (usa DynamoDB AWS)
- * - Validação: Deve ser URL válida se fornecido
- * 
- * DYNAMODB_TABLE_PREFIX:
- * - Prefixo para nomes de tabelas
- * - Padrão: 'blog'
- * - Permite múltiplos ambientes na mesma conta AWS
- * - Exemplo: 'blog-dev', 'blog-staging', 'blog-prod'
- * 
  * DATABASE_URL:
- * - String de conexão do MongoDB (Prisma ORM)
- * - Formato: mongodb://host:port/database?options
- * - Desenvolvimento: mongodb://localhost:27017/blog?replicaSet=rs0&directConnection=true
- * - Produção Atlas: mongodb+srv://user:pass@cluster.mongodb.net/blog
- * - Obrigatório quando DATABASE_PROVIDER=PRISMA
- * - Nota: Prisma 6+ requer MongoDB em modo Replica Set
- * 
- * DATABASE_PROVIDER:
- * - Provider de banco de dados a usar
- * - Valores: 'PRISMA' | 'DYNAMODB'
- * - Padrão: 'PRISMA' (recomendado para desenvolvimento)
- * - PRISMA: Prisma ORM + MongoDB
- *   • Desenvolvimento rápido e produtivo
- *   • Prisma Studio (GUI visual)
- *   • Type-safe queries
- *   • Migrations automáticas
- *   • Ideal para: desenvolvimento, testes, staging
- * - DYNAMODB: AWS DynamoDB
- *   • Serverless, escalável, pay-per-request
- *   • Sem gerenciamento de servidor
- *   • Alta disponibilidade automática
- *   • Ideal para: produção AWS Lambda
+ * - String de conexão MongoDB
+ * - Formato: "mongodb://host:port/database?replicaSet=rs0&directConnection=true"
+ * - Prisma 6+ requer Replica Set
+ * - Obrigatório para funcionamento da aplicação
  */
 export const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   PORT: z.coerce.number().default(4000),
   HOST: z.string().default('0.0.0.0'),
+  BASE_URL: z.string().default('http://localhost:4000'),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
   CORS_ORIGIN: z.string().default('*'),
   
   // Database Configuration
-  DATABASE_URL: z.string().optional(), // MongoDB connection string (obrigatório para DATABASE_PROVIDER=PRISMA)
-  DATABASE_PROVIDER: z.enum(['PRISMA', 'DYNAMODB']).default('PRISMA'), // PRISMA=MongoDB (dev) | DYNAMODB=AWS (prod)
+  DATABASE_PROVIDER: z.enum(['PRISMA', 'DYNAMODB']).default('PRISMA'), // Seleção do banco de dados
+  DATABASE_URL: z.string().min(1, 'DATABASE_URL é obrigatório').optional(), // MongoDB connection string
   
   // AWS Configuration
   AWS_REGION: z.string().default('us-east-1'),
   AWS_ACCESS_KEY_ID: z.string().optional(),
   AWS_SECRET_ACCESS_KEY: z.string().optional(),
-  DYNAMODB_ENDPOINT: z.string().url().optional(),
-  DYNAMODB_TABLE_PREFIX: z.string().default('blog'),
   
   // AWS Cognito Configuration
   COGNITO_USER_POOL_ID: z.string().optional(),
@@ -217,6 +167,10 @@ export const envSchema = z.object({
   
   // Cloudinary Configuration
   CLOUDINARY_URL: z.string().optional(), // Formato: cloudinary://api_key:api_secret@cloud_name
+  
+  // DynamoDB Configuration (optional - only needed when using DynamoDB)
+  DYNAMODB_ENDPOINT: z.string().optional(), // Local DynamoDB endpoint (ex: http://localhost:8000)
+  DYNAMODB_TABLE_PREFIX: z.string().optional().default('blog-api'), // Prefixo para nomes de tabelas
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -248,6 +202,9 @@ export function validateEnvironment(processEnv: NodeJS.ProcessEnv) {
   const result = envSchema.safeParse(processEnv);
   
   if (!result.success) {
+    // eslint-disable-next-line no-console
+    // Console é usado aqui porque o logger ainda não foi inicializado
+    // Este erro ocorre durante a validação inicial das variáveis de ambiente
     console.error('❌ Erro nas variáveis de ambiente:', result.error.format());
     throw new Error('Configuração de ambiente inválida');
   }
@@ -276,8 +233,7 @@ export function validateEnvironment(processEnv: NodeJS.ProcessEnv) {
  * @property {string} AWS_REGION - Região AWS
  * @property {string} [AWS_ACCESS_KEY_ID] - Chave de acesso AWS
  * @property {string} [AWS_SECRET_ACCESS_KEY] - Chave secreta AWS
- * @property {string} [DYNAMODB_ENDPOINT] - URL do DynamoDB Local
- * @property {string} DYNAMODB_TABLE_PREFIX - Prefixo das tabelas
+ * @property {string} DATABASE_URL - String de conexão MongoDB
  * 
  * @example
  * import { env } from './env.js';
@@ -288,60 +244,11 @@ export function validateEnvironment(processEnv: NodeJS.ProcessEnv) {
 export const env = validateEnvironment(process.env);
 
 // ═══════════════════════════════════════════════════════════════════════════
-// NOMES DE TABELAS DYNAMODB
+// CONSTANTES DE TABELAS DYNAMODB
 // ═══════════════════════════════════════════════════════════════════════════
+
 /**
- * Objeto com nomes completos das tabelas DynamoDB
- * 
- * Nomenclatura:
- * - Formato: {PREFIX}-{RESOURCE}
- * - Exemplo: 'blog-users', 'blog-posts'
- * 
- * Benefícios:
- * - Centralizado: Nomes definidos em um único lugar
- * - Consistente: Prefixo aplicado automaticamente
- * - Type-safe: Readonly e const garantem imutabilidade
- * - Multi-ambiente: Prefixo permite ambientes na mesma conta
- * 
- * Uso:
- * ```typescript
- * import { TABLES } from './env.js';
- * 
- * await dynamoDb.send(new PutCommand({
- *   TableName: TABLES.USERS,
- *   Item: user
- * }));
- * ```
- * 
- * Tabelas (7 modelos principais):
- * - USERS: Usuários, autores, perfis
- * - POSTS: Posts/artigos do blog
- * - CATEGORIES: Categorias (hierarquia de 2 níveis)
- * - COMMENTS: Comentários em posts (com threads)
- * - LIKES: Curtidas em posts
- * - BOOKMARKS: Posts salvos pelos usuários
- * - NOTIFICATIONS: Notificações do sistema
- * 
- * Nota: Estas tabelas são usadas apenas quando DATABASE_PROVIDER=DYNAMODB.
- * Em desenvolvimento (DATABASE_PROVIDER=PRISMA), MongoDB é usado via Prisma ORM.
- * 
- * @type {Readonly<Object>} Nomes das tabelas DynamoDB
- * @property {string} USERS - Tabela de usuários
- * @property {string} POSTS - Tabela de posts
- * @property {string} CATEGORIES - Tabela de categorias
- * @property {string} COMMENTS - Tabela de comentários
- * 
- * @example
- * // Com prefixo padrão 'blog'
- * TABLES.USERS      // 'blog-users'
- * TABLES.POSTS      // 'blog-posts'
- * TABLES.CATEGORIES // 'blog-categories'
- * TABLES.COMMENTS   // 'blog-comments'
- * 
- * @example
- * // Com prefixo customizado 'myapp-prod'
- * TABLES.USERS      // 'myapp-prod-users'
- * TABLES.POSTS      // 'myapp-prod-posts'
+ * Nomes das tabelas DynamoDB baseados no prefixo configurado
  */
 export const TABLES = {
   USERS: `${env.DYNAMODB_TABLE_PREFIX}-users`,

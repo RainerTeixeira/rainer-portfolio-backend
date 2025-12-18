@@ -1,0 +1,70 @@
+import { IsString, IsEmail, IsOptional, IsEnum, IsBoolean } from 'class-validator';
+
+/**
+ * Tipo de usuário para controle de permissões
+ */
+export type UserRoleType = 'ADMIN' | 'EDITOR' | 'AUTHOR' | 'SUBSCRIBER';
+
+/**
+ * Preferências do usuário
+ */
+export interface UserPreferences {
+  theme: 'light' | 'dark' | 'system';
+  language: string;
+  emailNotifications: boolean;
+  pushNotifications: boolean;
+  newsletter: boolean;
+}
+
+/**
+ * DTO para criação de usuário
+ */
+export class CreateUserDto {
+  @IsOptional()
+  @IsString()
+  cognitoSub?: string;
+
+  @IsEmail()
+  email: string;
+
+  @IsOptional()
+  @IsBoolean()
+  emailVerified?: boolean = false;
+
+  @IsOptional()
+  @IsString()
+  nickname?: string;
+
+  @IsOptional()
+  @IsString()
+  fullName?: string;
+
+  @IsOptional()
+  @IsString()
+  avatar?: string;
+
+  @IsOptional()
+  @IsString()
+  bio?: string;
+
+  @IsOptional()
+  @IsEnum(['ADMIN', 'EDITOR', 'AUTHOR', 'SUBSCRIBER'])
+  role?: UserRoleType = 'SUBSCRIBER';
+
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean = true;
+
+  @IsOptional()
+  @IsBoolean()
+  isBanned?: boolean = false;
+
+  @IsOptional()
+  preferences?: UserPreferences = {
+    theme: 'system',
+    language: 'pt-BR',
+    emailNotifications: true,
+    pushNotifications: true,
+    newsletter: false,
+  };
+}

@@ -1,0 +1,138 @@
+import { 
+  Controller, 
+  Get, 
+  Post, 
+  Body, 
+  Patch, 
+  Param, 
+  Delete, 
+  Query, 
+  UseGuards,
+  Req,
+  HttpCode,
+  HttpStatus
+} from '@nestjs/common';
+import { UsersService } from './users.service';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { CognitoGuard } from '../auth/guards/cognito.guard';
+
+@Controller('users')
+export class UsersController {
+  constructor(private readonly usersService: UsersService) {}
+
+  /**
+   * Cria novo usuário
+   */
+  @Post()
+  async create(@Body() createUserDto: CreateUserDto) {
+    return this.usersService.create(createUserDto);
+  }
+
+  /**
+   * Lista todos os usuários
+   */
+  @Get()
+  async findAll(
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
+    @Query('role') role?: string,
+    @Query('isActive') isActive?: string,
+  ) {
+    return this.usersService.findAll({
+      limit: limit ? parseInt(limit) : undefined,
+      offset: offset ? parseInt(offset) : undefined,
+      role,
+      isActive: isActive ? isActive === 'true' : undefined,
+    });
+  }
+
+  /**
+   * Busca usuário por ID
+   */
+  @Get(':id')
+  async findOne(@Param('id') id: string) {
+    return this.usersService.findById(id);
+  }
+
+  /**
+   * Busca usuário por email
+   */
+  @Get('email/:email')
+  async findByEmail(@Param('email') email: string) {
+    return this.usersService.findByEmail(email);
+  }
+
+  /**
+   * Atualiza usuário
+   */
+  @Patch(':id')
+  @UseGuards(CognitoGuard)
+  async update(
+    @Param('id') id: string,
+    @Body() updateUserDto: UpdateUserDto,
+    @Req() req: any,
+  ) {
+    // Verifica se usuário está atualizando seu próprio perfil ou é admin
+    if (req.user.sub !== id && req.user['cognito:groups']?.includes('ADMIN') !== true) {
+      throw new Error('Unauthorized');
+    }
+    
+    return this.usersService.update(id, updateUserDto);
+  }
+
+  /**
+   * Remove usuário
+   */
+  @Delete(':id')
+  @UseGuards(CognitoGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async remove(@Param('id') id: string, @Req() req: any) {
+    // Verifica se usuário está removendo seu próprio perfil ou é admin
+    if (req.user.sub !== id && req.user['cognito:groups']?.includes('ADMIN') !== true) {
+      throw new Error('Unauthorized');
+    }
+    
+    await this.usersService.remove(id);
+  }
+
+  /**
+   * Obtém perfil do usuário autenticado
+   */
+  @Get('profile/me')
+  @UseGuards(CognitoGuard)
+  async getProfile(@Req() req: any) {
+    return this.usersService.findByCognitoSub(req.user.sub);
+  }
+
+  /**
+   * Atualiza perfil do usuário autenticado
+   */
+  @Patch('profile/me')
+  @UseGuards(CognitoGuard)
+  async updateProfile(
+    @Body() updateUserDto: UpdateUserDto,
+    @Req() req: any,
+  ) {
+    // Busca ID do usuário pelo cognitoSub
+    const user = await this.usersService.findByCognitoSub(req.user.sub);
+    return this.usersService.update(user.data.id, updateUserDto);
+  }
+
+  /**
+   * Busca múltiplos usuários por IDs
+   */
+  @Post('batch')
+  async findByIds(@Body() body: { ids: string[] }) {
+    return this.usersService.findByIds(body.ids);
+  }
+
+  /**
+   * Conta total de usuários
+   */
+  @Get('count/total')
+  async count() {
+    const count = await this.usersService.count();
+    return { total: count };
+  }
+}

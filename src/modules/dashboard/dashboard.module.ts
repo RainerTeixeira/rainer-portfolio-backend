@@ -7,25 +7,21 @@
  */
 
 import { Module } from '@nestjs/common';
-import { DashboardController } from './dashboard.controller.js';
-import { DashboardService } from './dashboard.service.js';
-import { PrismaService } from '../../prisma/prisma.service.js';
-import { DatabaseProviderModule } from '../../utils/database-provider/index.js';
+import { DashboardController } from './controllers/dashboard.controller';
+import { DashboardService } from './services/dashboard.service';
 
 /**
  * Módulo de Dashboard
  * 
  * Providers:
  * - DashboardService: Lógica de negócio para estatísticas e analytics
- * - PrismaService: Acesso ao banco de dados
  * 
  * Controllers:
  * - DashboardController: Rotas de dashboard (/api/dashboard/stats, /api/dashboard/analytics)
  */
 @Module({
-  imports: [DatabaseProviderModule],
   controllers: [DashboardController],
-  providers: [DashboardService, PrismaService],
+  providers: [DashboardService],
   exports: [DashboardService],
 })
 export class DashboardModule {}

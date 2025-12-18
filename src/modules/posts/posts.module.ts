@@ -1,22 +1,12 @@
-/**
- * Módulo de Posts
- * 
- * Módulo NestJS para gerenciamento de posts/artigos.
- * 
- * @module modules/posts/posts.module
- */
-
 import { Module } from '@nestjs/common';
-import { PostsController } from './posts.controller.js';
-import { PostsService } from './posts.service.js';
-import { PostsRepository } from './posts.repository.js';
-import { CloudinaryModule } from '../cloudinary/cloudinary.module.js';
+import { PostsService } from './services/posts.service';
+import { PostsController } from './controllers/posts.controller';
+import { DatabaseModule } from '../../database/database.module';
 
 @Module({
-  imports: [CloudinaryModule],
+  imports: [DatabaseModule],
   controllers: [PostsController],
-  providers: [PostsService, PostsRepository],
-  exports: [PostsService, PostsRepository],
+  providers: [PostsService],
+  exports: [PostsService],
 })
 export class PostsModule {}
-

@@ -1,261 +1,161 @@
-name: blogapi
+name: blog-api
 
 services:
-  # 🗄️ MongoDB para desenvolvimento local (Cenário PRISMA)
-  # Configurado como replica set - REQUERIDO pelo Prisma 6+
+  # MongoDB para desenvolvimento local
   mongodb:
     image: mongo:7.0
-    container_name: blogapi-mongodb
+    container_name: blog-api-mongodb
     ports:
-      - "27017:27017"  # Expõe a porta padrão do MongoDB
+      - "27017:27017"
+    command: mongod --replSet rs0 --bind_ip_all
     environment:
-      MONGO_INITDB_DATABASE: blog  # Cria database 'blog' automaticamente
+      MONGO_INITDB_DATABASE: rainer-portfolio
     volumes:
-      - mongodb-data:/data/db       # Persistência dos dados
-      - mongodb-config:/data/configdb # Persistência da configuração
-    command: ["--replSet", "rs0", "--bind_ip_all"]  # Replica set para Prisma + aceita conexões externas
-    restart: unless-stopped  # Reinicia automaticamente se falhar
+      - mongodb-data:/data/db
+      - mongodb-config:/data/configdb
+      - ./scripts/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    restart: unless-stopped
     networks:
       - blog-network
-    labels:
-      - "com.blogapi.description=Banco de Dados MongoDB 7.0 com Replica Set"
-      - "com.blogapi.service=database"
-      - "com.blogapi.tier=data"
-      - "com.blogapi.technology=MongoDB"
-      - "com.blogapi.port=27017"
     healthcheck:
-      # Health check inteligente: inicia replica set se não existir
-      test: echo "try { rs.status() } catch (err) { rs.initiate({_id:'rs0',members:[{_id:0,host:'localhost:27017'}]}) }" | mongosh --quiet
-      interval: 5s      # Verifica a cada 5 segundos
-      timeout: 30s      # Timeout de 30 segundos
-      start_period: 10s # Aguarda 10s antes de começar checks
-      start_interval: 1s # Intervalo inicial de 1s
-      retries: 30       # 30 tentativas antes de marcar como não saudável
+      test: |
+        bash -c '
+          if ! mongosh --quiet --eval "rs.status()" > /dev/null 2>&1; then
+            mongosh --eval "rs.initiate({_id: "rs0", members: [{_id: 0, host: "mongodb:27017"}]})" > /dev/null 2>&1 || true
+          fi
+          echo "db.runCommand("ping").ok" | mongosh --quiet
+        '
+      interval: 5s
+      timeout: 30s
+      start_period: 10s
+      retries: 30
 
-  # 📊 DynamoDB Local (Cenário DYNAMODB_LOCAL)
-  # Para testes pré-produção e desenvolvimento com DynamoDB
+  # DynamoDB Local
   dynamodb-local:
     image: amazon/dynamodb-local:latest
-    container_name: blogapi-dynamodb
+    container_name: blog-api-dynamodb
     ports:
-      - "8000:8000"  # Porta padrão do DynamoDB Local
+      - "8000:8000"
     command: "-jar DynamoDBLocal.jar -sharedDb -dbPath ./data"
     volumes:
-      - dynamodb-data:/home/dynamodblocal/data  # Persistência dos dados
+      - dynamodb-data:/home/dynamodblocal/data
     working_dir: /home/dynamodblocal
     restart: unless-stopped
     networks:
       - blog-network
-    labels:
-      - "com.blogapi.description=DynamoDB Local - Banco NoSQL para desenvolvimento"
-      - "com.blogapi.service=database"
-      - "com.blogapi.tier=data"
-      - "com.blogapi.technology=DynamoDB"
-      - "com.blogapi.port=8000"
-      - "com.blogapi.environment=development"
-    healthcheck:
-      # Verifica se o processo DynamoDB está rodando
-      test: ["CMD-SHELL", "ps aux | grep DynamoDBLocal.jar | grep -v grep || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
 
-  # 🎨 Prisma Studio (Interface Visual para MongoDB)
-  # GUI para visualizar e manipular dados do MongoDB
-  # 🌐 Acesse em: http://localhost:5555
-  prisma-studio:
-    image: node:20-alpine
-    container_name: blogapi-prisma-studio
+  # Aplicação Blog API (com inicialização automática)
+  blog-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: blog-api
     ports:
-      - "5555:5555"  # Interface web do Prisma Studio
-    working_dir: /app
-    volumes:
-      - .:/app  # Monta o código fonte para acessar schema.prisma
-      - prisma-node-modules:/app/node_modules  # Cache de node_modules
-    command: >
-      sh -c "
-        npm install &&                    # Instala dependências
-        npx prisma generate &&            # Gera Prisma Client
-        npx prisma studio --port 5555 --browser none"  # Inicia Studio sem abrir browser
+      - "4000:4000"
     environment:
-      DATABASE_URL: "mongodb://mongodb:27017/blog?replicaSet=rs0&directConnection=true"
-    depends_on:
-      mongodb:
-        condition: service_healthy  # Só inicia quando MongoDB estiver saudável
-    restart: unless-stopped
-    networks:
-      - blog-network
-    labels:
-      - "com.blogapi.description=Prisma Studio - Interface visual para MongoDB"
-      - "com.blogapi.service=gui"
-      - "com.blogapi.tier=tools"
-      - "com.blogapi.technology=Prisma"
-      - "com.blogapi.port=5555"
-      - "com.blogapi.url=http://localhost:5555"
-    healthcheck:
-      # Verifica se Prisma Studio está respondendo na porta 5555
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5555"]
-      interval: 15s
-      timeout: 10s
-      retries: 5
-      start_period: 30s
-
-  # 📈 DynamoDB Admin (Interface Visual para DynamoDB Local)
-  # GUI para visualizar e manipular dados do DynamoDB
-  # 🌐 Acesse em: http://localhost:8001
-  dynamodb-admin:
-    image: node:20-alpine
-    container_name: blogapi-dynamodb-admin
-    ports:
-      - "8001:8001"  # Interface web do DynamoDB Admin
-    environment:
-      DYNAMO_ENDPOINT: http://dynamodb-local:8000  # Conecta ao DynamoDB Local
-      AWS_REGION: us-east-1
-      AWS_ACCESS_KEY_ID: local      # Credenciais para desenvolvimento
-      AWS_SECRET_ACCESS_KEY: local
-    command: >
-      sh -c "
-        sleep 10 &&                       # Aguarda DynamoDB inicializar
-        npm install -g dynamodb-admin &&  # Instala dynamodb-admin globalmente
-        dynamodb-admin"                   # Inicia a interface
-    depends_on:
-      dynamodb-local:
-        condition: service_healthy  # Aguarda DynamoDB ficar saudável
-    restart: unless-stopped
-    networks:
-      - blog-network
-    labels:
-      - "com.blogapi.description=DynamoDB Admin - Interface visual para DynamoDB Local"
-      - "com.blogapi.service=gui"
-      - "com.blogapi.tier=tools"
-      - "com.blogapi.technology=DynamoDB Admin"
-      - "com.blogapi.port=8001"
-      - "com.blogapi.url=http://localhost:8001"
-    healthcheck:
-      # Verifica se DynamoDB Admin está respondendo na porta 8001
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8001"]
-      interval: 15s
-      timeout: 10s
-      retries: 5
-      start_period: 30s
-
-  # 🚀 Aplicação NestJS (Serviço Principal)
-  # Container de desenvolvimento com hot reload
-  # 🌐 Acesse em: http://localhost:4000 | Swagger: http://localhost:4000/docs
-  app:
-    image: node:20-alpine
-    container_name: blogapi-app
-    ports:
-      - "4000:4000"  # API REST - Swagger disponível em /docs
-      - "9229:9229"  # Porta para debugging
-    working_dir: /app
-    volumes:
-      - .:/app                    # Monta código fonte para hot reload
-      - app-node-modules:/app/node_modules  # Cache de node_modules
-    command: >
-      sh -c "
-        npm install &&            # Instala dependências (se necessário)
-        npm run prisma:generate && # Gera Prisma Client
-        npm run dev"              # Inicia desenvolvimento com hot reload
-    environment:
-      # Configurações básicas do servidor
-      NODE_ENV: development
+      NODE_ENV: production
       PORT: 4000
-      HOST: 0.0.0.0              # Escuta em todas as interfaces
-      LOG_LEVEL: debug
+      HOST: 0.0.0.0
       
-      # 🗄️ Configuração MongoDB (Cenário PRISMA - Desenvolvimento)
+      # MongoDB Config
       DATABASE_PROVIDER: PRISMA
-      DATABASE_URL: "mongodb://mongodb:27017/blog?replicaSet=rs0&directConnection=true"
+      DATABASE_URL: "mongodb://mongodb:27017/rainer-portfolio?replicaSet=rs0"
+      MONGODB_DB_NAME: rainer-portfolio
       
-      # 📊 Configuração DynamoDB Local (Cenário DYNAMODB_LOCAL - Alternativo)
+      # DynamoDB Config
       DYNAMODB_ENDPOINT: http://dynamodb-local:8000
-      DYNAMODB_TABLE_PREFIX: blog-dev
+      DYNAMODB_TABLE_PREFIX: blog
       AWS_REGION: us-east-1
       AWS_ACCESS_KEY_ID: local
       AWS_SECRET_ACCESS_KEY: local
       
-      # 🔐 Configuração AWS Cognito (RainerSoftCognito)
+      # JWT Config
+      JWT_SECRET: 1vLG1UVpIFyhWLWubWc4Vuo3S3ritN9t/B9arxjKRL2aMGeiZM2gOx22Z+czY1amLEbvxCoMbH9x1G1ufpA+yg==
+      JWT_EXPIRES_IN: 7d
+      
+      # Cognito Config
       COGNITO_USER_POOL_ID: us-east-1_wryiyhbWC
       COGNITO_CLIENT_ID: 3ueos5ofu499je6ebc5u98n35h
       COGNITO_REGION: us-east-1
       COGNITO_ISSUER: https://cognito-idp.us-east-1.amazonaws.com/us-east-1_wryiyhbWC
-      JWT_SECRET: 1vLG1UVpIFyhWLWubWc4Vuo3S3ritN9t/B9arxjKRL2aMGeiZM2gOx22Z+czY1amLEbvxCoMbH9x1G1ufpA+yg==
       
-      # 🎯 Configurações adicionais para desenvolvimento
-      SWAGGER_ENABLED: "true"
-      DEBUG: "true"
+      # Cloudinary (opcional)
+      CLOUDINARY_URL: cloudinary://dummy
+      
+      # CORS
+      CORS_ORIGIN: "*"
+      LOG_LEVEL: info
     depends_on:
       mongodb:
-        condition: service_healthy      # Espera MongoDB ficar saudável
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - blog-network
-    labels:
-      - "com.blogapi.description=Blog API - Aplicação NestJS com Fastify"
-      - "com.blogapi.service=application"
-      - "com.blogapi.tier=backend"
-      - "com.blogapi.technology=NestJS + Fastify + Prisma"
-      - "com.blogapi.port=4000"
-      - "com.blogapi.api-url=http://localhost:4000"
-      - "com.blogapi.swagger-url=http://localhost:4000/docs"
-      - "com.blogapi.health-url=http://localhost:4000/health"
     healthcheck:
-      # Verifica se a API NestJS está respondendo no endpoint /health
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:4000/health"]
-      interval: 15s
+      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
+      interval: 30s
       timeout: 10s
-      retries: 5
-      start_period: 60s  # Aguarda 60s para npm install + prisma generate + start
+      retries: 3
+      start_period: 120s
+    volumes:
+      - ./logs:/app/logs
 
-# 💾 Volumes para persistência de dados
+  # Prisma Studio (opcional, para desenvolvimento)
+  prisma-studio:
+    image: timothyjmiller/prisma-studio:latest
+    container_name: blog-api-studio
+    ports:
+      - "5555:5555"
+    environment:
+      PRISMA_SCHEMA_PATH: /prisma/schema.prisma
+      DATABASE_URL: "mongodb://mongodb:27017/rainer-portfolio?replicaSet=rs0"
+    volumes:
+      - ./src/database/mongodb/prisma:/prisma
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - blog-network
+    profiles:
+      - dev
+
+  # DynamoDB Admin (opcional, para desenvolvimento)
+  dynamodb-admin:
+    image: node:20-alpine
+    container_name: blog-api-dynamodb-admin
+    ports:
+      - "8001:8001"
+    environment:
+      DYNAMO_ENDPOINT: http://dynamodb-local:8000
+      AWS_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: local
+      AWS_SECRET_ACCESS_KEY: local
+    command: >
+      sh -c "
+        npm install -g dynamodb-admin &&
+        dynamodb-admin
+      "
+    depends_on:
+      blog-api:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - blog-network
+    profiles:
+      - dev
+
 volumes:
-  # Volumes de dados dos bancos de dados
   mongodb-data:
-    name: blogapi-mongodb-data      # Nome explícito para facil identificação
-    driver: local                   # Driver local (arquivos no host)
-    labels:
-      - "com.blogapi.description=MongoDB - Dados do banco (coleções e documentos)"
-      - "com.blogapi.type=data"
-      - "com.blogapi.service=mongodb"
+    name: blog-api-mongodb-data
   mongodb-config:
-    name: blogapi-mongodb-config
-    driver: local
-    labels:
-      - "com.blogapi.description=MongoDB - Configuração do Replica Set"
-      - "com.blogapi.type=config"
-      - "com.blogapi.service=mongodb"
+    name: blog-api-mongodb-config
   dynamodb-data:
-    name: blogapi-dynamodb-data
-    driver: local
-    labels:
-      - "com.blogapi.description=DynamoDB Local - Dados das tabelas"
-      - "com.blogapi.type=data"
-      - "com.blogapi.service=dynamodb"
-  
-  # Volumes de cache para melhorar performance (node_modules)
+    name: blog-api-dynamodb-data
   prisma-node-modules:
-    name: blogapi-prisma-node-modules
-    driver: local
-    labels:
-      - "com.blogapi.description=Prisma Studio - Cache de dependências npm"
-      - "com.blogapi.type=cache"
-      - "com.blogapi.service=prisma-studio"
-  app-node-modules:
-    name: blogapi-app-node-modules
-    driver: local
-    labels:
-      - "com.blogapi.description=App NestJS - Cache de dependências npm"
-      - "com.blogapi.type=cache"
-      - "com.blogapi.service=app"
+    name: blog-api-prisma-node-modules
 
-# 🌐 Rede isolada para comunicação entre containers
 networks:
   blog-network:
-    name: blogapi-network           # Nome explícito da rede
-    driver: bridge                  # Driver bridge para comunicação interna
-    labels:
-      - "com.blogapi.description=Rede interna para comunicação entre serviços da BlogAPI"
-      - "com.blogapi.type=network"
-      - "com.blogapi.isolation=isolated"
+    name: blog-api-network
+    driver: bridge

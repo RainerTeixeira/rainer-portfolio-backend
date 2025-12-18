@@ -1,0 +1,145 @@
+/**
+ * Interface do Repositório de Posts
+ * 
+ * Define o contrato para implementações de repositório
+ * de posts (Prisma, DynamoDB, etc).
+ */
+
+import type { Post, CreatePostData, UpdatePostData, PostStatus } from '../../modules/posts/post.model.js';
+
+export interface IPostsRepository {
+  /**
+   * Cria um novo post
+   */
+  create(data: CreatePostData): Promise<Post>;
+
+  /**
+   * Busca post por ID
+   */
+  findById(postId: string): Promise<Post | null>;
+
+  /**
+   * Lista posts com paginação e filtros
+   */
+  findMany(params: {
+    page?: number;
+    limit?: number;
+    status?: PostStatus;
+    authorId?: string;
+    categoryId?: string;
+    featured?: boolean;
+    search?: string;
+  }): Promise<{
+    posts: Post[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+  }>;
+
+  /**
+   * Lista posts por autor
+   */
+  findByAuthor(authorId: string, params?: {
+    page?: number;
+    limit?: number;
+    status?: PostStatus;
+  }): Promise<{
+    posts: Post[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+  }>;
+
+  /**
+   * Lista posts por categoria
+   */
+  findByCategory(categoryId: string, params?: {
+    page?: number;
+    limit?: number;
+    status?: PostStatus;
+  }): Promise<{
+    posts: Post[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+  }>;
+
+  /**
+   * Busca posts em destaque
+   */
+  findFeatured(limit?: number): Promise<Post[]>;
+
+  /**
+   * Busca posts relacionados
+   */
+  findRelated(postId: string, limit?: number): Promise<Post[]>;
+
+  /**
+   * Busca posts populares (mais curtidas)
+   */
+  findPopular(limit?: number): Promise<Post[]>;
+
+  /**
+   * Atualiza um post
+   */
+  update(postId: string, data: UpdatePostData): Promise<Post>;
+
+  /**
+   * Atualiza status do post
+   */
+  updateStatus(postId: string, status: PostStatus, publishedAt?: string): Promise<Post>;
+
+  /**
+   * Incrementa contador de visualizações
+   */
+  incrementViews(postId: string): Promise<void>;
+
+  /**
+   * Incrementa contador de curtidas
+   */
+  incrementLikes(postId: string): Promise<void>;
+
+  /**
+   * Decrementa contador de curtidas
+   */
+  decrementLikes(postId: string): Promise<void>;
+
+  /**
+   * Incrementa contador de comentários
+   */
+  incrementComments(postId: string): Promise<void>;
+
+  /**
+   * Decrementa contador de comentários
+   */
+  decrementComments(postId: string): Promise<void>;
+
+  /**
+   * Deleta um post
+   */
+  delete(postId: string): Promise<boolean>;
+
+  /**
+   * Busca posts por slug
+   */
+  findBySlug(slug: string): Promise<Post | null>;
+
+  /**
+   * Verifica se slug já existe
+   */
+  isSlugTaken(slug: string, excludeId?: string): Promise<boolean>;
+
+  /**
+   * Conta posts por status
+   */
+  countByStatus(authorId?: string): Promise<Record<PostStatus, number>>;
+}

@@ -1,33 +1,12 @@
-/**
- * Módulo de Comentários
-*
-* Módulo NestJS para gerenciamento de comentários em posts.
-* Reúne controllers e services para criação, listagem, atualização,
-* remoção e moderação de comentários.
- *
- * Controllers:
- * - CommentsController
- *
- * Providers:
- * - CommentsService
- * - CommentsRepository
- *
- * Exports:
- * - CommentsService
- * - CommentsRepository
- *
- *
- * @module modules/comments/comments.module
- */
 import { Module } from '@nestjs/common';
-import { CommentsController } from './comments.controller.js';
-import { CommentsService } from './comments.service.js';
-import { CommentsRepository } from './comments.repository.js';
+import { CommentsService } from './services/comments.service';
+import { CommentsController } from './controllers/comments.controller';
+import { DatabaseModule } from '../../database/database.module';
 
 @Module({
+  imports: [DatabaseModule],
   controllers: [CommentsController],
-  providers: [CommentsService, CommentsRepository],
-  exports: [CommentsService, CommentsRepository],
+  providers: [CommentsService],
+  exports: [CommentsService],
 })
 export class CommentsModule {}
-

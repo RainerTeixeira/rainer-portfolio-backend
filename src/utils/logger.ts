@@ -9,7 +9,7 @@
  */
 
 import pino from 'pino';
-import { env } from '../config/env.js';
+import { env } from '../config/env';
 import * as fs from 'fs';
 import * as path from 'path';
 

@@ -11,34 +11,46 @@ API RESTful completa para blog com **arquitetura híbrida**: desenvolvimento loc
 [![Jest](https://img.shields.io/badge/Tests-478%20passed-success?style=flat-square&logo=jest)](https://jestjs.io/)
 [![Coverage](https://img.shields.io/badge/Coverage-~99%25-brightgreen?style=flat-square)](https://github.com)
 
-## ☁️ Produção AWS
+## ☁️ Produção AWS Serverless
 
 [![AWS Lambda](https://img.shields.io/badge/AWS%20Lambda-Node.js%2020-orange?style=flat-square&logo=awslambda)](https://aws.amazon.com/lambda/)
 [![DynamoDB](https://img.shields.io/badge/DynamoDB-NoSQL-blue?style=flat-square&logo=amazondynamodb)](https://aws.amazon.com/dynamodb/)
 [![Cognito](https://img.shields.io/badge/Cognito-Auth-red?style=flat-square&logo=amazonaws)](https://aws.amazon.com/cognito/)
 [![AWS SAM](https://img.shields.io/badge/AWS%20SAM-IaC-yellow?style=flat-square&logo=amazonaws)](https://aws.amazon.com/serverless/sam/)
+[![Function URLs](https://img.shields.io/badge/Function%20URLs-HTTPS-green?style=flat-square&logo=amazonaws)](https://docs.aws.amazon.com/lambda/latest/dg/lambda-urls.html)
 
 ---
 
 ## ⚡ Quick Start
 
-### Opção 1: Docker Compose (Recomendado - Mais Simples) 🔥
+### Opção 1: Docker Compose (Recomendado - Mais Simples) 
 
 ```bash
 # 1. Subir ambiente completo (MongoDB + GUIs)
 docker-compose up -d
 
-# 2. Aguardar inicialização (~30s)
+# 2. Subir com interfaces administrativas (opcional)
+docker-compose --profile dev up -d
+
+# 3. Aguardar inicialização (~30s)
 docker-compose ps
 
-# 3. Gerar Prisma Client e popular banco
+# 4. Gerar Prisma Client e popular banco
 pnpm run prisma:generate
 pnpm run prisma:push
 pnpm run seed
 
-# 4. Rodar aplicação
+# 5. Rodar aplicação
 pnpm run dev
 ```
+
+**🎉 Pronto!**
+
+- **API**: <http://localhost:4000>
+- **Swagger**: <http://localhost:4000/docs>
+- **Health**: <http://localhost:4000/health>
+- **Prisma Studio** (MongoDB): <http://localhost:5555>
+- **DynamoDB Admin**: <http://localhost:8001>
 
 ### Opção 2: Docker Manual (3 Comandos)
 
@@ -79,7 +91,7 @@ pnpm run dev
 | **Logger** | Pino | 8.17 |
 | **Docs** | Swagger/OpenAPI | 3.0 |
 
-#### Produção AWS (Serverless)
+#### Produção AWS Serverless
 
 | Camada | Tecnologia | Descrição |
 |--------|-----------|-----------|
@@ -94,6 +106,23 @@ pnpm run dev
 
 - **Dev**: MongoDB + Prisma (rápido, produtivo)
 - **Prod**: DynamoDB + AWS SDK (escalável, serverless)
+
+### 🚀 Deploy AWS Serverless
+
+```bash
+# Deploy rápido para desenvolvimento
+pnpm run sam:deploy:dev
+
+# Deploy para produção
+pnpm run sam:deploy:prod
+
+# Ou usar script PowerShell
+.\scripts\deploy-aws-serverless.ps1 -Environment prod
+```
+
+**📖 Documentação completa**: [README-AWS-DEPLOY.md](src/lambda/README-AWS-DEPLOY.md)
+
+**💰 Custo**: R$ 0,00 (100% Free Tier AWS)
 
 ### Estrutura de Pastas
 
@@ -945,19 +974,26 @@ pnpm run dynamodb:list-tables    # Listar tabelas
 pnpm run dynamodb:admin          # Instalar DynamoDB Admin
 ```
 
-### AWS SAM (Deploy)
+### AWS SAM (Deploy Serverless)
 
 ```bash
+# Validação e Build
 pnpm run sam:validate        # Validar template.yaml
 pnpm run sam:build           # Build da aplicação
 pnpm run sam:local           # Testar localmente (porta 4000)
-pnpm run sam:deploy          # Deploy (usa samconfig.toml)
-pnpm run sam:deploy:dev      # Deploy ambiente dev
-pnpm run sam:deploy:staging  # Deploy ambiente staging
-pnpm run sam:deploy:prod     # Deploy ambiente produção
-pnpm run sam:deploy:guided   # Deploy interativo (primeira vez)
+
+# Deploy por Ambiente
+pnpm run sam:deploy:dev      # Deploy desenvolvimento
+pnpm run sam:deploy:staging  # Deploy homologação
+pnpm run sam:deploy:prod     # Deploy produção
+
+# Monitoramento
 pnpm run sam:logs            # Ver logs do CloudWatch
-pnpm run sam:delete          # Deletar stack
+pnpm run sam:delete:dev      # Deletar stack dev
+pnpm run sam:delete:prod     # Deletar stack prod
+
+# Script Automatizado
+.\scripts\deploy-aws-serverless.ps1 -Environment prod
 ```
 
 ### Testes

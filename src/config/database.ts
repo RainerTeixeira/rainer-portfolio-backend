@@ -21,7 +21,7 @@
  */
 
 import { PrismaClient } from '@prisma/client';
-import { env } from './env.js';
+import { env } from './env';
 
 /**
  * Cliente Prisma Singleton

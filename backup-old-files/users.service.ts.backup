@@ -1,0 +1,215 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { IUsersRepository, UserEntity, UserProfile } from '../../database/interfaces/users.repository.interface';
+import { CreateUserDto, UserRoleType } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+
+@Injectable()
+export class UsersService {
+  constructor(
+    private readonly usersRepository: IUsersRepository,
+  ) {}
+
+  /**
+   * Cria novo usuário
+   */
+  async create(createUserDto: CreateUserDto): Promise<UserEntity> {
+    // Verifica se email já existe
+    const existingUser = await this.usersRepository.findByEmail(createUserDto.email);
+    if (existingUser) {
+      throw new NotFoundException('User already exists');
+    }
+    return this.usersRepository.create({
+      data: {
+        id: `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        cognitoSub: createUserDto.cognitoSub || '',
+        email: createUserDto.email || '',
+        emailVerified: createUserDto.emailVerified || false,
+        nickname: createUserDto.nickname || '',
+        fullName: createUserDto.fullName || '',
+        avatar: createUserDto.avatar,
+        bio: createUserDto.bio,
+        role: (createUserDto.role as UserRoleType) || 'SUBSCRIBER',
+        isActive: true,
+        isBanned: false,
+        postsCount: 0,
+        commentsCount: 0,
+        likesCount: 0,
+        followersCount: 0,
+        followingCount: 0,
+        preferences: createUserDto.preferences || {
+          theme: 'system',
+          language: 'pt-BR',
+          emailNotifications: true,
+          pushNotifications: true,
+          newsletter: false,
+        },
+      },
+    });
+  }
+
+  /**
+   * Busca usuário por ID
+   */
+  async findById(id: string): Promise<UserEntity> {
+    const user = await this.usersRepository.findById(id);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return user;
+  }
+
+  /**
+   * Busca usuário por email
+   */
+  async findByEmail(email: string): Promise<UserEntity> {
+    const user = await this.usersRepository.findByEmail(email);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return user;
+  }
+
+  /**
+   * Busca usuário por Cognito Sub
+   */
+  async findByCognitoSub(cognitoSub: string): Promise<UserEntity> {
+    const user = await this.usersRepository.findByCognitoSub(cognitoSub);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return user;
+  }
+
+  /**
+   * Lista usuários com paginação
+   */
+  async findAll(options?: {
+    limit?: number;
+    offset?: number;
+    role?: string;
+    isActive?: boolean;
+  }) {
+    const listOptions = {
+      limit: options?.limit || 20,
+      exclusiveStartKey: options?.offset ? { id: options.offset } : undefined,
+      filter: {
+        ...(options?.role && { role: options.role as any }),
+        ...(options?.isActive !== undefined && { isActive: options.isActive }),
+      },
+    };
+
+    return this.usersRepository.listUsers(listOptions);
+  }
+
+  /**
+   * Atualiza usuário
+   */
+  async update(id: string, updateUserDto: UpdateUserDto): Promise<UserEntity> {
+    // Verifica se usuário existe
+    await this.findById(id);
+
+    // Prepara dados para atualização
+    const profileData: UserProfile = {
+      fullName: updateUserDto.fullName,
+      avatar: updateUserDto.avatar,
+      bio: updateUserDto.bio,
+      preferences: updateUserDto.preferences as any || {
+        theme: 'system' as const,
+        language: 'pt-BR',
+        emailNotifications: true,
+        pushNotifications: true,
+        newsletter: false,
+      },
+    };
+
+    return this.usersRepository.updateProfile(id, profileData);
+  }
+
+  /**
+   * Remove usuário
+   */
+  async remove(id: string): Promise<void> {
+    await this.findById(id);
+    await this.usersRepository.delete(`USER#${id}`, 'PROFILE');
+  }
+
+  /**
+   * Atualiza último login
+   */
+  async updateLastLogin(id: string): Promise<void> {
+    await this.usersRepository.updateLastLogin(id);
+  }
+
+  /**
+   * Incrementa contador de posts
+   */
+  async incrementPostsCount(id: string): Promise<void> {
+    await this.usersRepository.incrementPostsCount(id);
+  }
+
+  /**
+   * Incrementa contador de comentários
+   */
+  async incrementCommentsCount(id: string): Promise<void> {
+    await this.usersRepository.incrementCommentsCount(id);
+  }
+
+  /**
+   * Busca múltiplos usuários
+   */
+  async findByIds(ids: string[]): Promise<UserEntity[]> {
+    return this.usersRepository.findByIds(ids);
+  }
+
+  /**
+   * Conta total de usuários
+   */
+  async count(): Promise<number> {
+    return this.usersRepository.countUsers();
+  }
+
+  /**
+   * Verifica se nome já está em uso
+   */
+  async isNameTaken(fullName: string): Promise<boolean> {
+    const users = await this.usersRepository.listUsers({ limit: 1000 });
+    return users.users.some((user: UserEntity) => user.data.fullName === fullName);
+  }
+
+  /**
+   * Verifica disponibilidade de nickname
+   */
+  async checkNicknameAvailability(nickname: string, excludeCognitoSub?: string): Promise<boolean> {
+    const users = await this.usersRepository.listUsers({ limit: 1000 });
+    return !users.users.some((user: UserEntity) => 
+      user.data.nickname === nickname && 
+      user.data.cognitoSub !== excludeCognitoSub
+    );
+  }
+
+  /**
+   * Atualiza nickname do usuário
+   */
+  async updateUserNickname(cognitoSub: string, newNickname: string): Promise<void> {
+    const user = await this.usersRepository.findByCognitoSub(cognitoSub);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    
+    await this.usersRepository.updateProfile(user.PK.split('#')[1], { nickname: newNickname } as Partial<UserEntity>);
+  }
+
+  /**
+   * Busca usuário por Cognito Sub (alias para findByCognitoSub)
+   */
+  async getUserByCognitoSub(cognitoSub: string): Promise<UserEntity | null> {
+    return this.usersRepository.findByCognitoSub(cognitoSub);
+  }
+
+  /**
+   * Cria usuário (alias para create)
+   */
+  async createUser(userData: CreateUserDto): Promise<UserEntity> {
+    return this.create(userData);
+  }
+}
