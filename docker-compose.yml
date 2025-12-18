@@ -1,22 +1,22 @@
-name: blog-api
+name: rainer-portfolio-backend
 
 services:
   # MongoDB para desenvolvimento local
   mongodb:
     image: mongo:7.0
-    container_name: blog-api-mongodb
+    container_name: rainer-portfolio-backend-mongodb
     ports:
       - "27017:27017"
     command: mongod --replSet rs0 --bind_ip_all
     environment:
       MONGO_INITDB_DATABASE: rainer-portfolio
     volumes:
-      - mongodb-data:/data/db
-      - mongodb-config:/data/configdb
+      - rainer-portfolio-backend-mongodb-data:/data/db
+      - rainer-portfolio-backend-mongodb-config:/data/configdb
       - ./scripts/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
     restart: unless-stopped
     networks:
-      - blog-network
+      - rainer-portfolio-backend-network
     healthcheck:
       test: |
         bash -c '
@@ -33,23 +33,23 @@ services:
   # DynamoDB Local
   dynamodb-local:
     image: amazon/dynamodb-local:latest
-    container_name: blog-api-dynamodb
+    container_name: rainer-portfolio-backend-dynamodb
     ports:
       - "8000:8000"
     command: "-jar DynamoDBLocal.jar -sharedDb -dbPath ./data"
     volumes:
-      - dynamodb-data:/home/dynamodblocal/data
+      - rainer-portfolio-backend-dynamodb-data:/home/dynamodblocal/data
     working_dir: /home/dynamodblocal
     restart: unless-stopped
     networks:
-      - blog-network
+      - rainer-portfolio-backend-network
 
   # Aplicação Blog API (com inicialização automática)
-  blog-api:
+  rainer-portfolio-backend:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: blog-api
+    container_name: rainer-portfolio-backend
     ports:
       - "4000:4000"
     environment:
@@ -90,7 +90,7 @@ services:
         condition: service_healthy
     restart: unless-stopped
     networks:
-      - blog-network
+      - rainer-portfolio-backend-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
       interval: 30s
@@ -103,7 +103,7 @@ services:
   # Prisma Studio (opcional, para desenvolvimento)
   prisma-studio:
     image: timothyjmiller/prisma-studio:latest
-    container_name: blog-api-studio
+    container_name: rainer-portfolio-backend-studio
     ports:
       - "5555:5555"
     environment:
@@ -116,14 +116,14 @@ services:
         condition: service_healthy
     restart: unless-stopped
     networks:
-      - blog-network
+      - rainer-portfolio-backend-network
     profiles:
       - dev
 
   # DynamoDB Admin (opcional, para desenvolvimento)
   dynamodb-admin:
     image: node:20-alpine
-    container_name: blog-api-dynamodb-admin
+    container_name: rainer-portfolio-backend-dynamodb-admin
     ports:
       - "8001:8001"
     environment:
@@ -137,25 +137,25 @@ services:
         dynamodb-admin
       "
     depends_on:
-      blog-api:
+      rainer-portfolio-backend:
         condition: service_healthy
     restart: unless-stopped
     networks:
-      - blog-network
+      - rainer-portfolio-backend-network
     profiles:
       - dev
 
 volumes:
-  mongodb-data:
-    name: blog-api-mongodb-data
-  mongodb-config:
-    name: blog-api-mongodb-config
-  dynamodb-data:
-    name: blog-api-dynamodb-data
-  prisma-node-modules:
-    name: blog-api-prisma-node-modules
+  rainer-portfolio-backend-mongodb-data:
+    name: rainer-portfolio-backend-mongodb-data
+  rainer-portfolio-backend-mongodb-config:
+    name: rainer-portfolio-backend-mongodb-config
+  rainer-portfolio-backend-dynamodb-data:
+    name: rainer-portfolio-backend-dynamodb-data
+  rainer-portfolio-backend-prisma-node-modules:
+    name: rainer-portfolio-backend-prisma-node-modules
 
 networks:
-  blog-network:
-    name: blog-api-network
+  rainer-portfolio-backend-network:
+    name: rainer-portfolio-backend-network
     driver: bridge
