@@ -8,14 +8,22 @@ import axios from 'axios';
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
-// Mock environment variables
-jest.mock('../config/env', () => ({
-  env: {
-    COGNITO_CLIENT_ID: 'test-client-id',
-    COGNITO_DOMAIN: 'https://test-domain.auth.us-east-1.amazoncognito.com',
-    OAUTH_REDIRECT_SIGN_IN: 'http://localhost:3000/dashboard/login/callback',
-    AWS_REGION: 'us-east-1',
+// Mock config (centralizado em ../common/config)
+jest.mock('../common/config', () => ({
+  cognito: {
+    clientId: 'test-client-id',
+    domain: 'https://test-domain.auth.us-east-1.amazoncognito.com',
+    redirectUri: 'http://localhost:3000/dashboard/login/callback',
+    region: 'us-east-1',
+    issuer: 'https://cognito-idp.us-east-1.amazonaws.com/us-east-1_123',
   },
+  aws: {
+    region: 'us-east-1',
+  },
+  getCognitoUrls: jest.fn().mockReturnValue({
+    authorize: 'https://test-domain.auth.us-east-1.amazoncognito.com/oauth2/authorize',
+    token: 'https://test-domain.auth.us-east-1.amazoncognito.com/oauth2/token',
+  }),
 }));
 
 describe('AuthService', () => {
@@ -31,6 +39,15 @@ describe('AuthService', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     mockedAxios.post.mockClear();
+    jest.spyOn(axios, 'isAxiosError').mockReturnValue(false);
+    mockedAxios.post.mockResolvedValue({
+      data: {
+        access_token: 'mock-access-token',
+        refresh_token: 'mock-refresh-token',
+        id_token: 'header.payload.signature',
+        expires_in: 3600,
+      },
+    } as any);
     
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -205,7 +222,12 @@ describe('AuthService', () => {
     });
 
     it('should throw error for invalid code', async () => {
-      mockedAxios.post.mockRejectedValue(new Error('Invalid code'));
+      jest.spyOn(axios, 'isAxiosError').mockReturnValue(true);
+      mockedAxios.post.mockRejectedValue({
+        isAxiosError: true,
+        response: { status: 400 },
+        toJSON: () => ({}),
+      } as any);
 
       await expect(service.handleOAuthCallback({ code: 'invalid-code' })).rejects.toThrow(BadRequestException);
     });

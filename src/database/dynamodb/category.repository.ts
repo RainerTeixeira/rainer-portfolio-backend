@@ -12,6 +12,8 @@ interface CategoryWithKeys extends Category {
 
 @Injectable()
 export class DynamoCategoryRepository implements CategoryRepository {
+  private readonly tableName = 'portfolio-backend-table-categories';
+  
   constructor(private readonly dynamo: DynamoDBService) {}
 
   async create(data: Omit<Category, 'createdAt' | 'updatedAt'>): Promise<Category> {
@@ -23,34 +25,31 @@ export class DynamoCategoryRepository implements CategoryRepository {
     };
 
     await this.dynamo.put({
-      PK: `CATEGORY#${item.id}`,
-      SK: 'PROFILE',
-      GSI1PK: `SLUG#${item.slug}`,
-      GSI1SK: 'CATEGORY',
       ...item,
-    });
+    }, this.tableName);
 
     return item;
   }
 
   async findById(id: string): Promise<Category | null> {
-    const result = await this.dynamo.get({ PK: `CATEGORY#${id}`, SK: 'PROFILE' });
-
+    const result = await this.dynamo.get({ id }, this.tableName);
     if (!result) return null;
-
-    const { PK, SK, GSI1PK, GSI1SK, ...category } = result as unknown as CategoryWithKeys;
-    return category as Category;
+    return result as Category;
   }
 
   async findBySlug(slug: string): Promise<Category | null> {
-    // Implementação simplificada - em produção usaria GSI1
-    const categories = await this.scanCategories();
+    const categories = await this.findAll();
     return categories.find(c => c.slug === slug) || null;
   }
 
   async findAll(): Promise<Category[]> {
-    // Implementação simplificada - em produção usaria query
-    return this.scanCategories();
+    try {
+      const items = await this.dynamo.scan({}, this.tableName);
+      return items as Category[];
+    } catch (error) {
+      console.error('Error scanning categories:', error);
+      return [];
+    }
   }
 
   async update(id: string, data: Partial<Category>): Promise<Category | null> {
@@ -64,23 +63,18 @@ export class DynamoCategoryRepository implements CategoryRepository {
     };
 
     await this.dynamo.put({
-      PK: `CATEGORY#${updated.id}`,
-      SK: 'PROFILE',
-      GSI1PK: `SLUG#${updated.slug}`,
-      GSI1SK: 'CATEGORY',
       ...updated,
-    });
+    }, this.tableName);
 
     return updated;
   }
 
   async delete(id: string): Promise<void> {
-    await this.dynamo.delete(`CATEGORY#${id}`, 'PROFILE');
+    const category = await this.findById(id);
+    if (category) {
+      await this.dynamo.delete(id, '', this.tableName);
+    }
   }
 
-  private async scanCategories(): Promise<Category[]> {
-    // Método auxiliar para scan de categorias
-    // Em produção, isso seria otimizado com queries
-    return [];
-  }
+
 }

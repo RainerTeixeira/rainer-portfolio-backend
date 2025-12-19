@@ -1,4 +1,4 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
     Testa TODAS as rotas da API com operações CRUD completas
@@ -42,6 +42,9 @@ if (-not $BaseUrl) {
     $BaseUrl = "http://localhost:$PORT"
     Write-Host "🔧 Usando porta do .env: $PORT" -ForegroundColor Cyan
 }
+
+# Prefixo e versionamento globais (NestJS)
+$ApiPrefix = "/api/v1"
 
 # ========================================
 # 🎨 CONFIGURAÇÕES E CORES
@@ -143,13 +146,26 @@ function Invoke-ApiRequest {
         if ($script:AccessToken) {
             $headers["Authorization"] = "Bearer $script:AccessToken"
         }
+
+        # Normaliza rota para sempre incluir /api/v1
+        $routeToCall = $Route
+        if ($routeToCall -match '^/api/v\d+/') {
+            # já está versionado
+        }
+        elseif ($routeToCall -match '^/api/') {
+            # tem /api mas sem versão -> troca para /api/v1
+            $routeToCall = $routeToCall -replace '^/api', $ApiPrefix
+        }
+        else {
+            # sem /api -> prefixa
+            $routeToCall = "$ApiPrefix$routeToCall"
+        }
         
         $params = @{
-            Uri = "$BaseUrl$Route"
+            Uri = "$BaseUrl$routeToCall"
             Method = $Method
             Headers = $headers
             UseBasicParsing = $true
-            SkipHttpErrorCheck = $true
             TimeoutSec = 15
         }
         
@@ -157,7 +173,38 @@ function Invoke-ApiRequest {
             $params.Body = ($Body | ConvertTo-Json -Depth 10)
         }
         
-        $response = Invoke-WebRequest @params -ErrorAction Stop
+        $response = $null
+        $responseBody = $null
+
+        try {
+            $response = Invoke-WebRequest @params -ErrorAction Stop
+            $responseBody = $response.Content
+        }
+        catch [System.Net.WebException] {
+            $webResponse = $_.Exception.Response
+            if ($webResponse) {
+                try {
+                    $statusCode = [int]$webResponse.StatusCode
+                } catch {
+                    $statusCode = 0
+                }
+
+                try {
+                    $reader = New-Object System.IO.StreamReader($webResponse.GetResponseStream())
+                    $responseBody = $reader.ReadToEnd()
+                    $reader.Close()
+                } catch {
+                    $responseBody = $null
+                }
+
+                $response = [pscustomobject]@{
+                    StatusCode = $statusCode
+                    Content    = $responseBody
+                }
+            } else {
+                throw
+            }
+        }
         
         if ($response.StatusCode -ge 200 -and $response.StatusCode -lt 300) {
             Write-Host "    ✅ OK (Status: $($response.StatusCode))" -ForegroundColor $Green
@@ -165,10 +212,10 @@ function Invoke-ApiRequest {
             
             # Tentar parsear JSON
             try {
-                $jsonResponse = $response.Content | ConvertFrom-Json
+                $jsonResponse = $responseBody | ConvertFrom-Json
                 
                 # Exibir resposta formatada (primeiras linhas)
-                $contentPreview = ($response.Content | ConvertFrom-Json | ConvertTo-Json -Depth 3 -Compress)
+                $contentPreview = ($responseBody | ConvertFrom-Json | ConvertTo-Json -Depth 3 -Compress)
                 if ($contentPreview.Length -gt 200) {
                     $contentPreview = $contentPreview.Substring(0, 200) + "..."
                 }
@@ -183,7 +230,7 @@ function Invoke-ApiRequest {
                 return @{
                     Success = $true
                     StatusCode = $response.StatusCode
-                    Data = $response.Content
+                    Data = $responseBody
                 }
             }
         }
@@ -192,7 +239,7 @@ function Invoke-ApiRequest {
             $script:TotalFailed++
             
             try {
-                $errorContent = $response.Content | ConvertFrom-Json
+                $errorContent = $responseBody | ConvertFrom-Json
                 if ($errorContent.message) {
                     Write-Host "    💬 $($errorContent.message)" -ForegroundColor $Red
                 }

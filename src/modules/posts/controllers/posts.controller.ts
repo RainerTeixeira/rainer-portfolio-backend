@@ -81,10 +81,34 @@ export class PostsController {
     status?: string;
     authorId?: string;
     categoryId?: string;
-    limit?: number;
-    offset?: number;
+    limit?: number | string;
+    offset?: number | string;
+    page?: number | string;
   }) {
-    return this.postsService.getAllPosts(query);
+    const limitRaw = query.limit;
+    const offsetRaw = query.offset;
+    const pageRaw = query.page;
+
+    const limit = limitRaw !== undefined ? Number.parseInt(String(limitRaw), 10) : undefined;
+    const offsetFromQuery = offsetRaw !== undefined ? Number.parseInt(String(offsetRaw), 10) : undefined;
+    const page = pageRaw !== undefined ? Number.parseInt(String(pageRaw), 10) : undefined;
+
+    const limitNum = typeof limit === 'number' && Number.isFinite(limit) ? limit : undefined;
+    const offsetNum = typeof offsetFromQuery === 'number' && Number.isFinite(offsetFromQuery) ? offsetFromQuery : undefined;
+    const pageNum = typeof page === 'number' && Number.isFinite(page) ? page : undefined;
+
+    const computedOffset =
+      offsetNum !== undefined ? offsetNum :
+      pageNum !== undefined && limitNum !== undefined ? Math.max(0, (pageNum - 1) * limitNum) :
+      undefined;
+
+    return this.postsService.getAllPosts({
+      status: query.status,
+      authorId: query.authorId,
+      categoryId: query.categoryId,
+      limit: limitNum,
+      offset: Number.isFinite(computedOffset) ? computedOffset : undefined,
+    });
   }
 
   /**

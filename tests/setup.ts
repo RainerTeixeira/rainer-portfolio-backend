@@ -4,8 +4,6 @@
  * Configura ambiente de testes, mocks globais e variáveis.
  */
 
-import { APIGatewayProxyResult } from 'aws-lambda';
-
 // Configura timeout para testes assíncronos
 jest.setTimeout(60000);
 
@@ -71,87 +69,8 @@ jest.mock('mongodb', () => ({
 }));
 
 // Mock do bootstrap da Lambda
-jest.mock('../src/lambda/bootstrap/lambda.bootstrap', () => ({
-  bootstrap: jest.fn().mockResolvedValue({
-    getHttpAdapter: () => ({
-      getInstance: () => ({
-        inject: jest.fn().mockImplementation(({ url }) => {
-          if (url === '/non-existent-route' || url === '/error-route') {
-            return Promise.resolve({
-              statusCode: 404,
-              headers: {},
-              payload: JSON.stringify({ message: 'Not Found' }),
-            });
-          }
-          return Promise.resolve({
-            statusCode: 200,
-            headers: { 'content-type': 'application/json' },
-            payload: JSON.stringify({ success: true }),
-          });
-        }),
-      }),
-    }),
-  }),
-}));
 
 // Mock dos handlers
-jest.mock('../src/lambda/handlers/health.handler', () => ({
-  healthHandler: jest.fn().mockResolvedValue({
-    statusCode: 200,
-    headers: {
-      'content-type': 'application/json',
-      'access-control-allow-origin': '*',
-    },
-    body: JSON.stringify({ success: true, status: 'healthy' }),
-  }),
-}));
-
-jest.mock('../src/lambda/function-url.handler', () => ({
-  functionUrlHandler: jest.fn().mockImplementation((event, processor) => {
-    // Simula CORS preflight (OPTIONS) para qualquer path
-    if (event.requestContext.http.method === 'OPTIONS') {
-      return Promise.resolve({
-        statusCode: 204,
-        headers: {
-          'access-control-allow-origin': '*',
-          'access-control-allow-methods': 'GET,POST,PUT,DELETE,PATCH,OPTIONS',
-        },
-        body: '',
-      });
-    }
-    
-    // Simula erro para rotas não encontradas
-    if (event.requestContext.http.path === '/non-existent-route' || 
-        event.requestContext.http.path === '/error-route') {
-      return Promise.resolve({
-        statusCode: 404,
-        headers: {
-          'content-type': 'application/json',
-          'access-control-allow-origin': '*',
-        },
-        body: JSON.stringify({ 
-          message: 'Internal Server Error',
-          requestId: event.requestContext.requestId
-        }),
-      });
-    }
-    
-    // Comportamento padrão
-    return processor({
-      httpMethod: event.requestContext.http.method,
-      path: event.requestContext.http.path,
-      headers: event.headers,
-      body: event.body,
-      queryStringParameters: null,
-    }).then((result: APIGatewayProxyResult) => ({
-      ...result,
-      headers: {
-        ...(result.headers || {}),
-        'access-control-allow-origin': '*',
-      },
-    }));
-  }),
-}));
 
 // Helper para limpar mocks entre testes
 afterEach(() => {

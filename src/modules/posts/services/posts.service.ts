@@ -79,18 +79,18 @@ export class PostsService {
       title: dto.title,
       slug,
       content: dto.content,
-      excerpt: dto.excerpt,
-      coverImage: dto.coverImage,
       authorId: dto.authorId,
-      categoryId: dto.categoryId,
+      subcategoryId: dto.subcategoryId || dto.categoryId, // Support both field names
       status: dto.status || 'DRAFT',
+      featured: dto.featured || dto.isFeatured || false,
+      allowComments: dto.allowComments !== false,
+      pinned: dto.pinned || false,
+      priority: dto.priority || 0,
       publishedAt: dto.publishedAt,
-      tags: dto.tags || [],
-      readTime: dto.readTime || 0,
-      viewCount: 0,
-      likeCount: 0,
-      commentCount: 0,
-      isFeatured: dto.isFeatured || false,
+      views: 0,
+      likesCount: 0,
+      commentsCount: 0,
+      bookmarksCount: 0,
     });
   }
 

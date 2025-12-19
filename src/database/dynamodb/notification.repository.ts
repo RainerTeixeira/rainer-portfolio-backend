@@ -2,49 +2,29 @@ import { Injectable } from '@nestjs/common';
 import { Notification, NotificationRepository } from '../interfaces/notification-repository.interface';
 import { DynamoDBService } from './dynamodb.service';
 
-// Interface interna para incluir chaves do DynamoDB
-interface NotificationWithKeys extends Notification {
-  PK: string;
-  SK: string;
-  GSI1PK: string;
-  GSI1SK: string;
-  GSI2PK: string;
-  GSI2SK: string;
-}
-
 @Injectable()
 export class DynamoNotificationRepository implements NotificationRepository {
+  private readonly tableName = 'portfolio-backend-table-notifications';
+  
   constructor(private readonly dynamo: DynamoDBService) {}
 
-  async create(data: Omit<Notification, 'createdAt' | 'readAt'>): Promise<Notification> {
+  async create(data: Omit<Notification, 'createdAt' | 'updatedAt' | 'readAt'>): Promise<Notification> {
     const now = new Date();
     const item: Notification = {
       ...data,
       createdAt: now,
+      updatedAt: now,
       readAt: data.isRead ? now : undefined,
     };
 
-    await this.dynamo.put({
-      PK: `NOTIFICATION#${item.id}`,
-      SK: 'PROFILE',
-      GSI1PK: `USER#${item.userId}`,
-      GSI1SK: item.createdAt.toISOString(),
-      GSI2PK: `USER#${item.userId}#UNREAD`,
-      GSI2SK: item.createdAt.toISOString(),
-      ...item,
-    });
-
+    await this.dynamo.put(item, this.tableName);
     return item;
   }
 
   async findById(id: string): Promise<Notification | null> {
-    const result = await this.dynamo.get({ PK: `NOTIFICATION#${id}`, SK: 'PROFILE' });
-
+    const result = await this.dynamo.get({ id }, this.tableName);
     if (!result) return null;
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { PK, SK, GSI1PK, GSI1SK, GSI2PK, GSI2SK, ...notification } = result as unknown as NotificationWithKeys;
-    return notification as Notification;
+    return result as Notification;
   }
 
   async findByUser(userId: string, options: {
@@ -52,16 +32,15 @@ export class DynamoNotificationRepository implements NotificationRepository {
     offset?: number;
     unreadOnly?: boolean;
   } = {}): Promise<Notification[]> {
-    // Implementação simplificada - em produção usaria GSI1/GSI2
-    let notifications = await this.scanNotifications();
+    let notifications = await this.findAll();
     notifications = notifications.filter(n => n.userId === userId);
 
     if (options.unreadOnly) {
       notifications = notifications.filter(n => !n.isRead);
     }
 
-    // Ordenar por data (mais recentes primeiro)
-    notifications.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    // Sort by date (most recent first)
+    notifications.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     if (options.offset) {
       notifications = notifications.slice(options.offset);
@@ -71,6 +50,20 @@ export class DynamoNotificationRepository implements NotificationRepository {
     }
 
     return notifications;
+  }
+
+  async update(id: string, data: Partial<Notification>): Promise<Notification | null> {
+    const existing = await this.findById(id);
+    if (!existing) throw new Error('Notification not found');
+
+    const updated: Notification = {
+      ...existing,
+      ...data,
+      updatedAt: new Date(),
+    };
+
+    await this.dynamo.put(updated, this.tableName);
+    return updated;
   }
 
   async markAsRead(id: string): Promise<Notification | null> {
@@ -92,7 +85,10 @@ export class DynamoNotificationRepository implements NotificationRepository {
   }
 
   async delete(id: string): Promise<void> {
-    await this.dynamo.delete(`NOTIFICATION#${id}`, 'PROFILE');
+    const notification = await this.findById(id);
+    if (notification) {
+      await this.dynamo.delete(id, '', this.tableName);
+    }
   }
 
   async deleteAll(userId: string): Promise<void> {
@@ -108,31 +104,13 @@ export class DynamoNotificationRepository implements NotificationRepository {
     return notifications.length;
   }
 
-  private async update(id: string, data: Partial<Notification>): Promise<Notification | null> {
-    const existing = await this.findById(id);
-    if (!existing) throw new Error('Notification not found');
-
-    const updated: Notification = {
-      ...existing,
-      ...data,
-    };
-
-    await this.dynamo.put({
-      PK: `NOTIFICATION#${updated.id}`,
-      SK: 'PROFILE',
-      GSI1PK: `USER#${updated.userId}`,
-      GSI1SK: updated.createdAt.toISOString(),
-      GSI2PK: `USER#${updated.userId}#UNREAD`,
-      GSI2SK: updated.createdAt.toISOString(),
-      ...updated,
-    });
-
-    return updated;
-  }
-
-  private async scanNotifications(): Promise<Notification[]> {
-    // Método auxiliar para scan de notificações
-    // Em produção, isso seria otimizado com queries
-    return [];
+  private async findAll(): Promise<Notification[]> {
+    try {
+      const items = await this.dynamo.scan({}, this.tableName);
+      return items as Notification[];
+    } catch (error) {
+      console.error('Error scanning notifications:', error);
+      return [];
+    }
   }
 }

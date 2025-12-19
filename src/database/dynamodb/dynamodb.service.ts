@@ -1,5 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Injectable, Logger, OnModuleInit, Optional } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  OnModuleInit,
+  Optional,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { 
   DynamoDBDocumentClient, 
@@ -7,12 +14,12 @@ import {
   PutCommand, 
   DeleteCommand,
   BatchGetCommand,
-  BatchWriteCommand
+  BatchWriteCommand,
+  ScanCommand as DocScanCommand
 } from '@aws-sdk/lib-dynamodb';
 import {
   UpdateItemCommand,
   QueryCommand,
-  ScanCommand,
   TransactWriteItemsCommand
 } from '@aws-sdk/client-dynamodb';
 import { ConfigService } from '@nestjs/config';
@@ -113,41 +120,70 @@ export class DynamoDBService implements OnModuleInit {
   /**
    * Obtém um item pela chave
    */
-  async get<T>(key: Record<string, any>): Promise<T | null> {
+  async get<T>(key: Record<string, any>, tableName?: string): Promise<T | null> {
     if (!this.docClient) {
-      throw new Error('DynamoDB client not initialized');
+      throw new ServiceUnavailableException('DynamoDB client not initialized');
     }
     try {
       const result = await this.docClient.send(
         new GetCommand({
-          TableName: this.tableName,
+          TableName: tableName || this.tableName,
           Key: key,
         })
       );
       return result.Item as T || null;
     } catch (error) {
-      this.logger.error(`Failed to get item from DynamoDB: ${error}`);
-      throw error;
+      const e = error as any;
+      const name = typeof e?.name === 'string' ? e.name : '';
+      const message = typeof e?.message === 'string' ? e.message : String(e);
+
+      this.logger.error(`Failed to get item from DynamoDB: ${message}`);
+
+      if (
+        name === 'ResourceNotFoundException' ||
+        message.includes('ResourceNotFoundException') ||
+        message.toLowerCase().includes('requested resource not found')
+      ) {
+        throw new ServiceUnavailableException('DynamoDB table not found. Run pnpm run dynamodb:create-tables.');
+      }
+
+      if (message.toLowerCase().includes('connect') || message.toLowerCase().includes('econnrefused')) {
+        throw new ServiceUnavailableException('DynamoDB endpoint not reachable. Is dynamodb-local running?');
+      }
+
+      throw new InternalServerErrorException('Failed to query DynamoDB');
     }
   }
 
   /**
    * Insere um item
    */
-  async put(item: Record<string, any>): Promise<void> {
+  async put(item: Record<string, any>, tableName?: string): Promise<void> {
     if (!this.docClient) {
-      throw new Error('DynamoDB client not initialized');
+      throw new ServiceUnavailableException('DynamoDB client not initialized');
     }
     try {
       await this.docClient.send(
         new PutCommand({
-          TableName: this.tableName,
+          TableName: tableName || this.tableName,
           Item: item,
         })
       );
     } catch (error) {
-      this.logger.error('Failed to put item', error instanceof Error ? error.message : 'Unknown error');
-      throw error;
+      const e = error as any;
+      const name = typeof e?.name === 'string' ? e.name : '';
+      const message = typeof e?.message === 'string' ? e.message : String(e);
+      this.logger.error('Failed to put item', message);
+
+      if (name === 'ResourceNotFoundException' || message.includes('ResourceNotFoundException')) {
+        throw new ServiceUnavailableException('DynamoDB table not found. Run pnpm run dynamodb:create-tables.');
+      }
+
+      if (message.toLowerCase().includes('connect') || message.toLowerCase().includes('econnrefused')) {
+        throw new ServiceUnavailableException('DynamoDB endpoint not reachable. Is dynamodb-local running?');
+      }
+
+      throw new InternalServerErrorException('Failed to write to DynamoDB');
     }
   }
 
@@ -240,30 +276,38 @@ export class DynamoDBService implements OnModuleInit {
   /**
    * Scan na tabela
    */
-  async scan(options?: any): Promise<Record<string, unknown>[]> {
-    if (!this.client) {
+  async scan(options?: any, tableName?: string): Promise<Record<string, unknown>[]> {
+    if (!this.docClient) {
       throw new Error('DynamoDB client not initialized');
     }
-    const command = new ScanCommand({
-      TableName: this.tableName,
+    const command = new DocScanCommand({
+      TableName: tableName || this.tableName,
       ...options,
     });
 
-    const result = await this.client.send(command);
-    return result.Items?.map(item => unmarshall(item)) || [];
+    const result = await this.docClient.send(command);
+    return result.Items || [];
   }
 
   /**
    * Remove um item
    */
-  async delete(pk: string, sk: string): Promise<void> {
+  async delete(pk: string, sk: string, tableName?: string): Promise<void> {
     if (!this.docClient) {
-      throw new Error('DynamoDB client not initialized');
+      throw new ServiceUnavailableException('DynamoDB client not initialized');
     }
+    
+    let key: any;
+    if (tableName?.includes('users')) {
+      key = { cognitoSub: pk };
+    } else {
+      key = { id: pk };
+    }
+    
     await this.docClient.send(
       new DeleteCommand({
-        TableName: this.tableName,
-        Key: { PK: pk, SK: sk },
+        TableName: tableName || this.tableName,
+        Key: key,
       })
     );
   }

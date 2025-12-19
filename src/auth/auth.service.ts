@@ -18,6 +18,7 @@ import {
   InternalServerErrorException,
   ConflictException,
   RequestTimeoutException,
+  ServiceUnavailableException,
   Logger,
 } from '@nestjs/common';
 import {
@@ -172,6 +173,10 @@ export class AuthService {
    */
   async signup(signupData: SignupDto) {
     try {
+      if (!cognito.clientId) {
+        throw new BadRequestException('Cognito clientId is not configured');
+      }
+
       const command = new SignUpCommand({
         ClientId: cognito.clientId,
         Username: signupData.email,
@@ -191,9 +196,30 @@ export class AuthService {
       };
     } catch (error) {
       this.logger.error('Signup error:', error);
-      if ((error as any).name === 'UsernameExistsException') {
+      const err: any = error;
+
+      if (err?.name === 'UsernameExistsException') {
         throw new ConflictException('User already exists');
       }
+
+      // Erros típicos quando Cognito/AWS não está acessível ou credenciais não são válidas
+      if (
+        err?.name === 'UnrecognizedClientException' ||
+        err?.name === 'InvalidSignatureException' ||
+        err?.name === 'AccessDeniedException'
+      ) {
+        throw new ServiceUnavailableException('Cognito is unavailable or AWS credentials are invalid');
+      }
+
+      if (err?.name === 'TooManyRequestsException') {
+        throw new RequestTimeoutException('Cognito rate limit exceeded');
+      }
+
+      // Validação do Cognito (senha fraca, formato inválido etc.)
+      if (err?.name === 'InvalidPasswordException' || err?.name === 'InvalidParameterException') {
+        throw new BadRequestException(err?.message || 'Invalid signup data');
+      }
+
       throw new InternalServerErrorException('Registration failed');
     }
   }

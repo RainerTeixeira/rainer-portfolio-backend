@@ -12,7 +12,7 @@
  * @module modules/comments/controllers/comments.controller
  */
 
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { CommentsService } from '../services/comments.service';
 import { CreateCommentDto } from '../dto/create-comment.dto';
@@ -91,7 +91,7 @@ export class CommentsController {
     if (query.parentId) {
       return this.commentsService.getReplies(query.parentId);
     }
-    throw new Error('Must provide postId, authorId, or parentId');
+    throw new BadRequestException('Must provide postId, authorId, or parentId');
   }
 
   /**

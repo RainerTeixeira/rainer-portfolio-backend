@@ -2,18 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { Comment, CommentRepository } from '../interfaces/comment-repository.interface';
 import { DynamoDBService } from './dynamodb.service';
 
-// Interface interna para incluir chaves do DynamoDB
-interface CommentWithKeys extends Comment {
-  PK: string;
-  SK: string;
-  GSI1PK: string;
-  GSI1SK: string;
-  GSI2PK: string;
-  GSI2SK: string;
-}
-
 @Injectable()
 export class DynamoCommentRepository implements CommentRepository {
+  private readonly tableName = 'portfolio-backend-table-comments';
+  
   constructor(private readonly dynamo: DynamoDBService) {}
 
   async create(data: Omit<Comment, 'createdAt' | 'updatedAt'>): Promise<Comment> {
@@ -24,34 +16,21 @@ export class DynamoCommentRepository implements CommentRepository {
       updatedAt: now,
     };
 
-    await this.dynamo.put({
-      PK: `COMMENT#${item.id}`,
-      SK: 'PROFILE',
-      GSI1PK: `POST#${item.postId}`,
-      GSI1SK: item.createdAt.toISOString(),
-      GSI2PK: `AUTHOR#${item.authorId}`,
-      GSI2SK: item.createdAt.toISOString(),
-      ...item,
-    });
-
+    await this.dynamo.put(item, this.tableName);
     return item;
   }
 
   async findById(id: string): Promise<Comment | null> {
-    const result = await this.dynamo.get({ PK: `COMMENT#${id}`, SK: 'PROFILE' });
-
+    const result = await this.dynamo.get({ id }, this.tableName);
     if (!result) return null;
-
-    const { PK, SK, GSI1PK, GSI1SK, GSI2PK, GSI2SK, ...comment } = result as unknown as CommentWithKeys;
-    return comment as Comment;
+    return result as Comment;
   }
 
   async findByPostId(postId: string, options: {
     limit?: number;
     offset?: number;
   } = {}): Promise<Comment[]> {
-    // Implementação simplificada - em produção usaria GSI1
-    let comments = await this.scanComments();
+    let comments = await this.findAll();
     comments = comments.filter(c => c.postId === postId);
 
     if (options.offset) {
@@ -68,8 +47,7 @@ export class DynamoCommentRepository implements CommentRepository {
     limit?: number;
     offset?: number;
   } = {}): Promise<Comment[]> {
-    // Implementação simplificada - em produção usaria GSI2
-    let comments = await this.scanComments();
+    let comments = await this.findAll();
     comments = comments.filter(c => c.authorId === authorId);
 
     if (options.offset) {
@@ -83,8 +61,7 @@ export class DynamoCommentRepository implements CommentRepository {
   }
 
   async findReplies(parentId: string): Promise<Comment[]> {
-    // Implementação simplificada
-    const comments = await this.scanComments();
+    const comments = await this.findAll();
     return comments.filter(c => c.parentId === parentId);
   }
 
@@ -98,34 +75,32 @@ export class DynamoCommentRepository implements CommentRepository {
       updatedAt: new Date(),
     };
 
-    await this.dynamo.put({
-      PK: `COMMENT#${updated.id}`,
-      SK: 'PROFILE',
-      GSI1PK: `POST#${updated.postId}`,
-      GSI1SK: updated.createdAt.toISOString(),
-      GSI2PK: `AUTHOR#${updated.authorId}`,
-      GSI2SK: updated.createdAt.toISOString(),
-      ...updated,
-    });
-
+    await this.dynamo.put(updated, this.tableName);
     return updated;
   }
 
   async delete(id: string): Promise<void> {
-    await this.dynamo.delete(`COMMENT#${id}`, 'PROFILE');
+    const comment = await this.findById(id);
+    if (comment) {
+      await this.dynamo.delete(id, '', this.tableName);
+    }
   }
 
   async approve(id: string): Promise<void> {
-    await this.update(id, { status: 'APPROVED' });
+    await this.update(id, { isApproved: true });
   }
 
   async reject(id: string): Promise<void> {
-    await this.update(id, { status: 'REJECTED' });
+    await this.update(id, { isApproved: false });
   }
 
-  private async scanComments(): Promise<Comment[]> {
-    // Método auxiliar para scan de comentários
-    // Em produção, isso seria otimizado com queries
-    return [];
+  private async findAll(): Promise<Comment[]> {
+    try {
+      const items = await this.dynamo.scan({}, this.tableName);
+      return items as Comment[];
+    } catch (error) {
+      console.error('Error scanning comments:', error);
+      return [];
+    }
   }
 }

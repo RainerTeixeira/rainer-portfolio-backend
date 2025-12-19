@@ -9,10 +9,12 @@ export interface Category {
   description?: string;
   color?: string;
   icon?: string;
+  coverImage?: string;
   isActive: boolean;
   order?: number;
   parentId?: string;
   postsCount: number;
+  metaDescription?: string;
   createdAt: Date;
   updatedAt: Date;
 }

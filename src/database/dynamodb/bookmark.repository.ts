@@ -2,80 +2,45 @@ import { Injectable } from '@nestjs/common';
 import { Bookmark, BookmarkRepository } from '../interfaces/bookmark-repository.interface';
 import { DynamoDBService } from './dynamodb.service';
 
-// Interface interna para incluir chaves do DynamoDB
-interface BookmarkWithKeys extends Bookmark {
-  PK: string;
-  SK: string;
-  GSI1PK: string;
-  GSI1SK: string;
-  GSI2PK: string;
-  GSI2SK: string;
-}
-
 @Injectable()
 export class DynamoBookmarkRepository implements BookmarkRepository {
+  private readonly tableName = 'portfolio-backend-table-bookmarks';
+  
   constructor(private readonly dynamo: DynamoDBService) {}
 
-  async create(data: Omit<Bookmark, 'createdAt'>): Promise<Bookmark> {
+  async create(data: Omit<Bookmark, 'createdAt' | 'updatedAt'>): Promise<Bookmark> {
     const now = new Date();
     const item: Bookmark = {
       ...data,
       createdAt: now,
+      updatedAt: now,
     };
 
-    await this.dynamo.put({
-      PK: `BOOKMARK#${item.id}`,
-      SK: 'PROFILE',
-      GSI1PK: `USER#${item.userId}`,
-      GSI1SK: item.createdAt.toISOString(),
-      GSI2PK: item.postId ? `POST#${item.postId}` : `COMMENT#${item.commentId}`,
-      GSI2SK: `USER#${item.userId}`,
-      ...item,
-    });
-
+    await this.dynamo.put(item, this.tableName);
     return item;
   }
 
   async findById(id: string): Promise<Bookmark | null> {
-    const result = await this.dynamo.get({ PK: `BOOKMARK#${id}`, SK: 'PROFILE' });
-
+    const result = await this.dynamo.get({ id }, this.tableName);
     if (!result) return null;
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { PK, SK, GSI1PK, GSI1SK, GSI2PK, GSI2SK, ...bookmark } = result as unknown as BookmarkWithKeys;
-    return bookmark as Bookmark;
+    return result as Bookmark;
   }
 
   async findByUserAndPost(userId: string, postId: string): Promise<Bookmark | null> {
-    // Implementação simplificada - em produção usaria GSI2
-    const bookmarks = await this.scanBookmarks();
+    const bookmarks = await this.findAll();
     return bookmarks.find(b => b.userId === userId && b.postId === postId) || null;
   }
 
-  async findByUserAndComment(userId: string, commentId: string): Promise<Bookmark | null> {
-    // Implementação simplificada - em produção usaria GSI2
-    const bookmarks = await this.scanBookmarks();
-    return bookmarks.find(b => b.userId === userId && b.commentId === commentId) || null;
-  }
-
   async findByPost(postId: string): Promise<Bookmark[]> {
-    // Implementação simplificada - em produção usaria GSI2
-    const bookmarks = await this.scanBookmarks();
+    const bookmarks = await this.findAll();
     return bookmarks.filter(b => b.postId === postId);
-  }
-
-  async findByComment(commentId: string): Promise<Bookmark[]> {
-    // Implementação simplificada - em produção usaria GSI2
-    const bookmarks = await this.scanBookmarks();
-    return bookmarks.filter(b => b.commentId === commentId);
   }
 
   async findByUser(userId: string, options: {
     limit?: number;
     offset?: number;
   } = {}): Promise<Bookmark[]> {
-    // Implementação simplificada - em produção usaria GSI1
-    let bookmarks = await this.scanBookmarks();
+    let bookmarks = await this.findAll();
     bookmarks = bookmarks.filter(b => b.userId === userId);
 
     if (options.offset) {
@@ -88,8 +53,25 @@ export class DynamoBookmarkRepository implements BookmarkRepository {
     return bookmarks;
   }
 
+  async update(id: string, data: Partial<Bookmark>): Promise<Bookmark | null> {
+    const existing = await this.findById(id);
+    if (!existing) throw new Error('Bookmark not found');
+
+    const updated: Bookmark = {
+      ...existing,
+      ...data,
+      updatedAt: new Date(),
+    };
+
+    await this.dynamo.put(updated, this.tableName);
+    return updated;
+  }
+
   async delete(id: string): Promise<void> {
-    await this.dynamo.delete(`BOOKMARK#${id}`, 'PROFILE');
+    const bookmark = await this.findById(id);
+    if (bookmark) {
+      await this.dynamo.delete(id, '', this.tableName);
+    }
   }
 
   async deleteByUserAndPost(userId: string, postId: string): Promise<void> {
@@ -99,16 +81,13 @@ export class DynamoBookmarkRepository implements BookmarkRepository {
     }
   }
 
-  async deleteByUserAndComment(userId: string, commentId: string): Promise<void> {
-    const bookmark = await this.findByUserAndComment(userId, commentId);
-    if (bookmark) {
-      await this.delete(bookmark.id);
+  private async findAll(): Promise<Bookmark[]> {
+    try {
+      const items = await this.dynamo.scan({}, this.tableName);
+      return items as Bookmark[];
+    } catch (error) {
+      console.error('Error scanning bookmarks:', error);
+      return [];
     }
-  }
-
-  private async scanBookmarks(): Promise<Bookmark[]> {
-    // Método auxiliar para scan de bookmarks
-    // Em produção, isso seria otimizado com queries
-    return [];
   }
 }

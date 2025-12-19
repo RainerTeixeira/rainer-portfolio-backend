@@ -79,27 +79,21 @@ export class UsersService {
    * ```
    */
   async createUser(dto: CreateUserDto): Promise<User> {
-    const id = randomUUID();
-
-    // Aqui você faria o hash da senha antes de salvar
-    const passwordHash = dto.password; // substituir por hash real
+    const cognitoSub = dto.cognitoSub || randomUUID();
 
     return this.usersRepo.create({
-      id,
-      cognitoSub: dto.cognitoSub || id, // usa o cognitoSub do DTO ou gera um ID temporário
-      name: dto.name || '',
+      cognitoSub,
       fullName: dto.fullName || dto.name || '',
       nickname: dto.nickname || dto.fullName || dto.name || '',
-      email: dto.email || '',
-      passwordHash: passwordHash || '',
       role: 'SUBSCRIBER',
       isActive: true,
       isBanned: false,
       postsCount: 0,
       commentsCount: 0,
-      likesCount: 0,
-      followersCount: 0,
-      followingCount: 0,
+      bio: dto.bio,
+      website: dto.website,
+      socialLinks: dto.socialLinks,
+      avatar: dto.avatar,
     });
   }
 

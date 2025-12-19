@@ -1,161 +1,174 @@
-name: rainer-portfolio-backend
+# ═══════════════════════════════════════════════════════════════════════════════
+# RAINER PORTFOLIO BACKEND - Docker Compose
+# ═══════════════════════════════════════════════════════════════════════════════
+# Configuração otimizada para desenvolvimento local simulando ambiente AWS
+#
+# USO RÁPIDO:
+#   docker compose up -d    # Sobe TODOS os serviços
+#   docker compose down     # Para todos os containers
+#   pnpm dev                 # Roda o backend (usa .env do projeto)
+#
+# PORTAS:
+#   4000  - Backend Node.js
+#   8000  - DynamoDB Local
+#   8001  - DynamoDB Admin UI
+#   27017 - MongoDB
+#   5555  - Prisma Studio
+# ═══════════════════════════════════════════════════════════════════════════════
+
+name: rainer-blog-backend
 
 services:
-  # MongoDB para desenvolvimento local
-  mongodb:
-    image: mongo:7.0
-    container_name: rainer-portfolio-backend-mongodb
-    ports:
-      - "27017:27017"
-    command: mongod --replSet rs0 --bind_ip_all
-    environment:
-      MONGO_INITDB_DATABASE: rainer-portfolio
-    volumes:
-      - rainer-portfolio-backend-mongodb-data:/data/db
-      - rainer-portfolio-backend-mongodb-config:/data/configdb
-      - ./scripts/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
-    restart: unless-stopped
-    networks:
-      - rainer-portfolio-backend-network
-    healthcheck:
-      test: |
-        bash -c '
-          if ! mongosh --quiet --eval "rs.status()" > /dev/null 2>&1; then
-            mongosh --eval "rs.initiate({_id: "rs0", members: [{_id: 0, host: "mongodb:27017"}]})" > /dev/null 2>&1 || true
-          fi
-          echo "db.runCommand("ping").ok" | mongosh --quiet
-        '
-      interval: 5s
-      timeout: 30s
-      start_period: 10s
-      retries: 30
-
-  # DynamoDB Local
-  dynamodb-local:
-    image: amazon/dynamodb-local:latest
-    container_name: rainer-portfolio-backend-dynamodb
-    ports:
-      - "8000:8000"
-    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath ./data"
-    volumes:
-      - rainer-portfolio-backend-dynamodb-data:/home/dynamodblocal/data
-    working_dir: /home/dynamodblocal
-    restart: unless-stopped
-    networks:
-      - rainer-portfolio-backend-network
-
-  # Aplicação Blog API (com inicialização automática)
-  rainer-portfolio-backend:
+  # ─────────────────────────────────────────────────────────────────────────────
+  # RAINER PORTFOLIO BACKEND - Aplicação Node.js
+  # ─────────────────────────────────────────────────────────────────────────────
+  rainer-blog-backend:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: rainer-portfolio-backend
+    container_name: rainer-blog-backend-api
     ports:
       - "4000:4000"
+    env_file:
+      - .env
     environment:
-      NODE_ENV: production
-      PORT: 4000
       HOST: 0.0.0.0
-      
-      # MongoDB Config
-      DATABASE_PROVIDER: PRISMA
-      DATABASE_URL: "mongodb://mongodb:27017/rainer-portfolio?replicaSet=rs0"
-      MONGODB_DB_NAME: rainer-portfolio
-      
-      # DynamoDB Config
+      PORT: 4000
+      DATABASE_URL: "mongodb://mongodb:27017/${MONGODB_DB_NAME:-rainer-portfolio}?replicaSet=rs0"
       DYNAMODB_ENDPOINT: http://dynamodb-local:8000
-      DYNAMODB_TABLE_PREFIX: blog
-      AWS_REGION: us-east-1
-      AWS_ACCESS_KEY_ID: local
-      AWS_SECRET_ACCESS_KEY: local
-      
-      # JWT Config
-      JWT_SECRET: 1vLG1UVpIFyhWLWubWc4Vuo3S3ritN9t/B9arxjKRL2aMGeiZM2gOx22Z+czY1amLEbvxCoMbH9x1G1ufpA+yg==
-      JWT_EXPIRES_IN: 7d
-      
-      # Cognito Config
-      COGNITO_USER_POOL_ID: us-east-1_wryiyhbWC
-      COGNITO_CLIENT_ID: 3ueos5ofu499je6ebc5u98n35h
-      COGNITO_REGION: us-east-1
-      COGNITO_ISSUER: https://cognito-idp.us-east-1.amazonaws.com/us-east-1_wryiyhbWC
-      
-      # Cloudinary (opcional)
-      CLOUDINARY_URL: cloudinary://dummy
-      
-      # CORS
-      CORS_ORIGIN: "*"
-      LOG_LEVEL: info
+      PRISMA_GENERATE_ON_START: "false"
+      RUN_SEED: "false"
+      USE_DYNAMODB: "false"
     depends_on:
+      dynamodb-local:
+        condition: service_healthy
       mongodb:
         condition: service_healthy
     restart: unless-stopped
     networks:
-      - rainer-portfolio-backend-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 120s
+      - backend-network
     volumes:
       - ./logs:/app/logs
 
-  # Prisma Studio (opcional, para desenvolvimento)
-  prisma-studio:
-    image: timothyjmiller/prisma-studio:latest
-    container_name: rainer-portfolio-backend-studio
+  # ─────────────────────────────────────────────────────────────────────────────
+  # DYNAMODB LOCAL - Simula AWS DynamoDB (SERVIÇO PRINCIPAL)
+  # ─────────────────────────────────────────────────────────────────────────────
+  dynamodb-local:
+    image: amazon/dynamodb-local:2.5.3
+    container_name: rainer-blog-backend-dynamodb
     ports:
-      - "5555:5555"
-    environment:
-      PRISMA_SCHEMA_PATH: /prisma/schema.prisma
-      DATABASE_URL: "mongodb://mongodb:27017/rainer-portfolio?replicaSet=rs0"
-    volumes:
-      - ./src/database/mongodb/prisma:/prisma
-    depends_on:
-      mongodb:
-        condition: service_healthy
+      - "8000:8000"
+    command: -jar DynamoDBLocal.jar -sharedDb -inMemory
+    user: root
     restart: unless-stopped
     networks:
-      - rainer-portfolio-backend-network
-    profiles:
-      - dev
+      - backend-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -o /dev/null http://localhost:8000/ || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 3s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
 
-  # DynamoDB Admin (opcional, para desenvolvimento)
+  # ─────────────────────────────────────────────────────────────────────────────
+  # DYNAMODB ADMIN UI - Interface visual para DynamoDB (opcional)
+  # ─────────────────────────────────────────────────────────────────────────────
   dynamodb-admin:
-    image: node:20-alpine
-    container_name: rainer-portfolio-backend-dynamodb-admin
+    image: aaronshaf/dynamodb-admin:latest
+    container_name: rainer-blog-backend-dynamodb-admin
     ports:
       - "8001:8001"
     environment:
       DYNAMO_ENDPOINT: http://dynamodb-local:8000
-      AWS_REGION: us-east-1
-      AWS_ACCESS_KEY_ID: local
-      AWS_SECRET_ACCESS_KEY: local
-    command: >
-      sh -c "
-        npm install -g dynamodb-admin &&
-        dynamodb-admin
-      "
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      AWS_ACCESS_KEY_ID: ${DYNAMODB_ACCESS_KEY_ID:-dummy}
+      AWS_SECRET_ACCESS_KEY: ${DYNAMODB_SECRET_ACCESS_KEY:-dummy}
     depends_on:
-      rainer-portfolio-backend:
+      dynamodb-local:
         condition: service_healthy
     restart: unless-stopped
     networks:
-      - rainer-portfolio-backend-network
-    profiles:
-      - dev
+      - backend-network
+    deploy:
+      resources:
+        limits:
+          memory: 128M
 
+  # ─────────────────────────────────────────────────────────────────────────────
+  # MONGODB - Alternativa ao DynamoDB (opcional, para testes com Prisma)
+  # ─────────────────────────────────────────────────────────────────────────────
+  mongodb:
+    image: mongo:7.0-jammy
+    container_name: rainer-blog-backend-mongodb
+    ports:
+      - "27017:27017"
+    command: mongod --replSet rs0 --bind_ip_all
+    environment:
+      MONGO_INITDB_DATABASE: ${MONGODB_DB_NAME:-rainer-portfolio}
+    volumes:
+      - mongodb-data:/data/db
+      - mongodb-config:/data/configdb
+    restart: unless-stopped
+    networks:
+      - backend-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # PRISMA STUDIO - Interface visual para MongoDB (opcional)
+  # ─────────────────────────────────────────────────────────────────────────────
+  prisma-studio:
+    image: timothyjmiller/prisma-studio:latest
+    container_name: rainer-blog-backend-prisma-studio
+    ports:
+      - "5555:5555"
+    environment:
+      PRISMA_SCHEMA_PATH: /prisma/schema.prisma
+      DATABASE_URL: "mongodb://mongodb:27017/${MONGODB_DB_NAME:-rainer-portfolio}?replicaSet=rs0"
+    volumes:
+      - ./src/database/mongodb/prisma:/prisma:ro
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - backend-network
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# VOLUMES - Persistência de dados
+# ═══════════════════════════════════════════════════════════════════════════════
 volumes:
-  rainer-portfolio-backend-mongodb-data:
-    name: rainer-portfolio-backend-mongodb-data
-  rainer-portfolio-backend-mongodb-config:
-    name: rainer-portfolio-backend-mongodb-config
-  rainer-portfolio-backend-dynamodb-data:
-    name: rainer-portfolio-backend-dynamodb-data
-  rainer-portfolio-backend-prisma-node-modules:
-    name: rainer-portfolio-backend-prisma-node-modules
+  dynamodb-data:
+    name: rainer-blog-backend-dynamodb-data
+  mongodb-data:
+    name: rainer-blog-backend-mongodb-data
+  mongodb-config:
+    name: rainer-blog-backend-mongodb-config
 
+# ═══════════════════════════════════════════════════════════════════════════════
+# NETWORKS - Rede isolada para os serviços
+# ═══════════════════════════════════════════════════════════════════════════════
 networks:
-  rainer-portfolio-backend-network:
-    name: rainer-portfolio-backend-network
+  backend-network:
+    name: rainer-blog-backend-network
     driver: bridge

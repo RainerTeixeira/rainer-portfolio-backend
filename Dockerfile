@@ -16,7 +16,10 @@ RUN pnpm install --ignore-scripts
 # Copia o código fonte
 COPY . .
 
-# Build da aplicação (sem gerar Prisma Client)
+# Gera Prisma Client (necessário para o TypeScript compilar sem erro)
+RUN pnpm run prisma:generate
+
+# Build da aplicação
 RUN pnpm run build
 
 # Stage de produção
@@ -67,7 +70,7 @@ EXPOSE 4000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:4000/health || exit 1
+    CMD wget --no-verbose --tries=1 --spider http://localhost:4000/api/v1/health || exit 1
 
 # Script de entrada que inicializa os bancos e sobe a aplicação
 COPY --chown=nodejs:nodejs ./scripts/docker-entrypoint.sh /usr/local/bin/

@@ -60,11 +60,11 @@ export class MongoPostRepository implements PostRepository {
     const cursor = this.getCollection().find(filter)
       .sort({ createdAt: -1 });
 
-    if (options.offset) {
+    if (typeof options.offset === 'number' && Number.isFinite(options.offset)) {
       cursor.skip(options.offset);
     }
 
-    if (options.limit) {
+    if (typeof options.limit === 'number' && Number.isFinite(options.limit)) {
       cursor.limit(options.limit);
     }
 

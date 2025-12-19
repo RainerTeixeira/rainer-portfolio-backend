@@ -15,13 +15,15 @@ done
 echo "✅ MongoDB está pronto!"
 
 # Gera Prisma Client em runtime
-echo "🔧 Gerando Prisma Client..."
-npx prisma generate --schema=src/database/mongodb/prisma/schema.prisma
+if [ "$PRISMA_GENERATE_ON_START" = "true" ]; then
+  echo "🔧 Gerando Prisma Client..."
+  npx prisma generate --schema=src/database/mongodb/prisma/schema.prisma
+fi
 
 # Aguarda DynamoDB estar disponível (se estiver usando)
 if [ "$USE_DYNAMODB" = "true" ]; then
   echo "⏳ Aguardando DynamoDB..."
-  while ! nc -z dynamodb 8000; do
+  while ! nc -z dynamodb-local 8000; do
     sleep 0.5
   done
   echo "✅ DynamoDB está pronto!"

@@ -6,21 +6,32 @@ export interface Post {
   id: string;
   title: string;
   slug: string;
-  content: string;
-  excerpt?: string;
-  coverImage?: string;
+  content: any; // JSON content from editor
   authorId: string;
-  categoryId: string;
-  status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+  subcategoryId: string; // Posts belong to subcategories
+  status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED' | 'SCHEDULED' | 'TRASH';
+  featured?: boolean;
+  allowComments?: boolean;
+  pinned?: boolean;
+  priority?: number;
   publishedAt?: Date;
-  tags: string[];
-  readTime: number;
-  viewCount: number;
-  likeCount: number;
-  commentCount: number;
-  isFeatured: boolean;
+  views?: number;
+  likesCount?: number;
+  commentsCount?: number;
+  bookmarksCount?: number;
   createdAt: Date;
   updatedAt: Date;
+  
+  // Optional fields for compatibility
+  excerpt?: string;
+  coverImage?: string;
+  categoryId?: string; // For backward compatibility
+  tags?: string[];
+  readTime?: number;
+  viewCount?: number;
+  likeCount?: number;
+  commentCount?: number;
+  isFeatured?: boolean;
 }
 
 export interface PostRepository {

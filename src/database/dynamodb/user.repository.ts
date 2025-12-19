@@ -12,34 +12,35 @@ interface UserWithKeys extends User {
 
 @Injectable()
 export class DynamoUserRepository implements UserRepository {
+  private readonly tableName = 'portfolio-backend-table-users';
+  
   constructor(private readonly dynamo: DynamoDBService) {}
 
   async create(data: Omit<User, 'createdAt' | 'updatedAt'>): Promise<User> {
     const now = new Date();
     const item: User = {
       ...data,
+      id: data.cognitoSub, // Use cognitoSub as id
       createdAt: now,
       updatedAt: now,
     };
 
     await this.dynamo.put({
-      PK: `USER#${item.id}`,
-      SK: 'PROFILE',
-      GSI1PK: `EMAIL#${item.email}`,
-      GSI1SK: 'PROFILE',
       ...item,
-    });
+    }, this.tableName);
 
     return item;
   }
 
   async findById(id: string): Promise<User | null> {
-    const result = await this.dynamo.get({ PK: `USER#${id}`, SK: 'PROFILE' });
-
+    // In DynamoDB, we use cognitoSub as the primary key
+    // So findById actually searches by cognitoSub
+    const result = await this.dynamo.get({ cognitoSub: id }, this.tableName);
     if (!result) return null;
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { PK, SK, GSI1PK, GSI1SK, ...user } = result as unknown as UserWithKeys;
+    
+    // Ensure id field exists and matches cognitoSub
+    const user = result as any;
+    user.id = user.cognitoSub;
     return user as User;
   }
 
@@ -80,18 +81,18 @@ export class DynamoUserRepository implements UserRepository {
     };
 
     await this.dynamo.put({
-      PK: `USER#${updated.id}`,
-      SK: 'PROFILE',
-      GSI1PK: `EMAIL#${updated.email}`,
-      GSI1SK: 'PROFILE',
       ...updated,
-    });
+    }, this.tableName);
 
     return updated;
   }
 
   async delete(id: string): Promise<void> {
-    await this.dynamo.delete(`USER#${id}`, 'PROFILE');
+    // For DynamoDB single table, we need to delete by the primary key
+    const user = await this.findById(id);
+    if (user) {
+      await this.dynamo.delete(user.cognitoSub, '', this.tableName);
+    }
   }
 
   async isNameTaken(_fullName: string): Promise<boolean> {
@@ -112,8 +113,17 @@ export class DynamoUserRepository implements UserRepository {
   }
 
   private async scanUsers(): Promise<User[]> {
-    // Método auxiliar para scan de usuários
-    // Em produção, isso seria otimizado com queries
-    return [];
+    try {
+      const items = await this.dynamo.scan({}, this.tableName);
+      // Ensure all users have id field matching cognitoSub
+      return items.map(item => {
+        const user = item as any;
+        user.id = user.cognitoSub;
+        return user as User;
+      });
+    } catch (error) {
+      console.error('Error scanning users:', error);
+      return [];
+    }
   }
 }

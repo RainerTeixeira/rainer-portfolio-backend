@@ -14,6 +14,8 @@ interface PostWithKeys extends Post {
 
 @Injectable()
 export class DynamoPostRepository implements PostRepository {
+  private readonly tableName = 'portfolio-backend-table-posts';
+  
   constructor(private readonly dynamo: DynamoDBService) {}
 
   async create(data: Omit<Post, 'createdAt' | 'updatedAt'>): Promise<Post> {
@@ -25,31 +27,20 @@ export class DynamoPostRepository implements PostRepository {
     };
 
     await this.dynamo.put({
-      PK: `POST#${item.id}`,
-      SK: 'PROFILE',
-      GSI1PK: `SLUG#${item.slug}`,
-      GSI1SK: 'POST',
-      GSI2PK: `AUTHOR#${item.authorId}`,
-      GSI2SK: item.publishedAt?.toISOString() || item.createdAt.toISOString(),
       ...item,
-    });
+    }, this.tableName);
 
     return item;
   }
 
   async findById(id: string): Promise<Post | null> {
-    const result = await this.dynamo.get({ PK: `POST#${id}`, SK: 'PROFILE' });
-
+    const result = await this.dynamo.get({ id }, this.tableName);
     if (!result) return null;
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { PK, SK, GSI1PK, GSI1SK, GSI2PK, GSI2SK, ...post } = result as unknown as PostWithKeys;
-    return post as Post;
+    return result as Post;
   }
 
   async findBySlug(slug: string): Promise<Post | null> {
-    // Implementação simplificada - em produção usaria GSI1
-    const posts = await this.scanPosts();
+    const posts = await this.findAll();
     return posts.find(p => p.slug === slug) || null;
   }
 
@@ -60,27 +51,31 @@ export class DynamoPostRepository implements PostRepository {
     limit?: number;
     offset?: number;
   } = {}): Promise<Post[]> {
-    // Implementação simplificada - em produção usaria queries
-    let posts = await this.scanPosts();
+    try {
+      let posts = await this.dynamo.scan({}, this.tableName) as Post[];
 
-    if (options.status) {
-      posts = posts.filter(p => p.status === options.status);
-    }
-    if (options.authorId) {
-      posts = posts.filter(p => p.authorId === options.authorId);
-    }
-    if (options.categoryId) {
-      posts = posts.filter(p => p.categoryId === options.categoryId);
-    }
+      if (options.status) {
+        posts = posts.filter(p => p.status === options.status);
+      }
+      if (options.authorId) {
+        posts = posts.filter(p => p.authorId === options.authorId);
+      }
+      if (options.categoryId) {
+        posts = posts.filter(p => p.subcategoryId === options.categoryId);
+      }
 
-    if (options.offset) {
-      posts = posts.slice(options.offset);
-    }
-    if (options.limit) {
-      posts = posts.slice(0, options.limit);
-    }
+      if (options.offset) {
+        posts = posts.slice(options.offset);
+      }
+      if (options.limit) {
+        posts = posts.slice(0, options.limit);
+      }
 
-    return posts;
+      return posts;
+    } catch (error) {
+      console.error('Error scanning posts:', error);
+      return [];
+    }
   }
 
   async update(id: string, data: Partial<Post>): Promise<Post | null> {
@@ -94,60 +89,53 @@ export class DynamoPostRepository implements PostRepository {
     };
 
     await this.dynamo.put({
-      PK: `POST#${updated.id}`,
-      SK: 'PROFILE',
-      GSI1PK: `SLUG#${updated.slug}`,
-      GSI1SK: 'POST',
-      GSI2PK: `AUTHOR#${updated.authorId}`,
-      GSI2SK: updated.publishedAt?.toISOString() || updated.createdAt.toISOString(),
       ...updated,
-    });
+    }, this.tableName);
 
     return updated;
   }
 
   async delete(id: string): Promise<void> {
-    await this.dynamo.delete(`POST#${id}`, 'PROFILE');
+    const post = await this.findById(id);
+    if (post) {
+      await this.dynamo.delete(id, '', this.tableName);
+    }
   }
 
   async incrementViewCount(id: string): Promise<void> {
     const post = await this.findById(id);
     if (!post) throw new Error('Post not found');
     
-    await this.update(id, { viewCount: post.viewCount + 1 });
+    await this.update(id, { views: (post.views || 0) + 1 });
   }
 
   async incrementLikeCount(id: string): Promise<void> {
     const post = await this.findById(id);
     if (!post) throw new Error('Post not found');
     
-    await this.update(id, { likeCount: post.likeCount + 1 });
+    await this.update(id, { likesCount: (post.likesCount || 0) + 1 });
   }
 
   async decrementLikeCount(id: string): Promise<void> {
     const post = await this.findById(id);
     if (!post) throw new Error('Post not found');
     
-    await this.update(id, { likeCount: Math.max(0, post.likeCount - 1) });
+    await this.update(id, { likesCount: Math.max(0, (post.likesCount || 0) - 1) });
   }
 
   async incrementCommentCount(id: string): Promise<void> {
     const post = await this.findById(id);
     if (!post) throw new Error('Post not found');
     
-    await this.update(id, { commentCount: post.commentCount + 1 });
+    await this.update(id, { commentsCount: (post.commentsCount || 0) + 1 });
   }
 
   async decrementCommentCount(id: string): Promise<void> {
     const post = await this.findById(id);
     if (!post) throw new Error('Post not found');
     
-    await this.update(id, { commentCount: Math.max(0, post.commentCount - 1) });
+    await this.update(id, { commentsCount: Math.max(0, (post.commentsCount || 0) - 1) });
   }
 
-  private async scanPosts(): Promise<Post[]> {
-    // Método auxiliar para scan de posts
-    // Em produção, isso seria otimizado com queries
-    return [];
-  }
+
 }

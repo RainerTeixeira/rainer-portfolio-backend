@@ -8,11 +8,11 @@
  * ```bash
  * npm run dynamodb:create-tables
  * # ou
- * npx tsx src/prisma/dynamodb.tables.ts
+ * npx tsx scripts/create-dynamodb-tables.ts
  * ```
  * 
  * @fileoverview Criação de tabelas DynamoDB
- * @module prisma/dynamodb.tables
+ * @module scripts/create-dynamodb-tables
  */
 
 import { 
@@ -22,7 +22,18 @@ import {
   DescribeTableCommand,
   waitUntilTableExists
 } from '@aws-sdk/client-dynamodb';
-import { env, TABLES } from '../config/env.js';
+import { config } from '../src/common/config/index.js';
+
+// Nomes das tabelas
+const TABLES = {
+  USERS: `${config.database.tableName}-users`,
+  POSTS: `${config.database.tableName}-posts`,
+  CATEGORIES: `${config.database.tableName}-categories`,
+  COMMENTS: `${config.database.tableName}-comments`,
+  LIKES: `${config.database.tableName}-likes`,
+  BOOKMARKS: `${config.database.tableName}-bookmarks`,
+  NOTIFICATIONS: `${config.database.tableName}-notifications`,
+};
 
 /**
  * Detecta automaticamente o ambiente
@@ -34,15 +45,15 @@ const isRunningInLambda = !!(
   process.env.AWS_LAMBDA_FUNCTION_NAME ||
   process.env.AWS_EXECUTION_ENV
 );
-const isLocalEnvironment = !isRunningInLambda && !!env.DYNAMODB_ENDPOINT;
+const isLocalEnvironment = !isRunningInLambda && config.aws.useLocalDynamoDB;
 const environment = isLocalEnvironment ? 'DynamoDB Local' : 'AWS DynamoDB';
 
 /**
  * Cliente DynamoDB para operações administrativas
  */
 const client = new DynamoDBClient({
-  region: env.AWS_REGION,
-  endpoint: env.DYNAMODB_ENDPOINT || undefined,
+  region: config.aws.region,
+  endpoint: config.aws.useLocalDynamoDB ? process.env.DYNAMODB_ENDPOINT : undefined,
   credentials: isLocalEnvironment ? {
     accessKeyId: 'fakeAccessKeyId',
     secretAccessKey: 'fakeSecretAccessKey',
@@ -63,7 +74,7 @@ const client = new DynamoDBClient({
  * │ Tabela          │ RCU │ WCU │ Justificativa            │
  * ├─────────────────┼─────┼─────┼──────────────────────────┤
  * │ Users           │  5  │  5  │ ⭐ Mais acessado (auth)  │
- * │ Posts           │  5  │  5  │ ⭐ Mais acessado (feed) │
+ * │ Posts           │  5  │  5  │ ⭐ Mais acessado (feed)  │
  * │ Categories      │  3  │  3  │ Navegação frequente      │
  * │ Comments        │  3  │  3  │ Interações médias        │
  * │ Likes           │  3  │  3  │ Curtidas frequentes      │
@@ -98,22 +109,9 @@ const baseTableDefinitions = [
     ],
     AttributeDefinitions: [
       { AttributeName: 'cognitoSub', AttributeType: 'S' },
-      { AttributeName: 'email', AttributeType: 'S' },
-      // Novo mundo: nickname salvo na aplicação (Mongo/Prisma/Dynamo)
       { AttributeName: 'nickname', AttributeType: 'S' },
     ],
     GlobalSecondaryIndexes: [
-      {
-        IndexName: 'EmailIndex',
-        KeySchema: [
-          { AttributeName: 'email', KeyType: 'HASH' },
-        ],
-        Projection: { ProjectionType: 'ALL' },
-        ProvisionedThroughput: {
-          ReadCapacityUnits: 5,
-          WriteCapacityUnits: 5,
-        },
-      },
       {
         IndexName: 'NicknameIndex',
         KeySchema: [
@@ -121,8 +119,8 @@ const baseTableDefinitions = [
         ],
         Projection: { ProjectionType: 'ALL' },
         ProvisionedThroughput: {
-          ReadCapacityUnits: 5,
-          WriteCapacityUnits: 5,
+          ReadCapacityUnits: 2,
+          WriteCapacityUnits: 2,
         },
       },
     ],
@@ -152,8 +150,8 @@ const baseTableDefinitions = [
         ],
         Projection: { ProjectionType: 'ALL' },
         ProvisionedThroughput: {
-          ReadCapacityUnits: 5,
-          WriteCapacityUnits: 5,
+          ReadCapacityUnits: 2,
+          WriteCapacityUnits: 2,
         },
       },
       {
@@ -164,8 +162,8 @@ const baseTableDefinitions = [
         ],
         Projection: { ProjectionType: 'ALL' },
         ProvisionedThroughput: {
-          ReadCapacityUnits: 5,
-          WriteCapacityUnits: 5,
+          ReadCapacityUnits: 2,
+          WriteCapacityUnits: 2,
         },
       },
       {
@@ -176,8 +174,8 @@ const baseTableDefinitions = [
         ],
         Projection: { ProjectionType: 'ALL' },
         ProvisionedThroughput: {
-          ReadCapacityUnits: 5,
-          WriteCapacityUnits: 5,
+          ReadCapacityUnits: 2,
+          WriteCapacityUnits: 2,
         },
       },
       {
@@ -188,8 +186,8 @@ const baseTableDefinitions = [
         ],
         Projection: { ProjectionType: 'ALL' },
         ProvisionedThroughput: {
-          ReadCapacityUnits: 5,
-          WriteCapacityUnits: 5,
+          ReadCapacityUnits: 2,
+          WriteCapacityUnits: 2,
         },
       },
     ],
@@ -216,8 +214,8 @@ const baseTableDefinitions = [
         ],
         Projection: { ProjectionType: 'ALL' },
         ProvisionedThroughput: {
-          ReadCapacityUnits: 3,
-          WriteCapacityUnits: 3,
+          ReadCapacityUnits: 2,
+          WriteCapacityUnits: 1,
         },
       },
       {
@@ -227,8 +225,8 @@ const baseTableDefinitions = [
         ],
         Projection: { ProjectionType: 'ALL' },
         ProvisionedThroughput: {
-          ReadCapacityUnits: 3,
-          WriteCapacityUnits: 3,
+          ReadCapacityUnits: 1,
+          WriteCapacityUnits: 1,
         },
       },
     ],
@@ -257,8 +255,8 @@ const baseTableDefinitions = [
         ],
         Projection: { ProjectionType: 'ALL' },
         ProvisionedThroughput: {
-          ReadCapacityUnits: 3,
-          WriteCapacityUnits: 3,
+          ReadCapacityUnits: 2,
+          WriteCapacityUnits: 2,
         },
       },
       {
@@ -269,8 +267,8 @@ const baseTableDefinitions = [
         ],
         Projection: { ProjectionType: 'ALL' },
         ProvisionedThroughput: {
-          ReadCapacityUnits: 3,
-          WriteCapacityUnits: 3,
+          ReadCapacityUnits: 1,
+          WriteCapacityUnits: 1,
         },
       },
     ],
@@ -297,8 +295,8 @@ const baseTableDefinitions = [
         ],
         Projection: { ProjectionType: 'ALL' },
         ProvisionedThroughput: {
-          ReadCapacityUnits: 3,
-          WriteCapacityUnits: 3,
+          ReadCapacityUnits: 2,
+          WriteCapacityUnits: 2,
         },
       },
       {
@@ -308,8 +306,8 @@ const baseTableDefinitions = [
         ],
         Projection: { ProjectionType: 'ALL' },
         ProvisionedThroughput: {
-          ReadCapacityUnits: 3,
-          WriteCapacityUnits: 3,
+          ReadCapacityUnits: 1,
+          WriteCapacityUnits: 1,
         },
       },
     ],
@@ -327,6 +325,7 @@ const baseTableDefinitions = [
       { AttributeName: 'id', AttributeType: 'S' },
       { AttributeName: 'postId', AttributeType: 'S' },
       { AttributeName: 'userId', AttributeType: 'S' },
+      { AttributeName: 'createdAt', AttributeType: 'S' },
     ],
     GlobalSecondaryIndexes: [
       {
@@ -336,19 +335,20 @@ const baseTableDefinitions = [
         ],
         Projection: { ProjectionType: 'ALL' },
         ProvisionedThroughput: {
-          ReadCapacityUnits: 3,
-          WriteCapacityUnits: 3,
+          ReadCapacityUnits: 1,
+          WriteCapacityUnits: 1,
         },
       },
       {
         IndexName: 'UserIndex',
         KeySchema: [
           { AttributeName: 'userId', KeyType: 'HASH' },
+          { AttributeName: 'createdAt', KeyType: 'RANGE' },
         ],
         Projection: { ProjectionType: 'ALL' },
         ProvisionedThroughput: {
-          ReadCapacityUnits: 3,
-          WriteCapacityUnits: 3,
+          ReadCapacityUnits: 2,
+          WriteCapacityUnits: 2,
         },
       },
     ],
@@ -397,7 +397,7 @@ async function tableExists(tableName: string): Promise<boolean> {
     await client.send(command);
     return true;
   } catch (error: any) {
-    if (error.fullName === 'ResourceNotFoundException') {
+    if (error.name === 'ResourceNotFoundException') {
       return false;
     }
     throw error;
@@ -458,9 +458,9 @@ async function main() {
   console.log('═══════════════════════════════════════════════════════════════════════════\n');
 
   console.log(`🌍 Ambiente: ${environment}`);
-  console.log(`🔗 Endpoint: ${env.DYNAMODB_ENDPOINT || 'AWS Cloud (padrão)'}`);
-  console.log(`📊 Prefixo das tabelas: ${env.DYNAMODB_TABLE_PREFIX}`);
-  console.log(`🌎 Região: ${env.AWS_REGION}`);
+  console.log(`🔗 Endpoint: ${process.env.DYNAMODB_ENDPOINT || 'AWS Cloud (padrão)'}`);
+  console.log(`📊 Nome base das tabelas: ${config.database.tableName}`);
+  console.log(`🌎 Região: ${config.aws.region}`);
   console.log(`💰 Billing Mode: Provisioned (FREE TIER PERMANENTE)`);
   console.log(`⚡ Capacidade Total: 25 RCU + 25 WCU distribuídos entre 7 tabelas\n`);
 
@@ -562,4 +562,3 @@ main()
     console.error('\n❌ Erro ao executar script:', error);
     process.exit(1);
   });
-

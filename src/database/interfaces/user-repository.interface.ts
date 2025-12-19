@@ -36,20 +36,10 @@
  * @since 1.0.0
  */
 export interface User {
-  /** ID único do usuário (UUID) */
-  id: string;
-  /** Sub do AWS Cognito (identificador único no Cognito) */
+  /** Sub do AWS Cognito (identificador único no Cognito) - Primary Key */
   cognitoSub: string;
-  /** Nome de exibição (pode ser diferente do fullName) */
-  name: string;
   /** Nome completo do usuário */
   fullName: string;
-  /** Username único (opcional, usado para login alternativo) */
-  username?: string;
-  /** Email do usuário (único no sistema) */
-  email: string;
-  /** Hash da senha (armazenado com bcrypt) */
-  passwordHash: string;
   /** Nickname único (usado em URLs e menções) */
   nickname?: string;
   /** URL do avatar do usuário */
@@ -70,16 +60,28 @@ export interface User {
   postsCount: number;
   /** Contador de comentários feitos */
   commentsCount: number;
-  /** Contador de curtidas recebidas */
-  likesCount: number;
-  /** Contador de seguidores */
-  followersCount: number;
-  /** Contador de usuários seguidos */
-  followingCount: number;
   /** Data de criação do usuário */
   createdAt: Date;
   /** Data da última atualização */
   updatedAt: Date;
+  
+  // Campos opcionais para compatibilidade
+  /** ID único do usuário (UUID) - Para compatibilidade */
+  id?: string;
+  /** Nome de exibição - Para compatibilidade */
+  name?: string;
+  /** Username único - Para compatibilidade */
+  username?: string;
+  /** Email do usuário - Vem do Cognito JWT */
+  email?: string;
+  /** Hash da senha - Gerenciado pelo Cognito */
+  passwordHash?: string;
+  /** Contador de curtidas recebidas - Para compatibilidade */
+  likesCount?: number;
+  /** Contador de seguidores - Para compatibilidade */
+  followersCount?: number;
+  /** Contador de usuários seguidos - Para compatibilidade */
+  followingCount?: number;
 }
 
 /**
