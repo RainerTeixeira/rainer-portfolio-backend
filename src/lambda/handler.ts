@@ -16,7 +16,7 @@ import awsLambdaFastify from '@fastify/aws-lambda';
 import { INestApplication } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter } from '@nestjs/platform-fastify';
-import { AppModule } from '../app.module';
+import { LambdaAppModule } from './lambda-app.module';
 import { applyGlobalAppConfig } from '../common/bootstrap/app.bootstrap';
 
 export interface FunctionUrlEvent {
@@ -81,7 +81,7 @@ async function bootstrap(): Promise<INestApplication> {
   }
 
   const adapter = new FastifyAdapter();
-  const instance = await NestFactory.create(AppModule, adapter, {
+  const instance = await NestFactory.create(LambdaAppModule, adapter, {
     logger: isProd ? ['error'] : ['error', 'warn'],
   });
 

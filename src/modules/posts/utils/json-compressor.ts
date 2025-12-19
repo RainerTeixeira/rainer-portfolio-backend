@@ -11,8 +11,33 @@
  * - Remoção de espaços desnecessários
  * - Estruturas otimizadas por tipo de nó
  * 
- * @module utils/json-compressor
+ * @module modules/posts/utils/json-compressor
  */
+
+type UnknownRecord = Record<string, unknown>;
+
+type TipTapAttrs = Record<string, unknown>;
+
+interface TipTapMark {
+  type: string;
+  attrs?: TipTapAttrs;
+}
+
+interface TipTapNode {
+  type: string;
+  attrs?: TipTapAttrs;
+  content?: TipTapNode[];
+  text?: string;
+  marks?: TipTapMark[];
+}
+
+function isRecord(value: unknown): value is UnknownRecord {
+  return typeof value === 'object' && value !== null;
+}
+
+function isTipTapNode(value: unknown): value is TipTapNode {
+  return isRecord(value) && typeof value.type === 'string';
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // MAPEAMENTO DE CHAVES (Compressão)
@@ -305,9 +330,9 @@ function restoreYouTubeUrl(videoId: string, startTime?: number): string {
  * compressNode({ type: 'paragraph', content: [{ type: 'text', text: 'Olá' }] });
  * // { t: 'p', c: [ { t: 'Olá' } ] }
  */
-function compressNode(node: any): any {
-  if (!node || typeof node !== 'object') return node;
-  
+function compressNode(node: unknown): unknown {
+  if (!isTipTapNode(node)) return node;
+
   const nodeType = node.type;
   const compressedType = NODE_TYPE_MAP[nodeType] || nodeType;
   
@@ -321,7 +346,7 @@ function compressNode(node: any): any {
   
   // Heading
   if (nodeType === 'heading') {
-    const level = node.attrs?.level || 1;
+    const level = typeof node.attrs?.level === 'number' ? node.attrs.level : 1;
     return {
       t: compressedType,
       l: level,
@@ -356,10 +381,10 @@ function compressNode(node: any): any {
   
   // Image (Cloudinary)
   if (nodeType === 'image') {
-    const src = node.attrs?.src || '';
+    const src = typeof node.attrs?.src === 'string' ? node.attrs.src : '';
     const optimizedSrc = optimizeCloudinaryUrl(src);
     
-    const result: any = {
+    const result: UnknownRecord = {
       t: compressedType,
       s: optimizedSrc,
     };
@@ -375,7 +400,7 @@ function compressNode(node: any): any {
   
   // Code Block
   if (nodeType === 'codeBlock') {
-    const lang = node.attrs?.language || 'plaintext';
+    const lang = typeof node.attrs?.language === 'string' ? node.attrs.language : 'plaintext';
     const code = extractTextContent(node.content || []);
     
     return {
@@ -412,11 +437,11 @@ function compressNode(node: any): any {
   // YouTube Video
   if (nodeType === 'youtube' || nodeType === 'video') {
     // Priorizar videoId direto se disponível, senão extrair do src
-    const videoId = node.attrs?.videoId || extractYouTubeVideoId(node.attrs?.src || '') || '';
-    const src = node.attrs?.src || '';
-    const startTime = node.attrs?.startTime || extractYouTubeStartTime(src);
+    const src = typeof node.attrs?.src === 'string' ? node.attrs.src : '';
+    const videoId = typeof node.attrs?.videoId === 'string' ? node.attrs.videoId : (extractYouTubeVideoId(src) || '');
+    const startTime = typeof node.attrs?.startTime === 'number' ? node.attrs.startTime : extractYouTubeStartTime(src);
     
-    const result: any = {
+    const result: UnknownRecord = {
       t: 'yt',
       vid: videoId,
     };
@@ -451,7 +476,7 @@ function compressNode(node: any): any {
   }
   
   // Tipo genérico
-  const result: any = {
+  const result: UnknownRecord = {
     t: compressedType,
   };
   
@@ -481,23 +506,27 @@ function compressNode(node: any): any {
  * compressInlineContent([{ type: 'text', text: 'Hi', marks: [{ type: 'bold' }] }]);
  * // [ { t: 'Hi', m: ['b'] } ]
  */
-function compressInlineContent(nodes: any[]): any[] {
-  return nodes.map(node => {
+function compressInlineContent(nodes: unknown[]): unknown[] {
+  return nodes.map((node) => {
     // Text node
-    if (node.type === 'text') {
-      const result: any = {
-        t: node.text || '',
+    if (isTipTapNode(node) && node.type === 'text') {
+      const result: UnknownRecord = {
+        t: typeof node.text === 'string' ? node.text : '',
       };
       
       // Marks (formatação)
       if (node.marks && node.marks.length > 0) {
-        result.m = node.marks.map((mark: any) => {
+        result.m = node.marks.map((mark) => {
+          if (!isRecord(mark) || typeof mark.type !== 'string') {
+            return mark;
+          }
+
           const markType = NODE_TYPE_MAP[mark.type] || mark.type;
           
           if (mark.type === 'link') {
             return {
               t: markType,
-              h: mark.attrs?.href || '',
+              h: typeof mark.attrs?.href === 'string' ? mark.attrs.href : '',
               ...(mark.attrs?.target ? { tg: mark.attrs.target } : {}),
             };
           }
@@ -510,7 +539,7 @@ function compressInlineContent(nodes: any[]): any[] {
     }
     
     // Hard break
-    if (node.type === 'hardBreak') {
+    if (isTipTapNode(node) && node.type === 'hardBreak') {
       return { t: 'br' };
     }
     
@@ -527,8 +556,11 @@ function compressInlineContent(nodes: any[]): any[] {
  * @param attrs - Objeto de atributos TipTap.
  * @returns Objeto com chaves minificadas.
  */
-function compressAttrs(attrs: any): any {
-  const compressed: any = {};
+function compressAttrs(attrs: unknown): UnknownRecord {
+  const compressed: UnknownRecord = {};
+  if (!isRecord(attrs)) {
+    return compressed;
+  }
   
   for (const [key, value] of Object.entries(attrs)) {
     const compressedKey = KEY_MAP[key] || key;
@@ -547,12 +579,12 @@ function compressAttrs(attrs: any): any {
  * @param nodes - Array de nós TipTap (inline ou block) contendo texto.
  * @returns String com o conteúdo textual agregado.
  */
-function extractTextContent(nodes: any[]): string {
+function extractTextContent(nodes: unknown[]): string {
   return nodes
     .map(node => {
       if (typeof node === 'string') return node;
-      if (node.type === 'text') return node.text || '';
-      if (node.content) return extractTextContent(node.content);
+      if (isTipTapNode(node) && node.type === 'text') return typeof node.text === 'string' ? node.text : '';
+      if (isTipTapNode(node) && node.content) return extractTextContent(node.content);
       return '';
     })
     .join('');
@@ -577,17 +609,17 @@ function extractTextContent(nodes: any[]): string {
  * @param options - Opções de descompressão (ex.: `cloudName` para URLs Cloudinary).
  * @returns Nó TipTap expandido.
  */
-function decompressNode(node: any, options?: { cloudName?: string }): any {
-  if (!node || typeof node !== 'object') return node;
+function decompressNode(node: unknown, options?: { cloudName?: string }): unknown {
+  if (!isRecord(node)) return node;
   
-  const compressedType = node.t;
+  const compressedType = typeof node.t === 'string' ? node.t : '';
   const originalType = NODE_TYPE_MAP_REVERSE[compressedType] || compressedType;
   
   // Documento raiz
   if (compressedType === 'd') {
     return {
       type: 'doc',
-      content: (node.c || []).map((n: any) => decompressNode(n, options)),
+      content: (Array.isArray(node.c) ? node.c : []).map((n) => decompressNode(n, options)),
     };
   }
   
@@ -599,7 +631,7 @@ function decompressNode(node: any, options?: { cloudName?: string }): any {
         level: node.l || 1,
         ...(node.id ? { id: node.id } : {}),
       },
-      content: decompressInlineContent(node.c || [], options),
+      content: decompressInlineContent(Array.isArray(node.c) ? node.c : [], options),
     };
   }
   
@@ -607,7 +639,7 @@ function decompressNode(node: any, options?: { cloudName?: string }): any {
   if (compressedType === 'p') {
     return {
       type: 'paragraph',
-      content: decompressInlineContent(node.c || [], options),
+      content: decompressInlineContent(Array.isArray(node.c) ? node.c : [], options),
     };
   }
   
@@ -615,7 +647,7 @@ function decompressNode(node: any, options?: { cloudName?: string }): any {
   if (compressedType === 'ul' || compressedType === 'ol') {
     return {
       type: compressedType === 'ul' ? 'bulletList' : 'orderedList',
-      content: (node.c || []).map((n: any) => decompressNode(n, options)),
+      content: (Array.isArray(node.c) ? node.c : []).map((n) => decompressNode(n, options)),
     };
   }
   
@@ -623,15 +655,15 @@ function decompressNode(node: any, options?: { cloudName?: string }): any {
   if (compressedType === 'li') {
     return {
       type: 'listItem',
-      content: (node.c || []).map((n: any) => decompressNode(n, options)),
+      content: (Array.isArray(node.c) ? node.c : []).map((n) => decompressNode(n, options)),
     };
   }
   
   // Image
   if (compressedType === 'i') {
-    const src = restoreCloudinaryUrl(node.s || '', options?.cloudName);
+    const src = restoreCloudinaryUrl(typeof node.s === 'string' ? node.s : '', options?.cloudName);
     
-    const attrs: any = { src };
+    const attrs: UnknownRecord = { src };
     if (node.a) attrs.alt = node.a;
     if (node.tt) attrs.title = node.tt;
     if (node.w) attrs.width = node.w;
@@ -664,7 +696,7 @@ function decompressNode(node: any, options?: { cloudName?: string }): any {
   if (compressedType === 'tb') {
     return {
       type: 'table',
-      content: (node.c || []).map((n: any) => decompressNode(n, options)),
+      content: (Array.isArray(node.c) ? node.c : []).map((n) => decompressNode(n, options)),
     };
   }
   
@@ -672,7 +704,7 @@ function decompressNode(node: any, options?: { cloudName?: string }): any {
   if (compressedType === 'tr') {
     return {
       type: 'tableRow',
-      content: (node.c || []).map((n: any) => decompressNode(n, options)),
+      content: (Array.isArray(node.c) ? node.c : []).map((n) => decompressNode(n, options)),
     };
   }
   
@@ -680,14 +712,14 @@ function decompressNode(node: any, options?: { cloudName?: string }): any {
   if (compressedType === 'td' || compressedType === 'th') {
     return {
       type: compressedType === 'th' ? 'tableHeader' : 'tableCell',
-      content: decompressInlineContent(node.c || [], options),
+      content: decompressInlineContent(Array.isArray(node.c) ? node.c : [], options),
     };
   }
   
   // YouTube Video
   if (compressedType === 'yt') {
-    const videoId = node.vid || '';
-    const startTime = node.st;
+    const videoId = typeof node.vid === 'string' ? node.vid : '';
+    const startTime = typeof node.st === 'number' ? node.st : undefined;
     const src = restoreYouTubeUrl(videoId, startTime);
     
     return {
@@ -704,7 +736,7 @@ function decompressNode(node: any, options?: { cloudName?: string }): any {
   if (compressedType === 'bq') {
     return {
       type: 'blockquote',
-      content: (node.c || []).map((n: any) => decompressNode(n, options)),
+      content: (Array.isArray(node.c) ? node.c : []).map((n) => decompressNode(n, options)),
     };
   }
   
@@ -723,12 +755,12 @@ function decompressNode(node: any, options?: { cloudName?: string }): any {
   }
   
   // Tipo genérico
-  const result: any = {
+  const result: UnknownRecord = {
     type: originalType,
   };
   
   if (node.c && Array.isArray(node.c)) {
-    result.content = node.c.map((n: any) => decompressNode(n, options));
+    result.content = node.c.map((n) => decompressNode(n, options));
   }
   
   if (node.a) {
@@ -751,8 +783,8 @@ function decompressNode(node: any, options?: { cloudName?: string }): any {
  * @param options - Opções de descompressão (ex.: `cloudName` para URLs Cloudinary em nós aninhados).
  * @returns Array de nós TipTap restaurados.
  */
-function decompressInlineContent(nodes: any[], options?: { cloudName?: string }): any[] {
-  return nodes.map(node => {
+function decompressInlineContent(nodes: unknown[], options?: { cloudName?: string }): unknown[] {
+  return nodes.map((node) => {
     // String simples (texto direto) - caso raro, mas suportado
     if (typeof node === 'string') {
       return {
@@ -762,33 +794,33 @@ function decompressInlineContent(nodes: any[], options?: { cloudName?: string })
     }
     
     // Objeto com texto (texto com ou sem formatação)
-    if (typeof node === 'object' && node.t && typeof node.t === 'string' && !node.c) {
-      const result: any = {
+    if (isRecord(node) && typeof node.t === 'string' && !('c' in node)) {
+      const result: UnknownRecord = {
         type: 'text',
         text: node.t,
       };
       
       // Marks (formatação) - só adiciona se existir
-      if (node.m && Array.isArray(node.m) && node.m.length > 0) {
-        result.marks = node.m.map((mark: any) => {
+      if (Array.isArray(node.m) && node.m.length > 0) {
+        result.marks = node.m.map((mark) => {
           if (typeof mark === 'string') {
             return {
               type: NODE_TYPE_MAP_REVERSE[mark] || mark,
             };
           }
           
-          if (mark.t === 'ln' || mark.t === 'link') {
+          if (isRecord(mark) && (mark.t === 'ln' || mark.t === 'link')) {
             return {
               type: 'link',
               attrs: {
-                href: mark.h || '',
+                href: typeof mark.h === 'string' ? mark.h : '',
                 ...(mark.tg ? { target: mark.tg } : {}),
               },
             };
           }
           
           return {
-            type: NODE_TYPE_MAP_REVERSE[mark.t] || mark.t,
+            type: isRecord(mark) && typeof mark.t === 'string' ? (NODE_TYPE_MAP_REVERSE[mark.t] || mark.t) : 'unknown',
           };
         });
       }
@@ -797,7 +829,7 @@ function decompressInlineContent(nodes: any[], options?: { cloudName?: string })
     }
     
     // Hard break
-    if (node.t === 'br') {
+    if (isRecord(node) && node.t === 'br') {
       return {
         type: 'hardBreak',
       };
@@ -813,8 +845,11 @@ function decompressInlineContent(nodes: any[], options?: { cloudName?: string })
  * @param attrs - Objeto de atributos com chaves minificadas.
  * @returns Objeto `attrs` com chaves expandidas.
  */
-function decompressAttrs(attrs: any): any {
-  const decompressed: any = {};
+function decompressAttrs(attrs: unknown): UnknownRecord {
+  const decompressed: UnknownRecord = {};
+  if (!isRecord(attrs)) {
+    return decompressed;
+  }
   
   for (const [key, value] of Object.entries(attrs)) {
     const originalKey = KEY_MAP_REVERSE[key] || key;
@@ -836,6 +871,7 @@ function decompressAttrs(attrs: any): any {
  */
 export interface CompressionOptions {
   cloudName?: string;
+  onError?: (error: unknown) => void;
 }
 
 /**
@@ -871,7 +907,7 @@ export interface CompressionResult {
  *
  * @public
  */
-export function compressContent(content: any): string {
+export function compressContent(content: unknown, options?: CompressionOptions): string {
   try {
     let parsed = content;
     if (typeof content === 'string') {
@@ -881,7 +917,7 @@ export function compressContent(content: any): string {
     const compressed = compressNode(parsed);
     return JSON.stringify(compressed);
   } catch (error) {
-    console.error('Erro ao comprimir conteúdo:', error);
+    options?.onError?.(error);
     return typeof content === 'string' ? content : JSON.stringify(content);
   }
 }
@@ -905,12 +941,12 @@ export function compressContent(content: any): string {
 export function decompressContent(
   compressedContent: string,
   options?: CompressionOptions
-): any {
+): unknown {
   try {
     const parsed = JSON.parse(compressedContent);
     return decompressNode(parsed, options);
   } catch (error) {
-    console.error('Erro ao descomprimir conteúdo:', error);
+    options?.onError?.(error);
     try {
       return JSON.parse(compressedContent);
     } catch {
@@ -940,9 +976,9 @@ export function decompressContent(
  *
  * @public
  */
-export function compressWithStats(content: any): CompressionResult {
+export function compressWithStats(content: unknown, options?: CompressionOptions): CompressionResult {
   const original = typeof content === 'string' ? content : JSON.stringify(content);
-  const compressed = compressContent(content);
+  const compressed = compressContent(content, options);
   
   const originalSize = Buffer.byteLength(original, 'utf8');
   const compressedSize = Buffer.byteLength(compressed, 'utf8');
