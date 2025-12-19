@@ -26,10 +26,14 @@ export class LikesService {
   /**
    * Curte um post para um usuário (idempotente).
    *
+   * Por que isso é idempotente:
+   * - Evita duplicidade em cenários de clique duplo, retry de rede ou concorrência.
+   * - Simplifica o frontend: chamar “curtir” várias vezes não cria lixo.
+   *
    * @param {CreateLikeDto} dto Dados do like.
    * @returns {Promise<unknown>} Like criado ou existente.
    */
-  async likePost(dto: CreateLikeDto) {
+  async likePost(dto: CreateLikeDto): Promise<unknown> {
     // Verifica se já existe
     const existing = await this.likesRepo.findByUserAndPost(dto.userId, dto.postId!);
     if (existing) {
@@ -47,10 +51,12 @@ export class LikesService {
   /**
    * Curte um comentário para um usuário (idempotente).
    *
+   * Mesmo racional do `likePost`: múltiplas chamadas devem resultar em um único registro.
+   *
    * @param {CreateLikeDto} dto Dados do like.
    * @returns {Promise<unknown>} Like criado ou existente.
    */
-  async likeComment(dto: CreateLikeDto) {
+  async likeComment(dto: CreateLikeDto): Promise<unknown> {
     // Verifica se já existe
     const existing = await this.likesRepo.findByUserAndComment(dto.userId, dto.commentId!);
     if (existing) {
@@ -72,7 +78,7 @@ export class LikesService {
    * @param {string} postId ID do post.
    * @returns {Promise<void>} Conclusão da operação.
    */
-  async unlikePost(userId: string, postId: string) {
+  async unlikePost(userId: string, postId: string): Promise<void> {
     await this.likesRepo.deleteByUserAndPost(userId, postId);
   }
 
@@ -83,7 +89,7 @@ export class LikesService {
    * @param {string} commentId ID do comentário.
    * @returns {Promise<void>} Conclusão da operação.
    */
-  async unlikeComment(userId: string, commentId: string) {
+  async unlikeComment(userId: string, commentId: string): Promise<void> {
     await this.likesRepo.deleteByUserAndComment(userId, commentId);
   }
 
@@ -93,7 +99,7 @@ export class LikesService {
    * @param {string} id ID do like.
    * @returns {Promise<unknown>} Like encontrado.
    */
-  async getLikeById(id: string) {
+  async getLikeById(id: string): Promise<unknown> {
     return this.likesRepo.findById(id);
   }
 
@@ -103,7 +109,7 @@ export class LikesService {
    * @param {string} postId ID do post.
    * @returns {Promise<unknown>} Lista de likes.
    */
-  async getPostLikes(postId: string) {
+  async getPostLikes(postId: string): Promise<unknown> {
     return this.likesRepo.findByPost(postId);
   }
 
@@ -113,7 +119,7 @@ export class LikesService {
    * @param {string} commentId ID do comentário.
    * @returns {Promise<unknown>} Lista de likes.
    */
-  async getCommentLikes(commentId: string) {
+  async getCommentLikes(commentId: string): Promise<unknown> {
     return this.likesRepo.findByComment(commentId);
   }
 
@@ -123,7 +129,7 @@ export class LikesService {
    * @param {string} userId ID do usuário.
    * @returns {Promise<unknown>} Lista de likes.
    */
-  async getUserLikes(userId: string) {
+  async getUserLikes(userId: string): Promise<unknown> {
     return this.likesRepo.findByUser(userId);
   }
 
@@ -134,7 +140,7 @@ export class LikesService {
    * @param {string} postId ID do post.
    * @returns {Promise<boolean>} `true` se existe like.
    */
-  async isPostLikedByUser(userId: string, postId: string) {
+  async isPostLikedByUser(userId: string, postId: string): Promise<boolean> {
     const like = await this.likesRepo.findByUserAndPost(userId, postId);
     return !!like;
   }
@@ -146,7 +152,7 @@ export class LikesService {
    * @param {string} commentId ID do comentário.
    * @returns {Promise<boolean>} `true` se existe like.
    */
-  async isCommentLikedByUser(userId: string, commentId: string) {
+  async isCommentLikedByUser(userId: string, commentId: string): Promise<boolean> {
     const like = await this.likesRepo.findByUserAndComment(userId, commentId);
     return !!like;
   }

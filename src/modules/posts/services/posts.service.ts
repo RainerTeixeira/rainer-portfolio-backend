@@ -41,8 +41,8 @@ function textToSlug(text: string): string {
     .toLowerCase()
     .trim()
     .replace(/\s+/g, '-')
-    .replace(/[^\w\-]+/g, '')
-    .replace(/\-\-+/g, '-')
+    .replace(/[^\w-]+/g, '')
+    .replace(/--+/g, '-')
     .replace(/^-+/, '')
     .replace(/-+$/, '');
 }

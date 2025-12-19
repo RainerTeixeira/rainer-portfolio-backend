@@ -26,10 +26,14 @@ export class BookmarksService {
   /**
    * Cria (ou retorna) o bookmark de um post para um usuário.
    *
+   * Por que é idempotente:
+   * - Evita duplicidade em cenários de retry/concorrência.
+   * - Simplifica o consumidor: chamar “favoritar” várias vezes não cria múltiplos registros.
+   *
    * @param {CreateBookmarkDto} dto Dados do bookmark.
    * @returns {Promise<unknown>} Bookmark criado ou já existente.
    */
-  async bookmarkPost(dto: CreateBookmarkDto) {
+  async bookmarkPost(dto: CreateBookmarkDto): Promise<unknown> {
     // Verifica se já existe
     const existing = await this.bookmarksRepo.findByUserAndPost(dto.userId, dto.postId!);
     if (existing) {
@@ -47,10 +51,12 @@ export class BookmarksService {
   /**
    * Cria (ou retorna) o bookmark de um comentário para um usuário.
    *
+   * Mesmo racional do `bookmarkPost`.
+   *
    * @param {CreateBookmarkDto} dto Dados do bookmark.
    * @returns {Promise<unknown>} Bookmark criado ou já existente.
    */
-  async bookmarkComment(dto: CreateBookmarkDto) {
+  async bookmarkComment(dto: CreateBookmarkDto): Promise<unknown> {
     // Verifica se já existe
     const existing = await this.bookmarksRepo.findByUserAndComment(dto.userId, dto.commentId!);
     if (existing) {
@@ -72,7 +78,7 @@ export class BookmarksService {
    * @param {string} postId ID do post.
    * @returns {Promise<void>} Conclusão da operação.
    */
-  async unbookmarkPost(userId: string, postId: string) {
+  async unbookmarkPost(userId: string, postId: string): Promise<void> {
     await this.bookmarksRepo.deleteByUserAndPost(userId, postId);
   }
 
@@ -83,7 +89,7 @@ export class BookmarksService {
    * @param {string} commentId ID do comentário.
    * @returns {Promise<void>} Conclusão da operação.
    */
-  async unbookmarkComment(userId: string, commentId: string) {
+  async unbookmarkComment(userId: string, commentId: string): Promise<void> {
     await this.bookmarksRepo.deleteByUserAndComment(userId, commentId);
   }
 
@@ -93,7 +99,7 @@ export class BookmarksService {
    * @param {string} id ID do bookmark.
    * @returns {Promise<unknown>} Bookmark encontrado.
    */
-  async getBookmarkById(id: string) {
+  async getBookmarkById(id: string): Promise<unknown> {
     return this.bookmarksRepo.findById(id);
   }
 
@@ -103,7 +109,7 @@ export class BookmarksService {
    * @param {string} postId ID do post.
    * @returns {Promise<unknown>} Lista de bookmarks.
    */
-  async getPostBookmarks(postId: string) {
+  async getPostBookmarks(postId: string): Promise<unknown> {
     return this.bookmarksRepo.findByPost(postId);
   }
 
@@ -113,7 +119,7 @@ export class BookmarksService {
    * @param {string} commentId ID do comentário.
    * @returns {Promise<unknown>} Lista de bookmarks.
    */
-  async getCommentBookmarks(commentId: string) {
+  async getCommentBookmarks(commentId: string): Promise<unknown> {
     return this.bookmarksRepo.findByComment(commentId);
   }
 
@@ -127,7 +133,7 @@ export class BookmarksService {
   async getUserBookmarks(userId: string, options?: {
     limit?: number;
     offset?: number;
-  }) {
+  }): Promise<unknown> {
     return this.bookmarksRepo.findByUser(userId, options);
   }
 
@@ -138,7 +144,7 @@ export class BookmarksService {
    * @param {string} postId ID do post.
    * @returns {Promise<boolean>} `true` se existe bookmark.
    */
-  async isPostBookmarkedByUser(userId: string, postId: string) {
+  async isPostBookmarkedByUser(userId: string, postId: string): Promise<boolean> {
     const bookmark = await this.bookmarksRepo.findByUserAndPost(userId, postId);
     return !!bookmark;
   }
@@ -150,7 +156,7 @@ export class BookmarksService {
    * @param {string} commentId ID do comentário.
    * @returns {Promise<boolean>} `true` se existe bookmark.
    */
-  async isCommentBookmarkedByUser(userId: string, commentId: string) {
+  async isCommentBookmarkedByUser(userId: string, commentId: string): Promise<boolean> {
     const bookmark = await this.bookmarksRepo.findByUserAndComment(userId, commentId);
     return !!bookmark;
   }

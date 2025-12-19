@@ -28,10 +28,15 @@ export class CategoriesService {
   /**
    * Cria uma nova categoria.
    *
+   * Por que o service gera `id` e defaults:
+   * - Evita depender do banco para gerar identificador.
+   * - Mantém consistência para `isActive`/`postsCount` independentemente do repositório.
+   * - Centraliza regra simples de criação fora do controller.
+   *
    * @param {CreateCategoryDto} dto Dados da categoria.
    * @returns {Promise<unknown>} Categoria criada.
    */
-  async createCategory(dto: CreateCategoryDto) {
+  async createCategory(dto: CreateCategoryDto): Promise<unknown> {
     const id = randomUUID();
 
     return this.categoriesRepo.create({
@@ -50,7 +55,7 @@ export class CategoriesService {
    * @param {string} id ID da categoria.
    * @returns {Promise<unknown>} Categoria encontrada.
    */
-  async getCategoryById(id: string) {
+  async getCategoryById(id: string): Promise<unknown> {
     return this.categoriesRepo.findById(id);
   }
 
@@ -60,7 +65,7 @@ export class CategoriesService {
    * @param {string} slug Slug da categoria.
    * @returns {Promise<unknown>} Categoria encontrada.
    */
-  async getCategoryBySlug(slug: string) {
+  async getCategoryBySlug(slug: string): Promise<unknown> {
     return this.categoriesRepo.findBySlug(slug);
   }
 
@@ -69,7 +74,7 @@ export class CategoriesService {
    *
    * @returns {Promise<unknown>} Lista de categorias.
    */
-  async getAllCategories() {
+  async getAllCategories(): Promise<unknown> {
     return this.categoriesRepo.findAll();
   }
 
@@ -80,7 +85,7 @@ export class CategoriesService {
    * @param {UpdateCategoryDto} dto Campos para atualização.
    * @returns {Promise<unknown>} Categoria atualizada.
    */
-  async updateCategory(id: string, dto: UpdateCategoryDto) {
+  async updateCategory(id: string, dto: UpdateCategoryDto): Promise<unknown> {
     return this.categoriesRepo.update(id, dto);
   }
 
@@ -90,7 +95,7 @@ export class CategoriesService {
    * @param {string} id ID da categoria.
    * @returns {Promise<void>} Conclusão da operação.
    */
-  async deleteCategory(id: string) {
+  async deleteCategory(id: string): Promise<void> {
     await this.categoriesRepo.delete(id);
   }
 }

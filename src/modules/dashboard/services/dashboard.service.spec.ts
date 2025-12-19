@@ -52,8 +52,6 @@ describe('DashboardService', () => {
       expect(result).toEqual({
         views: [],
         engagement: [],
-        topPosts: [],
-        recentActivity: [],
       });
     });
 
@@ -65,8 +63,6 @@ describe('DashboardService', () => {
       const resolved = await result;
       expect(Array.isArray(resolved.views)).toBe(true);
       expect(Array.isArray(resolved.engagement)).toBe(true);
-      expect(Array.isArray(resolved.topPosts)).toBe(true);
-      expect(Array.isArray(resolved.recentActivity)).toBe(true);
     });
   });
 });

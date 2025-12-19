@@ -11,7 +11,7 @@
  * @license MIT
  */
 
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { USER_REPOSITORY } from '../../../database/tokens';
 import { UserRepository, User } from '../../../database/interfaces/user-repository.interface';
 import { CreateUserDto } from '../dto/create-user.dto';
@@ -43,6 +43,8 @@ import { randomUUID } from 'crypto';
  */
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
+
   /**
    * Cria uma instância do UsersService.
    * 
@@ -56,7 +58,12 @@ export class UsersService {
 
   /**
    * Cria um novo usuário no sistema.
-   * 
+   *
+   * Por que isso fica no service:
+   * - O controller não deve decidir defaults de domínio nem gerar IDs.
+   * - O repositório não deve conter regras de negócio; ele apenas persiste/consulta.
+   * - O service centraliza decisões simples (id/defaults) para manter consistência.
+   *
    * @async
    * @method createUser
    * @param {CreateUserDto} dto - Dados do novo usuário
@@ -71,7 +78,7 @@ export class UsersService {
    * });
    * ```
    */
-  async createUser(dto: CreateUserDto) {
+  async createUser(dto: CreateUserDto): Promise<User> {
     const id = randomUUID();
 
     // Aqui você faria o hash da senha antes de salvar
@@ -154,7 +161,7 @@ export class UsersService {
    * @param {string} cognitoSub - Sub do Cognito
    * @returns {Promise<User | null>} Usuário encontrado
    */
-  async getUserByCognitoSub(cognitoSub: string) {
+  async getUserByCognitoSub(cognitoSub: string): Promise<User | null> {
     return this.usersRepo.findByCognitoSub(cognitoSub);
   }
 
@@ -184,7 +191,7 @@ export class UsersService {
    * @param {string} id - ID do usuário
    * @returns {Promise<void>}
    */
-  async deleteUser(id: string) {
+  async deleteUser(id: string): Promise<void> {
     await this.usersRepo.delete(id);
   }
 
@@ -286,7 +293,7 @@ export class UsersService {
 
     // TODO: Implementar busca por texto no futuro
     if (search) {
-      console.warn('Search functionality not yet implemented');
+      this.logger.warn('Search functionality not yet implemented');
     }
 
     // Aplicar paginação manual
