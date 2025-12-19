@@ -21,7 +21,20 @@ import { PostRepository } from '../../../database/interfaces/post-repository.int
 import { CreatePostDto } from '../dto/create-post.dto';
 import { UpdatePostDto } from '../dto/update-post.dto';
 import { randomUUID } from 'crypto';
-import { textToSlug } from '../../../utils/slug';
+
+function textToSlug(text: string): string {
+  if (!text) return '';
+
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w\-]+/g, '')
+    .replace(/\-\-+/g, '-')
+    .replace(/^-+/, '')
+    .replace(/-+$/, '');
+}
 
 @Injectable()
 export class PostsService {
