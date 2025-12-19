@@ -144,6 +144,7 @@ export interface ForgotPasswordDto {
  * @example
  * ```typescript
  * const resetData: ResetPasswordDto = {
+ *   email: 'usuario@exemplo.com',
  *   token: '123456',
  *   newPassword: 'NovaSenha123'
  * };
@@ -152,8 +153,35 @@ export interface ForgotPasswordDto {
  * @since 1.0.0
  */
 export interface ResetPasswordDto {
+  /** Email do usuário que está redefinindo a senha */
+  email: string;
   /** Código de confirmação recebido por email */
   token: string;
   /** Nova senha forte (mínimo 8 caracteres) */
   newPassword: string;
+}
+
+/**
+ * DTO para Callback OAuth.
+ * 
+ * Utilizado para processar o retorno da autenticação OAuth
+ * e trocar o código de autorização por tokens.
+ * 
+ * @interface OAuthCallbackDto
+ * 
+ * @example
+ * ```typescript
+ * const callbackData: OAuthCallbackDto = {
+ *   code: 'auth_code_123',
+ *   state: 'csrf_token_abc'
+ * };
+ * ```
+ * 
+ * @since 1.0.0
+ */
+export interface OAuthCallbackDto {
+  /** Código de autorização OAuth retornado pelo provider */
+  code: string;
+  /** Token CSRF para validação de segurança */
+  state?: string;
 }

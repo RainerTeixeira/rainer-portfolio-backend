@@ -1,6 +1,22 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from './auth.service';
 import { UsersService } from '../modules/users/services/users.service';
+import { BadRequestException, InternalServerErrorException } from '@nestjs/common';
+import axios from 'axios';
+
+// Mock axios
+jest.mock('axios');
+const mockedAxios = axios as jest.Mocked<typeof axios>;
+
+// Mock environment variables
+jest.mock('../config/env', () => ({
+  env: {
+    COGNITO_CLIENT_ID: 'test-client-id',
+    COGNITO_DOMAIN: 'https://test-domain.auth.us-east-1.amazoncognito.com',
+    OAUTH_REDIRECT_SIGN_IN: 'http://localhost:3000/dashboard/login/callback',
+    AWS_REGION: 'us-east-1',
+  },
+}));
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -14,6 +30,7 @@ describe('AuthService', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
+    mockedAxios.post.mockClear();
     
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -113,6 +130,84 @@ describe('AuthService', () => {
 
       // Should not throw error even if database operations fail
       await expect((service as any).syncUserWithDatabase(payload)).resolves.toBeUndefined();
+    });
+  });
+
+  describe('getGoogleAuthUrl', () => {
+    it('should generate Google OAuth URL', async () => {
+      const result = await service.getGoogleAuthUrl();
+
+      expect(result.success).toBe(true);
+      expect(result.data.authUrl).toContain('https://test-domain.auth.us-east-1.amazoncognito.com/oauth2/authorize');
+      expect(result.data.authUrl).toContain('client_id=test-client-id');
+      expect(result.data.authUrl).toContain('identity_provider=Google');
+      expect(result.data.authUrl).toContain('response_type=code');
+    });
+
+    it('should use custom redirect URI', async () => {
+      const customRedirect = 'http://localhost:3000/custom/callback';
+      const result = await service.getGoogleAuthUrl(customRedirect);
+
+      expect(result.data.authUrl).toContain(encodeURIComponent(customRedirect));
+    });
+
+    it('should throw error if OAuth not configured', async () => {
+      // Mock the env module to return undefined for required config
+      const configMock = require('../common/config');
+      const originalDomain = configMock.cognito.domain;
+      configMock.cognito.domain = undefined;
+
+      await expect(service.getGoogleAuthUrl()).rejects.toThrow(InternalServerErrorException);
+
+      // Restore original value
+      configMock.cognito.domain = originalDomain;
+    });
+  });
+
+  describe('handleOAuthCallback', () => {
+    it('should handle OAuth callback successfully', async () => {
+      // Create a valid JWT token for testing
+      const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64');
+      const payload = Buffer.from(JSON.stringify({ sub: 'test-sub', email: 'test@example.com', name: 'Test User' })).toString('base64');
+      const signature = 'mock-signature';
+      const validIdToken = `${header}.${payload}.${signature}`;
+
+      const mockTokenResponse = {
+        data: {
+          access_token: 'mock-access-token',
+          refresh_token: 'mock-refresh-token',
+          id_token: validIdToken,
+          expires_in: 3600,
+        },
+      };
+
+      mockedAxios.post.mockResolvedValue(mockTokenResponse);
+      mockUsersService.getUserByCognitoSub.mockResolvedValue(null);
+      mockUsersService.createUser.mockResolvedValue({ id: '1' });
+
+      const result = await service.handleOAuthCallback({ code: 'test-code' });
+
+      expect(result.success).toBe(true);
+      expect(result.data.accessToken).toBe('mock-access-token');
+      expect(result.data.refreshToken).toBe('mock-refresh-token');
+      expect(result.data.idToken).toBe(validIdToken);
+      expect(result.data.expiresIn).toBe(3600);
+
+      expect(mockedAxios.post).toHaveBeenCalledWith(
+        'https://test-domain.auth.us-east-1.amazoncognito.com/oauth2/token',
+        expect.stringContaining('grant_type=authorization_code'),
+        expect.objectContaining({
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+        })
+      );
+    });
+
+    it('should throw error for invalid code', async () => {
+      mockedAxios.post.mockRejectedValue(new Error('Invalid code'));
+
+      await expect(service.handleOAuthCallback({ code: 'invalid-code' })).rejects.toThrow(BadRequestException);
     });
   });
 });

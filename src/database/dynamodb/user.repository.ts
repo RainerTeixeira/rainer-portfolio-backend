@@ -12,9 +12,6 @@ interface UserWithKeys extends User {
 
 @Injectable()
 export class DynamoUserRepository implements UserRepository {
-  // TableName será usado quando implementarmos queries completas
-  // private readonly tableName = process.env.DYNAMODB_TABLE_NAME!;
-
   constructor(private readonly dynamo: DynamoDBService) {}
 
   async create(data: Omit<User, 'createdAt' | 'updatedAt'>): Promise<User> {

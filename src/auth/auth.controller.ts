@@ -2,13 +2,15 @@
  * @fileoverview Controller de Autenticação
  *
  * Controller responsável por expor endpoints HTTP para autenticação
- * via AWS Cognito.
+ * via AWS Cognito com suporte a email/senha e Google OAuth.
  *
  * Responsabilidades:
- * - Login de usuários
+ * - Login de usuários (email/senha)
  * - Registro via Cognito
- * - OAuth callbacks (Google, GitHub)
+ * - OAuth com Google via Cognito Hosted UI
  * - Refresh de tokens
+ * - Confirmação de email
+ * - Recuperação de senha
  *
  * @module auth/controllers/auth.controller
  */
@@ -16,6 +18,14 @@
 import { Body, Controller, Post, Get, Query, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiQuery } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
+import type { 
+  LoginDto, 
+  SignupDto, 
+  RefreshTokenDto, 
+  ForgotPasswordDto, 
+  ResetPasswordDto, 
+  OAuthCallbackDto 
+} from './dto/auth.dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -68,9 +78,8 @@ export class AuthController {
     }
   })
   @ApiResponse({ status: 401, description: 'Credenciais inválidas' })
-  async login(@Body() credentials: { email: string; password: string }) {
-    const result = await this.authService.login(credentials);
-    return { success: true, data: result };
+  async login(@Body() credentials: LoginDto) {
+    return await this.authService.login(credentials);
   }
 
   /**
@@ -95,57 +104,150 @@ export class AuthController {
   })
   @ApiResponse({ status: 201, description: 'Usuário criado com sucesso' })
   @ApiResponse({ status: 409, description: 'Email já cadastrado' })
-  async register(@Body() userData: { email: string; password: string; fullName: string }) {
-    const result = await this.authService.signup(userData);
-    return { success: true, data: result };
+  async register(@Body() userData: SignupDto) {
+    return await this.authService.signup(userData);
   }
 
   /**
-   * Inicia fluxo OAuth com Google
+   * Confirma email após registro
+   */
+  @Post('confirm-email')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ 
+    summary: '✅ Confirmar Email',
+    description: 'Confirma email do usuário com código enviado por email'
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        email: { type: 'string', example: 'user@example.com' },
+        token: { type: 'string', example: '123456' }
+      },
+      required: ['email', 'token']
+    }
+  })
+  @ApiResponse({ status: 200, description: 'Email confirmado com sucesso' })
+  @ApiResponse({ status: 400, description: 'Código inválido' })
+  async confirmEmail(@Body() confirmData: { email: string; token: string }) {
+    return await this.authService.confirmEmail({ ...confirmData });
+  }
+
+  /**
+   * Inicia recuperação de senha
+   */
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ 
+    summary: '🔑 Esqueci Minha Senha',
+    description: 'Envia código de recuperação de senha por email'
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        email: { type: 'string', example: 'user@example.com' }
+      },
+      required: ['email']
+    }
+  })
+  @ApiResponse({ status: 200, description: 'Código enviado por email' })
+  @ApiResponse({ status: 400, description: 'Email não encontrado' })
+  async forgotPassword(@Body() forgotData: ForgotPasswordDto) {
+    return await this.authService.forgotPassword(forgotData);
+  }
+
+  /**
+   * Redefine senha com código
+   */
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ 
+    summary: '🔄 Redefinir Senha',
+    description: 'Redefine senha usando código de confirmação'
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        email: { type: 'string', example: 'user@example.com' },
+        token: { type: 'string', example: '123456' },
+        newPassword: { type: 'string', example: 'NewPassword123!' }
+      },
+      required: ['email', 'token', 'newPassword']
+    }
+  })
+  @ApiResponse({ status: 200, description: 'Senha redefinida com sucesso' })
+  @ApiResponse({ status: 400, description: 'Código inválido ou senha fraca' })
+  async resetPassword(@Body() resetData: ResetPasswordDto) {
+    return await this.authService.resetPassword({ ...resetData });
+  }
+
+  /**
+   * Inicia fluxo OAuth com Google via Cognito Hosted UI
    */
   @Get('oauth/google')
   @ApiOperation({ 
     summary: '🔗 Login com Google',
-    description: 'Inicia fluxo OAuth2 com Google (não implementado)'
+    description: 'Redireciona para Cognito Hosted UI para login com Google'
   })
   @ApiQuery({ name: 'redirect_uri', required: false, description: 'URI de redirecionamento após login' })
-  @ApiResponse({ status: 501, description: 'Não implementado' })
-  async googleOAuth(@Query('redirect_uri') _redirectUri?: string) {
-    return { success: false, message: 'OAuth não implementado ainda' };
+  @ApiResponse({ 
+    status: 200, 
+    description: 'URL de redirecionamento para Cognito Hosted UI',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: true },
+        data: {
+          type: 'object',
+          properties: {
+            authUrl: { type: 'string', example: 'https://your-domain.auth.region.amazoncognito.com/oauth2/authorize?...' }
+          }
+        }
+      }
+    }
+  })
+  async googleOAuth(@Query('redirect_uri') redirectUri?: string) {
+    return await this.authService.getGoogleAuthUrl(redirectUri);
   }
 
   /**
-   * Inicia fluxo OAuth com GitHub
-   */
-  @Get('oauth/github')
-  @ApiOperation({ 
-    summary: '🔗 Login com GitHub',
-    description: 'Inicia fluxo OAuth2 com GitHub (não implementado)'
-  })
-  @ApiQuery({ name: 'redirect_uri', required: false, description: 'URI de redirecionamento após login' })
-  @ApiResponse({ status: 501, description: 'Não implementado' })
-  async githubOAuth(@Query('redirect_uri') _redirectUri?: string) {
-    return { success: false, message: 'OAuth não implementado ainda' };
-  }
-
-  /**
-   * Callback do OAuth (Google/GitHub)
+   * Callback do OAuth do Cognito
    */
   @Get('oauth/callback')
   @ApiOperation({ 
     summary: '🔄 OAuth Callback',
-    description: 'Processa callback OAuth do provedor (não implementado)'
+    description: 'Processa callback OAuth do Cognito e troca código por tokens'
   })
   @ApiQuery({ name: 'code', required: true, description: 'Código de autorização OAuth' })
   @ApiQuery({ name: 'state', required: false, description: 'Parâmetro de estado CSRF' })
-  @ApiQuery({ name: 'provider', required: true, description: 'Provedor OAuth (google/github)' })
-  @ApiResponse({ status: 501, description: 'Não implementado' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Tokens obtidos com sucesso',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: true },
+        data: {
+          type: 'object',
+          properties: {
+            accessToken: { type: 'string', example: 'eyJhbGciOiJIUzI1NiIs...' },
+            refreshToken: { type: 'string', example: 'eyJhbGciOiJIUzI1NiIs...' },
+            idToken: { type: 'string', example: 'eyJhbGciOiJIUzI1NiIs...' },
+            expiresIn: { type: 'number', example: 3600 }
+          }
+        }
+      }
+    }
+  })
+  @ApiResponse({ status: 400, description: 'Código inválido ou expirado' })
   async oauthCallback(
-    @Query('code') _code: string,
-    @Query('state') _state?: string,
-    @Query('provider') _provider: string = 'google'
+    @Query('code') code: string,
+    @Query('state') state?: string
   ) {
-    return { success: false, message: 'OAuth callback não implementado ainda' };
+    const payload: OAuthCallbackDto = { code, state };
+    return await this.authService.handleOAuthCallback(payload);
   }
 
   /**
@@ -168,31 +270,7 @@ export class AuthController {
   })
   @ApiResponse({ status: 200, description: 'Tokens renovados com sucesso' })
   @ApiResponse({ status: 401, description: 'Refresh token inválido' })
-  async refresh(@Body() body: { refreshToken: string }) {
-    const result = await this.authService.refreshToken({ refreshToken: body.refreshToken });
-    return { success: true, data: result };
-  }
-
-  /**
-   * Logout do usuário
-   */
-  @Post('logout')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ 
-    summary: '🚪 Logout',
-    description: 'Invalida tokens do usuário no Cognito (não implementado)'
-  })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        accessToken: { type: 'string', example: 'eyJhbGciOiJIUzI1NiIs...' }
-      },
-      required: ['accessToken']
-    }
-  })
-  @ApiResponse({ status: 501, description: 'Não implementado' })
-  async logout(@Body() _body: { accessToken: string }) {
-    return { success: false, message: 'Logout não implementado ainda' };
+  async refresh(@Body() body: RefreshTokenDto) {
+    return await this.authService.refreshToken({ refreshToken: body.refreshToken });
   }
 }

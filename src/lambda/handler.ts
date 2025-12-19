@@ -11,17 +11,155 @@
  * @license MIT
  */
 
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { bootstrap } from './bootstrap/lambda.bootstrap';
-import { functionUrlHandler, FunctionUrlEvent } from './function-url.handler';
-import { healthHandler } from './handlers/health.handler';
+import type { APIGatewayProxyResultV2, Context } from 'aws-lambda';
+import awsLambdaFastify from '@fastify/aws-lambda';
+import { INestApplication } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
+import { FastifyAdapter } from '@nestjs/platform-fastify';
+import { AppModule } from '../app.module';
+import { applyGlobalAppConfig } from '../common/bootstrap/app.bootstrap';
+
+export interface FunctionUrlEvent {
+  version: '2.0';
+  routeKey: string;
+  rawPath: string;
+  rawQueryString: string;
+  cookies?: string[];
+  headers: Record<string, string>;
+  body?: string;
+  isBase64Encoded: boolean;
+  requestContext: {
+    accountId: string;
+    apiId: string;
+    domainName: string;
+    domainPrefix: string;
+    requestId: string;
+    routeKey: string;
+    stage: string;
+    time: string;
+    timeEpoch: number;
+    http: {
+      method: string;
+      path: string;
+      protocol: string;
+      sourceIp: string;
+      userAgent: string;
+    };
+    authorizer?: {
+      jwt: {
+        claims: Record<string, string>;
+        scopes: string[];
+      };
+    };
+  };
+}
 
 /**
  * Cache da instância NestJS para warm starts.
  * 
- * @type {unknown}
+ * @type {INestApplication | null}
  */
-let app: unknown = null;
+const isProd = process.env.NODE_ENV === 'production';
+
+function logInfo(message: string, data?: unknown): void {
+  if (isProd) return;
+  // eslint-disable-next-line no-console
+  console.log(message, data ?? '');
+}
+
+function logError(message: string, data?: unknown): void {
+  // eslint-disable-next-line no-console
+  console.error(message, data ?? '');
+}
+
+let app: INestApplication | null = null;
+let proxy: ((event: unknown, context: Context) => Promise<APIGatewayProxyResultV2>) | null = null;
+
+async function bootstrap(): Promise<INestApplication> {
+  if (app) {
+    return app;
+  }
+
+  const adapter = new FastifyAdapter();
+  const instance = await NestFactory.create(AppModule, adapter, {
+    logger: isProd ? ['error'] : ['error', 'warn'],
+  });
+
+  await applyGlobalAppConfig(instance);
+
+  await instance.init();
+
+  instance.enableShutdownHooks();
+
+  app = instance;
+  return app;
+}
+
+/**
+ * Health check direto (bypass NestJS) - máximo performance.
+ */
+async function healthHandler(event: FunctionUrlEvent): Promise<APIGatewayProxyResultV2> {
+  const requestId = event.requestContext?.requestId;
+  const region = process.env.AWS_REGION || 'unknown';
+  const environment = process.env.NODE_ENV || 'development';
+  const version = process.env.VERSION || '1.0.0';
+
+  try {
+    const response = {
+      status: 'ok' as const,
+      timestamp: new Date().toISOString(),
+      uptime: Math.floor(process.uptime()),
+      version,
+      environment,
+      region,
+      requestId,
+    };
+
+    return {
+      statusCode: 200,
+      headers: {
+        'content-type': 'application/json',
+        'cache-control': 'no-cache, no-store, must-revalidate',
+        pragma: 'no-cache',
+        expires: '0',
+        'access-control-allow-origin': process.env.CORS_ORIGIN || '*',
+        'access-control-allow-methods': 'GET',
+        'access-control-allow-headers': 'Content-Type',
+      },
+      body: JSON.stringify(response),
+      isBase64Encoded: false,
+    };
+  } catch (error) {
+    if (!isProd) {
+      logError(
+        ' Health Check Error:',
+        {
+          error: error instanceof Error ? error.message : error,
+          stack: error instanceof Error ? error.stack : undefined,
+          requestId,
+        },
+      );
+    }
+
+    return {
+      statusCode: 503,
+      headers: {
+        'content-type': 'application/json',
+        'access-control-allow-origin': process.env.CORS_ORIGIN || '*',
+      },
+      body: JSON.stringify({
+        status: 'error',
+        timestamp: new Date().toISOString(),
+        uptime: 0,
+        version,
+        environment,
+        region,
+        requestId,
+      }),
+      isBase64Encoded: false,
+    };
+  }
+}
 
 /**
  * Inicializa a aplicação NestJS.
@@ -30,18 +168,15 @@ let app: unknown = null;
  * 
  * @async
  * @function initializeApp
- * @returns {Promise<unknown>} Instância do NestJS
+ * @returns {Promise<INestApplication>} Instância do NestJS
  */
-async function initializeApp(): Promise<unknown> {
+async function initializeApp(): Promise<INestApplication> {
   if (!app) {
-    // eslint-disable-next-line no-console
-    console.log(' Cold start - Inicializando NestJS...');
+    logInfo(' Cold start - Inicializando NestJS...');
     app = await bootstrap();
-    // eslint-disable-next-line no-console
-    console.log(' NestJS inicializado com sucesso');
+    logInfo(' NestJS inicializado com sucesso');
   } else {
-    // eslint-disable-next-line no-console
-    console.log(' Warm start - Reutilizando instância NestJS');
+    logInfo(' Warm start - Reutilizando instância NestJS');
   }
   return app;
 }
@@ -51,43 +186,51 @@ async function initializeApp(): Promise<unknown> {
  * 
  * @async
  * @function processWithNestJS
- * @param {APIGatewayProxyEvent} event - Evento formatado
- * @returns {Promise<APIGatewayProxyResult>} Resposta processada
+ * @param {FunctionUrlEvent} event - Evento da Function URL
+ * @param {Context} context - Contexto da Lambda
+ * @returns {Promise<APIGatewayProxyResultV2>} Resposta processada
  */
 async function processWithNestJS(
-  event: APIGatewayProxyEvent
-): Promise<APIGatewayProxyResult> {
+  event: FunctionUrlEvent,
+  context: Context,
+): Promise<APIGatewayProxyResultV2> {
   const appInstance = await initializeApp();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const fastify = (appInstance as any).getHttpAdapter().getInstance();
 
-  // Monta URL completa
-  let url = event.path;
-  if (event.queryStringParameters) {
-    const query = new URLSearchParams(event.queryStringParameters as Record<string, string>).toString();
-    url += `?${query}`;
+  if (!proxy) {
+    proxy = awsLambdaFastify(fastify);
   }
 
-  // Injeta requisição no Fastify
-  const response = await fastify.inject({
-    method: event.httpMethod,
-    url: url,
-    headers: event.headers,
-    payload: event.body,
-  });
+  const result = await proxy(event, context);
 
-  // Converte resposta
+  if (typeof result === 'string') {
+    return {
+      statusCode: 200,
+      headers: {
+        'access-control-allow-origin': process.env.CORS_ORIGIN || '*',
+        'access-control-allow-credentials': 'true',
+      },
+      body: result,
+    };
+  }
+
+  const headers: Record<string, string> = {};
+  for (const [key, value] of Object.entries(result.headers || {})) {
+    headers[key] = String(value);
+  }
+
+  if (!headers['access-control-allow-origin']) {
+    headers['access-control-allow-origin'] = process.env.CORS_ORIGIN || '*';
+  }
+
+  if (!headers['access-control-allow-credentials']) {
+    headers['access-control-allow-credentials'] = 'true';
+  }
+
   return {
-    statusCode: response.statusCode,
-    headers: {
-      ...response.headers,
-      'Access-Control-Allow-Origin': process.env.CORS_ORIGIN || '*',
-      'Access-Control-Allow-Credentials': 'true',
-      'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,PATCH,OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-Requested-With',
-    },
-    body: response.payload,
-    isBase64Encoded: false,
+    ...result,
+    headers,
   };
 }
 
@@ -98,7 +241,8 @@ async function processWithNestJS(
  * @export
  * @function handler
  * @param {FunctionUrlEvent} event - Evento da Function URL
- * @returns {Promise<APIGatewayProxyResult>} Resposta HTTP
+ * @param {Context} context - Contexto da Lambda
+ * @returns {Promise<APIGatewayProxyResultV2>} Resposta HTTP
  * 
  * @example
  * ```typescript
@@ -108,14 +252,17 @@ async function processWithNestJS(
  * ```
  */
 export async function handler(
-  event: FunctionUrlEvent
-): Promise<APIGatewayProxyResult> {
+  event: FunctionUrlEvent,
+  context: Context,
+): Promise<APIGatewayProxyResultV2> {
   const startTime = Date.now();
 
+  context.callbackWaitsForEmptyEventLoop = false;
+
   try {
+
     // Log da requisição
-    // eslint-disable-next-line no-console
-    console.log(' Lambda Request:', {
+    logInfo(' Lambda Request:', {
       method: event.requestContext.http.method,
       path: event.requestContext.http.path,
       userAgent: event.requestContext.http.userAgent,
@@ -123,45 +270,59 @@ export async function handler(
       requestId: event.requestContext.requestId,
     });
 
+    const method = event.requestContext.http.method;
+    const path = event.requestContext.http.path;
+
     // Health check direto (sem NestJS)
-    if (event.requestContext.http.path === '/health') {
-      // eslint-disable-next-line no-console
-      console.log(' Health check direto (bypass NestJS)');
-      const healthEvent: APIGatewayProxyEvent = {
-        resource: '/health',
-        path: '/health',
-        httpMethod: 'GET',
-        headers: event.headers,
-        multiValueHeaders: {},
-        queryStringParameters: null,
-        multiValueQueryStringParameters: null,
-        pathParameters: null,
-        stageVariables: null,
-        requestContext: event.requestContext as unknown as APIGatewayProxyEvent['requestContext'],
-        body: null,
-        isBase64Encoded: false,
-      };
-      const response = await healthHandler(healthEvent);
-      // eslint-disable-next-line no-console
-      console.log(` Health check em ${Date.now() - startTime}ms`);
+    if (path === '/health') {
+      logInfo(' Health check direto (bypass NestJS)');
+      const response = await healthHandler(event);
+      logInfo(` Health check em ${Date.now() - startTime}ms`);
       return response;
     }
 
-    // Processa via Function URL Handler
-    return await functionUrlHandler(event, processWithNestJS);
+    // CORS preflight direto (sem NestJS)
+    if (method === 'OPTIONS') {
+      return {
+        statusCode: 204,
+        headers: {
+          'access-control-allow-origin': process.env.CORS_ORIGIN || '*',
+          'access-control-allow-credentials': 'true',
+          'access-control-allow-methods': 'GET,POST,PUT,DELETE,PATCH,OPTIONS',
+          'access-control-allow-headers':
+            (event.headers &&
+              (event.headers['access-control-request-headers'] ||
+                event.headers['Access-Control-Request-Headers'])) ||
+            'Content-Type,Authorization,X-Requested-With',
+        },
+        body: '',
+        isBase64Encoded: false,
+      };
+    }
+
+    // Processa via NestJS/Fastify
+    return await processWithNestJS(event, context);
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error(' Lambda Handler Error:', {
-      error: error instanceof Error ? error.message : error,
-      stack: error instanceof Error ? error.stack : undefined,
-      duration: Date.now() - startTime,
-    });
+    logError(
+      ' Lambda Handler Error:',
+      isProd
+        ? {
+            duration: Date.now() - startTime,
+            requestId: event.requestContext.requestId,
+          }
+        : {
+            error: error instanceof Error ? error.message : error,
+            stack: error instanceof Error ? error.stack : undefined,
+            duration: Date.now() - startTime,
+            requestId: event.requestContext.requestId,
+          },
+    );
 
     return {
       statusCode: 500,
       headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': process.env.CORS_ORIGIN || '*',
+        'content-type': 'application/json',
+        'access-control-allow-origin': process.env.CORS_ORIGIN || '*',
       },
       body: JSON.stringify({
         message: 'Internal Server Error',
@@ -173,46 +334,4 @@ export async function handler(
   }
 }
 
-/**
- * Handler para execução local (desenvolvimento).
- * 
- * Inicia o servidor HTTP local para testes.
- * 
- * @async
- * @function runLocal
- * @returns {Promise<void>}
- * 
- * @example
- * ```typescript
- * // Executa localmente
- * await runLocal();
- * // Servidor disponível em http://localhost:4000
- * ```
- */
-export async function runLocal(): Promise<void> {
-  // eslint-disable-next-line no-console
-  console.log(' Iniciando servidor local...');
-  
-  const appInstance = await initializeApp();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (appInstance as any).listen({
-    port: parseInt(process.env.PORT || '4000', 10),
-    host: process.env.HOST || '0.0.0.0',
-  });
-  
-  // eslint-disable-next-line no-console
-  console.log(` Servidor rodando em http://localhost:${process.env.PORT || 4000}`);
-  // eslint-disable-next-line no-console
-  console.log(' Health check: http://localhost:4000/health');
-  // eslint-disable-next-line no-console
-  console.log(' API docs: http://localhost:4000/docs');
-  
-  // Mantém o processo vivo indefinidamente
-  await new Promise(() => {});
-}
-
-// Executa localmente se chamado diretamente
-if (require.main === module) {
-  runLocal().catch(console.error);
-}
+export const lambdaHandler = handler;

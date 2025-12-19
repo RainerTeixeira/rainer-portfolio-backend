@@ -14,7 +14,7 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { env } from '../../config/env';
+import { cognito } from '../../common/config';
 
 /**
  * Estratégia JWT para validação de tokens do AWS Cognito.
@@ -59,17 +59,17 @@ export class CognitoStrategy extends PassportStrategy(Strategy) {
       /**
        * Chave secreta para verificar assinatura do token
        */
-      secretOrKey: env.JWT_SECRET,
+      secretOrKey: cognito.tokenValidation.jwksUri,
       
       /**
        * Client ID do Cognito (audience do token)
        */
-      audience: env.COGNITO_CLIENT_ID,
+      audience: cognito.clientId,
       
       /**
        * URL do issuer do Cognito User Pool
        */
-      issuer: `https://cognito-idp.${env.AWS_REGION}.amazonaws.com/${env.COGNITO_USER_POOL_ID}`,
+      issuer: cognito.issuer,
     });
   }
 

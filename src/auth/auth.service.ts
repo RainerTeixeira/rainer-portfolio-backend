@@ -17,6 +17,7 @@ import {
   BadRequestException,
   InternalServerErrorException,
   ConflictException,
+  RequestTimeoutException,
   Logger,
 } from '@nestjs/common';
 import {
@@ -28,14 +29,15 @@ import {
   ConfirmForgotPasswordCommand,
 } from '@aws-sdk/client-cognito-identity-provider';
 import { UsersService } from '../modules/users/services/users.service';
-import { env } from '../config/env';
+import { aws, cognito, getCognitoUrls } from '../common/config';
+import axios from 'axios';
 import type {
   LoginDto,
   SignupDto,
   RefreshTokenDto,
-  ConfirmEmailDto,
   ForgotPasswordDto,
   ResetPasswordDto,
+  OAuthCallbackDto,
 } from './dto/auth.dto';
 
 /**
@@ -88,7 +90,7 @@ export class AuthService {
    */
   constructor(private readonly usersService: UsersService) {
     this.client = new CognitoIdentityProviderClient({
-      region: env.AWS_REGION,
+      region: aws.region,
     });
   }
 
@@ -115,7 +117,7 @@ export class AuthService {
     try {
       const command = new InitiateAuthCommand({
         AuthFlow: 'USER_PASSWORD_AUTH',
-        ClientId: env.COGNITO_CLIENT_ID,
+        ClientId: cognito.clientId,
         AuthParameters: {
           USERNAME: loginData.email,
           PASSWORD: loginData.password,
@@ -171,7 +173,7 @@ export class AuthService {
   async signup(signupData: SignupDto) {
     try {
       const command = new SignUpCommand({
-        ClientId: env.COGNITO_CLIENT_ID,
+        ClientId: cognito.clientId,
         Username: signupData.email,
         Password: signupData.password,
         UserAttributes: [
@@ -213,11 +215,11 @@ export class AuthService {
    * });
    * ```
    */
-  async confirmEmail(confirmData: ConfirmEmailDto) {
+  async confirmEmail(confirmData: { email: string; token: string }) {
     try {
       const command = new ConfirmSignUpCommand({
-        ClientId: env.COGNITO_CLIENT_ID,
-        Username: confirmData.token, // Na prática, seria o email
+        ClientId: cognito.clientId,
+        Username: confirmData.email,
         ConfirmationCode: confirmData.token,
       });
 
@@ -254,7 +256,7 @@ export class AuthService {
     try {
       const command = new InitiateAuthCommand({
         AuthFlow: 'REFRESH_TOKEN_AUTH',
-        ClientId: env.COGNITO_CLIENT_ID,
+        ClientId: cognito.clientId,
         AuthParameters: {
           REFRESH_TOKEN: refreshData.refreshToken,
         },
@@ -300,7 +302,7 @@ export class AuthService {
   async forgotPassword(forgotData: ForgotPasswordDto) {
     try {
       const command = new ForgotPasswordCommand({
-        ClientId: env.COGNITO_CLIENT_ID,
+        ClientId: cognito.clientId,
         Username: forgotData.email,
       });
 
@@ -329,6 +331,7 @@ export class AuthService {
    * @example
    * ```typescript
    * const result = await authService.resetPassword({
+   *   email: 'user@example.com',
    *   token: '123456',
    *   newPassword: 'novaSenha123'
    * });
@@ -337,8 +340,8 @@ export class AuthService {
   async resetPassword(resetData: ResetPasswordDto) {
     try {
       const command = new ConfirmForgotPasswordCommand({
-        ClientId: env.COGNITO_CLIENT_ID,
-        Username: resetData.token, // Na prática, seria o email
+        ClientId: cognito.clientId,
+        Username: resetData.email,
         ConfirmationCode: resetData.token,
         Password: resetData.newPassword,
       });
@@ -356,6 +359,215 @@ export class AuthService {
   }
 
   /**
+   * Cache de estados CSRF para validação OAuth.
+   * Em produção, use Redis ou DynamoDB.
+   * 
+   * @private
+   * @type {Map<string, number>}
+   */
+  private readonly stateCache = new Map<string, number>();
+
+  /**
+   * Gera URL de autenticação do Google via Cognito Hosted UI.
+   * 
+   * @async
+   * @method getGoogleAuthUrl
+   * @param {string} [redirectUri] - URI de redirecionamento customizada
+   * @returns {Promise<object>} URL de autenticação com state token
+   * 
+   * @example
+   * ```typescript
+   * const result = await authService.getGoogleAuthUrl();
+   * // Returns: { success: true, data: { authUrl: 'https://...', state: 'abc123' } }
+   * ```
+   */
+  async getGoogleAuthUrl(redirectUri?: string) {
+    try {
+      if (!cognito.domain || !cognito.clientId) {
+        throw new InternalServerErrorException('OAuth not configured');
+      }
+
+      const redirect = redirectUri || cognito.redirectUri;
+      if (!redirect) {
+        throw new InternalServerErrorException('Redirect URI not configured');
+      }
+
+      // Gerar state CSRF token
+      const state = Buffer.from(JSON.stringify({ 
+        timestamp: Date.now(),
+        nonce: Math.random().toString(36).substring(7)
+      })).toString('base64');
+
+      // Armazenar state para validação (expira em 10 minutos)
+      this.stateCache.set(state, Date.now() + 10 * 60 * 1000);
+
+      const cognitoUrls = getCognitoUrls();
+      const authUrl = `${cognitoUrls.authorize}?` +
+        `client_id=${cognito.clientId}&` +
+        `response_type=code&` +
+        `scope=email+openid+profile&` +
+        `redirect_uri=${encodeURIComponent(redirect)}&` +
+        `identity_provider=Google&` +
+        `state=${state}`;
+
+      return {
+        success: true,
+        data: { authUrl, state },
+      };
+    } catch (error) {
+      this.logger.error('Get Google auth URL error:', error);
+      throw new InternalServerErrorException('Failed to generate auth URL');
+    }
+  }
+
+  /**
+   * Processa callback OAuth e troca código por tokens.
+   * 
+   * @async
+   * @method handleOAuthCallback
+   * @param {OAuthCallbackDto} callbackData - Dados do callback OAuth
+   * @returns {Promise<object>} Tokens de autenticação
+   * 
+   * @throws {UnauthorizedException} State CSRF inválido
+   * @throws {BadRequestException} Código inválido
+   * 
+   * @example
+   * ```typescript
+   * const tokens = await authService.handleOAuthCallback({
+   *   code: 'auth_code_123',
+   *   state: 'csrf_token_abc'
+   * });
+   * ```
+   */
+  async handleOAuthCallback(callbackData: OAuthCallbackDto) {
+    try {
+      // Validar state CSRF
+      if (callbackData.state) {
+        const expiresAt = this.stateCache.get(callbackData.state);
+        if (!expiresAt || Date.now() > expiresAt) {
+          throw new UnauthorizedException('Invalid or expired CSRF state token');
+        }
+        // Remover state após uso (one-time use)
+        this.stateCache.delete(callbackData.state);
+      }
+
+      if (!cognito.domain || !cognito.clientId) {
+        throw new InternalServerErrorException('OAuth not configured');
+      }
+
+      const redirect = cognito.redirectUri;
+      if (!redirect) {
+        throw new InternalServerErrorException('Redirect URI not configured');
+      }
+
+      const cognitoUrls = getCognitoUrls();
+      const params = new URLSearchParams({
+        grant_type: 'authorization_code',
+        client_id: cognito.clientId,
+        code: callbackData.code,
+        redirect_uri: redirect,
+      });
+
+      const response = await axios.post(cognitoUrls.token, params.toString(), {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        timeout: 10000, // 10 segundos
+      });
+
+      const { access_token, refresh_token, id_token, expires_in } = response.data;
+
+      // Sincronizar usuário com banco de dados
+      const payload = this.decodeJWT(id_token);
+      await this.syncUserWithDatabase(payload);
+
+      return {
+        success: true,
+        data: {
+          accessToken: access_token,
+          refreshToken: refresh_token,
+          idToken: id_token,
+          expiresIn: expires_in,
+        },
+      };
+    } catch (error) {
+      // Erros de rede/timeout do Axios
+      if (axios.isAxiosError(error)) {
+        this.logger.error('Falha na requisição OAuth:', {
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          data: error.response?.data,
+          code: error.code
+        });
+        
+        if (error.code === 'ECONNABORTED') {
+          throw new InternalServerErrorException('Timeout na requisição de token OAuth');
+        }
+        
+        if (error.response?.status === 400) {
+          throw new BadRequestException('Código de autorização inválido');
+        }
+        
+        if (error.response?.status === 401) {
+          throw new UnauthorizedException('Falha na autenticação OAuth do cliente');
+        }
+        
+        if (error.response?.status === 429) {
+          throw new RequestTimeoutException('Muitas tentativas de OAuth, tente novamente mais tarde');
+        }
+        
+        throw new InternalServerErrorException('Erro no provedor OAuth');
+      }
+      
+      // Erros de decodificação JWT
+      if (error instanceof Error && (
+        error.message.includes('JWT') || 
+        error.message.includes('token') ||
+        error.message.includes('decode')
+      )) {
+        this.logger.error('Erro na decodificação JWT:', error);
+        throw new UnauthorizedException('Token inválido recebido do provedor OAuth');
+      }
+      
+      // Erros de sincronização com banco de dados
+      if (error instanceof Error && (
+        error.message.includes('database') ||
+        error.message.includes('sync') ||
+        error.message.includes('MongoDB')
+      )) {
+        this.logger.error('Falha na sincronização com banco:', error);
+        throw new InternalServerErrorException('Falha ao sincronizar conta do usuário');
+      }
+      
+      // Erros de configuração (repassar como estão)
+      if (error instanceof InternalServerErrorException && 
+          (error.message.includes('not configured') || 
+           error.message.includes('OAuth'))) {
+        this.logger.error('Erro de configuração OAuth:', error.message);
+        throw error;
+      }
+      
+      // Erros CSRF state (já tratados acima, mas garante repasse)
+      if (error instanceof UnauthorizedException) {
+        this.logger.error('Erro de validação CSRF:', error.message);
+        throw error;
+      }
+      
+      // Log genérico para erros não esperados
+      this.logger.error('Erro inesperado no callback OAuth:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        callbackData: { 
+          hasCode: !!callbackData.code, 
+          hasState: !!callbackData.state 
+        }
+      });
+      
+      throw new InternalServerErrorException('Falha ao processar callback OAuth');
+    }
+  }
+
+  /**
    * Sincroniza usuário do Cognito com banco de dados local.
    * 
    * @private
@@ -367,7 +579,7 @@ export class AuthService {
   private async syncUserWithDatabase(payload: any) {
     try {
       // Verificar se usuário já existe
-      let user = await this.usersService.getUserByCognitoSub(payload.sub);
+      const user = await this.usersService.getUserByCognitoSub(payload.sub);
 
       if (!user) {
         // Criar usuário no MongoDB

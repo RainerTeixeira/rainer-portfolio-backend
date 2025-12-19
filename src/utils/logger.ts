@@ -9,7 +9,7 @@
  */
 
 import pino from 'pino';
-import { env } from '../config/env';
+import { environment } from '../common/config';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -25,8 +25,8 @@ if (!fs.existsSync(logsDir)) {
  * - Production: Arquivo JSON estruturado
  */
 export const logger = pino({
-  level: env.LOG_LEVEL || 'info',
-  transport: env.NODE_ENV === 'development' ? {
+  level: environment.isDevelopment ? 'debug' : 'info',
+  transport: environment.isDevelopment ? {
     targets: [
       // Console com cores (pino-pretty)
       {

@@ -9,12 +9,12 @@
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
-import { ValidationPipe } from '@nestjs/common';
+import { applyGlobalAppConfig } from './common/bootstrap/app.bootstrap';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from '@fastify/helmet';
 import multipart from '@fastify/multipart';
 import { AppModule } from './app.module';
-import { env } from './config/env';
+import { NODE_ENV, PORT, HOST, BASE_URL } from './common/config';
 
 /**
  * Inicializa a aplicação NestJS com Fastify e configura middlewares, CORS, validação, interceptores e Swagger.
@@ -44,7 +44,7 @@ async function bootstrap() {
   // Criar aplicação NestJS com Fastify
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
-    new FastifyAdapter({ logger: env.NODE_ENV === 'development' }),
+    new FastifyAdapter({ logger: NODE_ENV === 'development' }),
   );
 
   // Helmet - Security Headers
@@ -66,22 +66,8 @@ async function bootstrap() {
     },
   });
 
-  // Habilitar CORS
-  app.enableCors({
-    origin: env.CORS_ORIGIN || '*',
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-  });
-
-  // Global Validation Pipe (Zod)
-  app.useGlobalPipes(
-    new ValidationPipe({
-      transform: true,
-      whitelist: false, // Temporariamente desabilitado para testes
-      forbidNonWhitelisted: false,
-    }),
-  );
+  // Configurações globais unificadas (ValidationPipe + CORS)
+  await applyGlobalAppConfig(app);
 
   // Rota raiz (/) - Página inicial da API
   const fastifyInstance = app.getHttpAdapter().getInstance();
@@ -93,12 +79,12 @@ async function bootstrap() {
       version: '5.0.0',
       description: 'API RESTful moderna para blog com NestJS + Fastify',
       documentation: {
-        swagger: `${env.BASE_URL}/docs`,
-        openapi: `${env.BASE_URL}/api-json`,
+        swagger: `${BASE_URL}/docs`,
+        openapi: `${BASE_URL}/api-json`,
       },
       endpoints: {
-        health: `${env.BASE_URL}/health`,
-        healthDetailed: `${env.BASE_URL}/health/detailed`,
+        health: `${BASE_URL}/health`,
+        healthDetailed: `${BASE_URL}/health/detailed`,
       },
       features: [
         '✅ CRUD completo para 7 recursos',
@@ -109,13 +95,13 @@ async function bootstrap() {
         '✅ Swagger/OpenAPI 3.0',
       ],
       resources: {
-        users: `${env.BASE_URL}/users`,
-        posts: `${env.BASE_URL}/posts`,
-        categories: `${env.BASE_URL}/categories`,
-        comments: `${env.BASE_URL}/comments`,
-        likes: `${env.BASE_URL}/likes`,
-        bookmarks: `${env.BASE_URL}/bookmarks`,
-        notifications: `${env.BASE_URL}/notifications`,
+        users: `${BASE_URL}/users`,
+        posts: `${BASE_URL}/posts`,
+        categories: `${BASE_URL}/categories`,
+        comments: `${BASE_URL}/comments`,
+        likes: `${BASE_URL}/likes`,
+        bookmarks: `${BASE_URL}/bookmarks`,
+        notifications: `${BASE_URL}/notifications`,
       },
       database: {
         provider: 'MongoDB',
@@ -397,13 +383,13 @@ async function bootstrap() {
   });
 
   // Iniciar servidor
-  console.log(`🔄 Iniciando servidor na porta ${env.PORT} (host: ${env.HOST})...`);
+  console.log(`🔄 Iniciando servidor na porta ${PORT} (host: ${HOST})...`);
   
   try {
     // Fastify/NestJS: sintaxe correta - usar parâmetros separados ou objeto
     // Segundo a documentação NestJS: app.listen(port, host)
-    const port = Number(env.PORT);
-    const host = env.HOST;
+    const port = Number(PORT);
+    const host = HOST;
     
     console.log(`📡 Tentando escutar em ${host}:${port}...`);
     await app.listen(port, host);
@@ -412,10 +398,10 @@ async function bootstrap() {
   ═══════════════════════════════════════════════════════════
     🚀 NestJS + Fastify + MongoDB + Prisma + Zod
   ═══════════════════════════════════════════════════════════
-    Ambiente:       ${env.NODE_ENV}
-    Porta:          ${env.PORT}
-    URL:            ${env.BASE_URL}
-    Docs:           ${env.BASE_URL}/docs
+    Ambiente:       ${NODE_ENV}
+    Porta:          ${PORT}
+    URL:            ${BASE_URL}
+    Docs:           ${BASE_URL}/docs
     Database:       MongoDB + Prisma
     Segurança:      Helmet ✅ | CORS ✅ | Zod ✅
   ═══════════════════════════════════════════════════════════
