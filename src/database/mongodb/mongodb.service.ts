@@ -1,6 +1,31 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { MongoClient, Db, Document, Collection } from 'mongodb';
-import { EnvUtil } from '../../utils/env.util';
+import dotenv from 'dotenv';
+import path from 'path';
+
+dotenv.config({
+  path: path.join(process.cwd(), '.env'),
+  override: true,
+});
+
+class EnvUtil {
+  static get(key: string, defaultValue?: string): string {
+    return process.env[key] || defaultValue || '';
+  }
+
+  static getNumber(key: string, defaultValue?: number): number {
+    const value = process.env[key];
+    if (!value) return defaultValue || 0;
+    const num = parseInt(value, 10);
+    return isNaN(num) ? (defaultValue || 0) : num;
+  }
+
+  static getBoolean(key: string, defaultValue?: boolean): boolean {
+    const value = process.env[key];
+    if (!value) return defaultValue || false;
+    return value.toLowerCase() === 'true';
+  }
+}
 
 @Injectable()
 export class MongoDBService implements OnModuleInit {
