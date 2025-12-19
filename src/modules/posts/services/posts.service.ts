@@ -15,12 +15,12 @@
  * @module modules/posts/services/posts.service
  */
 
-import { Inject, Injectable } from '@nestjs/common';
+import { randomUUID } from 'crypto';
+import { Injectable, BadRequestException, Inject } from '@nestjs/common';
 import { POST_REPOSITORY } from '../../../database/tokens';
 import { PostRepository } from '../../../database/interfaces/post-repository.interface';
 import { CreatePostDto } from '../dto/create-post.dto';
 import { UpdatePostDto } from '../dto/update-post.dto';
-import { randomUUID } from 'crypto';
 
 /**
  * Converte um texto em slug (string segura para URL).
@@ -73,6 +73,10 @@ export class PostsService {
   async createPost(dto: CreatePostDto): Promise<unknown> {
     const id = randomUUID();
     const slug = dto.slug || textToSlug(dto.title);
+    const subcategoryId = dto.subcategoryId ?? dto.categoryId;
+    if (!subcategoryId) {
+      throw new BadRequestException('subcategoryId é obrigatório');
+    }
 
     return this.postsRepo.create({
       id,
@@ -80,7 +84,7 @@ export class PostsService {
       slug,
       content: dto.content,
       authorId: dto.authorId,
-      subcategoryId: dto.subcategoryId || dto.categoryId, // Support both field names
+      subcategoryId, // Support both field names
       status: dto.status || 'DRAFT',
       featured: dto.featured || dto.isFeatured || false,
       allowComments: dto.allowComments !== false,

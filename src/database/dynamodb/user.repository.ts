@@ -114,13 +114,19 @@ export class DynamoUserRepository implements UserRepository {
 
   private async scanUsers(): Promise<User[]> {
     try {
+      console.log('DynamoUserRepository.scanUsers - scanning table:', this.tableName);
       const items = await this.dynamo.scan({}, this.tableName);
+      console.log('DynamoUserRepository.scanUsers - items found:', items.length);
+      
       // Ensure all users have id field matching cognitoSub
-      return items.map(item => {
+      const users = items.map(item => {
         const user = item as any;
         user.id = user.cognitoSub;
         return user as User;
       });
+      
+      console.log('DynamoUserRepository.scanUsers - processed users:', users.length);
+      return users;
     } catch (error) {
       console.error('Error scanning users:', error);
       return [];

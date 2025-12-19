@@ -70,9 +70,18 @@ describe('PostsService', () => {
           title: 'My First Post',
           slug: 'my-first-post',
           content: 'This is the content',
-          viewCount: 0,
-          likeCount: 0,
-          commentCount: 0,
+          authorId: 'user-1',
+          subcategoryId: 'category-1',
+          status: 'DRAFT',
+          featured: false,
+          allowComments: true,
+          pinned: false,
+          priority: 0,
+          views: 0,
+          likesCount: 0,
+          commentsCount: 0,
+          bookmarksCount: 0,
+          publishedAt: expect.any(Date),
         })
       );
     });
@@ -107,13 +116,20 @@ describe('PostsService', () => {
       expect(result).toEqual(createdPost);
       expect(mockPostRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
+          title: 'My First Post',
+          slug: 'my-first-post',
+          content: 'This is the content',
+          authorId: 'user-1',
+          subcategoryId: 'category-1',
           status: 'DRAFT',
-          tags: [],
-          readTime: 0,
-          viewCount: 0,
-          likeCount: 0,
-          commentCount: 0,
-          isFeatured: false,
+          featured: false,
+          allowComments: true,
+          pinned: false,
+          priority: 0,
+          views: 0,
+          likesCount: 0,
+          commentsCount: 0,
+          bookmarksCount: 0,
         })
       );
     });

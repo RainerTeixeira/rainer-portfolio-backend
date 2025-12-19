@@ -124,7 +124,9 @@ export class UsersService {
     offset?: number;
     _excludeCognitoSub?: boolean;
   }): Promise<User[]> {
-    return this.usersRepo.findAll();
+    const users = await this.usersRepo.findAll();
+    console.log('UsersService.findAll - users found:', users.length);
+    return users;
   }
 
   /**
@@ -231,10 +233,13 @@ export class UsersService {
    * @returns {Promise<void>}
    * @throws {Error} Usuário não encontrado
    */
-  async updateUserNickname(cognitoSub: string, newNickname: string): Promise<void> {
+  async updateUserNickname(cognitoSub: string, newNickname?: string): Promise<void> {
     const user = await this.usersRepo.findByCognitoSub(cognitoSub);
     if (!user) {
       throw new Error('User not found');
+    }
+    if (!newNickname) {
+      throw new Error('Nickname is required');
     }
     
     await this.usersRepo.update(user.id, { nickname: newNickname });
@@ -278,6 +283,7 @@ export class UsersService {
     const offset = (page - 1) * limit;
 
     const users = await this.usersRepo.findAll();
+    console.log('UsersService.listUsers - users found:', users.length);
 
     // TODO: Implementar paginação e filtro no futuro
     // Por enquanto, retorna todos os usuários

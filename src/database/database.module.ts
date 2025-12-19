@@ -122,9 +122,12 @@ import {
          * Verifica se deve usar DynamoDB ou MongoDB (padrão PRISMA).
          */
         const dbProvider = config.get<string>('DATABASE_PROVIDER', 'PRISMA');
-        return dbProvider === 'DYNAMODB' 
+        console.log('DatabaseModule.USER_REPOSITORY - DATABASE_PROVIDER:', dbProvider);
+        const repository = dbProvider === 'DYNAMODB' 
           ? new DynamoUserRepository(dynamo)
           : new MongoUserRepository(mongo);
+        console.log('DatabaseModule.USER_REPOSITORY - using:', repository.constructor.name);
+        return repository;
       },
       /**
        * Dependências injetadas na factory.

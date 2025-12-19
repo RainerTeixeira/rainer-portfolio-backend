@@ -41,6 +41,7 @@ export class DynamoDBService implements OnModuleInit {
     }
 
     const dbProvider = this.configService.get<string>('DATABASE_PROVIDER', 'PRISMA');
+    console.log('DynamoDBService.constructor - DATABASE_PROVIDER:', dbProvider);
     if (dbProvider !== 'DYNAMODB') {
       this.logger.log('DynamoDB skipped (DATABASE_PROVIDER is not "DYNAMODB")');
       return;
@@ -70,7 +71,9 @@ export class DynamoDBService implements OnModuleInit {
       });
 
       this.tableName = this.configService.get<string>('DYNAMODB_TABLE') || 'portfolio-backend-table';
+      console.log('DynamoDBService.constructor - tableName:', this.tableName);
       this.isInitialized = true;
+      console.log('DynamoDBService.constructor - initialized successfully');
     } catch (error) {
       this.logger.error('Erro ao inicializar DynamoDB', error);
     }
@@ -280,12 +283,17 @@ export class DynamoDBService implements OnModuleInit {
     if (!this.docClient) {
       throw new Error('DynamoDB client not initialized');
     }
+    
+    const tableToUse = tableName || this.tableName;
+    console.log('DynamoDBService.scan - scanning table:', tableToUse);
+    
     const command = new DocScanCommand({
-      TableName: tableName || this.tableName,
+      TableName: tableToUse,
       ...options,
     });
 
     const result = await this.docClient.send(command);
+    console.log('DynamoDBService.scan - items found:', result.Items?.length || 0);
     return result.Items || [];
   }
 
