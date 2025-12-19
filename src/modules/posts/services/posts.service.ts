@@ -22,6 +22,17 @@ import { CreatePostDto } from '../dto/create-post.dto';
 import { UpdatePostDto } from '../dto/update-post.dto';
 import { randomUUID } from 'crypto';
 
+/**
+ * Converte um texto em slug (string segura para URL).
+ *
+ * Por que isso existe aqui (e não em util separado):
+ * - A única regra de slug atualmente usada pelo backend está no fluxo de criação de post.
+ * - Manter a função ao lado do `PostsService` reduz acoplamento e evita utilitários globais
+ *   que acabam ficando “soltos” no projeto.
+ *
+ * Observação:
+ * - Isso não garante unicidade do slug; é apenas normalização.
+ */
 function textToSlug(text: string): string {
   if (!text) return '';
 
@@ -46,14 +57,20 @@ export class PostsService {
   /**
    * Cria um novo post.
    *
-   * Regras/decisões aplicadas aqui:
-   * - Gera um `id` único.
-   * - Define defaults para `status`, contadores e flags.
+   * Por que a lógica fica aqui (service) e não no controller/repositório:
+   * - O controller só recebe/valida dados.
+   * - O repositório só persiste/consulta.
+   * - O service aplica regras de domínio simples (defaults, slug, id) e coordena a criação.
+   *
+   * Regras/decisões aplicadas:
+   * - Gera um `id` único (evita depender do banco para gerar id).
+   * - Gera `slug` a partir do título quando não for informado.
+   * - Define defaults para `status`, contadores e flags para garantir consistência.
    *
    * @param {CreatePostDto} dto Dados de criação.
    * @returns {Promise<unknown>} Entidade criada (conforme implementação do repositório).
    */
-  async createPost(dto: CreatePostDto) {
+  async createPost(dto: CreatePostDto): Promise<unknown> {
     const id = randomUUID();
     const slug = dto.slug || textToSlug(dto.title);
 
@@ -83,7 +100,7 @@ export class PostsService {
    * @param {string} id ID do post.
    * @returns {Promise<unknown>} Post encontrado ou `null`/`undefined` dependendo do repositório.
    */
-  async getPostById(id: string) {
+  async getPostById(id: string): Promise<unknown> {
     return this.postsRepo.findById(id);
   }
 
@@ -93,7 +110,7 @@ export class PostsService {
    * @param {string} slug Slug do post.
    * @returns {Promise<unknown>} Post encontrado ou `null`/`undefined` dependendo do repositório.
    */
-  async getPostBySlug(slug: string) {
+  async getPostBySlug(slug: string): Promise<unknown> {
     return this.postsRepo.findBySlug(slug);
   }
 
@@ -109,7 +126,7 @@ export class PostsService {
     categoryId?: string;
     limit?: number;
     offset?: number;
-  }) {
+  }): Promise<unknown> {
     return this.postsRepo.findAll(options);
   }
 
@@ -120,7 +137,7 @@ export class PostsService {
    * @param {UpdatePostDto} dto Campos a atualizar.
    * @returns {Promise<unknown>} Post atualizado.
    */
-  async updatePost(id: string, dto: UpdatePostDto) {
+  async updatePost(id: string, dto: UpdatePostDto): Promise<unknown> {
     return this.postsRepo.update(id, dto);
   }
 
@@ -154,7 +171,7 @@ export class PostsService {
    * @param {string} id ID do post.
    * @returns {Promise<unknown>} Post atualizado.
    */
-  async publishPost(id: string) {
+  async publishPost(id: string): Promise<unknown> {
     return this.postsRepo.update(id, {
       status: 'PUBLISHED',
       publishedAt: new Date(),
@@ -167,7 +184,7 @@ export class PostsService {
    * @param {string} id ID do post.
    * @returns {Promise<unknown>} Post atualizado.
    */
-  async archivePost(id: string) {
+  async archivePost(id: string): Promise<unknown> {
     return this.postsRepo.update(id, {
       status: 'ARCHIVED',
     });
