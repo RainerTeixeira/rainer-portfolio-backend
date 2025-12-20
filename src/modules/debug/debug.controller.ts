@@ -1,5 +1,9 @@
+/**
+ * Debug Controller for testing DynamoDB
+ */
+
 import { Controller, Get } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
 import { DynamoDBService } from '../../database/dynamodb/dynamodb.service';
 
 @ApiTags('debug')
@@ -7,25 +11,48 @@ import { DynamoDBService } from '../../database/dynamodb/dynamodb.service';
 export class DebugController {
   constructor(private readonly dynamoService: DynamoDBService) {}
 
-  @Get('users')
-  @ApiOperation({ summary: 'Debug - Testar scan direto de usuários' })
-  async debugUsers() {
+  @Get('posts')
+  async testPosts() {
     try {
-      console.log('DebugController.debugUsers - starting scan...');
-      const users = await this.dynamoService.scan({}, 'portfolio-backend-table-users');
-      console.log('DebugController.debugUsers - users found:', users.length);
+      console.log('Debug: Testing posts scan...');
+      const posts = await this.dynamoService.scan({}, 'portfolio-backend-table-posts');
+      console.log('Debug: Posts found:', posts.length);
       return {
         success: true,
-        count: users.length,
-        data: users,
-        message: 'Scan direto do DynamoDB'
+        message: 'Debug posts scan',
+        data: posts,
+        count: posts.length
       };
     } catch (error) {
-      console.error('DebugController.debugUsers - error:', error);
+      const message = error instanceof Error ? error.message : String(error);
+      console.error('Debug: Error scanning posts:', error);
       return {
         success: false,
-        error: error.message,
-        message: 'Erro no scan direto'
+        message: 'Error scanning posts',
+        error: message
+      };
+    }
+  }
+
+  @Get('categories')
+  async testCategories() {
+    try {
+      console.log('Debug: Testing categories scan...');
+      const categories = await this.dynamoService.scan({}, 'portfolio-backend-table-categories');
+      console.log('Debug: Categories found:', categories.length);
+      return {
+        success: true,
+        message: 'Debug categories scan',
+        data: categories,
+        count: categories.length
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error('Debug: Error scanning categories:', error);
+      return {
+        success: false,
+        message: 'Error scanning categories',
+        error: message
       };
     }
   }
