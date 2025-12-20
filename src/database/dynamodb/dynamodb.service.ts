@@ -281,26 +281,37 @@ export class DynamoDBService implements OnModuleInit {
    */
   async scan(options?: any, tableName?: string): Promise<Record<string, unknown>[]> {
     if (!this.docClient) {
+      console.error('DynamoDBService.scan - DynamoDB client not initialized');
       throw new Error('DynamoDB client not initialized');
     }
     
     const tableToUse = tableName || this.tableName;
     console.log('DynamoDBService.scan - scanning table:', tableToUse);
     
-    const command = new DocScanCommand({
-      TableName: tableToUse,
-      ...options,
-    });
+    try {
+      const command = new DocScanCommand({
+        TableName: tableToUse,
+        ...options,
+      });
 
-    const result = await this.docClient.send(command);
-    console.log('DynamoDBService.scan - items found:', result.Items?.length || 0);
-    return result.Items || [];
+      const result = await this.docClient.send(command);
+      console.log('DynamoDBService.scan - items found:', result.Items?.length || 0);
+      if (result.Items && result.Items.length > 0) {
+        console.log('DynamoDBService.scan - first item sample:', JSON.stringify(result.Items[0], null, 2));
+      }
+      return result.Items || [];
+    } catch (error) {
+      console.error('DynamoDBService.scan - error scanning table:', tableToUse);
+      console.error('DynamoDBService.scan - error details:', error);
+      // Don't return empty array, throw the error so we can see what's wrong
+      throw error;
+    }
   }
 
   /**
    * Remove um item
    */
-  async delete(pk: string, sk: string, tableName?: string): Promise<void> {
+  async delete(pk: string, _sk: string, tableName?: string): Promise<void> {
     if (!this.docClient) {
       throw new ServiceUnavailableException('DynamoDB client not initialized');
     }

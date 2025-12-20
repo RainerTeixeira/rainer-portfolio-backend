@@ -2,13 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { Category, CategoryRepository } from '../interfaces/category-repository.interface';
 import { DynamoDBService } from './dynamodb.service';
 
-// Interface interna para incluir chaves do DynamoDB
-interface CategoryWithKeys extends Category {
-  PK: string;
-  SK: string;
-  GSI1PK: string;
-  GSI1SK: string;
-}
 
 @Injectable()
 export class DynamoCategoryRepository implements CategoryRepository {
@@ -45,7 +38,7 @@ export class DynamoCategoryRepository implements CategoryRepository {
   async findAll(): Promise<Category[]> {
     try {
       const items = await this.dynamo.scan({}, this.tableName);
-      return items as Category[];
+      return items as unknown as Category[];
     } catch (error) {
       console.error('Error scanning categories:', error);
       return [];

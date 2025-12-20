@@ -87,17 +87,17 @@ export class DynamoCommentRepository implements CommentRepository {
   }
 
   async approve(id: string): Promise<void> {
-    await this.update(id, { isApproved: true });
+    await this.update(id, { status: 'APPROVED' });
   }
 
   async reject(id: string): Promise<void> {
-    await this.update(id, { isApproved: false });
+    await this.update(id, { status: 'REJECTED' });
   }
 
   private async findAll(): Promise<Comment[]> {
     try {
       const items = await this.dynamo.scan({}, this.tableName);
-      return items as Comment[];
+      return items as unknown as Comment[];
     } catch (error) {
       console.error('Error scanning comments:', error);
       return [];

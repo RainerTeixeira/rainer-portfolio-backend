@@ -8,12 +8,11 @@ export class DynamoNotificationRepository implements NotificationRepository {
   
   constructor(private readonly dynamo: DynamoDBService) {}
 
-  async create(data: Omit<Notification, 'createdAt' | 'updatedAt' | 'readAt'>): Promise<Notification> {
+  async create(data: Omit<Notification, 'createdAt' | 'readAt'>): Promise<Notification> {
     const now = new Date();
     const item: Notification = {
       ...data,
       createdAt: now,
-      updatedAt: now,
       readAt: data.isRead ? now : undefined,
     };
 
@@ -59,7 +58,6 @@ export class DynamoNotificationRepository implements NotificationRepository {
     const updated: Notification = {
       ...existing,
       ...data,
-      updatedAt: new Date(),
     };
 
     await this.dynamo.put(updated, this.tableName);
@@ -107,9 +105,9 @@ export class DynamoNotificationRepository implements NotificationRepository {
   private async findAll(): Promise<Notification[]> {
     try {
       const items = await this.dynamo.scan({}, this.tableName);
-      return items as Notification[];
+      return items as unknown as Notification[];
     } catch (error) {
-      console.error('Error scanning notifications:', error);
+      // Error scanning notifications
       return [];
     }
   }

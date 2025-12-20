@@ -54,10 +54,27 @@ export class DynamoLikeRepository implements LikeRepository {
     }
   }
 
+  async findByUserAndComment(userId: string, commentId: string): Promise<Like | null> {
+    const likes = await this.findAll();
+    return likes.find(l => l.userId === userId && l.commentId === commentId) || null;
+  }
+
+  async findByComment(commentId: string): Promise<Like[]> {
+    const likes = await this.findAll();
+    return likes.filter(l => l.commentId === commentId);
+  }
+
+  async deleteByUserAndComment(userId: string, commentId: string): Promise<void> {
+    const like = await this.findByUserAndComment(userId, commentId);
+    if (like) {
+      await this.delete(like.id);
+    }
+  }
+
   private async findAll(): Promise<Like[]> {
     try {
       const items = await this.dynamo.scan({}, this.tableName);
-      return items as Like[];
+      return items as unknown as Like[];
     } catch (error) {
       console.error('Error scanning likes:', error);
       return [];

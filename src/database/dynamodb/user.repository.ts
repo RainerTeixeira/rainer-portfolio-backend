@@ -2,14 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { User, UserRepository } from '../interfaces/user-repository.interface';
 import { DynamoDBService } from './dynamodb.service';
 
-// Interface interna para incluir chaves do DynamoDB
-interface UserWithKeys extends User {
-  PK: string;
-  SK: string;
-  GSI1PK: string;
-  GSI1SK: string;
-}
-
 @Injectable()
 export class DynamoUserRepository implements UserRepository {
   private readonly tableName = 'portfolio-backend-table-users';
@@ -39,9 +31,9 @@ export class DynamoUserRepository implements UserRepository {
     if (!result) return null;
     
     // Ensure id field exists and matches cognitoSub
-    const user = result as any;
+    const user = result as User & { cognitoSub: string };
     user.id = user.cognitoSub;
-    return user as User;
+    return user;
   }
 
   async findByCognitoSub(cognitoSub: string): Promise<User | null> {
@@ -109,26 +101,25 @@ export class DynamoUserRepository implements UserRepository {
     const user = await this.findByCognitoSub(cognitoSub);
     if (!user) throw new Error('User not found');
 
-    await this.update(user.id, { nickname: newNickname });
+    if (user.id) {
+      await this.update(user.id, { nickname: newNickname });
+    }
   }
 
   private async scanUsers(): Promise<User[]> {
     try {
-      console.log('DynamoUserRepository.scanUsers - scanning table:', this.tableName);
       const items = await this.dynamo.scan({}, this.tableName);
-      console.log('DynamoUserRepository.scanUsers - items found:', items.length);
       
       // Ensure all users have id field matching cognitoSub
       const users = items.map(item => {
-        const user = item as any;
+        const user = item as unknown as User & { cognitoSub: string };
         user.id = user.cognitoSub;
-        return user as User;
+        return user;
       });
       
-      console.log('DynamoUserRepository.scanUsers - processed users:', users.length);
       return users;
     } catch (error) {
-      console.error('Error scanning users:', error);
+      // Error scanning users
       return [];
     }
   }

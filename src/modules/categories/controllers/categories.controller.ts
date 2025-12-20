@@ -63,8 +63,13 @@ export class CategoriesController {
     description: 'Lista de categorias retornada com sucesso',
     type: ApiResponseDto,
   })
-  findAll() {
-    return this.categoriesService.getAllCategories();
+  async findAll() {
+    const categories = await this.categoriesService.getAllCategories();
+    return {
+      success: true,
+      message: 'Categorias encontradas com sucesso',
+      data: categories
+    };
   }
 
   /**

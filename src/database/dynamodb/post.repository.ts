@@ -2,16 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { Post, PostRepository } from '../interfaces/post-repository.interface';
 import { DynamoDBService } from './dynamodb.service';
 
-// Interface interna para incluir chaves do DynamoDB
-interface PostWithKeys extends Post {
-  PK: string;
-  SK: string;
-  GSI1PK: string;
-  GSI1SK: string;
-  GSI2PK: string;
-  GSI2SK: string;
-}
-
 @Injectable()
 export class DynamoPostRepository implements PostRepository {
   private readonly tableName = 'portfolio-backend-table-posts';
@@ -52,7 +42,7 @@ export class DynamoPostRepository implements PostRepository {
     offset?: number;
   } = {}): Promise<Post[]> {
     try {
-      let posts = await this.dynamo.scan({}, this.tableName) as Post[];
+      let posts = await this.dynamo.scan({}, this.tableName) as unknown as Post[];
 
       if (options.status) {
         posts = posts.filter(p => p.status === options.status);

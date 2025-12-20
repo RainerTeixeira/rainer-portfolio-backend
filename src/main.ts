@@ -24,9 +24,9 @@ import { NODE_ENV, PORT, HOST, BASE_URL } from './common/config';
  * - Registra `helmet` com ajustes para compatibilidade de APIs e Swagger.
  * - Registra `@fastify/multipart` com limites adequados para upload.
  * - Habilita CORS com origem, métodos e headers permitidos.
- * - Aplica `ValidationPipe` global para transformação e whitelisting.
+ * '- Aplica `ValidationPipe` global para transformação e whitelisting.
  * - Instala `DatabaseProviderInterceptor` para seleção dinâmica de banco por header.
- * - Define rota raiz (`/`) com metadados da API.
+ * - Define rota raiz (`/`) com metadados da API.'
  * - Configura documentação `Swagger` e UI com CSS customizado.
  * - Inicia o servidor em `env.PORT` e `env.HOST` com logs de status.
  *

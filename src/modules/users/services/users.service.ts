@@ -233,7 +233,7 @@ export class UsersService {
    * @returns {Promise<void>}
    * @throws {Error} Usuário não encontrado
    */
-  async updateUserNickname(cognitoSub: string, newNickname?: string): Promise<void> {
+  async updateUserNickname(cognitoSub: string, newNickname: string): Promise<void> {
     const user = await this.usersRepo.findByCognitoSub(cognitoSub);
     if (!user) {
       throw new Error('User not found');
@@ -242,7 +242,12 @@ export class UsersService {
       throw new Error('Nickname is required');
     }
     
-    await this.usersRepo.update(user.id, { nickname: newNickname });
+    const userId = user.id ?? user.cognitoSub;
+    if (!userId) {
+      throw new Error('User id is required to update nickname');
+    }
+
+    await this.usersRepo.update(userId, { nickname: newNickname as string });
   }
 
   /**

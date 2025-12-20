@@ -8,12 +8,11 @@ export class DynamoBookmarkRepository implements BookmarkRepository {
   
   constructor(private readonly dynamo: DynamoDBService) {}
 
-  async create(data: Omit<Bookmark, 'createdAt' | 'updatedAt'>): Promise<Bookmark> {
+  async create(data: Omit<Bookmark, 'createdAt'>): Promise<Bookmark> {
     const now = new Date();
     const item: Bookmark = {
       ...data,
       createdAt: now,
-      updatedAt: now,
     };
 
     await this.dynamo.put(item, this.tableName);
@@ -53,19 +52,6 @@ export class DynamoBookmarkRepository implements BookmarkRepository {
     return bookmarks;
   }
 
-  async update(id: string, data: Partial<Bookmark>): Promise<Bookmark | null> {
-    const existing = await this.findById(id);
-    if (!existing) throw new Error('Bookmark not found');
-
-    const updated: Bookmark = {
-      ...existing,
-      ...data,
-      updatedAt: new Date(),
-    };
-
-    await this.dynamo.put(updated, this.tableName);
-    return updated;
-  }
 
   async delete(id: string): Promise<void> {
     const bookmark = await this.findById(id);
@@ -81,10 +67,27 @@ export class DynamoBookmarkRepository implements BookmarkRepository {
     }
   }
 
+  async findByUserAndComment(userId: string, commentId: string): Promise<Bookmark | null> {
+    const bookmarks = await this.findAll();
+    return bookmarks.find(b => b.userId === userId && b.commentId === commentId) || null;
+  }
+
+  async findByComment(commentId: string): Promise<Bookmark[]> {
+    const bookmarks = await this.findAll();
+    return bookmarks.filter(b => b.commentId === commentId);
+  }
+
+  async deleteByUserAndComment(userId: string, commentId: string): Promise<void> {
+    const bookmark = await this.findByUserAndComment(userId, commentId);
+    if (bookmark) {
+      await this.delete(bookmark.id);
+    }
+  }
+
   private async findAll(): Promise<Bookmark[]> {
     try {
       const items = await this.dynamo.scan({}, this.tableName);
-      return items as Bookmark[];
+      return items as unknown as Bookmark[];
     } catch (error) {
       console.error('Error scanning bookmarks:', error);
       return [];

@@ -77,7 +77,7 @@ export class PostsController {
     description: 'Lista de posts retornada com sucesso',
     type: ApiResponseDto,
   })
-  findAll(@Query() query: {
+  async findAll(@Query() query: {
     status?: string;
     authorId?: string;
     categoryId?: string;
@@ -102,13 +102,19 @@ export class PostsController {
       pageNum !== undefined && limitNum !== undefined ? Math.max(0, (pageNum - 1) * limitNum) :
       undefined;
 
-    return this.postsService.getAllPosts({
+    const posts = await this.postsService.getAllPosts({
       status: query.status,
       authorId: query.authorId,
       categoryId: query.categoryId,
       limit: limitNum,
       offset: Number.isFinite(computedOffset) ? computedOffset : undefined,
     });
+
+    return {
+      success: true,
+      message: 'Posts encontrados com sucesso',
+      data: posts
+    };
   }
 
   /**
