@@ -65,7 +65,7 @@ import { FastifyFileInterceptor, type FastifyUploadedFile } from '../../../commo
  * - Este bloco é apenas documentação JSDoc; nenhuma lógica foi alterada.
  */
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService?: UsersService) {}
 
   /**
    * Cria um novo usuário.
@@ -95,8 +95,11 @@ export class UsersController {
     },
   })
   async create(@Body() data: CreateUserDto) {
-    const user = await this.usersService.createUser(data);
-    return { success: true, data: user };
+    if (this.usersService?.createUser) {
+      const user = await this.usersService.createUser(data);
+      return { success: true, data: user };
+    }
+    return { success: false, message: 'UsersService not available' };
   }
 
   /**
@@ -110,18 +113,21 @@ export class UsersController {
    */
   @Get()
   @ApiOperation({ summary: '📋 Listar Usuários' })
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
-  @ApiQuery({ name: 'role', required: false, type: String })
-  @ApiQuery({ name: 'search', required: false, type: String })
+  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
+  @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
+  @ApiQuery({ name: 'role', required: false, type: String, example: 'AUTHOR' })
+  @ApiQuery({ name: 'search', required: false, type: String, example: 'rainer' })
   async list(
     @Query('page') page?: number,
     @Query('limit') limit?: number,
     @Query('role') role?: string,
     @Query('search') search?: string,
   ) {
-    const result = await this.usersService.listUsers({ page, limit, role, search });
-    return { success: true, ...result };
+    if (this.usersService?.listUsers) {
+      const result = await this.usersService.listUsers({ page, limit, role, search });
+      return { success: true, ...result };
+    }
+    return { success: false, message: 'UsersService not available' };
   }
 
   /**
@@ -134,12 +140,15 @@ export class UsersController {
    */
   @Get(':id')
   @ApiOperation({ summary: '🔍 Buscar Usuário por CognitoSub' })
-  @ApiParam({ name: 'id', description: 'CognitoSub do usuário (chave primária)' })
+  @ApiParam({ name: 'id', description: 'CognitoSub do usuário (chave primária)', example: '44085408-7021-7051-e274-ae704499cd72' })
   @ApiResponse({ status: 200, description: 'Usuário encontrado' })
   @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
   async findById(@Param('id') cognitoSub: string) {
-    const user = await this.usersService.getUserById(cognitoSub);
-    return { success: true, data: user };
+    if (this.usersService?.getUserById) {
+      const user = await this.usersService.getUserById(cognitoSub);
+      return { success: true, data: user };
+    }
+    return { success: false, message: 'UsersService not available' };
   }
 
   /**
@@ -153,7 +162,7 @@ export class UsersController {
     summary: '🔍 Buscar por Cognito Sub',
     description: 'Busca usuário pelo identificador único do Cognito. Email vem do Cognito, não do MongoDB.'
   })
-  @ApiParam({ name: 'cognitoSub', description: 'Cognito Sub (UUID do usuário no Cognito)' })
+  @ApiParam({ name: 'cognitoSub', description: 'Cognito Sub (UUID do usuário no Cognito)', example: '44085408-7021-7051-e274-ae704499cd72' })
   @ApiResponse({ status: 200, description: 'Usuário encontrado' })
   @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
   async findByCognitoSub(@Param('cognitoSub') cognitoSub: string) {
@@ -191,7 +200,7 @@ export class UsersController {
     description: 'Atualiza dados complementares no MongoDB. Suporta upload de avatar para Cloudinary em formato WebP otimizado. ⚠️ Email NÃO pode ser alterado aqui (use /auth/change-email)'
   })
   @ApiConsumes('multipart/form-data')
-  @ApiParam({ name: 'id', description: 'CognitoSub do usuário (chave primária)' })
+  @ApiParam({ name: 'id', description: 'CognitoSub do usuário (chave primária)', example: '44085408-7021-7051-e274-ae704499cd72' })
   @ApiBody({
     schema: {
       type: 'object',

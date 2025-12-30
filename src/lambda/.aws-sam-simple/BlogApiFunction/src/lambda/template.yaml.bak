@@ -1,0 +1,898 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: 'Rainer Portfolio Backend - Serverless AWS (Lambda + DynamoDB + Cognito + Function URLs)'
+
+# ═══════════════════════════════════════════════════════════════════════════
+# PARÂMETROS GLOBAIS
+# ═══════════════════════════════════════════════════════════════════════════
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - staging
+      - prod
+    Description: Ambiente de deployment (dev, staging ou prod)
+  
+  DomainName:
+    Type: String
+    Default: ''
+    Description: Custom domain name (optional)
+  
+  CognitoUserPoolId:
+    Type: String
+    Description: ID do Cognito User Pool existente
+    Default: ''
+  
+  CognitoClientId:
+    Type: String
+    Description: ID do Cognito App Client existente
+    Default: ''
+
+# ═══════════════════════════════════════════════════════════════════════════
+# CONDIÇÕES
+# ═══════════════════════════════════════════════════════════════════════════
+Conditions:
+  IsProduction: !Equals [!Ref Environment, 'prod']
+  IsDevelopment: !Equals [!Ref Environment, 'dev']
+  HasDomainName: !Not [!Equals [!Ref DomainName, '']]
+  HasCognitoConfig: !And
+    - !Not [!Equals [!Ref CognitoUserPoolId, '']]
+    - !Not [!Equals [!Ref CognitoClientId, '']]
+
+# ═══════════════════════════════════════════════════════════════════════════
+# VARIÁVEIS GLOBAIS - OTIMIZADAS PARA FREE TIER
+# ═══════════════════════════════════════════════════════════════════════════
+Globals:
+  Function:
+    # ⚡ Lambda Free Tier: 1M requests + 400k GB-segundos/mês GRÁTIS
+    Timeout: 29 # Máximo para Function URLs (30s)
+    MemorySize: 512 # Sweet spot: performance vs custo
+    Runtime: nodejs20.x # Mais recente e eficiente
+    Architectures:
+      - x86_64 # Free Tier maior que ARM64
+    Environment:
+      Variables:
+        NODE_ENV: !Ref Environment
+        DYNAMODB_TABLE_PREFIX: !Sub '${AWS::StackName}-${Environment}'
+        LOG_LEVEL: !If [IsProduction, 'warn', 'debug']
+
+        # Cognito (criado dinamicamente ou existente)
+        COGNITO_USER_POOL_ID: !If [HasCognitoConfig, !Ref CognitoUserPoolId, !Ref UserPool]
+        COGNITO_CLIENT_ID: !If [HasCognitoConfig, !Ref CognitoClientId, !Ref UserPoolClient]
+        COGNITO_REGION: !Ref AWS::Region
+    # X-Ray grátis (1M traces/mês)
+    Tracing: !If [IsDevelopment, 'Active', 'PassThrough']
+    # Tags para controle de custos
+    Tags:
+      Environment: !Ref Environment
+      Application: blog-api-serverless
+      ManagedBy: AWS-SAM
+      CostCenter: FreeTier
+      Owner: RainerSoft
+
+# ═══════════════════════════════════════════════════════════════════════════
+# RECURSOS
+# ═══════════════════════════════════════════════════════════════════════════
+Resources:
+  # ─────────────────────────────────────────────────────────────────────────
+  # COGNITO USER POOL E CLIENT
+  # ─────────────────────────────────────────────────────────────────────────
+  
+  # Cognito User Pool
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Sub '${AWS::StackName}-users-${Environment}'
+
+      UsernameAttributes:
+        - email
+      AutoVerifiedAttributes:
+        - email
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 12
+          RequireUppercase: true
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: true
+      Schema:
+        - Name: email
+          AttributeDataType: String
+          Required: true
+          Mutable: true
+        - Name: name
+          AttributeDataType: String
+          Required: true
+          Mutable: true
+        - Name: nickname
+          AttributeDataType: String
+          Required: true
+          Mutable: false
+
+  # Cognito User Pool Client
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId: !Ref UserPool
+      ClientName: !Sub '${AWS::StackName}-client-${Environment}'
+      GenerateSecret: false
+      SupportedIdentityProviders:
+        - COGNITO
+        - Google
+        - Facebook
+      CallbackURLs:
+        - !If 
+          - HasDomainName
+          - !Sub 'https://${DomainName}/auth/callback'
+          - 'http://localhost:3000/auth/callback'
+        - 'http://localhost:3000/auth/callback'
+      LogoutURLs:
+        - !If 
+          - HasDomainName
+          - !Sub 'https://${DomainName}/auth/logout'
+          - 'http://localhost:3000/auth/logout'
+        - 'http://localhost:3000/auth/logout'
+      AllowedOAuthFlows:
+        - code
+      AllowedOAuthScopes:
+        - email
+        - openid
+        - profile
+      AllowedOAuthFlowsUserPoolClient: true
+      ExplicitAuthFlows:
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+        - ALLOW_USER_SRP_AUTH
+
+  # Pre-SignUp Lambda Trigger
+  PreSignUpTrigger:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub '${AWS::StackName}-pre-signup-${Environment}'
+      CodeUri: ..
+      Handler: lambda/cognito-pre-signup-trigger.handler
+      Runtime: nodejs20.x
+      Timeout: 10
+      MemorySize: 256
+      Environment:
+        Variables:
+          NODE_ENV: !Ref Environment
+      Tags:
+        Environment: !Ref Environment
+        Application: rainer-portfolio-backend
+
+  # Permission for Cognito to invoke Pre-SignUp trigger
+  PreSignUpTriggerPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref PreSignUpTrigger
+      Action: lambda:InvokeFunction
+      Principal: cognito-idp.amazonaws.com
+      SourceArn: !GetAtt UserPool.Arn
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # FUNÇÃO LAMBDA - API PRINCIPAL (OTIMIZADA FREE TIER)
+  # ─────────────────────────────────────────────────────────────────────────
+  BlogApiFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2020
+        Sourcemap: !If [IsDevelopment, true, false]
+        EntryPoints:
+          - lambda/handler.ts
+        External:
+          - '@aws-sdk/*' # Usar AWS SDK do runtime
+        Bundle: true
+        TreeShaking: true
+    Properties:
+      FunctionName: !Sub '${AWS::StackName}-api-${Environment}'
+      Description: 'NestJS Blog API - Serverless com DynamoDB (Free Tier)'
+      Handler: handler.lambdaHandler
+      CodeUri: ..
+      
+      # Configurações de performance
+      ReservedConcurrentExecutions: !If [IsProduction, 10, 2]
+      
+      DeadLetterQueue:
+        Type: SQS
+        TargetArn: !GetAtt DeadLetterQueue.Arn
+      
+      # Function URL (GRATUITO - sem API Gateway)
+      FunctionUrlConfig:
+        AuthType: NONE
+        Cors:
+          AllowOrigins: 
+            - '*'
+          AllowHeaders: 
+            - 'Content-Type'
+            - 'Authorization' 
+            - 'X-Database-Provider'
+            - 'X-Requested-With'
+          AllowMethods: 
+            - 'GET'
+            - 'POST'
+            - 'PUT'
+            - 'PATCH'
+            - 'DELETE'
+          MaxAge: 86400
+          AllowCredentials: false
+      
+      # Permissões IAM (mínimas necessárias)
+      Policies:
+        # DynamoDB - Acesso completo às tabelas
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UsersTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref PostsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CategoriesTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CommentsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref LikesTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref BookmarksTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref NotificationsTable
+        
+        # CloudWatch Logs (Free Tier: 5GB/mês)
+        - Statement:
+            - Effect: Allow
+              Action:
+                - 'logs:CreateLogGroup'
+                - 'logs:CreateLogStream'
+                - 'logs:PutLogEvents'
+              Resource: !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${AWS::StackName}-api-${Environment}*'
+        
+        # Cognito (criado dinamicamente ou existente)
+        - Statement:
+            - Effect: Allow
+              Action:
+                - 'cognito-idp:AdminGetUser'
+                - 'cognito-idp:AdminUpdateUserAttributes'
+                - 'cognito-idp:AdminSetUserPassword'
+                - 'cognito-idp:ListUsers'
+                - 'cognito-idp:AdminCreateUser'
+                - 'cognito-idp:AdminDeleteUser'
+              Resource: !If 
+                - HasCognitoConfig
+                - !Sub 'arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${CognitoUserPoolId}'
+                - !GetAtt UserPool.Arn
+      
+      # Variáveis específicas da função
+      Environment:
+        Variables:
+          CORS_ORIGIN: '*'
+          PORT: '4000'
+          HOST: '0.0.0.0'
+
+    Events:
+      Api:
+        Type: Api
+        Properties:
+          Path: /{proxy+}
+          Method: ANY
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # TABELAS DYNAMODB
+  # ─────────────────────────────────────────────────────────────────────────
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # TABELA: USERS (⭐ 5 RCU/WCU - Mais Acessada)
+  # ═══════════════════════════════════════════════════════════════════════════
+  UsersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub ${AWS::StackName}-${Environment}-users
+
+      # 💰 FREE TIER PERMANENTE: Provisioned (não On-Demand!)
+      BillingMode: PROVISIONED
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5 # ⭐ Mais acessado (auth)
+        WriteCapacityUnits: 5
+
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: email
+          AttributeType: S
+        - AttributeName: username
+          AttributeType: S
+        - AttributeName: cognitoSub
+          AttributeType: S
+
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+
+      GlobalSecondaryIndexes:
+        - IndexName: EmailIndex
+          KeySchema:
+            - AttributeName: email
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 5
+            WriteCapacityUnits: 5
+
+        - IndexName: UsernameIndex
+          KeySchema:
+            - AttributeName: username
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 5
+            WriteCapacityUnits: 5
+
+        - IndexName: CognitoSubIndex
+          KeySchema:
+            - AttributeName: cognitoSub
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 5
+            WriteCapacityUnits: 5
+
+      # Backup: grátis até 10 GB (sempre habilitado)
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: false
+
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Resource
+          Value: Users
+        - Key: CostOptimization
+          Value: FreeTierProvisioned
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # TABELA: POSTS (⭐ 5 RCU/WCU - Mais Acessada)
+  # ═══════════════════════════════════════════════════════════════════════════
+  PostsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub ${AWS::StackName}-${Environment}-posts
+
+      # 💰 FREE TIER PERMANENTE
+      BillingMode: PROVISIONED
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5 # ⭐ Mais acessado (feed, listagens)
+        WriteCapacityUnits: 5
+
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: slug
+          AttributeType: S
+        - AttributeName: authorId
+          AttributeType: S
+        - AttributeName: subcategoryId
+          AttributeType: S
+        - AttributeName: status
+          AttributeType: S
+        - AttributeName: createdAt
+          AttributeType: S
+
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+
+      GlobalSecondaryIndexes:
+        - IndexName: SlugIndex
+          KeySchema:
+            - AttributeName: slug
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 5
+            WriteCapacityUnits: 5
+
+        - IndexName: AuthorIndex
+          KeySchema:
+            - AttributeName: authorId
+              KeyType: HASH
+            - AttributeName: createdAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 5
+            WriteCapacityUnits: 5
+
+        - IndexName: SubcategoryIndex
+          KeySchema:
+            - AttributeName: subcategoryId
+              KeyType: HASH
+            - AttributeName: createdAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 5
+            WriteCapacityUnits: 5
+
+        - IndexName: StatusIndex
+          KeySchema:
+            - AttributeName: status
+              KeyType: HASH
+            - AttributeName: createdAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 5
+            WriteCapacityUnits: 5
+
+      # Backup: apenas produção
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: false
+
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Resource
+          Value: Posts
+        - Key: CostOptimization
+          Value: FreeTierProvisioned
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # TABELA: CATEGORIES (3 RCU/WCU)
+  # ═══════════════════════════════════════════════════════════════════════════
+  CategoriesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub ${AWS::StackName}-${Environment}-categories
+
+      # 💰 FREE TIER PERMANENTE
+      BillingMode: PROVISIONED
+      ProvisionedThroughput:
+        ReadCapacityUnits: 3 # Navegação frequente
+        WriteCapacityUnits: 3
+
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: slug
+          AttributeType: S
+        - AttributeName: parentId
+          AttributeType: S
+
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+
+      GlobalSecondaryIndexes:
+        - IndexName: SlugIndex
+          KeySchema:
+            - AttributeName: slug
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 3
+            WriteCapacityUnits: 3
+
+        - IndexName: ParentIdIndex
+          KeySchema:
+            - AttributeName: parentId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 3
+            WriteCapacityUnits: 3
+
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: false
+
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Resource
+          Value: Categories
+        - Key: CostOptimization
+          Value: FreeTierProvisioned
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # TABELA: COMMENTS (3 RCU/WCU)
+  # ═══════════════════════════════════════════════════════════════════════════
+  CommentsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub ${AWS::StackName}-${Environment}-comments
+
+      # 💰 FREE TIER PERMANENTE
+      BillingMode: PROVISIONED
+      ProvisionedThroughput:
+        ReadCapacityUnits: 3 # Interações médias
+        WriteCapacityUnits: 3
+
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: postId
+          AttributeType: S
+        - AttributeName: authorId
+          AttributeType: S
+        - AttributeName: createdAt
+          AttributeType: S
+
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+
+      GlobalSecondaryIndexes:
+        - IndexName: PostIndex
+          KeySchema:
+            - AttributeName: postId
+              KeyType: HASH
+            - AttributeName: createdAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 3
+            WriteCapacityUnits: 3
+
+        - IndexName: AuthorIndex
+          KeySchema:
+            - AttributeName: authorId
+              KeyType: HASH
+            - AttributeName: createdAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 3
+            WriteCapacityUnits: 3
+
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: false
+
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Resource
+          Value: Comments
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # TABELA: LIKES (3 RCU/WCU)
+  # ═══════════════════════════════════════════════════════════════════════════
+  LikesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub ${AWS::StackName}-${Environment}-likes
+
+      # 💰 FREE TIER PERMANENTE
+      BillingMode: PROVISIONED
+      ProvisionedThroughput:
+        ReadCapacityUnits: 3 # Curtidas frequentes
+        WriteCapacityUnits: 3
+
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: postId
+          AttributeType: S
+        - AttributeName: userId
+          AttributeType: S
+
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+
+      GlobalSecondaryIndexes:
+        - IndexName: PostIndex
+          KeySchema:
+            - AttributeName: postId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 3
+            WriteCapacityUnits: 3
+
+        - IndexName: UserIndex
+          KeySchema:
+            - AttributeName: userId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 3
+            WriteCapacityUnits: 3
+
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Resource
+          Value: Likes
+        - Key: CostOptimization
+          Value: FreeTierProvisioned
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # TABELA: BOOKMARKS (3 RCU/WCU)
+  # ═══════════════════════════════════════════════════════════════════════════
+  BookmarksTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub ${AWS::StackName}-${Environment}-bookmarks
+
+      # 💰 FREE TIER PERMANENTE
+      BillingMode: PROVISIONED
+      ProvisionedThroughput:
+        ReadCapacityUnits: 3 # Salvamentos médios
+        WriteCapacityUnits: 3
+
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: postId
+          AttributeType: S
+        - AttributeName: userId
+          AttributeType: S
+
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: PostIndex
+          KeySchema:
+            - AttributeName: postId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 3
+            WriteCapacityUnits: 3
+
+        - IndexName: UserIndex
+          KeySchema:
+            - AttributeName: userId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 3
+            WriteCapacityUnits: 3
+
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Resource
+          Value: Bookmarks
+        - Key: CostOptimization
+          Value: FreeTierProvisioned
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # TABELA: NOTIFICATIONS (3 RCU/WCU)
+  # ═══════════════════════════════════════════════════════════════════════════
+  NotificationsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub ${AWS::StackName}-${Environment}-notifications
+
+      # 💰 FREE TIER PERMANENTE
+      BillingMode: PROVISIONED
+      ProvisionedThroughput:
+        ReadCapacityUnits: 3 # Notificações médias
+        WriteCapacityUnits: 3
+
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: userId
+          AttributeType: S
+        - AttributeName: createdAt
+          AttributeType: S
+
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+
+      GlobalSecondaryIndexes:
+        - IndexName: UserIndex
+          KeySchema:
+            - AttributeName: userId
+              KeyType: HASH
+            - AttributeName: createdAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 3
+            WriteCapacityUnits: 3
+
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Resource
+          Value: Notifications
+        - Key: CostOptimization
+          Value: FreeTierProvisioned
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # RECURSOS AUXILIARES
+  # ─────────────────────────────────────────────────────────────────────────
+  
+  # Dead Letter Queue para funções com falha
+  DeadLetterQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub '${AWS::StackName}-dlq-${Environment}'
+      MessageRetentionPeriod: 1209600 # 14 dias
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Purpose
+          Value: DeadLetterQueue
+  
+  # CloudWatch Log Group (Free Tier: 5GB/mês)
+  BlogApiLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${AWS::StackName}-api-${Environment}'
+      RetentionInDays: !If [IsProduction, 30, 7]
+
+# ═══════════════════════════════════════════════════════════════════════════
+# OUTPUTS
+# ═══════════════════════════════════════════════════════════════════════════
+Outputs:
+  # ═══════════════════════════════════════════════════════════════════════════
+  # OUTPUTS PRINCIPAIS
+  # ═══════════════════════════════════════════════════════════════════════════
+  
+  # Cognito Outputs
+  UserPoolId:
+    Description: 'Cognito User Pool ID'
+    Value: !If [HasCognitoConfig, !Ref CognitoUserPoolId, !Ref UserPool]
+    Export:
+      Name: !Sub '${AWS::StackName}-user-pool-id'
+
+  UserPoolClientId:
+    Description: 'Cognito User Pool Client ID'
+    Value: !If [HasCognitoConfig, !Ref CognitoClientId, !Ref UserPoolClient]
+    Export:
+      Name: !Sub '${AWS::StackName}-user-pool-client-id'
+
+  # API Endpoint
+  BlogApiFunctionUrl:
+    Description: 'URL pública da API (Lambda Function URL)'
+    Value: !GetAtt BlogApiFunctionUrl.FunctionUrl
+    Export:
+      Name: !Sub '${AWS::StackName}-api-url'
+
+  BlogApiFunctionArn:
+    Description: 'ARN da função Lambda principal'
+    Value: !GetAtt BlogApiFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-api-arn'
+  
+  # Informações de deployment
+  DeploymentInfo:
+    Description: 'Informações do deployment'
+    Value: !Sub |
+      Stack: ${AWS::StackName}
+      Environment: ${Environment}
+      Region: ${AWS::Region}
+      Deployed: $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+      API URL: ${BlogApiFunctionUrl.FunctionUrl}
+
+  # Tabelas DynamoDB
+  UsersTableName:
+    Description: Nome da tabela de usuários
+    Value: !Ref UsersTable
+    Export:
+      Name: !Sub ${AWS::StackName}-users-table
+
+  PostsTableName:
+    Description: Nome da tabela de posts
+    Value: !Ref PostsTable
+    Export:
+      Name: !Sub ${AWS::StackName}-posts-table
+
+  CategoriesTableName:
+    Description: Nome da tabela de categorias
+    Value: !Ref CategoriesTable
+    Export:
+      Name: !Sub ${AWS::StackName}-categories-table
+
+  CommentsTableName:
+    Description: Nome da tabela de comentários
+    Value: !Ref CommentsTable
+    Export:
+      Name: !Sub ${AWS::StackName}-comments-table
+
+  LikesTableName:
+    Description: Nome da tabela de likes
+    Value: !Ref LikesTable
+    Export:
+      Name: !Sub ${AWS::StackName}-likes-table
+
+  BookmarksTableName:
+    Description: Nome da tabela de bookmarks
+    Value: !Ref BookmarksTable
+    Export:
+      Name: !Sub ${AWS::StackName}-bookmarks-table
+
+  NotificationsTableName:
+    Description: Nome da tabela de notificações
+    Value: !Ref NotificationsTable
+    Export:
+      Name: !Sub ${AWS::StackName}-notifications-table
+
+  # Informações de deployment
+  StackName:
+    Description: Nome da stack CloudFormation
+    Value: !Ref AWS::StackName
+
+  Region:
+    Description: Região AWS onde a stack foi deployada
+    Value: !Ref AWS::Region
+
+  # 💰 RESUMO FREE TIER (CUSTO ZERO PERMANENTE)
+  FreeTierSummary:
+    Description: 'Resumo completo do Free Tier AWS - Custo ZERO permanente'
+    Value: !Sub |
+      ═══════════════════════════════════════════════════════════════════════════
+      💰 AWS FREE TIER PERMANENTE - CUSTO R$ 0,00 PARA SEMPRE!
+      ═══════════════════════════════════════════════════════════════════════════
+      
+      🚀 STACK DEPLOYADA:
+         • Nome: ${AWS::StackName}
+         • Ambiente: ${Environment}
+         • Região: ${AWS::Region}
+         • API URL: ${BlogApiFunctionUrl.FunctionUrl}
+      
+      📊 DYNAMODB PROVISIONED (7 tabelas):
+         ⭐ Users: 5 RCU + 5 WCU (autenticação)
+         ⭐ Posts: 5 RCU + 5 WCU (feed principal)
+         📄 Categories: 3 RCU + 3 WCU (navegação)
+         💬 Comments: 3 RCU + 3 WCU (interações)
+         ❤️  Likes: 3 RCU + 3 WCU (curtidas)
+         🔖 Bookmarks: 3 RCU + 3 WCU (salvamentos)
+         🔔 Notifications: 3 RCU + 3 WCU (notificações)
+         ────────────────────────────────────────────────────────────
+         TOTAL: 25 RCU + 25 WCU = 100% GRÁTIS SEMPRE! ✅
+      
+      ⚡ AWS LAMBDA:
+         • 1 milhão requests/mês = GRÁTIS
+         • 400k GB-segundos compute = GRÁTIS
+         • Runtime: Node.js 20.x (x86_64)
+         • Function URLs: 100% GRÁTIS (sem API Gateway)
+      
+      🔐 COGNITO USER POOL:
+         • 50.000 MAU (usuários ativos/mês) = GRÁTIS
+      
+      📝 CLOUDWATCH LOGS:
+         • 5 GB ingest/mês = GRÁTIS
+         • Retenção: ${Environment} = 7 dias (dev) / 30 dias (prod)
+      
+      🛡️ DICAS PARA MANTER FREE TIER:
+         1. Itens DynamoDB ≤ 1KB (write) / ≤ 4KB (read)
+         2. Use CloudFront para cache (reduz RCU)
+         3. Imagens no S3, metadados no DynamoDB
+         4. Configure CloudWatch Alarms para monitorar
+         5. Monitore usage no AWS Cost Explorer
+      
+      ⚠️ LIMITES IMPORTANTES:
+         • DynamoDB: 25 RCU + 25 WCU (não exceder!)
+         • Lambda: 1M requests + 400k GB-segundos/mês
+         • CloudWatch: 5GB logs/mês
+         • Cognito: 50k MAU/mês
+      
+      ═══════════════════════════════════════════════════════════════════════════
+
+  Environment:
+    Description: Ambiente de deployment
+    Value: !Ref Environment
+

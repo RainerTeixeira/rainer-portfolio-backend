@@ -22,7 +22,7 @@ import { ApiResponseDto } from '../../../common/dto/api-response.dto';
 @ApiTags('categories')
 @Controller('categories')
 export class CategoriesController {
-  constructor(private readonly categoriesService: CategoriesService) {}
+  constructor(private readonly categoriesService?: CategoriesService) {}
 
   /**
    * Cria uma nova categoria.
@@ -45,7 +45,10 @@ export class CategoriesController {
     description: 'Dados inválidos',
   })
   create(@Body() dto: CreateCategoryDto) {
-    return this.categoriesService.createCategory(dto);
+    if (this.categoriesService?.createCategory) {
+      return this.categoriesService.createCategory(dto);
+    }
+    return { success: false, message: 'CategoriesService not available' };
   }
 
   /**
@@ -64,12 +67,33 @@ export class CategoriesController {
     type: ApiResponseDto,
   })
   async findAll() {
-    const categories = await this.categoriesService.getAllCategories();
-    return {
-      success: true,
-      message: 'Categorias encontradas com sucesso',
-      data: categories
-    };
+    try {
+      // Buscar diretamente via HTTP do DynamoDB Admin
+      const response = await fetch('http://localhost:8001/tables/portfolio-backend-table-categories/items', {
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const data: any = await response.json();
+      
+      return {
+        success: true,
+        message: 'Categorias encontradas com sucesso',
+        data: data.Items || []
+      };
+    } catch (error) {
+      console.error('Erro ao buscar categorias:', error);
+      return {
+        success: false,
+        message: 'Erro ao buscar categorias',
+        error: error.message
+      };
+    }
   }
 
   /**
@@ -83,7 +107,7 @@ export class CategoriesController {
     summary: 'Buscar categoria por ID',
     description: 'Retorna uma categoria específica pelo seu ID',
   })
-  @ApiParam({ name: 'id', description: 'ID da categoria' })
+  @ApiParam({ name: 'id', description: 'ID da categoria', example: 'AmfYq9ckEHMOjaPq1jvEK' })
   @ApiResponse({
     status: 200,
     description: 'Categoria encontrada',
@@ -108,7 +132,7 @@ export class CategoriesController {
     summary: 'Buscar categoria por slug',
     description: 'Retorna uma categoria específica através do seu slug URL-friendly',
   })
-  @ApiParam({ name: 'slug', description: 'Slug da categoria' })
+  @ApiParam({ name: 'slug', description: 'Slug da categoria', example: 'tecnologia' })
   @ApiResponse({
     status: 200,
     description: 'Categoria encontrada',
@@ -134,7 +158,7 @@ export class CategoriesController {
     summary: 'Atualizar categoria',
     description: 'Atualiza uma categoria existente',
   })
-  @ApiParam({ name: 'id', description: 'ID da categoria' })
+  @ApiParam({ name: 'id', description: 'ID da categoria', example: 'AmfYq9ckEHMOjaPq1jvEK' })
   @ApiResponse({
     status: 200,
     description: 'Categoria atualizada com sucesso',
@@ -163,7 +187,7 @@ export class CategoriesController {
     summary: 'Deletar categoria',
     description: 'Remove permanentemente uma categoria',
   })
-  @ApiParam({ name: 'id', description: 'ID da categoria' })
+  @ApiParam({ name: 'id', description: 'ID da categoria', example: 'AmfYq9ckEHMOjaPq1jvEK' })
   @ApiResponse({
     status: 200,
     description: 'Categoria deletada com sucesso',

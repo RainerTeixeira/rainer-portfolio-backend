@@ -14,7 +14,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from '@fastify/helmet';
 import multipart from '@fastify/multipart';
 import { AppModule } from './app.module';
-import { NODE_ENV, PORT, HOST, BASE_URL } from './common/config';
+import { NODE_ENV, PORT, HOST, BASE_URL, VERSION, database } from './common/config';
 
 /**
  * Inicializa a aplicação NestJS com Fastify e configura middlewares, CORS, validação, interceptores e Swagger.
@@ -41,6 +41,8 @@ import { NODE_ENV, PORT, HOST, BASE_URL } from './common/config';
  * - O CSS customizado da UI do Swagger melhora legibilidade e organização das tags.
  */
 async function bootstrap() {
+  const apiBase = `${BASE_URL}/api/v1`;
+
   // Criar aplicação NestJS com Fastify
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
@@ -50,7 +52,6 @@ async function bootstrap() {
   // Helmet - Security Headers
   // Configurado para permitir Swagger UI funcionar corretamente
   // CSP e XSS Protection desabilitados por questões de performance e compatibilidade
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await app.register(helmet as any, {
     contentSecurityPolicy: false, // Desabilitado - não necessário para APIs REST
     xssFilter: false, // Desabilitado - header descontinuado pelos navegadores
@@ -59,7 +60,6 @@ async function bootstrap() {
   });
 
   // Habilitar multipart para upload de arquivos
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await app.register(multipart as any, {
     limits: {
       fileSize: 5 * 1024 * 1024, // 5MB para imagens do blog (aumentado de 2MB)
@@ -71,7 +71,6 @@ async function bootstrap() {
 
   // Rota raiz (/) - Página inicial da API
   const fastifyInstance = app.getHttpAdapter().getInstance();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   fastifyInstance.get('/', async (_request: any, reply: any) => {
     reply.status(200).send({
       success: true,
@@ -83,8 +82,8 @@ async function bootstrap() {
         openapi: `${BASE_URL}/api-json`,
       },
       endpoints: {
-        health: `${BASE_URL}/health`,
-        healthDetailed: `${BASE_URL}/health/detailed`,
+        health: `${apiBase}/health`,
+        healthDetailed: `${apiBase}/health/detailed`,
       },
       features: [
         '✅ CRUD completo para 7 recursos',
@@ -95,13 +94,13 @@ async function bootstrap() {
         '✅ Swagger/OpenAPI 3.0',
       ],
       resources: {
-        users: `${BASE_URL}/users`,
-        posts: `${BASE_URL}/posts`,
-        categories: `${BASE_URL}/categories`,
-        comments: `${BASE_URL}/comments`,
-        likes: `${BASE_URL}/likes`,
-        bookmarks: `${BASE_URL}/bookmarks`,
-        notifications: `${BASE_URL}/notifications`,
+        users: `${apiBase}/users`,
+        posts: `${apiBase}/posts`,
+        categories: `${apiBase}/categories`,
+        comments: `${apiBase}/comments`,
+        likes: `${apiBase}/likes`,
+        bookmarks: `${apiBase}/bookmarks`,
+        notifications: `${apiBase}/notifications`,
       },
       database: {
         provider: 'MongoDB',
@@ -117,9 +116,10 @@ async function bootstrap() {
   });
 
   // Configuração Swagger/OpenAPI
-  const config = new DocumentBuilder()
-    .setTitle('Blog API v5.0.0')
-    .setDescription(`
+  if (true) {
+    const config = new DocumentBuilder()
+      .setTitle('Blog API v3.0.0')
+      .setDescription(`
     ## 📝 Visão Geral
     
     API RESTful completa para gerenciamento de blog, construída com **NestJS + Fastify + MongoDB**.
@@ -162,12 +162,16 @@ async function bootstrap() {
     .addTag('notifications', '🔔 Centro de notificações')
     .addTag('dashboard', '📈 Analytics e estatísticas')
     .addTag('cloudinary', '📸 Upload de imagens')
-    .setExternalDoc('Documentação Completa', 'https://github.com/rainersoft/blog-api')
-    .build();
+      .setExternalDoc('Documentação Completa', 'https://github.com/RainerTeixeira/rainer-portfolio-backend/tree/master/docs')
+      // Server explícito para evitar falhas de "Failed to fetch" no Swagger.
+      // Os paths já incluem /api/v1, então BASE_URL basta.
+      .addServer(BASE_URL, 'Local/dev - paths já incluem /api/v1')
+      .addServer('http://127.0.0.1:4000', 'Local 127.0.0.1 (paths já incluem /api/v1)')
+      .build();
 
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('docs', app, document, {
-    customCss: `
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('docs', app, document, {
+      customCss: `
       /* Limpeza geral - remover poluição visual */
       .swagger-ui .topbar { 
         display: none; 
@@ -359,52 +363,60 @@ async function bootstrap() {
         border: 1px solid #e2e8f0;
       }
       
-      .swagger-ui .filter-container .filter {
-        width: 100%;
-        padding: 8px 12px;
-        border: 1px solid #cbd5e0;
-        border-radius: 4px;
-        font-size: 14px;
-      }
-    `,
-    customSiteTitle: 'Blog API v5.0.0 - Documentação',
-    customfavIcon: '/favicon.ico',
-    swaggerOptions: {
-      persistAuthorization: true,
-      displayRequestDuration: true,
-      filter: true,
-      showExtensions: true,
-      showCommonExtensions: true,
-      docExpansion: 'list',
-      defaultModelsExpandDepth: 1,
-      defaultModelExpandDepth: 1,
-      tryItOutEnabled: true,
-    },
+        .swagger-ui .filter-container .filter {
+          width: 100%;
+          padding: 8px 12px;
+          border: 1px solid #cbd5e0;
+          border-radius: 4px;
+          font-size: 14px;
+        }
+      `,
+      customSiteTitle: 'Blog API v5.0.0 - Documentação',
+      customfavIcon: '/favicon.ico',
+      swaggerOptions: {
+        persistAuthorization: true,
+        displayRequestDuration: true,
+        filter: true,
+        showExtensions: true,
+        showCommonExtensions: true,
+        docExpansion: 'list',
+        defaultModelsExpandDepth: 1,
+        defaultModelExpandDepth: 1,
+        tryItOutEnabled: true,
+      },
+    });
+  }
+
+  // Expor documento JSON explicitamente (Fastify + prefixo global com exclusão) - DESABILITADO TEMPORARIAMENTE
+  /*
+  fastifyInstance.get('/api-json', async (_request: any, reply: any) => {
+    reply
+      .status(200)
+      .header('Content-Type', 'application/json; charset=utf-8')
+      .send(document);
   });
+  */
 
   // Iniciar servidor
-  console.log(`🔄 Iniciando servidor na porta ${PORT} (host: ${HOST})...`);
-  
+  const port = Number(PORT);
+  const host = HOST;
+  console.log(`🔄 Iniciando servidor na porta ${port} (host: ${host})...`);
+
   try {
-    // Fastify/NestJS: sintaxe correta - usar parâmetros separados ou objeto
-    // Segundo a documentação NestJS: app.listen(port, host)
-    const port = Number(PORT);
-    const host = HOST;
-    
     console.log(`📡 Tentando escutar em ${host}:${port}...`);
     await app.listen(port, host);
-    
     console.log(`
-  ═══════════════════════════════════════════════════════════
-    🚀 NestJS + Fastify + MongoDB + Prisma + Zod
-  ═══════════════════════════════════════════════════════════
-    Ambiente:       ${NODE_ENV}
-    Porta:          ${PORT}
-    URL:            ${BASE_URL}
-    Docs:           ${BASE_URL}/docs
-    Database:       MongoDB + Prisma
-    Segurança:      Helmet ✅ | CORS ✅ | Zod ✅
-  ═══════════════════════════════════════════════════════════
+  ============================================
+    🚀 NestJS + Fastify + Zod
+  ============================================
+    Ambiente: ${NODE_ENV}
+    Versão: ${VERSION}
+    Porta: ${PORT}
+    URL: ${BASE_URL}
+    Docs: ${BASE_URL}/docs
+    Database: ${database.provider}
+    Segurança: Helmet ✅ | CORS ✅ | Zod ✅
+  ============================================
     `);
   } catch (error) {
     console.error('❌ Erro ao iniciar servidor:', error);

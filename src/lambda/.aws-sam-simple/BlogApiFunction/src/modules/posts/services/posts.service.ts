@@ -1,0 +1,196 @@
+/**
+ * @fileoverview Serviço de Posts
+ *
+ * Camada de serviço responsável por orquestrar operações relacionadas a posts.
+ *
+ * Responsabilidades típicas:
+ * - Gerar identificadores (ex.: `randomUUID`) quando necessário.
+ * - Definir valores padrão (ex.: status `DRAFT`).
+ * - Delegar persistência e consultas ao `PostRepository`.
+ *
+ * Observações:
+ * - A regra de persistência/consulta fica no repositório (MongoDB/DynamoDB).
+ * - Este service tende a ser fino (thin service), apenas coordenando chamadas.
+ *
+ * @module modules/posts/services/posts.service
+ */
+
+import { randomUUID } from 'crypto';
+import { Injectable, BadRequestException, Inject } from '@nestjs/common';
+import { POST_REPOSITORY } from '../../../database/tokens';
+import { PostRepository } from '../../../database/interfaces/post-repository.interface';
+import { CreatePostDto } from '../dto/create-post.dto';
+import { UpdatePostDto } from '../dto/update-post.dto';
+
+/**
+ * Converte um texto em slug (string segura para URL).
+ *
+ * Por que isso existe aqui (e não em util separado):
+ * - A única regra de slug atualmente usada pelo backend está no fluxo de criação de post.
+ * - Manter a função ao lado do `PostsService` reduz acoplamento e evita utilitários globais
+ *   que acabam ficando “soltos” no projeto.
+ *
+ * Observação:
+ * - Isso não garante unicidade do slug; é apenas normalização.
+ */
+function textToSlug(text: string): string {
+  if (!text) return '';
+
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w-]+/g, '')
+    .replace(/--+/g, '-')
+    .replace(/^-+/, '')
+    .replace(/-+$/, '');
+}
+
+@Injectable()
+export class PostsService {
+  constructor(
+    @Inject(POST_REPOSITORY)
+    private readonly postsRepo: PostRepository,
+  ) {}
+
+  /**
+   * Cria um novo post.
+   *
+   * Por que a lógica fica aqui (service) e não no controller/repositório:
+   * - O controller só recebe/valida dados.
+   * - O repositório só persiste/consulta.
+   * - O service aplica regras de domínio simples (defaults, slug, id) e coordena a criação.
+   *
+   * Regras/decisões aplicadas:
+   * - Gera um `id` único (evita depender do banco para gerar id).
+   * - Gera `slug` a partir do título quando não for informado.
+   * - Define defaults para `status`, contadores e flags para garantir consistência.
+   *
+   * @param {CreatePostDto} dto Dados de criação.
+   * @returns {Promise<unknown>} Entidade criada (conforme implementação do repositório).
+   */
+  async createPost(dto: CreatePostDto): Promise<unknown> {
+    const id = randomUUID();
+    const slug = dto.slug || textToSlug(dto.title);
+    const subcategoryId = dto.subcategoryId ?? dto.categoryId;
+    if (!subcategoryId) {
+      throw new BadRequestException('subcategoryId é obrigatório');
+    }
+
+    return this.postsRepo.create({
+      id,
+      title: dto.title,
+      slug,
+      content: dto.content,
+      authorId: dto.authorId,
+      subcategoryId, // Support both field names
+      status: dto.status || 'DRAFT',
+      featured: dto.featured || dto.isFeatured || false,
+      allowComments: dto.allowComments !== false,
+      pinned: dto.pinned || false,
+      priority: dto.priority || 0,
+      publishedAt: dto.publishedAt,
+      views: 0,
+      likesCount: 0,
+      commentsCount: 0,
+      bookmarksCount: 0,
+    });
+  }
+
+  /**
+   * Busca um post por ID.
+   *
+   * @param {string} id ID do post.
+   * @returns {Promise<unknown>} Post encontrado ou `null`/`undefined` dependendo do repositório.
+   */
+  async getPostById(id: string): Promise<unknown> {
+    return this.postsRepo.findById(id);
+  }
+
+  /**
+   * Busca um post por slug.
+   *
+   * @param {string} slug Slug do post.
+   * @returns {Promise<unknown>} Post encontrado ou `null`/`undefined` dependendo do repositório.
+   */
+  async getPostBySlug(slug: string): Promise<unknown> {
+    return this.postsRepo.findBySlug(slug);
+  }
+
+  /**
+   * Lista posts com filtros/paginação.
+   *
+   * @param {object} [options] Opções de filtro e paginação.
+   * @returns {Promise<unknown>} Resultado conforme implementação do repositório.
+   */
+  async getAllPosts(options?: {
+    status?: string;
+    authorId?: string;
+    categoryId?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<unknown> {
+    return this.postsRepo.findAll(options);
+  }
+
+  /**
+   * Atualiza dados de um post.
+   *
+   * @param {string} id ID do post.
+   * @param {UpdatePostDto} dto Campos a atualizar.
+   * @returns {Promise<unknown>} Post atualizado.
+   */
+  async updatePost(id: string, dto: UpdatePostDto): Promise<unknown> {
+    return this.postsRepo.update(id, dto);
+  }
+
+  /**
+   * Remove um post.
+   *
+   * @param {string} id ID do post.
+   * @returns {Promise<void>} Conclusão da remoção.
+   */
+  async deletePost(id: string) {
+    await this.postsRepo.delete(id);
+  }
+
+  /**
+   * Incrementa o contador de visualizações de um post.
+   *
+   * @param {string} id ID do post.
+   * @returns {Promise<void>} Conclusão da operação.
+   */
+  async incrementViewCount(id: string) {
+    await this.postsRepo.incrementViewCount(id);
+  }
+
+  /**
+   * Publica um post.
+   *
+   * Efeitos:
+   * - Define `status` como `PUBLISHED`.
+   * - Define `publishedAt` com a data/hora atual.
+   *
+   * @param {string} id ID do post.
+   * @returns {Promise<unknown>} Post atualizado.
+   */
+  async publishPost(id: string): Promise<unknown> {
+    return this.postsRepo.update(id, {
+      status: 'PUBLISHED',
+      publishedAt: new Date(),
+    });
+  }
+
+  /**
+   * Arquiva um post.
+   *
+   * @param {string} id ID do post.
+   * @returns {Promise<unknown>} Post atualizado.
+   */
+  async archivePost(id: string): Promise<unknown> {
+    return this.postsRepo.update(id, {
+      status: 'ARCHIVED',
+    });
+  }
+}

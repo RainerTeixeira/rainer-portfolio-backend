@@ -11,8 +11,6 @@
  * @license MIT
  */
 
-import { ApiProperty } from '@nestjs/swagger';
-
 /**
  * DTO para resposta padrão da API.
  * 
@@ -50,10 +48,6 @@ export class ApiResponseDto<T = any> {
    * 
    * @type {boolean}
    */
-  @ApiProperty({
-    description: 'Indica se a operação foi bem-sucedida',
-    example: true,
-  })
   success!: boolean;
 
   /**
@@ -61,10 +55,6 @@ export class ApiResponseDto<T = any> {
    * 
    * @type {string}
    */
-  @ApiProperty({
-    description: 'Mensagem descritiva do resultado',
-    example: 'Operação realizada com sucesso',
-  })
   message!: string;
 
   /**
@@ -72,10 +62,6 @@ export class ApiResponseDto<T = any> {
    * 
    * @type {T}
    */
-  @ApiProperty({
-    description: 'Dados retornados pela operação',
-    required: false,
-  })
   data?: T;
 
   /**
@@ -83,10 +69,6 @@ export class ApiResponseDto<T = any> {
    * 
    * @type {object}
    */
-  @ApiProperty({
-    description: 'Metadados da resposta (paginação, etc)',
-    required: false,
-  })
   meta?: {
     /** Total de itens disponíveis */
     total?: number;
@@ -123,10 +105,6 @@ export class ErrorDto {
    * 
    * @type {string}
    */
-  @ApiProperty({
-    description: 'Mensagem de erro',
-    example: 'Recurso não encontrado',
-  })
   message!: string;
 
   /**
@@ -134,11 +112,6 @@ export class ErrorDto {
    * 
    * @type {string}
    */
-  @ApiProperty({
-    description: 'Código do erro',
-    example: 'NOT_FOUND',
-    required: false,
-  })
   code?: string;
 
   /**
@@ -146,10 +119,6 @@ export class ErrorDto {
    * 
    * @type {any}
    */
-  @ApiProperty({
-    description: 'Detalhes do erro (apenas em desenvolvimento)',
-    required: false,
-  })
   details?: any;
 
   /**
@@ -157,10 +126,6 @@ export class ErrorDto {
    * 
    * @type {string}
    */
-  @ApiProperty({
-    description: 'Timestamp do erro',
-    example: '2025-12-15T14:30:00.000Z',
-  })
   timestamp!: string;
 
   /**
@@ -168,10 +133,6 @@ export class ErrorDto {
    * 
    * @type {string}
    */
-  @ApiProperty({
-    description: 'Path da requisição',
-    example: '/api/v1/posts/123',
-  })
   path!: string;
 }
 
@@ -201,11 +162,6 @@ export class PaginationDto {
    * 
    * @type {number}
    */
-  @ApiProperty({
-    description: 'Número da página atual',
-    example: 1,
-    minimum: 1,
-  })
   page!: number;
 
   /**
@@ -213,12 +169,6 @@ export class PaginationDto {
    * 
    * @type {number}
    */
-  @ApiProperty({
-    description: 'Itens por página',
-    example: 10,
-    minimum: 1,
-    maximum: 100,
-  })
   limit!: number;
 
   /**
@@ -226,10 +176,6 @@ export class PaginationDto {
    * 
    * @type {number}
    */
-  @ApiProperty({
-    description: 'Total de itens',
-    example: 150,
-  })
   total!: number;
 
   /**
@@ -237,10 +183,6 @@ export class PaginationDto {
    * 
    * @type {number}
    */
-  @ApiProperty({
-    description: 'Total de páginas',
-    example: 15,
-  })
   totalPages!: number;
 
   /**
@@ -248,10 +190,6 @@ export class PaginationDto {
    * 
    * @type {boolean}
    */
-  @ApiProperty({
-    description: 'Indica se existe próxima página',
-    example: true,
-  })
   hasNext!: boolean;
 
   /**
@@ -259,9 +197,5 @@ export class PaginationDto {
    * 
    * @type {boolean}
    */
-  @ApiProperty({
-    description: 'Indica se existe página anterior',
-    example: false,
-  })
   hasPrev!: boolean;
 }

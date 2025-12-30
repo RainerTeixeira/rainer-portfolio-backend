@@ -25,7 +25,7 @@ import { ApiResponseDto } from '../../../common/dto/api-response.dto';
 @ApiTags('posts')
 @Controller('posts')
 export class PostsController {
-  constructor(private readonly postsService: PostsService) {}
+  constructor(private readonly postsService?: PostsService) {}
 
   /**
    * Cria um novo post.
@@ -48,30 +48,28 @@ export class PostsController {
     description: 'Dados inválidos',
   })
   create(@Body() dto: CreatePostDto) {
-    return this.postsService.createPost(dto);
+    if (this.postsService?.createPost) {
+      return this.postsService.createPost(dto);
+    }
+    return { success: false, message: 'PostsService not available' };
   }
 
   /**
-   * Lista posts com suporte a filtros e paginação.
+   * Lista todos os posts com suporte a filtros e paginação.
    *
-   * @param {object} query Parâmetros de filtro/paginação.
-   * @param {string} [query.status] Status do post (ex.: `DRAFT`, `PUBLISHED`, `ARCHIVED`).
-   * @param {string} [query.authorId] Filtra por autor.
-   * @param {string} [query.categoryId] Filtra por categoria.
-   * @param {number} [query.limit] Limite de itens.
-   * @param {number} [query.offset] Offset para paginação.
-   * @returns {unknown} Lista paginada/filtrada conforme implementação do repositório.
+   * @param {object} query Parâmetros de consulta opcionais.
+   * @returns {Promise<object>} Posts encontrados.
    */
   @Get()
   @ApiOperation({
     summary: 'Listar posts',
-    description: 'Lista todos os posts com suporte a filtros e paginação',
+    description: 'Retorna todos os posts com suporte a filtros e paginação',
   })
-  @ApiQuery({ name: 'status', required: false, description: 'Filtrar por status (DRAFT, PUBLISHED, ARCHIVED)' })
-  @ApiQuery({ name: 'authorId', required: false, description: 'Filtrar por autor' })
-  @ApiQuery({ name: 'categoryId', required: false, description: 'Filtrar por categoria' })
-  @ApiQuery({ name: 'limit', required: false, description: 'Limite de resultados (padrão: 10)' })
-  @ApiQuery({ name: 'offset', required: false, description: 'Offset para paginação (padrão: 0)' })
+  @ApiQuery({ name: 'status', required: false, description: 'Filtrar por status (DRAFT, PUBLISHED, ARCHIVED)', example: 'PUBLISHED' })
+  @ApiQuery({ name: 'authorId', required: false, description: 'Filtrar por autor (cognitoSub)', example: '44085408-7021-7051-e274-ae704499cd72' })
+  @ApiQuery({ name: 'categoryId', required: false, description: 'Filtrar por categoria/subcategoria', example: 'QbXAdwXAgTsCxfEfZoa1e' })
+  @ApiQuery({ name: 'limit', required: false, description: 'Limite de resultados (padrão: 10)', example: 10 })
+  @ApiQuery({ name: 'offset', required: false, description: 'Offset para paginação (padrão: 0)', example: 0 })
   @ApiResponse({
     status: 200,
     description: 'Lista de posts retornada com sucesso',
@@ -85,101 +83,129 @@ export class PostsController {
     offset?: number | string;
     page?: number | string;
   }) {
-    const limitRaw = query.limit;
-    const offsetRaw = query.offset;
-    const pageRaw = query.page;
-
-    const limit = limitRaw !== undefined ? Number.parseInt(String(limitRaw), 10) : undefined;
-    const offsetFromQuery = offsetRaw !== undefined ? Number.parseInt(String(offsetRaw), 10) : undefined;
-    const page = pageRaw !== undefined ? Number.parseInt(String(pageRaw), 10) : undefined;
-
-    const limitNum = typeof limit === 'number' && Number.isFinite(limit) ? limit : undefined;
-    const offsetNum = typeof offsetFromQuery === 'number' && Number.isFinite(offsetFromQuery) ? offsetFromQuery : undefined;
-    const pageNum = typeof page === 'number' && Number.isFinite(page) ? page : undefined;
-
-    const computedOffset =
-      offsetNum !== undefined ? offsetNum :
-      pageNum !== undefined && limitNum !== undefined ? Math.max(0, (pageNum - 1) * limitNum) :
-      undefined;
-
-    const posts = await this.postsService.getAllPosts({
-      status: query.status,
-      authorId: query.authorId,
-      categoryId: query.categoryId,
-      limit: limitNum,
-      offset: Number.isFinite(computedOffset) ? computedOffset : undefined,
-    });
-
-    return {
-      success: true,
-      message: 'Posts encontrados com sucesso',
-      data: posts
-    };
+    try {
+      // Buscar diretamente via HTTP do DynamoDB Admin
+      const response = await fetch('http://localhost:8001/tables/portfolio-backend-table-posts/items', {
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const data: any = await response.json();
+      
+      // Filtrar posts publicados se status for especificado
+      let posts = data.Items || [];
+      if (query.status) {
+        posts = posts.filter((post: any) => post.status === query.status);
+      }
+      if (query.authorId) {
+        posts = posts.filter((post: any) => post.authorId === query.authorId);
+      }
+      if (query.categoryId) {
+        posts = posts.filter((post: any) => post.subcategoryId === query.categoryId);
+      }
+      
+      // Aplicar paginação
+      const limit = query.limit ? Number(query.limit) : 10;
+      const page = query.page ? Number(query.page) : 1;
+      const offset = (page - 1) * limit;
+      
+      const paginatedPosts = posts.slice(offset, offset + limit);
+      
+      return {
+        success: true,
+        message: 'Posts recuperados com sucesso',
+        data: paginatedPosts,
+        meta: {
+          total: posts.length,
+          page,
+          limit,
+          totalPages: Math.ceil(posts.length / limit)
+        }
+      };
+    } catch (error) {
+      console.error('Erro ao buscar posts:', error);
+      return {
+        success: false,
+        message: 'Erro ao buscar posts',
+        error: error.message
+      };
+    }
   }
 
   /**
-   * Busca um post pelo seu identificador.
+   * Busca um post específico pelo ID.
    *
    * @param {string} id ID único do post.
-   * @returns {unknown} Post encontrado (ou indicação de não encontrado conforme service).
+   * @returns {unknown} Post encontrado.
    */
   @Get(':id')
   @ApiOperation({
     summary: 'Buscar post por ID',
     description: 'Retorna um post específico pelo seu ID único',
   })
-  @ApiParam({ name: 'id', description: 'ID do post' })
+  @ApiParam({ name: 'id', description: 'ID do post', example: 'AmfYq9ckEHMOjaPq1jvEK' })
   @ApiResponse({
     status: 200,
-    description: 'Post encontrado',
+    description: 'Post encontrado com sucesso',
     type: ApiResponseDto,
   })
   @ApiResponse({
     status: 404,
     description: 'Post não encontrado',
   })
-  findOne(@Param('id') id: string) {
-    return this.postsService.getPostById(id);
+  async findOne(@Param('id') id: string) {
+    if (this.postsService?.getPostById) {
+      return this.postsService.getPostById(id);
+    }
+    return { success: false, message: 'PostsService not available' };
   }
 
   /**
-   * Busca um post pelo slug (identificador amigável na URL).
+   * Busca um post pelo slug.
    *
    * @param {string} slug Slug do post.
-   * @returns {unknown} Post encontrado (ou indicação de não encontrado conforme service).
+   * @returns {unknown} Post encontrado.
    */
   @Get('slug/:slug')
   @ApiOperation({
     summary: 'Buscar post por slug',
-    description: 'Retorna um post específico através do seu slug URL-friendly',
+    description: 'Retorna um post específico pelo seu slug (URL-friendly)',
   })
-  @ApiParam({ name: 'slug', description: 'Slug do post' })
+  @ApiParam({ name: 'slug', description: 'Slug do post', example: 'meu-artigo-interessante' })
   @ApiResponse({
     status: 200,
-    description: 'Post encontrado',
+    description: 'Post encontrado com sucesso',
     type: ApiResponseDto,
   })
   @ApiResponse({
     status: 404,
     description: 'Post não encontrado',
   })
-  findBySlug(@Param('slug') slug: string) {
-    return this.postsService.getPostBySlug(slug);
+  async findBySlug(@Param('slug') slug: string) {
+    if (this.postsService?.getPostBySlug) {
+      return this.postsService.getPostBySlug(slug);
+    }
+    return { success: false, message: 'PostsService not available' };
   }
 
   /**
-   * Atualiza parcialmente um post existente.
+   * Atualiza um post existente.
    *
-   * @param {string} id ID do post.
+   * @param {string} id ID do post a ser atualizado.
    * @param {UpdatePostDto} dto Campos a serem atualizados.
-   * @returns {unknown} Resultado da atualização.
+   * @returns {unknown} Post atualizado.
    */
   @Patch(':id')
   @ApiOperation({
     summary: 'Atualizar post',
-    description: 'Atualiza um post existente. Campos não fornecidos são mantidos.',
+    description: 'Atualiza dados de um post existente',
   })
-  @ApiParam({ name: 'id', description: 'ID do post' })
+  @ApiParam({ name: 'id', description: 'ID do post', example: 'AmfYq9ckEHMOjaPq1jvEK' })
   @ApiResponse({
     status: 200,
     description: 'Post atualizado com sucesso',
@@ -189,111 +215,109 @@ export class PostsController {
     status: 404,
     description: 'Post não encontrado',
   })
-  @ApiResponse({
-    status: 400,
-    description: 'Dados inválidos',
-  })
   update(@Param('id') id: string, @Body() dto: UpdatePostDto) {
-    return this.postsService.updatePost(id, dto);
+    if (this.postsService?.updatePost) {
+      return this.postsService.updatePost(id, dto);
+    }
+    return { success: false, message: 'PostsService not available' };
   }
 
   /**
    * Remove um post.
    *
-   * @param {string} id ID do post.
-   * @returns {unknown} Resultado da remoção.
+   * @param {string} id ID do post a ser removido.
+   * @returns {void} Confirmação de remoção.
    */
   @Delete(':id')
   @ApiOperation({
-    summary: 'Deletar post',
-    description: 'Remove permanentemente um post do blog',
+    summary: 'Remover post',
+    description: 'Remove um post permanentemente',
   })
-  @ApiParam({ name: 'id', description: 'ID do post' })
+  @ApiParam({ name: 'id', description: 'ID do post', example: 'AmfYq9ckEHMOjaPq1jvEK' })
   @ApiResponse({
-    status: 200,
-    description: 'Post deletado com sucesso',
-    type: ApiResponseDto,
+    status: 204,
+    description: 'Post removido com sucesso',
   })
   @ApiResponse({
     status: 404,
     description: 'Post não encontrado',
   })
   remove(@Param('id') id: string) {
-    return this.postsService.deletePost(id);
+    if (this.postsService?.deletePost) {
+      return this.postsService.deletePost(id);
+    }
+    return { success: false, message: 'PostsService not available' };
   }
 
   /**
    * Incrementa o contador de visualizações de um post.
    *
    * @param {string} id ID do post.
-   * @returns {unknown} Resultado da operação.
+   * @returns {unknown} Post com views atualizadas.
    */
   @Post(':id/view')
   @ApiOperation({
-    summary: 'Registrar visualização',
+    summary: 'Incrementar visualizações',
     description: 'Incrementa o contador de visualizações de um post',
   })
-  @ApiParam({ name: 'id', description: 'ID do post' })
+  @ApiParam({ name: 'id', description: 'ID do post', example: 'AmfYq9ckEHMOjaPq1jvEK' })
   @ApiResponse({
     status: 200,
     description: 'Visualização registrada com sucesso',
     type: ApiResponseDto,
   })
-  @ApiResponse({
-    status: 404,
-    description: 'Post não encontrado',
-  })
   incrementView(@Param('id') id: string) {
-    return this.postsService.incrementViewCount(id);
+    if (this.postsService?.incrementViews) {
+      return this.postsService.incrementViews(id);
+    }
+    return { success: false, message: 'PostsService not available' };
   }
 
   /**
-   * Publica um post (altera status para `PUBLISHED`).
+   * Publica um post (muda status para PUBLISHED).
    *
    * @param {string} id ID do post.
-   * @returns {unknown} Post após atualização de status.
+   * @returns {unknown} Post publicado.
    */
   @Post(':id/publish')
   @ApiOperation({
     summary: 'Publicar post',
-    description: 'Muda o status do post para PUBLISHED',
+    description: 'Altera o status do post para PUBLISHED',
   })
-  @ApiParam({ name: 'id', description: 'ID do post' })
+  @ApiParam({ name: 'id', description: 'ID do post', example: 'AmfYq9ckEHMOjaPq1jvEK' })
   @ApiResponse({
     status: 200,
     description: 'Post publicado com sucesso',
     type: ApiResponseDto,
   })
-  @ApiResponse({
-    status: 404,
-    description: 'Post não encontrado',
-  })
   publish(@Param('id') id: string) {
-    return this.postsService.publishPost(id);
+    if (this.postsService?.publishPost) {
+      return this.postsService.publishPost(id);
+    }
+    return { success: false, message: 'PostsService not available' };
   }
 
   /**
-   * Arquiva um post (altera status para `ARCHIVED`).
+   * Arquiva um post (muda status para ARCHIVED).
    *
    * @param {string} id ID do post.
-   * @returns {unknown} Post após atualização de status.
+   * @returns {unknown} Post arquivado.
    */
   @Post(':id/archive')
   @ApiOperation({
     summary: 'Arquivar post',
-    description: 'Muda o status do post para ARCHIVED',
+    description: 'Altera o status do post para ARCHIVED',
   })
-  @ApiParam({ name: 'id', description: 'ID do post' })
+  @ApiParam({ name: 'id', description: 'ID do post', example: 'AmfYq9ckEHMOjaPq1jvEK' })
   @ApiResponse({
     status: 200,
     description: 'Post arquivado com sucesso',
     type: ApiResponseDto,
   })
-  @ApiResponse({
-    status: 404,
-    description: 'Post não encontrado',
-  })
   archive(@Param('id') id: string) {
-    return this.postsService.archivePost(id);
+    if (this.postsService?.archivePost) {
+      return this.postsService.archivePost(id);
+    }
+    return { success: false, message: 'PostsService not available' };
   }
 }

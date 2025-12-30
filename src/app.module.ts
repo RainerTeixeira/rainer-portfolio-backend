@@ -25,7 +25,6 @@ import { LikesModule } from './modules/likes/likes.module';
 import { BookmarksModule } from './modules/bookmarks/bookmarks.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
-import { DebugModule } from './modules/debug/debug.module';
 
 /**
  * Módulo raiz da aplicação.
@@ -88,7 +87,6 @@ import { DebugModule } from './modules/debug/debug.module';
     BookmarksModule,
     NotificationsModule,
     DashboardModule,
-    DebugModule,
   ],
 })
 export class AppModule {}

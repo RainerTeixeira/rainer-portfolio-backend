@@ -1,0 +1,72 @@
+#!/bin/bash
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Script: Finalizar Configuração do Ambiente Local
+# Descrição: Prepara tudo para produção/cloud
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Cores
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+echo -e "${GREEN}"
+echo "╔════════════════════════════════════════════════════════════╗"
+echo "║  FINALIZANDO AMBIENTE LOCAL                               ║"
+echo "╚════════════════════════════════════════════════════════════╝${NC}"
+echo ""
+
+# FASE 1: AWS CLI
+echo -e "${YELLOW}📊 FASE 1: Verificando AWS CLI...${NC}"
+if command -v aws &> /dev/null; then
+    echo -e "${GREEN}✅ AWS CLI já instalado!${NC}"
+    aws --version
+else
+    echo -e "${YELLOW}⚠️  AWS CLI não encontrado. Instale manualmente:${NC}"
+    echo "   https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html"
+fi
+echo ""
+
+# FASE 2: DynamoDB
+echo -e "${YELLOW}📊 FASE 2: Criando tabelas DynamoDB...${NC}"
+cd ../..
+npm run dynamodb:create-tables
+echo -e "${GREEN}✅ Tabelas criadas!${NC}"
+echo ""
+
+# FASE 3: MongoDB
+echo -e "${YELLOW}📊 FASE 3: Populando MongoDB...${NC}"
+tsx src/prisma/mongodb.seed.ts
+echo -e "${GREEN}✅ MongoDB populado!${NC}"
+echo ""
+
+# FASE 4: Containers
+echo -e "${YELLOW}📊 FASE 4: Status dos containers...${NC}"
+docker ps --filter "fullName=blogapi" --format "{{.Names}}\t{{.Status}}"
+echo ""
+
+# FASE 5: API
+# Ler PORT do .env
+API_PORT=$(grep -oP '^PORT\s*=\s*\K\d+' .env 2>/dev/null || echo "4000")
+
+echo -e "${YELLOW}📊 FASE 5: Testando API...${NC}"
+if curl -s http://localhost:${API_PORT}/health &> /dev/null; then
+    echo -e "${GREEN}✅ API funcionando na porta ${API_PORT}!${NC}"
+else
+    echo -e "${YELLOW}⚠️  API não está rodando. Execute: npm run start:dev${NC}"
+fi
+
+echo ""
+echo -e "${CYAN}╔════════════════════════════════════════════════════════════╗${NC}"
+echo -e "${CYAN}║  RESUMO FINAL                                             ║${NC}"
+echo -e "${CYAN}╚════════════════════════════════════════════════════════════╝${NC}"
+echo ""
+
+echo -e "${GREEN}✅ Configuração finalizada!${NC}"
+echo ""
+echo -e "${CYAN}📚 PRÓXIMOS PASSOS:${NC}"
+echo "   1. npm run start:dev"
+echo "   2. http://localhost:${API_PORT}/api"
+echo ""
+

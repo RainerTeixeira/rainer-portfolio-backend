@@ -1,0 +1,10 @@
+Events:
+ApiLocal:
+Type:
+HttpApi
+Properties:
+Path:
+/
+proxy+
+Method:
+ANY

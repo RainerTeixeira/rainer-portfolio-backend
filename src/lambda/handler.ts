@@ -62,13 +62,10 @@ export interface FunctionUrlEvent {
 const isProd = process.env.NODE_ENV === 'production';
 
 function logInfo(message: string, data?: unknown): void {
-  if (isProd) return;
-  // eslint-disable-next-line no-console
   console.log(message, data ?? '');
 }
 
 function logError(message: string, data?: unknown): void {
-  // eslint-disable-next-line no-console
   console.error(message, data ?? '');
 }
 
@@ -195,7 +192,6 @@ async function processWithNestJS(
   context: Context,
 ): Promise<APIGatewayProxyResultV2> {
   const appInstance = await initializeApp();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const fastify = (appInstance as any).getHttpAdapter().getInstance();
 
   if (!proxy) {

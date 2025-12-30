@@ -171,7 +171,6 @@ export const handler = async (
   event: PreSignUpEvent,
   _context: Context
 ): Promise<PreSignUpEvent> => {
-  // eslint-disable-next-line no-console
   console.log('🔐 Cognito Pre Sign-Up Trigger:', {
     triggerSource: event.triggerSource,
     userName: event.userName,
@@ -182,12 +181,10 @@ export const handler = async (
     const isSocialLogin = event.triggerSource.includes('ExternalProvider');
 
     if (isSocialLogin) {
-      // eslint-disable-next-line no-console
       console.log('🔗 Social login detected');
 
       if (userAttributes.email_verified === 'true') {
         userAttributes.email_verified = 'true';
-        // eslint-disable-next-line no-console
         console.log(`Email marked as verified: ${userAttributes.email}`);
       }
 
@@ -212,7 +209,6 @@ export const handler = async (
 
         if (nickname && nickname.length >= 3) {
           userAttributes.nickname = nickname;
-          // eslint-disable-next-line no-console
           console.log(`Nickname generated: ${nickname}`);
         }
       }
@@ -229,12 +225,10 @@ export const handler = async (
         
         if (parts.length > 0) {
           userAttributes.name = parts.join(' ');
-          // eslint-disable-next-line no-console
           console.log(`Full name defined: ${userAttributes.name}`);
         }
       }
 
-      // eslint-disable-next-line no-console
       console.log('Attributes configured for social login:', {
         email_verified: userAttributes.email_verified,
         nickname: userAttributes.nickname,
@@ -242,7 +236,6 @@ export const handler = async (
         name: userAttributes.name,
       });
     } else {
-      // eslint-disable-next-line no-console
       console.log('Normal signup (not social login) - maintaining default behavior');
       
       // Validações para signup tradicional
@@ -264,7 +257,6 @@ export const handler = async (
       if (!userAttributes.nickname) {
         const base = email.toLowerCase().split('@')[0];
         userAttributes.nickname = base.replace(/[^a-z0-9]/g, '').substring(0, 30);
-        // eslint-disable-next-line no-console
         console.log(`🏷️ Nickname gerado: ${userAttributes.nickname}`);
       }
     }
@@ -285,7 +277,6 @@ export const handler = async (
       },
     };
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error('❌ Erro no Pre Sign-Up:', {
       error: error instanceof Error ? error.message : error,
       userName: event.userName,
@@ -310,11 +301,8 @@ export const handler = async (
 export const postAuthenticationHandler = async (
   event: unknown
 ): Promise<unknown> => {
-  // eslint-disable-next-line no-console
   console.log('🔓 Cognito Post Authentication:', {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     userName: (event as any).userName,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     userPoolId: (event as any).userPoolId,
   });
 
@@ -339,11 +327,8 @@ export const postAuthenticationHandler = async (
 export const preAuthenticationHandler = async (
   event: unknown
 ): Promise<unknown> => {
-  // eslint-disable-next-line no-console
   console.log('🔒 Cognito Pre Authentication:', {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     userName: (event as any).userName,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     triggerSource: (event as any).triggerSource,
   });
 

@@ -1,80 +1,58 @@
-# Multi-stage build para produção
-FROM node:20-alpine AS builder
+# Multi-stage build for production optimization
+FROM node:20-alpine AS base
 
-# Define working directory
+# Install dependencies only when needed
+FROM base AS deps
+RUN apk add --no-cache libc6-compat curl
 WORKDIR /app
 
-# Copia package files
-COPY package*.json ./
-COPY pnpm-lock.yaml* ./
+# Install dependencies
+COPY package.json pnpm-lock.yaml* ./
+RUN corepack enable pnpm && pnpm install --frozen-lockfile
 
-# Instala pnpm e dependências
-RUN npm install -g pnpm
-RUN npm install -g tsx
-RUN pnpm install --ignore-scripts
-
-# Copia o código fonte
+# Rebuild the source code only when needed
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Gera Prisma Client (necessário para o TypeScript compilar sem erro)
-RUN pnpm run prisma:generate
+# Enable pnpm for build steps
+RUN corepack enable pnpm
 
-# Build da aplicação
-RUN pnpm run build
+# Generate Prisma client (explicit schema path)
+RUN pnpm prisma generate --schema ./src/database/mongodb/prisma/schema.prisma
 
-# Stage de produção
-FROM node:20-alpine AS production
+# Build application
+ENV NODE_ENV production
+RUN pnpm build
 
-# Instala dependências necessárias para produção
-RUN apk add --no-cache \
-    curl \
-    wget \
-    netcat-openbsd \
-    && rm -rf /var/cache/apk/*
-
-# Cria usuário non-root
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nodejs -u 1001
-
-# Define working directory
+# Production image
+FROM base AS runner
 WORKDIR /app
 
-# Copia package files
-COPY package*.json ./
-COPY pnpm-lock.yaml* ./
+ENV NODE_ENV production
 
-# Instala pnpm
-RUN npm install -g pnpm
-RUN npm install -g tsx
+RUN apk add --no-cache curl
 
-# Instala apenas dependências de produção
-RUN pnpm install --ignore-scripts --prod
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nodejs
 
-# Copia código buildado do stage builder
-COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
-COPY --from=builder --chown=nodejs:nodejs /app/scripts ./scripts
-COPY --from=builder --chown=nodejs:nodejs /app/src/database/mongodb/prisma ./src/database/mongodb/prisma
+# Copy built application
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/node_modules ./node_modules
 
-# Instala Prisma CLI e gera o Prisma Client
-RUN npm install -g prisma@6.17.1
-RUN npx prisma generate --schema=src/database/mongodb/prisma/schema.prisma
+# Set permissions
+RUN chown -R nodejs:nodejs /app
 
-# Cria diretório de logs
-RUN mkdir -p /app/logs && chown nodejs:nodejs /app/logs
-
-# Muda para usuário non-root
 USER nodejs
 
-# Expõe porta
 EXPOSE 4000
 
+ENV PORT=4000
+ENV HOST=0.0.0.0
+
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:4000/api/v1/health || exit 1
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 CMD curl -f http://localhost:4000/api/v1/health || exit 1
 
-# Script de entrada que inicializa os bancos e sobe a aplicação
-COPY --chown=nodejs:nodejs ./scripts/docker-entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
-
-ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["node", "dist/main.js"]

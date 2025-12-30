@@ -1,0 +1,205 @@
+{
+  "id": "oauth-nickname-implementation",
+  "type": "feature",
+  "content": "Implementação completa do fluxo de escolha de nickname para usuários OAuth (Google/GitHub)",
+  "createdAt": "2025-11-06T16:00:00.000Z",
+  "lastModified": "2025-11-06T17:00:00.000Z",
+  "tags": [
+    "oauth",
+    "nickname",
+    "cognito",
+    "authentication",
+    "frontend-flow"
+  ],
+  "implementation": {
+    "overview": {
+      "problem": "Usuários autenticados via OAuth (Google/GitHub) não têm nickname no Cognito na primeira autenticação",
+      "solution": "Sistema que verifica se usuário tem nickname no Cognito e solicita escolha na primeira vez",
+      "approach": "Zero modificações no banco de dados - apenas verificação em tempo real no Cognito"
+    },
+    "architecture": {
+      "backend": {
+        "endpoints": [
+          {
+            "method": "GET",
+            "path": "/auth/needs-nickname/:cognitoSub",
+            "purpose": "Verifica se usuário precisa escolher nickname",
+            "returns": {
+              "needsNickname": "boolean - true se precisa escolher",
+              "hasNickname": "boolean - true se já tem nickname no Cognito",
+              "cognitoSub": "string - ID do usuário no Cognito"
+            }
+          },
+          {
+            "method": "POST",
+            "path": "/auth/change-nickname",
+            "purpose": "Altera nickname do usuário no Cognito",
+            "body": {
+              "cognitoSub": "string - ID do usuário",
+              "newNickname": "string - Novo nickname"
+            },
+            "note": "Atualiza apenas no Cognito, não modifica MongoDB"
+          }
+        ],
+        "serviceMethods": {
+          "checkNeedsNickname": {
+            "location": "src/modules/auth/auth.service.ts",
+            "purpose": "Verifica se usuário tem nickname no Cognito",
+            "implementation": "Usa AWS SDK ListUsersCommand para buscar usuário e verificar atributo nickname",
+            "returns": "needsNickname: boolean, hasNickname: boolean, cognitoSub: string"
+          },
+          "changeNickname": {
+            "location": "src/modules/auth/auth.service.ts",
+            "purpose": "Atualiza nickname no Cognito",
+            "implementation": "Usa AdminUpdateUserAttributesCommand para atualizar atributo nickname",
+            "note": "Não modifica MongoDB - nickname é gerenciado apenas pelo Cognito"
+          },
+          "handleOAuthCallback": {
+            "location": "src/modules/auth/auth.service.ts",
+            "modification": "Adiciona flag needsNickname na resposta",
+            "logic": "Calcula needsNickname dinamicamente verificando se nickname existe no idToken do Cognito",
+            "returns": {
+              "tokens": "accessToken, refreshToken, idToken, etc",
+              "user": "dados do usuário + needsNickname: boolean"
+            }
+          }
+        },
+        "dataModel": {
+          "important": "NICKNAME NÃO É ARMAZENADO NO MONGODB",
+          "storage": "Apenas no AWS Cognito como atributo do usuário",
+          "reason": "Evita modificações no schema de produção",
+          "userModel": {
+            "note": "Interface User não possui campo nickname",
+            "location": "src/modules/users/user.model.ts"
+          },
+          "prismaSchema": {
+            "note": "Schema Prisma não possui campo nickname no modelo User",
+            "location": "src/prisma/schema.prisma"
+          }
+        }
+      },
+      "frontend": {
+        "flow": [
+          "1. Usuário faz login via OAuth (Google/GitHub)",
+          "2. Backend retorna needsNickname: true se não tiver nickname",
+          "3. Frontend exibe tela de escolha de nickname",
+          "4. Usuário escolhe nickname",
+          "5. Frontend chama POST /auth/change-nickname",
+          "6. Backend atualiza nickname no Cognito",
+          "7. Usuário continua fluxo normal"
+        ],
+        "endpoints": {
+          "check": "GET /auth/needs-nickname/:cognitoSub",
+          "update": "POST /auth/change-nickname"
+        }
+      }
+    },
+    "codePatterns": {
+      "cognitoIntegration": {
+        "pattern": "Uso de AWS SDK v3 com CognitoIdentityProviderClient",
+        "example": "import { CognitoIdentityProviderClient, ListUsersCommand } from '@aws-sdk/client-cognito-identity-provider'",
+        "location": "src/modules/auth/auth.service.ts"
+      },
+      "errorHandling": {
+        "pattern": "Try-catch com logging estruturado",
+        "example": "try { ... } catch (error) { this.logger.error(...); throw new InternalServerErrorException(...) }",
+        "note": "Sempre logar erros antes de lançar exceções"
+      },
+      "typeSafety": {
+        "pattern": "Interfaces TypeScript para todas as respostas",
+        "example": "LoginResponseUser interface com needsNickname?: boolean",
+        "location": "src/modules/auth/auth.model.ts"
+      },
+      "validation": {
+        "pattern": "Validação de nickname disponível antes de atualizar",
+        "method": "checkNicknameAvailability - verifica no Cognito se nickname já está em uso",
+        "note": "Previne conflitos de nickname"
+      }
+    },
+    "testing": {
+      "testFiles": [
+        "tests/modules/auth/auth.service.test.ts",
+        "tests/modules/auth/auth.controller.test.ts"
+      ],
+      "testResults": {
+        "status": "100% passing",
+        "total": "43 testes passando, 5 skipped",
+        "coverage": "Todos os métodos OAuth cobertos",
+        "lastRun": "2025-11-06T17:00:00.000Z"
+      },
+      "testPatterns": {
+        "oauthUrlValidation": {
+          "pattern": "Validar URLs do Cognito Hosted UI, não URLs diretas do Google/GitHub",
+          "example": "expect(authUrl).toContain('amazoncognito.com/oauth2/authorize'); expect(authUrl).toContain('identity_provider=Google');",
+          "location": "tests/modules/auth/auth.service.test.ts",
+          "reason": "Arquitetura mudou para Cognito Hosted UI",
+          "changes": [
+            "URLs agora validam amazoncognito.com/oauth2/authorize",
+            "Mocks incluem id_token e access_token do Cognito",
+            "Códigos únicos por teste para evitar cache conflicts"
+          ]
+        },
+        "uniqueCodes": {
+          "pattern": "Sempre usar códigos únicos por teste para evitar conflitos de cache",
+          "example": "const uniqueCode = 'google-code-123-' + Date.now();",
+          "location": "tests/modules/auth/auth.service.test.ts",
+          "reason": "Cache processedCodes impede reutilização de códigos OAuth"
+        },
+        "cacheManagement": {
+          "pattern": "Limpar cache processedCodes entre testes no beforeEach",
+          "example": "beforeEach(() => { if (service['processedCodes']) { service['processedCodes'].clear(); } });",
+          "location": "tests/modules/auth/auth.service.test.ts",
+          "reason": "Evita falsos positivos por códigos já processados"
+        },
+        "cognitoMockStructure": {
+          "pattern": "Mocks de fetch devem incluir id_token e access_token do Cognito",
+          "example": "mockResolvedValueOnce({ ok: true, json: async () => ({ access_token, id_token, refresh_token, token_type, expires_in }) })",
+          "location": "tests/modules/auth/auth.service.test.ts",
+          "reason": "Cognito retorna tokens completos no exchange code",
+          "note": "Sempre incluir id_token e access_token nos mocks"
+        },
+        "controllerTests": {
+          "pattern": "Testes de controller devem usar método único startOAuth com provider como parâmetro",
+          "example": "await controller.startOAuth('google', redirectUri, res);",
+          "location": "tests/modules/auth/auth.controller.test.ts",
+          "reason": "Controller unificado usa um único método para todos os providers"
+        },
+        "callbackDataStructure": {
+          "pattern": "callbackData deve incluir code, state e redirectUri",
+          "example": "const callbackData = { code: 'auth-code', state: 'mock-state', redirectUri: 'http://...' };",
+          "location": "tests/modules/auth/auth.controller.test.ts",
+          "reason": "Controller espera todos os parâmetros opcionais"
+        }
+      }
+    },
+    "documentation": {
+      "files": [
+        "docs/03-GUIAS/FLUXO_NICKNAME_OAUTH.md",
+        "RESULTADOS_TESTES.md"
+      ],
+      "content": [
+        "Fluxo completo de escolha de nickname",
+        "Exemplos de código frontend e backend",
+        "Diagramas de sequência",
+        "Troubleshooting comum"
+      ]
+    }
+  },
+  "importantNotes": [
+    "NICKNAME É GERENCIADO APENAS PELO COGNITO - NÃO NO MONGODB",
+    "needsNickname é calculado dinamicamente - não é armazenado",
+    "Zero modificações no schema do banco de dados",
+    "Testes devem usar códigos únicos para evitar cache conflicts",
+    "Sempre limpar processedCodes entre testes",
+    "Mocks devem incluir id_token e access_token do Cognito"
+  ],
+  "relatedFiles": [
+    "src/modules/auth/auth.service.ts",
+    "src/modules/auth/auth.controller.ts",
+    "src/modules/auth/auth.model.ts",
+    "src/modules/users/users.service.ts",
+    "tests/modules/auth/auth.service.test.ts",
+    "tests/modules/auth/auth.controller.test.ts"
+  ]
+}
+
