@@ -86,8 +86,8 @@ export class BookmarksController {
     summary: 'Desfavoritar post',
     description: 'Remove um post dos favoritos do usuário',
   })
-  @ApiParam({ name: 'userId', description: 'ID do usuário', example: '44085408-7021-7051-e274-ae704499cd72' })
-  @ApiParam({ name: 'postId', description: 'ID do post', example: 'N-fGhgb8-2byjMUku8vkI' })
+  @ApiParam({ name: 'userId', description: 'ID do usuário' })
+  @ApiParam({ name: 'postId', description: 'ID do post' })
   @ApiResponse({
     status: 200,
     description: 'Post desfavoritado com sucesso',
@@ -109,8 +109,8 @@ export class BookmarksController {
     summary: 'Desfavoritar comentário',
     description: 'Remove um comentário dos favoritos do usuário',
   })
-  @ApiParam({ name: 'userId', description: 'ID do usuário', example: '44085408-7021-7051-e274-ae704499cd72' })
-  @ApiParam({ name: 'commentId', description: 'ID do comentário', example: 'O4gqlc5OagZr5HQClsYDU' })
+  @ApiParam({ name: 'userId', description: 'ID do usuário' })
+  @ApiParam({ name: 'commentId', description: 'ID do comentário' })
   @ApiResponse({
     status: 200,
     description: 'Comentário desfavoritado com sucesso',
@@ -131,7 +131,7 @@ export class BookmarksController {
     summary: 'Buscar favorito por ID',
     description: 'Retorna um favorito específico pelo seu ID',
   })
-  @ApiParam({ name: 'id', description: 'ID do favorito', example: '0Kw9MMCknaaPCD10D8BmG' })
+  @ApiParam({ name: 'id', description: 'ID do favorito' })
   @ApiResponse({
     status: 200,
     description: 'Favorito encontrado',
@@ -199,9 +199,9 @@ export class BookmarksController {
     summary: 'Listar favoritos do usuário',
     description: 'Retorna todos os favoritos de um usuário específico com paginação',
   })
-  @ApiParam({ name: 'userId', description: 'ID do usuário', example: '44085408-7021-7051-e274-ae704499cd72' })
-  @ApiQuery({ name: 'limit', required: false, description: 'Limite de resultados (padrão: 10)', example: 10 })
-  @ApiQuery({ name: 'offset', required: false, description: 'Offset para paginação (padrão: 0)', example: 0 })
+  @ApiParam({ name: 'userId', description: 'ID do usuário' })
+  @ApiQuery({ name: 'limit', required: false, description: 'Limite de resultados' })
+  @ApiQuery({ name: 'offset', required: false, description: 'Offset para paginação' })
   @ApiResponse({
     status: 200,
     description: 'Lista de favoritos retornada',
@@ -226,8 +226,8 @@ export class BookmarksController {
     summary: 'Verificar se usuário favoritou post',
     description: 'Verifica se um usuário específico favoritou um post',
   })
-  @ApiParam({ name: 'userId', description: 'ID do usuário', example: '44085408-7021-7051-e274-ae704499cd72' })
-  @ApiParam({ name: 'postId', description: 'ID do post', example: 'N-fGhgb8-2byjMUku8vkI' })
+  @ApiParam({ name: 'userId', description: 'ID do usuário' })
+  @ApiParam({ name: 'postId', description: 'ID do post' })
   @ApiResponse({
     status: 200,
     description: 'Status do favorito retornado',
@@ -249,8 +249,8 @@ export class BookmarksController {
     summary: 'Verificar se usuário favoritou comentário',
     description: 'Verifica se um usuário específico favoritou um comentário',
   })
-  @ApiParam({ name: 'userId', description: 'ID do usuário', example: '44085408-7021-7051-e274-ae704499cd72' })
-  @ApiParam({ name: 'commentId', description: 'ID do comentário', example: 'O4gqlc5OagZr5HQClsYDU' })
+  @ApiParam({ name: 'userId', description: 'ID do usuário' })
+  @ApiParam({ name: 'commentId', description: 'ID do comentário' })
   @ApiResponse({
     status: 200,
     description: 'Status do favorito retornado',

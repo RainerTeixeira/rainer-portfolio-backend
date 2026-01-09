@@ -12,7 +12,7 @@
  * @module modules/notifications/controllers/notifications.controller
  */
 
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, BadRequestException } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { NotificationsService } from '../services/notifications.service';
 import { CreateNotificationDto } from '../dto/create-notification.dto';
@@ -61,9 +61,9 @@ export class NotificationsController {
     description: 'Lista notificações de um usuário com filtros e paginação',
   })
   @ApiQuery({ name: 'userId', required: true, description: 'ID do usuário' })
-  @ApiQuery({ name: 'limit', required: false, description: 'Limite de resultados', example: 10 })
-  @ApiQuery({ name: 'offset', required: false, description: 'Offset para paginação', example: 0 })
-  @ApiQuery({ name: 'unreadOnly', required: false, description: 'Apenas não lidas (true/false)', example: true })
+  @ApiQuery({ name: 'limit', required: false, description: 'Limite de resultados' })
+  @ApiQuery({ name: 'offset', required: false, description: 'Offset para paginação' })
+  @ApiQuery({ name: 'unreadOnly', required: false, description: 'Apenas não lidas (true/false)' })
   @ApiResponse({
     status: 200,
     description: 'Lista de notificações retornada',
@@ -76,8 +76,7 @@ export class NotificationsController {
     unreadOnly?: boolean;
   }) {
     if (!query.userId) {
-      // Retornar 400 em vez de 500 quando userId não for informado
-      throw new BadRequestException('userId is required');
+      throw new Error('userId is required');
     }
     return this.notificationsService.getUserNotifications(query.userId, query);
   }
@@ -93,7 +92,7 @@ export class NotificationsController {
     summary: 'Buscar notificação por ID',
     description: 'Retorna uma notificação específica pelo seu ID',
   })
-  @ApiParam({ name: 'id', description: 'ID da notificação', example: '_xZDC5yAETyMpbQv1RA8J' })
+  @ApiParam({ name: 'id', description: 'ID da notificação' })
   @ApiResponse({
     status: 200,
     description: 'Notificação encontrada',
@@ -118,7 +117,7 @@ export class NotificationsController {
     summary: 'Contar notificações não lidas',
     description: 'Retorna o número de notificações não lidas para um usuário',
   })
-  @ApiParam({ name: 'userId', description: 'ID do usuário', example: '44085408-7021-7051-e274-ae704499cd72' })
+  @ApiParam({ name: 'userId', description: 'ID do usuário' })
   @ApiResponse({
     status: 200,
     description: 'Contagem de notificações não lidas',
@@ -139,7 +138,7 @@ export class NotificationsController {
     summary: 'Marcar notificação como lida',
     description: 'Marca uma notificação específica como lida',
   })
-  @ApiParam({ name: 'id', description: 'ID da notificação', example: '_xZDC5yAETyMpbQv1RA8J' })
+  @ApiParam({ name: 'id', description: 'ID da notificação' })
   @ApiResponse({
     status: 200,
     description: 'Notificação marcada como lida',
@@ -160,7 +159,7 @@ export class NotificationsController {
     summary: 'Marcar todas como lidas',
     description: 'Marca todas as notificações de um usuário como lidas',
   })
-  @ApiParam({ name: 'userId', description: 'ID do usuário', example: '44085408-7021-7051-e274-ae704499cd72' })
+  @ApiParam({ name: 'userId', description: 'ID do usuário' })
   @ApiResponse({
     status: 200,
     description: 'Todas as notificações marcadas como lidas',
@@ -181,7 +180,7 @@ export class NotificationsController {
     summary: 'Deletar notificação',
     description: 'Remove permanentemente uma notificação',
   })
-  @ApiParam({ name: 'id', description: 'ID da notificação', example: '_xZDC5yAETyMpbQv1RA8J' })
+  @ApiParam({ name: 'id', description: 'ID da notificação' })
   @ApiResponse({
     status: 200,
     description: 'Notificação deletada com sucesso',
@@ -202,7 +201,7 @@ export class NotificationsController {
     summary: 'Deletar todas as notificações',
     description: 'Remove permanentemente todas as notificações de um usuário',
   })
-  @ApiParam({ name: 'userId', description: 'ID do usuário', example: '44085408-7021-7051-e274-ae704499cd72' })
+  @ApiParam({ name: 'userId', description: 'ID do usuário' })
   @ApiResponse({
     status: 200,
     description: 'Todas as notificações deletadas com sucesso',

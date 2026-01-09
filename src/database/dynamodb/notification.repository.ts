@@ -1,29 +1,60 @@
 import { Injectable } from '@nestjs/common';
 import { Notification, NotificationRepository } from '../interfaces/notification-repository.interface';
 import { DynamoDBService } from './dynamodb.service';
+import { BaseDynamoDBRepository } from './base-dynamodb.repository';
 
 @Injectable()
-export class DynamoNotificationRepository implements NotificationRepository {
-  private readonly tableName = 'portfolio-backend-table-notifications';
+export class DynamoNotificationRepository extends BaseDynamoDBRepository implements NotificationRepository {
   
-  constructor(private readonly dynamo: DynamoDBService) {}
+  constructor(dynamo: DynamoDBService) {
+    super(dynamo.getDocumentClient()!, dynamo.getTableName());
+  }
 
   async create(data: Omit<Notification, 'createdAt' | 'readAt'>): Promise<Notification> {
     const now = new Date();
-    const item: Notification = {
+    const notification: Notification = {
       ...data,
       createdAt: now,
       readAt: data.isRead ? now : undefined,
     };
 
-    await this.dynamo.put(item, this.tableName);
-    return item;
+    // Gerar ID único para a notificação
+    const notificationId = `notification_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    (notification as any).id = notificationId;
+
+    // PK/SK Pattern: USER#userId / NOTIFICATION#notificationId
+    const PK = this.createEntityPK('USER', notification.userId);
+    const SK = this.createEntitySK('NOTIFICATION', notificationId);
+    
+    const dynamoItem = this.toDynamoDB(notification, 'NOTIFICATION', PK, SK);
+    
+    // Adicionar GSI1 para queries globais de notificações
+    dynamoItem.GSI1PK = this.createGSI1PK('ENTITY', 'NOTIFICATION');
+    dynamoItem.GSI1SK = this.createGSI1SK('NOTIFICATION', notificationId, notification.createdAt.toISOString());
+    
+    // Adicionar GSI2 para queries por status (lidas/não lidas)
+    const statusPrefix = notification.isRead ? 'READ' : 'UNREAD';
+    dynamoItem.GSI2PK = this.createGSI2PK('STATUS', statusPrefix);
+    dynamoItem.GSI2SK = this.createGSI2SK('USER', notification.userId, notification.createdAt.toISOString());
+    
+    await this.putItem(dynamoItem);
+
+    return notification;
   }
 
   async findById(id: string): Promise<Notification | null> {
-    const result = await this.dynamo.get({ id }, this.tableName);
-    if (!result) return null;
-    return result as Notification;
+    // Buscar por GSI1 usando notificationId
+    const result = await this.query({
+      IndexName: 'GSI1',
+      KeyConditionExpression: 'GSI1PK = :gsi1pk AND begins_with(GSI1SK, :gsi1sk)',
+      ExpressionAttributeValues: {
+        ':gsi1pk': this.createGSI1PK('ENTITY', 'NOTIFICATION'),
+        ':gsi1sk': this.createGSI1SK('NOTIFICATION', id),
+      },
+    });
+
+    const notification = result.items[0];
+    return notification ? this.fromDynamoDB(notification) as Notification : null;
   }
 
   async findByUser(userId: string, options: {
@@ -31,21 +62,38 @@ export class DynamoNotificationRepository implements NotificationRepository {
     offset?: number;
     unreadOnly?: boolean;
   } = {}): Promise<Notification[]> {
-    let notifications = await this.findAll();
-    notifications = notifications.filter(n => n.userId === userId);
+    let result: { items: any[]; lastEvaluatedKey?: any };
 
     if (options.unreadOnly) {
-      notifications = notifications.filter(n => !n.isRead);
+      // Query por usuário não lidas usando GSI2
+      result = await this.query({
+        IndexName: 'GSI2',
+        KeyConditionExpression: 'GSI2PK = :gsi2pk AND begins_with(GSI2SK, :gsi2sk)',
+        ExpressionAttributeValues: {
+          ':gsi2pk': this.createGSI2PK('STATUS', 'UNREAD'),
+          ':gsi2sk': this.createGSI2SK('USER', userId),
+        },
+        Limit: options.limit,
+        ScanIndexForward: false, // Mais recentes primeiro
+      });
+    } else {
+      // Query por usuário: PK = USER#userId, SK begins_with NOTIFICATION#
+      result = await this.query({
+        KeyConditionExpression: 'PK = :pk AND begins_with(SK, :sk)',
+        ExpressionAttributeValues: {
+          ':pk': this.createEntityPK('USER', userId),
+          ':sk': 'NOTIFICATION#',
+        },
+        Limit: options.limit,
+        ScanIndexForward: false, // Mais recentes primeiro
+      });
     }
 
-    // Sort by date (most recent first)
-    notifications.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    let notifications = result.items.map(item => this.fromDynamoDB(item) as Notification);
 
+    // Aplicar offset
     if (options.offset) {
       notifications = notifications.slice(options.offset);
-    }
-    if (options.limit) {
-      notifications = notifications.slice(0, options.limit);
     }
 
     return notifications;
@@ -60,14 +108,32 @@ export class DynamoNotificationRepository implements NotificationRepository {
       ...data,
     };
 
-    await this.dynamo.put(updated, this.tableName);
+    // Se mudou o status de leitura, atualizar readAt
+    if (data.isRead !== undefined && data.isRead !== existing.isRead) {
+      updated.readAt = data.isRead ? new Date() : undefined;
+    }
+
+    // PK/SK Pattern: USER#userId / NOTIFICATION#notificationId
+    const PK = this.createEntityPK('USER', updated.userId);
+    const SK = this.createEntitySK('NOTIFICATION', id);
+    
+    const dynamoItem = this.toDynamoDB(updated, 'NOTIFICATION', PK, SK);
+    
+    // Recriar GSI1
+    dynamoItem.GSI1PK = this.createGSI1PK('ENTITY', 'NOTIFICATION');
+    dynamoItem.GSI1SK = this.createGSI1SK('NOTIFICATION', id, updated.createdAt.toISOString());
+    
+    // Recriar GSI2 com status atualizado
+    const statusPrefix = updated.isRead ? 'READ' : 'UNREAD';
+    dynamoItem.GSI2PK = this.createGSI2PK('STATUS', statusPrefix);
+    dynamoItem.GSI2SK = this.createGSI2SK('USER', updated.userId, updated.createdAt.toISOString());
+    
+    await this.putItem(dynamoItem);
+
     return updated;
   }
 
   async markAsRead(id: string): Promise<Notification | null> {
-    const notification = await this.findById(id);
-    if (!notification) return null;
-
     return await this.update(id, {
       isRead: true,
       readAt: new Date(),
@@ -77,6 +143,7 @@ export class DynamoNotificationRepository implements NotificationRepository {
   async markAllAsRead(userId: string): Promise<void> {
     const notifications = await this.findByUser(userId, { unreadOnly: true });
     
+    // Atualizar em lote para melhor performance
     for (const notification of notifications) {
       await this.markAsRead(notification.id);
     }
@@ -84,31 +151,34 @@ export class DynamoNotificationRepository implements NotificationRepository {
 
   async delete(id: string): Promise<void> {
     const notification = await this.findById(id);
-    if (notification) {
-      await this.dynamo.delete(id, '', this.tableName);
-    }
+    if (!notification) return;
+
+    const PK = this.createEntityPK('USER', notification.userId);
+    const SK = this.createEntitySK('NOTIFICATION', id);
+    
+    await this.deleteItem({ PK, SK });
   }
 
   async deleteAll(userId: string): Promise<void> {
     const notifications = await this.findByUser(userId);
     
+    // Deletar em lote para melhor performance
     for (const notification of notifications) {
       await this.delete(notification.id);
     }
   }
 
   async getUnreadCount(userId: string): Promise<number> {
-    const notifications = await this.findByUser(userId, { unreadOnly: true });
-    return notifications.length;
-  }
+    // Query eficiente usando GSI2
+    const result = await this.query({
+      IndexName: 'GSI2',
+      KeyConditionExpression: 'GSI2PK = :gsi2pk AND begins_with(GSI2SK, :gsi2sk)',
+      ExpressionAttributeValues: {
+        ':gsi2pk': this.createGSI2PK('STATUS', 'UNREAD'),
+        ':gsi2sk': this.createGSI2SK('USER', userId),
+      },
+    });
 
-  private async findAll(): Promise<Notification[]> {
-    try {
-      const items = await this.dynamo.scan({}, this.tableName);
-      return items as unknown as Notification[];
-    } catch {
-      // Error scanning notifications
-      return [];
-    }
+    return result.items.length;
   }
 }

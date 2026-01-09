@@ -43,7 +43,12 @@
     "clean": "rm -rf dist .aws-sam .nest",
     "version:update": "node scripts/08-memoria/update-version.js",
     "memory:update": "node scripts/08-memoria/update-memory.js",
-    "memory:sync": "npm run version:update && npm run memory:update"
+    "memory:sync": "npm run version:update && npm run memory:update",
+    "changelog": "npx tsx scripts/generate-changelog.ts",
+    "version": "npx tsx scripts/generate-changelog.ts && git add docs/98-CHANGELOG.md package.json",
+    "release": "npx tsx scripts/release-package.ts",
+    "release:dry-run": "npx tsx scripts/release-package.ts --dry-run",
+    "release:validate": "npx tsx scripts/release-package.ts --validate-only"
   },
   "dependencies": {
     "@aws-sdk/client-cognito-identity-provider": "^3.709.0",

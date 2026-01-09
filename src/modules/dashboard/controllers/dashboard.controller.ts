@@ -29,9 +29,9 @@ import type { DashboardStats, DashboardAnalytics } from '../dto/dashboard.model'
  *
  */
 @ApiTags('dashboard')
-@Controller('dashboard')
+@Controller('api/dashboard')
 export class DashboardController {
-  constructor(private readonly dashboardService?: DashboardService) {}
+  constructor(private readonly dashboardService: DashboardService) {}
 
   /**
    * Retorna estatísticas gerais do dashboard.
@@ -68,11 +68,8 @@ export class DashboardController {
   })
   @ApiResponse({ status: 500, description: 'Erro interno do servidor' })
   async getStats(): Promise<{ success: true; data: DashboardStats }> {
-    if (this.dashboardService?.getStats) {
-      const stats = await this.dashboardService.getStats();
-      return { success: true, data: stats };
-    }
-    return { success: false, message: 'DashboardService not available' } as any;
+    const stats = await this.dashboardService.getStats();
+    return { success: true, data: stats };
   }
 
   /**
@@ -134,10 +131,8 @@ export class DashboardController {
   async getAnalytics(
     @Query('period') _period?: string,
   ): Promise<{ success: true; data: DashboardAnalytics }> {
-    if (this.dashboardService?.getAnalytics) {
-      const analytics = await this.dashboardService.getAnalytics();
-      return { success: true, data: analytics };
-    }
-    return { success: false, message: 'DashboardService not available' } as any;
+    // TODO: Implementar com período quando a nova arquitetura estiver pronta
+    const analytics = await this.dashboardService.getAnalytics();
+    return { success: true, data: analytics };
   }
 }

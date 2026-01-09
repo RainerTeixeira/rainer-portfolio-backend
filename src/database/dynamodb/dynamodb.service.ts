@@ -29,7 +29,7 @@ export class DynamoDBService implements OnModuleInit {
   private readonly logger = new Logger(DynamoDBService.name);
   private client: DynamoDBClient | undefined;
   private docClient: DynamoDBDocumentClient | undefined;
-  private tableName: string = 'portfolio-backend-table';
+  private tableName: string = 'portfolio-backend-table-posts';
   private isInitialized: boolean = false;
 
   constructor(@Optional() private configService?: ConfigService) {
@@ -412,7 +412,7 @@ export class DynamoDBService implements OnModuleInit {
   }
 
   /**
-   * Obtém o cliente DynamoDB para operações avançadas
+   * Obtém o cliente DynamoDB Document para operações avançadas
    */
   getDocumentClient() {
     return this.docClient;

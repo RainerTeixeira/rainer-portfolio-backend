@@ -29,14 +29,10 @@ export class CommentsService {
   /**
    * Cria um novo comentário.
    *
-   * Por que o service define `status` padrão:
-   * - A moderação é uma regra de domínio; o repositório não deve “inventar” status.
-   * - Mantém consistência mesmo se múltiplos controllers chamarem este fluxo.
-   *
    * @param {CreateCommentDto} dto Dados do comentário.
    * @returns {Promise<unknown>} Comentário criado.
    */
-  async createComment(dto: CreateCommentDto): Promise<unknown> {
+  async createComment(dto: CreateCommentDto) {
     const id = randomUUID();
 
     return this.commentsRepo.create({
@@ -55,7 +51,7 @@ export class CommentsService {
    * @param {string} id ID do comentário.
    * @returns {Promise<unknown>} Comentário encontrado.
    */
-  async getCommentById(id: string): Promise<unknown> {
+  async getCommentById(id: string) {
     return this.commentsRepo.findById(id);
   }
 
@@ -69,7 +65,7 @@ export class CommentsService {
   async getCommentsByPostId(postId: string, options?: {
     limit?: number;
     offset?: number;
-  }): Promise<unknown> {
+  }) {
     return this.commentsRepo.findByPostId(postId, options);
   }
 
@@ -83,7 +79,7 @@ export class CommentsService {
   async getCommentsByAuthorId(authorId: string, options?: {
     limit?: number;
     offset?: number;
-  }): Promise<unknown> {
+  }) {
     return this.commentsRepo.findByAuthorId(authorId, options);
   }
 
@@ -93,7 +89,7 @@ export class CommentsService {
    * @param {string} parentId ID do comentário pai.
    * @returns {Promise<unknown>} Respostas encontradas.
    */
-  async getReplies(parentId: string): Promise<unknown> {
+  async getReplies(parentId: string) {
     return this.commentsRepo.findReplies(parentId);
   }
 
@@ -104,7 +100,7 @@ export class CommentsService {
    * @param {UpdateCommentDto} dto Campos para atualização.
    * @returns {Promise<unknown>} Comentário atualizado.
    */
-  async updateComment(id: string, dto: UpdateCommentDto): Promise<unknown> {
+  async updateComment(id: string, dto: UpdateCommentDto) {
     return this.commentsRepo.update(id, dto);
   }
 
@@ -114,7 +110,7 @@ export class CommentsService {
    * @param {string} id ID do comentário.
    * @returns {Promise<void>} Conclusão da operação.
    */
-  async deleteComment(id: string): Promise<void> {
+  async deleteComment(id: string) {
     await this.commentsRepo.delete(id);
   }
 
@@ -124,7 +120,7 @@ export class CommentsService {
    * @param {string} id ID do comentário.
    * @returns {Promise<void>} Conclusão da operação.
    */
-  async approveComment(id: string): Promise<void> {
+  async approveComment(id: string) {
     await this.commentsRepo.approve(id);
   }
 
@@ -134,7 +130,7 @@ export class CommentsService {
    * @param {string} id ID do comentário.
    * @returns {Promise<void>} Conclusão da operação.
    */
-  async rejectComment(id: string): Promise<void> {
+  async rejectComment(id: string) {
     await this.commentsRepo.reject(id);
   }
 }

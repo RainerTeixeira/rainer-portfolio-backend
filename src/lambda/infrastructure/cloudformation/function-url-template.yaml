@@ -1,0 +1,174 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Blog API - Lambda Function URLs (Free Tier Optimized)'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: 'development'
+    AllowedValues: ['development', 'staging', 'production']
+    Description: Environment name
+
+  LambdaMemory:
+    Type: Number
+    Default: 256
+    MinValue: 128
+    MaxValue: 1024
+    Description: Lambda memory size in MB
+
+  LambdaTimeout:
+    Type: Number
+    Default: 30
+    MinValue: 1
+    MaxValue: 900
+    Description: Lambda timeout in seconds
+
+Resources:
+  # IAM Role para Lambda
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${Environment}-blog-api-lambda-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: LambdaFunctionURLPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: '*'
+
+  # Lambda Function principal
+  BlogApiFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${Environment}-blog-api-function'
+      Runtime: nodejs20.x
+      Handler: function-url.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      MemorySize: !Ref LambdaMemory
+      Timeout: !Ref LambdaTimeout
+      Environment:
+        Variables:
+          NODE_ENV: !Ref Environment
+          VERSION: '1.0.0'
+          LOG_LEVEL: 'info'
+          ENABLE_PERFORMANCE_LOGS: 'true'
+      Code:
+        ZipFile: |
+          exports.handler = async (event) => {
+            return {
+              statusCode: 200,
+              headers: {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+                'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS'
+              },
+              body: JSON.stringify({
+                message: 'Blog API - Function URL',
+                environment: process.env.NODE_ENV,
+                timestamp: new Date().toISOString(),
+                event: event
+              })
+            };
+          };
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: blog-api
+        - Key: Tier
+          Value: free
+
+  # Lambda Function URL (Free Tier)
+  BlogApiFunctionUrl:
+    Type: AWS::Lambda::Url
+    Properties:
+      TargetFunctionArn: !GetAtt BlogApiFunction.Arn
+      AuthType: NONE
+      InvokeMode: RESPONSE_STREAM
+      Cors:
+        AllowOrigins:
+          - '*'
+        AllowMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        AllowHeaders:
+          - Content-Type
+          - X-Amz-Date
+          - Authorization
+          - X-Api-Key
+          - X-Amz-Security-Token
+          - X-Database-Provider
+        MaxAge: 86400
+
+  # Resource-based policy para Function URL
+  BlogApiFunctionUrlPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref BlogApiFunction
+      Action: lambda:InvokeFunctionUrl
+      Principal: '*'
+      FunctionUrlAuthType: NONE
+
+  # CloudWatch Log Group
+  BlogApiLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${BlogApiFunction}'
+      RetentionInDays: 14
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: blog-api
+
+Outputs:
+  FunctionUrl:
+    Description: 'Lambda Function URL endpoint'
+    Value: !GetAtt BlogApiFunctionUrl.FunctionUrl
+    Export:
+      Name: !Sub '${Environment}-BlogApi-FunctionUrl'
+
+  FunctionName:
+    Description: 'Lambda function name'
+    Value: !Ref BlogApiFunction
+    Export:
+      Name: !Sub '${Environment}-BlogApi-FunctionName'
+
+  FunctionArn:
+    Description: 'Lambda function ARN'
+    Value: !GetAtt BlogApiFunction.Arn
+    Export:
+      Name: !Sub '${Environment}-BlogApi-FunctionArn'
+
+  FreeTierInfo:
+    Description: 'Free Tier Information'
+    Value: !Sub |
+      Lambda Function URLs - FREE TIER:
+      - 1 million requests per month (always free)
+      - No API Gateway charges
+      - No data transfer charges (up to 1 GB)
+      - Lambda: 400,000 GB-seconds per month free
+      - Current config: ${LambdaMemory}MB memory, ${LambdaTimeout}s timeout
+      
+      Cost optimization tips:
+      - Keep memory under 512MB for better free tier utilization
+      - Use response streaming for large payloads
+      - Enable CloudWatch Logs retention (14 days)
+      - Monitor usage in AWS Free Tier Dashboard

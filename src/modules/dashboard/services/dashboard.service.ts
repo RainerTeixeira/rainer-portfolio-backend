@@ -9,7 +9,23 @@
  */
 
 import { Injectable } from '@nestjs/common';
-import type { DashboardAnalytics, DashboardStats } from '../dto/dashboard.model';
+
+/**
+ * Estrutura de estatísticas agregadas do dashboard.
+ *
+ * Observação: há também um tipo exportado em `../dto/dashboard.model`.
+ * Aqui existe uma interface local para tipagem interna do service.
+ */
+interface DashboardStats {
+  totalPosts: number;
+  totalViews: number;
+  totalLikes: number;
+  totalComments: number;
+  postsChange: number;
+  viewsChange: number;
+  likesChange: number;
+  commentsChange: number;
+}
 
 @Injectable()
 export class DashboardService {
@@ -35,18 +51,15 @@ export class DashboardService {
   /**
    * Retorna dados de analytics do dashboard.
    *
-   * Por que este método pode retornar dados "zerados" hoje:
-   * - Enquanto as tabelas/consultas definitivas (Mongo/Dynamo) não estiverem fechadas,
-   *   o dashboard precisa de um contrato estável para o frontend integrar.
-   * - Assim, o service mantém o formato do payload e a implementação evolui depois.
-   *
-   * @returns {Promise<DashboardAnalytics>} Série temporal de views e engajamento.
+   * @returns {Promise<{ views: unknown[]; engagement: unknown[]; topPosts: unknown[]; recentActivity: unknown[] }>} Payload de analytics.
    */
-  async getAnalytics(): Promise<DashboardAnalytics> {
+  async getAnalytics() {
     // TODO: Implement with new database architecture
     return {
       views: [],
       engagement: [],
+      topPosts: [],
+      recentActivity: [],
     };
   }
 }

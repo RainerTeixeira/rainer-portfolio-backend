@@ -21,7 +21,6 @@ export class MongoUserRepository implements UserRepository {
   async create(data: CreateUserDto): Promise<User> {
     const id = randomUUID();
     const user: User = {
-      id,
       cognitoSub: data.cognitoSub || '',
       name: data.name || '',
       email: data.email || '',

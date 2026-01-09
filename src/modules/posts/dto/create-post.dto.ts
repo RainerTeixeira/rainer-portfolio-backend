@@ -54,17 +54,11 @@ export class CreatePostDto {
   })
   authorId: string;
 
-  @ApiPropertyOptional({
-    description: 'ID da subcategoria do post',
-    example: 'subcat-123456',
-  })
-  subcategoryId?: string;
-
-  @ApiPropertyOptional({
-    description: 'ID da categoria do post (legacy)',
+  @ApiProperty({
+    description: 'ID da categoria do post',
     example: 'cat-123456',
   })
-  categoryId?: string;
+  categoryId: string;
 
   @ApiPropertyOptional({
     description: 'Status do post',
@@ -97,28 +91,4 @@ export class CreatePostDto {
     example: false,
   })
   isFeatured?: boolean;
-
-  @ApiPropertyOptional({
-    description: 'Se o post é destacado (novo campo)',
-    example: false,
-  })
-  featured?: boolean;
-
-  @ApiPropertyOptional({
-    description: 'Se permite comentários',
-    example: true,
-  })
-  allowComments?: boolean;
-
-  @ApiPropertyOptional({
-    description: 'Se o post está fixado',
-    example: false,
-  })
-  pinned?: boolean;
-
-  @ApiPropertyOptional({
-    description: 'Prioridade do post',
-    example: 0,
-  })
-  priority?: number;
 }

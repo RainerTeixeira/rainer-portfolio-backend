@@ -11,7 +11,7 @@
  * @license MIT
  */
 
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { USER_REPOSITORY } from '../../../database/tokens';
 import { UserRepository, User } from '../../../database/interfaces/user-repository.interface';
 import { CreateUserDto } from '../dto/create-user.dto';
@@ -43,8 +43,6 @@ import { randomUUID } from 'crypto';
  */
 @Injectable()
 export class UsersService {
-  private readonly logger = new Logger(UsersService.name);
-
   /**
    * Cria uma instância do UsersService.
    * 
@@ -58,12 +56,7 @@ export class UsersService {
 
   /**
    * Cria um novo usuário no sistema.
-   *
-   * Por que isso fica no service:
-   * - O controller não deve decidir defaults de domínio nem gerar IDs.
-   * - O repositório não deve conter regras de negócio; ele apenas persiste/consulta.
-   * - O service centraliza decisões simples (id/defaults) para manter consistência.
-   *
+   * 
    * @async
    * @method createUser
    * @param {CreateUserDto} dto - Dados do novo usuário
@@ -78,22 +71,27 @@ export class UsersService {
    * });
    * ```
    */
-  async createUser(dto: CreateUserDto): Promise<User> {
-    const cognitoSub = dto.cognitoSub || randomUUID();
+  async createUser(dto: CreateUserDto) {
+    const id = randomUUID();
+
+    // Aqui você faria o hash da senha antes de salvar
+    const passwordHash = dto.password; // substituir por hash real
 
     return this.usersRepo.create({
-      cognitoSub,
+      cognitoSub: dto.cognitoSub || randomUUID(), // usa o cognitoSub do DTO ou gera um ID temporário
+      name: dto.name || '',
       fullName: dto.fullName || dto.name || '',
       nickname: dto.nickname || dto.fullName || dto.name || '',
+      email: dto.email || '',
+      passwordHash: passwordHash || '',
       role: 'SUBSCRIBER',
       isActive: true,
       isBanned: false,
       postsCount: 0,
       commentsCount: 0,
-      bio: dto.bio,
-      website: dto.website,
-      socialLinks: dto.socialLinks,
-      avatar: dto.avatar,
+      likesCount: 0,
+      followersCount: 0,
+      followingCount: 0,
     });
   }
 
@@ -106,7 +104,7 @@ export class UsersService {
    * @returns {Promise<User | null>} Usuário encontrado ou null
    */
   async getUserById(id: string): Promise<User | null> {
-    return this.usersRepo.findById(id);
+    return this.usersRepo.findByCognitoSub(id);
   }
 
   /**
@@ -124,9 +122,7 @@ export class UsersService {
     offset?: number;
     _excludeCognitoSub?: boolean;
   }): Promise<User[]> {
-    const users = await this.usersRepo.findAll();
-    console.log('UsersService.findAll - users found:', users.length);
-    return users;
+    return this.usersRepo.findAll();
   }
 
   /**
@@ -146,7 +142,7 @@ export class UsersService {
       _excludeCognitoSub?: boolean;
     }
   ): Promise<User | null> {
-    return this.usersRepo.findById(userId);
+    return this.usersRepo.findByCognitoSub(userId);
   }
 
   /**
@@ -157,7 +153,7 @@ export class UsersService {
    * @param {string} cognitoSub - Sub do Cognito
    * @returns {Promise<User | null>} Usuário encontrado
    */
-  async getUserByCognitoSub(cognitoSub: string): Promise<User | null> {
+  async getUserByCognitoSub(cognitoSub: string) {
     return this.usersRepo.findByCognitoSub(cognitoSub);
   }
 
@@ -187,7 +183,7 @@ export class UsersService {
    * @param {string} id - ID do usuário
    * @returns {Promise<void>}
    */
-  async deleteUser(id: string): Promise<void> {
+  async deleteUser(id: string) {
     await this.usersRepo.delete(id);
   }
 
@@ -238,16 +234,8 @@ export class UsersService {
     if (!user) {
       throw new Error('User not found');
     }
-    if (!newNickname) {
-      throw new Error('Nickname is required');
-    }
     
-    const userId = user.id ?? user.cognitoSub;
-    if (!userId) {
-      throw new Error('User id is required to update nickname');
-    }
-
-    await this.usersRepo.update(userId, { nickname: newNickname as string });
+    await this.usersRepo.update(user.cognitoSub, { nickname: newNickname });
   }
 
   /**
@@ -288,7 +276,6 @@ export class UsersService {
     const offset = (page - 1) * limit;
 
     const users = await this.usersRepo.findAll();
-    console.log('UsersService.listUsers - users found:', users.length);
 
     // TODO: Implementar paginação e filtro no futuro
     // Por enquanto, retorna todos os usuários
@@ -298,7 +285,7 @@ export class UsersService {
 
     // TODO: Implementar busca por texto no futuro
     if (search) {
-      this.logger.warn('Search functionality not yet implemented');
+      console.warn('Search functionality not yet implemented');
     }
 
     // Aplicar paginação manual

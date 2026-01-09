@@ -66,8 +66,6 @@ export interface User {
   updatedAt: Date;
   
   // Campos opcionais para compatibilidade
-  /** ID único do usuário (UUID) - Para compatibilidade */
-  id?: string;
   /** Nome de exibição - Para compatibilidade */
   name?: string;
   /** Username único - Para compatibilidade */
@@ -114,14 +112,6 @@ export interface UserRepository {
   create(data: Omit<User, 'createdAt' | 'updatedAt'>): Promise<User>;
   
   /**
-   * Busca usuário pelo ID.
-   * 
-   * @param {string} id - ID do usuário
-   * @returns {Promise<User | null>} Usuário encontrado ou null
-   */
-  findById(id: string): Promise<User | null>;
-  
-  /**
    * Busca usuário pelo Cognito Sub.
    * 
    * @param {string} cognitoSub - Sub do Cognito
@@ -155,19 +145,19 @@ export interface UserRepository {
   /**
    * Atualiza dados de um usuário.
    * 
-   * @param {string} id - ID do usuário
+   * @param {string} cognitoSub - Sub do Cognito do usuário
    * @param {Partial<User>} data - Dados para atualizar
    * @returns {Promise<User | null>} Usuário atualizado ou null
    */
-  update(id: string, data: Partial<User>): Promise<User | null>;
+  update(cognitoSub: string, data: Partial<User>): Promise<User | null>;
   
   /**
    * Exclui um usuário.
    * 
-   * @param {string} id - ID do usuário
+   * @param {string} cognitoSub - Sub do Cognito do usuário
    * @returns {Promise<void>}
    */
-  delete(id: string): Promise<void>;
+  delete(cognitoSub: string): Promise<void>;
   
   /**
    * Verifica se nome completo já está em uso.

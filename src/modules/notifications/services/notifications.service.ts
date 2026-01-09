@@ -26,10 +26,6 @@ export class NotificationsService {
   /**
    * Cria uma notificação.
    *
-   * Por que o service gera `id` e força `isRead=false` por padrão:
-   * - Garante que toda notificação nasça não-lida, evitando inconsistência.
-   * - Centraliza a regra fora do repositório (que só persiste/consulta).
-   *
    * Regras/decisões aplicadas aqui:
    * - Gera `id`.
    * - Define `isRead` como `false` por padrão quando não informado.
@@ -37,7 +33,7 @@ export class NotificationsService {
    * @param {CreateNotificationDto} dto Dados da notificação.
    * @returns {Promise<unknown>} Notificação criada.
    */
-  async createNotification(dto: CreateNotificationDto): Promise<unknown> {
+  async createNotification(dto: CreateNotificationDto) {
     const id = randomUUID();
 
     return this.notificationsRepo.create({
@@ -59,7 +55,7 @@ export class NotificationsService {
    * @param {string} id ID da notificação.
    * @returns {Promise<unknown>} Notificação encontrada.
    */
-  async getNotificationById(id: string): Promise<unknown> {
+  async getNotificationById(id: string) {
     return this.notificationsRepo.findById(id);
   }
 
@@ -74,7 +70,7 @@ export class NotificationsService {
     limit?: number;
     offset?: number;
     unreadOnly?: boolean;
-  }): Promise<unknown> {
+  }) {
     return this.notificationsRepo.findByUser(userId, options);
   }
 
@@ -84,7 +80,7 @@ export class NotificationsService {
    * @param {string} id ID da notificação.
    * @returns {Promise<void>} Conclusão da operação.
    */
-  async markAsRead(id: string): Promise<void> {
+  async markAsRead(id: string) {
     await this.notificationsRepo.markAsRead(id);
   }
 
@@ -94,7 +90,7 @@ export class NotificationsService {
    * @param {string} userId ID do usuário.
    * @returns {Promise<void>} Conclusão da operação.
    */
-  async markAllAsRead(userId: string): Promise<void> {
+  async markAllAsRead(userId: string) {
     await this.notificationsRepo.markAllAsRead(userId);
   }
 
@@ -104,7 +100,7 @@ export class NotificationsService {
    * @param {string} id ID da notificação.
    * @returns {Promise<void>} Conclusão da operação.
    */
-  async deleteNotification(id: string): Promise<void> {
+  async deleteNotification(id: string) {
     await this.notificationsRepo.delete(id);
   }
 
@@ -114,7 +110,7 @@ export class NotificationsService {
    * @param {string} userId ID do usuário.
    * @returns {Promise<void>} Conclusão da operação.
    */
-  async deleteAllNotifications(userId: string): Promise<void> {
+  async deleteAllNotifications(userId: string) {
     await this.notificationsRepo.deleteAll(userId);
   }
 
@@ -124,7 +120,7 @@ export class NotificationsService {
    * @param {string} userId ID do usuário.
    * @returns {Promise<unknown>} Contagem.
    */
-  async getUnreadCount(userId: string): Promise<unknown> {
+  async getUnreadCount(userId: string) {
     return this.notificationsRepo.getUnreadCount(userId);
   }
 
@@ -137,7 +133,7 @@ export class NotificationsService {
    * @param {string} userName Nome de quem curtiu.
    * @returns {Promise<unknown>} Notificação criada.
    */
-  async notifyNewLike(userId: string, postId: string, userName: string): Promise<unknown> {
+  async notifyNewLike(userId: string, postId: string, userName: string) {
     return this.createNotification({
       userId,
       title: 'Novo like',
@@ -158,7 +154,7 @@ export class NotificationsService {
    * @param {string} userName Nome de quem comentou.
    * @returns {Promise<unknown>} Notificação criada.
    */
-  async notifyNewComment(userId: string, postId: string, _commentId: string, userName: string): Promise<unknown> {
+  async notifyNewComment(userId: string, postId: string, _commentId: string, userName: string) {
     return this.createNotification({
       userId,
       title: 'Novo comentário',
@@ -178,7 +174,7 @@ export class NotificationsService {
    * @param {string} followerName Nome do seguidor.
    * @returns {Promise<unknown>} Notificação criada.
    */
-  async notifyNewFollower(userId: string, followerId: string, followerName: string): Promise<unknown> {
+  async notifyNewFollower(userId: string, followerId: string, followerName: string) {
     return this.createNotification({
       userId,
       title: 'Novo seguidor',

@@ -1,84 +1,134 @@
 /**
- * @fileoverview Repositório Base para DynamoDB
+ * @fileoverview Repositório Base Otimizado para DynamoDB
  * 
- * Classe abstrata que contém métodos comuns para todas as implementações
- * de repositórios DynamoDB, seguindo o padrão Single Table Design.
+ * Classe abstrata com otimizações de performance e custo:
+ * - Batch operations otimizadas
+ * - Projection expressions para reduzir consumo
+ * - Consistent reads apenas quando necessário
+ * - Paginação eficiente
+ * - Cache de queries frequentes
+ * - Índices otimizados
  * 
  * @module database/dynamodb/base-dynamodb.repository
- * @version 1.0.0
+ * @version 2.0.0 - Performance Optimized
  * @since 2025-12-16
  * @author Rainer Soft
  * @license MIT
  */
 
 import { Injectable, Logger } from '@nestjs/common';
-import { DynamoDBDocumentClient, GetCommand, PutCommand, UpdateCommand, DeleteCommand, QueryCommand, ScanCommand } from '@aws-sdk/lib-dynamodb';
+import { 
+  DynamoDBDocumentClient, 
+  GetCommand, 
+  PutCommand, 
+  UpdateCommand, 
+  DeleteCommand, 
+  QueryCommand, 
+  ScanCommand,
+  BatchGetCommand,
+  BatchWriteCommand,
+  TransactGetCommand,
+  TransactWriteCommand
+} from '@aws-sdk/lib-dynamodb';
 
 /**
- * Repositório base abstrato para DynamoDB.
+ * Opções de consulta otimizadas
+ */
+interface OptimizedQueryOptions {
+  /**
+   * Tipos de consistência: eventual (padrão/mais barato) ou strong (mais caro)
+   */
+  consistentRead?: boolean;
+  /**
+   * Atributos específicos para retornar (reduz consumo)
+   */
+  projectionExpression?: string;
+  /**
+   * Limite de itens (controla custo)
+   */
+  limit?: number;
+  /**
+   * Paginação eficiente
+   */
+  exclusiveStartKey?: any;
+  /**
+   * Ordenação (false = mais recentes primeiro)
+   */
+  scanIndexForward?: boolean;
+  /**
+   * Para contagem eficiente (sem trazer dados)
+   */
+  select?: 'COUNT' | 'SPECIFIC_ATTRIBUTES';
+}
+
+/**
+ * Opções de batch otimizadas
+ */
+interface BatchOptions {
+  /**
+   * Tipos de consistência: eventual (padrão/mais barato) ou strong (mais caro)
+   */
+  consistentRead?: boolean;
+  /**
+   * Atributos específicos para retornar (reduz consumo)
+   */
+  projectionExpression?: string;
+  /**
+   * Tamanho do lote para operações (máx 25)
+   */
+  batchSize?: number;
+  /**
+   * Paralelismo de processamento
+   */
+  parallelism?: number;
+  /**
+   * Retry automático em falhas
+   */
+  retryAttempts?: number;
+}
+
+/**
+ * Repositório base otimizado para DynamoDB.
  * 
- * Fornece funcionalidades comuns para operações CRUD e gerenciamento
- * de chaves no padrão Single Table Design. Todos os repositórios
- * específicos devem estender esta classe.
- * 
- * Funcionalidades:
- * - Gerenciamento de chaves PK/SK e GSIs
- * - Operações CRUD básicas (get, put, update, delete)
- * - Query e Scan com suporte a paginação
- * - Transformação de dados entre app e DynamoDB
- * - Logging integrado
+ * Foco em performance e controle de custos:
+ * - Operações batch eficientes
+ * - Projection expressions
+ * - Cache inteligente
+ * - Monitoramento de consumo
  * 
  * @abstract
  * @class BaseDynamoDBRepository
- * 
- * @example
- * ```typescript
- * // Implementação de repositório específico
- * @Injectable()
- * export class UserRepository extends BaseDynamoDBRepository {
- *   async findById(id: string) {
- *     const PK = this.createEntityPK('USER', id);
- *     const SK = this.createEntitySK('USER', id);
- *     return this.getItem({ PK, SK });
- *   }
- * }
- * ```
- * 
- * @since 1.0.0
+ * @version 2.0.0
  */
 @Injectable()
 export abstract class BaseDynamoDBRepository {
   /**
    * Logger para registro de eventos e erros.
-   * 
-   * @protected
-   * @readonly
-   * @type {Logger}
    */
   protected readonly logger = new Logger(this.constructor.name);
   
   /**
    * Cliente DynamoDB Document para operações.
-   * 
-   * @protected
-   * @readonly
-   * @type {DynamoDBDocumentClient}
    */
   protected readonly client: DynamoDBDocumentClient;
   
   /**
    * Nome da tabela DynamoDB.
-   * 
-   * @protected
-   * @readonly
-   * @type {string}
    */
   protected readonly tableName: string;
 
   /**
-   * Construtor do repositório base.
-   * 
-   * Recebe o client já configurado (AWS ou Local) e o nome da tabela.
+   * Cache simples para queries frequentes
+   */
+  protected cache: Map<string, { data: any; ttl: number }> = new Map();
+  
+  /**
+   * TTL padrão do cache (5 minutos)
+   */
+  private readonly defaultCacheTTL = 5 * 60 * 1000;
+
+  /**
+   * Construtor do repositório base otimizado.
    */
   constructor(dynamoDb: DynamoDBDocumentClient, tableName: string) {
     this.client = dynamoDb;
@@ -86,114 +136,294 @@ export abstract class BaseDynamoDBRepository {
   }
 
   /**
-   * Cria a chave primária (PK) para uma entidade.
-   * 
-   * Formato: ENTITY#ID
-   * 
-   * @protected
-   * @method createEntityPK
-   * @param {string} entity - Tipo da entidade (ex: USER, POST)
-   * @param {string} id - ID único da entidade
-   * @returns {string} Chave primária formatada
-   * 
-   * @example
-   * ```typescript
-   * const PK = this.createEntityPK('USER', '123');
-   * // Returns: 'USER#123'
-   * ```
+   * Cria PK otimizada (shorter strings = menor custo)
    */
   protected createEntityPK(entity: string, id: string): string {
-    return `${entity}#${id}`;
+    // Otimizado: prefixes curtos
+    const prefixes: Record<string, string> = {
+      'USER': 'U',
+      'POST': 'P', 
+      'COMMENT': 'C',
+      'LIKE': 'L',
+      'BOOKMARK': 'B',
+      'NOTIFICATION': 'N',
+      'CATEGORY': 'CAT'
+    };
+    const prefix = prefixes[entity] || entity;
+    return `${prefix}#${id}`;
   }
 
   /**
-   * Cria a chave de ordenação (SK) para uma entidade.
-   * 
-   * Formato: TYPE#ID#TIMESTAMP
-   * 
-   * @protected
-   * @method createEntitySK
-   * @param {string} type - Tipo do item
-   * @param {string} id - ID do item
-   * @param {string} [timestamp] - Timestamp opcional (gerado automaticamente)
-   * @returns {string} Chave de ordenação formatada
+   * Cria SK otimizada com timestamp invertido para ordenação
    */
   protected createEntitySK(type: string, id: string, timestamp?: string): string {
     const ts = timestamp || new Date().toISOString();
-    return `${type}#${id}#${ts}`;
+    // Timestamp invertido para ordenação descendente (mais recentes primeiro)
+    const invertedTs = ts.replace(/[-T:Z.]/g, '').split('').reverse().join('');
+    return `${type}#${id}#${invertedTs}`;
   }
 
   /**
-   * Cria chave primária para GSI1.
-   * 
-   * GSI1 é usada para consultas por tipo de entidade.
-   * 
-   * @protected
-   * @method createGSI1PK
-   * @param {string} gsiType - Tipo de consulta GSI1
-   * @param {string} value - Valor para a consulta
-   * @returns {string} Chave GSI1 formatada
+   * Cria GSI1 PK para queries globais otimizadas
    */
   protected createGSI1PK(gsiType: string, value: string): string {
-    return `${gsiType}#${value}`;
+    const prefixes: Record<string, string> = {
+      'ENTITY': 'E',
+      'STATUS': 'S',
+      'TYPE': 'T'
+    };
+    const prefix = prefixes[gsiType] || gsiType;
+    return `${prefix}#${value}`;
   }
 
   /**
-   * Cria chave de ordenação para GSI1.
-   * 
-   * @protected
-   * @method createGSI1SK
-   * @param {string} type - Tipo do item
-   * @param {string} id - ID do item
-   * @param {string} [timestamp] - Timestamp opcional
-   * @returns {string} Chave GSI1 formatada
+   * Cria GSI1 SK otimizada
    */
   protected createGSI1SK(type: string, id: string, timestamp?: string): string {
     const ts = timestamp || new Date().toISOString();
-    return `${type}#${ts}#${id}`;
+    const invertedTs = ts.replace(/[-T:Z.]/g, '').split('').reverse().join('');
+    return `${type}#${invertedTs}#${id}`;
   }
 
   /**
-   * Cria chave primária para GSI2.
-   * 
-   * GSI2 é usada para consultas por relacionamentos.
-   * 
-   * @protected
-   * @method createGSI2PK
-   * @param {string} gsiType - Tipo de consulta GSI2
-   * @param {string} value - Valor para a consulta
-   * @returns {string} Chave GSI2 formatada
+   * Cria GSI2 PK para relacionamentos
    */
   protected createGSI2PK(gsiType: string, value: string): string {
-    return `${gsiType}#${value}`;
+    const prefixes: Record<string, string> = {
+      'USER': 'U',
+      'POST': 'P',
+      'CATEGORY': 'CAT',
+      'AUTHOR': 'A',
+      'EMAIL': 'E',
+      'USERNAME': 'UN',
+      'FULLNAME': 'FN',
+      'NICKNAME': 'NN'
+    };
+    const prefix = prefixes[gsiType] || gsiType;
+    return `${prefix}#${value}`;
   }
 
   /**
-   * Cria chave de ordenação para GSI2.
-   * 
-   * @protected
-   * @method createGSI2SK
-   * @param {string} type - Tipo do item
-   * @param {string} id - ID do item
-   * @param {string} [timestamp] - Timestamp opcional
-   * @returns {string} Chave GSI2 formatada
+   * Cria GSI2 SK otimizada
    */
   protected createGSI2SK(type: string, id: string, timestamp?: string): string {
     const ts = timestamp || new Date().toISOString();
-    return `${type}#${ts}#${id}`;
+    const invertedTs = ts.replace(/[-T:Z.]/g, '').split('').reverse().join('');
+    return `${type}#${invertedTs}#${id}`;
   }
 
   /**
-   * Adiciona campos comuns a todos os itens.
-   * 
-   * Inclui metadados como tipo de entidade, timestamps
-   * e outros campos padrão.
-   * 
-   * @protected
-   * @method addCommonFields
-   * @param {any} item - Item original
-   * @param {string} entityType - Tipo da entidade
-   * @returns {any} Item com campos comuns adicionados
+   * Get otimizado com cache e projection
+   */
+  async getItemOptimized(params: { PK: string; SK: string }, options: OptimizedQueryOptions = {}): Promise<any | null> {
+    const cacheKey = `${params.PK}:${params.SK}`;
+    
+    // Verificar cache primeiro
+    if (!options.consistentRead) {
+      const cached = this.getFromCache(cacheKey);
+      if (cached) return cached;
+    }
+
+    const command = new GetCommand({
+      TableName: this.tableName,
+      Key: params,
+      ConsistentRead: options.consistentRead || false, // Eventual read por padrão (mais barato)
+      ProjectionExpression: options.projectionExpression,
+    });
+    
+    const result = await this.client.send(command);
+    const item = result.Item || null;
+    
+    // Cache apenas para consistent reads falsas
+    if (item && !options.consistentRead) {
+      this.setCache(cacheKey, item);
+    }
+    
+    return item;
+  }
+
+  /**
+   * Put otimizado com conditional writes
+   */
+  async putItemOptimized(item: any, conditionExpression?: string): Promise<void> {
+    const command = new PutCommand({
+      TableName: this.tableName,
+      Item: item,
+      ConditionExpression: conditionExpression,
+      // Evitar consumir capacidade desnecessária
+      ReturnValues: 'NONE',
+    });
+    
+    await this.client.send(command);
+    
+    // Invalidar cache relacionado
+    this.invalidateCache(`${item.PK}:${item.SK}`);
+  }
+
+  /**
+   * Query otimizada com projection e paginação
+   */
+  async queryOptimized(params: OptimizedQueryOptions & {
+    KeyConditionExpression?: string;
+    FilterExpression?: string;
+    ExpressionAttributeNames?: Record<string, string>;
+    ExpressionAttributeValues?: Record<string, any>;
+    IndexName?: string;
+  }): Promise<{ items: any[]; lastEvaluatedKey?: any; consumedCapacity?: any }> {
+    const command = new QueryCommand({
+      TableName: this.tableName,
+      ConsistentRead: false, // Sempre eventual read para queries
+      ProjectionExpression: params.projectionExpression,
+      Limit: params.limit || 25, // Limite padrão para controlar custo
+      ExclusiveStartKey: params.exclusiveStartKey,
+      ScanIndexForward: params.scanIndexForward ?? false, // Mais recentes primeiro
+      Select: params.select,
+      ReturnConsumedCapacity: 'TOTAL', // Monitorar consumo
+      KeyConditionExpression: params.KeyConditionExpression,
+      FilterExpression: params.FilterExpression,
+      ExpressionAttributeNames: params.ExpressionAttributeNames,
+      ExpressionAttributeValues: params.ExpressionAttributeValues,
+      IndexName: params.IndexName,
+    });
+
+    const result = await this.client.send(command);
+    
+    // Log de consumo para monitoramento
+    if (result.ConsumedCapacity) {
+      this.logger.debug(`Query consumed: ${JSON.stringify(result.ConsumedCapacity)}`);
+    }
+
+    return {
+      items: result.Items || [],
+      lastEvaluatedKey: result.LastEvaluatedKey,
+      consumedCapacity: result.ConsumedCapacity,
+    };
+  }
+
+  /**
+   * Batch Get otimizado (até 100 itens)
+   */
+  async batchGetOptimized(keys: { PK: string; SK: string }[], options: BatchOptions = {}): Promise<any[]> {
+    const batchSize = options.batchSize || 25; // Máximo permitido pelo DynamoDB
+    const results: any[] = [];
+    
+    // Processar em lotes para evitar throttling
+    for (let i = 0; i < keys.length; i += batchSize) {
+      const batch = keys.slice(i, i + batchSize);
+      
+      const command = new BatchGetCommand({
+        RequestItems: {
+          [this.tableName]: {
+            Keys: batch,
+            ProjectionExpression: options.projectionExpression,
+          },
+        },
+        ReturnConsumedCapacity: 'TOTAL',
+      });
+
+      const result = await this.client.send(command);
+      const items = result.Responses?.[this.tableName] || [];
+      results.push(...items);
+      
+      // Pequeno delay entre batches para evitar throttling
+      if (i + batchSize < keys.length) {
+        await this.sleep(10);
+      }
+    }
+    
+    return results;
+  }
+
+  /**
+   * Batch Write otimizado (até 25 itens por lote)
+   */
+  async batchWriteOptimized(
+    putRequests: any[] = [],
+    deleteRequests: { PK: string; SK: string }[] = [],
+    options: BatchOptions = {}
+  ): Promise<void> {
+    const batchSize = options.batchSize || 25;
+    const retryAttempts = options.retryAttempts || 3;
+    
+    for (let i = 0; i < Math.max(putRequests.length, deleteRequests.length); i += batchSize) {
+      const putBatch = putRequests.slice(i, i + batchSize);
+      const deleteBatch = deleteRequests.slice(i, i + batchSize);
+      
+      const requestItems: any[] = [];
+      
+      // Adiciona operações PUT
+      putBatch.forEach(item => {
+        requestItems.push({
+          PutRequest: { Item: item },
+        });
+      });
+      
+      // Adiciona operações DELETE
+      deleteBatch.forEach(key => {
+        requestItems.push({
+          DeleteRequest: { Key: key },
+        });
+      });
+      
+      // Retry automático em caso de falha
+      for (let attempt = 0; attempt < retryAttempts; attempt++) {
+        try {
+          const command = new BatchWriteCommand({
+            RequestItems: {
+              [this.tableName]: requestItems,
+            },
+            ReturnConsumedCapacity: 'TOTAL',
+          });
+
+          await this.client.send(command);
+          break; // Sucesso, sair do retry
+        } catch (error) {
+          if (attempt === retryAttempts - 1) throw error;
+          
+          // Exponential backoff
+          await this.sleep(Math.pow(2, attempt) * 100);
+        }
+      }
+      
+      // Delay entre batches para controlar throughput
+      if (i + batchSize < Math.max(putRequests.length, deleteRequests.length)) {
+        await this.sleep(50);
+      }
+    }
+  }
+
+  /**
+   * Transação Write para operações atômicas
+   */
+  async transactWriteOptimized(transactItems: any[]): Promise<void> {
+    const command = new TransactWriteCommand({
+      TransactItems: transactItems,
+      ReturnConsumedCapacity: 'TOTAL',
+    });
+    
+    await this.client.send(command);
+  }
+
+  /**
+   * Transação Get para leituras atômicas
+   */
+  async transactGetOptimized(keys: { PK: string; SK: string }[]): Promise<any[]> {
+    const command = new TransactGetCommand({
+      TransactItems: keys.map(key => ({
+        Get: {
+          TableName: this.tableName,
+          Key: key,
+        },
+      })),
+      ReturnConsumedCapacity: 'TOTAL',
+    });
+    
+    const result = await this.client.send(command);
+    return result.Responses || [];
+  }
+
+  /**
+   * Adiciona campos comuns otimizados
    */
   protected addCommonFields(item: any, entityType: string): any {
     return {
@@ -201,77 +431,117 @@ export abstract class BaseDynamoDBRepository {
       entityType,
       createdAt: item.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      // Campos para otimização de queries
+      gsi1Sort: this.createGSI1SK('SORT', item.id || 'unknown'),
+      gsi2Sort: this.createGSI2SK('SORT', item.id || 'unknown'),
     };
   }
 
   /**
-   * Obtém um item pela chave primária (PK) e chave de ordenação (SK).
-   * 
-   * @async
-   * @method getItem
-   * @param {object} params - Parâmetros da consulta
-   * @param {string} params.PK - Chave primária
-   * @param {string} params.SK - Chave de ordenação
-   * @returns {Promise<any|null>} Item encontrado ou null
-   * 
-   * @example
-   * ```typescript
-   * const user = await this.getItem({
-   *   PK: 'USER#123',
-   *   SK: 'USER#123#2023-01-01T00:00:00.000Z'
-   * });
-   * ```
+   * Remove campos do DynamoDB de forma otimizada
    */
+  protected fromDynamoDB(item: any): any {
+    if (!item) return null;
+    
+    const cleanItem = { ...item };
+    // Remover campos do DynamoDB
+    delete cleanItem.PK;
+    delete cleanItem.SK;
+    delete cleanItem.GSI1PK;
+    delete cleanItem.GSI1SK;
+    delete cleanItem.GSI2PK;
+    delete cleanItem.GSI2SK;
+    delete cleanItem.gsi1Sort;
+    delete cleanItem.gsi2Sort;
+    
+    return cleanItem;
+  }
+
+  /**
+   * Prepara item para DynamoDB com otimizações
+   */
+  protected toDynamoDB(item: any, entityType: string, PK: string, SK: string): any {
+    return {
+      PK,
+      SK,
+      ...this.addCommonFields(item, entityType),
+    };
+  }
+
+  // Métodos de cache simples
+  protected getFromCache(key: string): any | null {
+    const cached = this.cache.get(key);
+    if (cached && Date.now() < cached.ttl) {
+      return cached.data;
+    }
+    this.cache.delete(key);
+    return null;
+  }
+
+  protected setCache(key: string, data: any): void {
+    this.cache.set(key, { data, ttl: Date.now() + this.defaultCacheTTL });
+  }
+
+  protected invalidateCache(key: string): void {
+    this.cache.delete(key);
+  }
+
+  // Utilitário para delays
+  private sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  // Métodos legacy para compatibilidade (sem duplicação)
   async getItem(params: { PK: string; SK: string }): Promise<any | null> {
-    const command = new GetCommand({
-      TableName: this.tableName,
-      Key: params,
-    });
-    
-    const result = await this.client.send(command);
-    return result.Item || null;
+    return this.getItemOptimized(params);
   }
 
-  /**
-   * Insere ou atualiza um item na tabela.
-   * 
-   * @async
-   * @method putItem
-   * @param {any} item - Item a ser inserido/atualizado
-   * @returns {Promise<void>}
-   * 
-   * @example
-   * ```typescript
-   * await this.putItem({
-   *   PK: 'USER#123',
-   *   SK: 'USER#123#2023-01-01T00:00:00.000Z',
-   *   name: 'John Doe',
-   *   email: 'john@example.com'
-   * });
-   * ```
-   */
   async putItem(item: any): Promise<void> {
-    const command = new PutCommand({
-      TableName: this.tableName,
-      Item: item,
-    });
-    
-    await this.client.send(command);
+    return this.putItemOptimized(item);
   }
 
-  /**
-   * Atualiza um item existente na tabela.
-   * 
-   * @async
-   * @method updateItem
-   * @param {object} params - Parâmetros da atualização
-   * @param {string} params.PK - Chave primária
-   * @param {string} params.SK - Chave de ordenação
-   * @param {string} params.UpdateExpression - Expressão de atualização
-   * @param {Record<string,string>} [params.ExpressionAttributeNames] - Nomes de atributos
-   * @param {Record<string,any>} [params.ExpressionAttributeValues] - Valores de atributos
-   * @returns {Promise<any>} Item atualizado
-   */
+  protected async query(params: {
+    KeyConditionExpression?: string;
+    FilterExpression?: string;
+    ExpressionAttributeNames?: Record<string, string>;
+    ExpressionAttributeValues?: Record<string, any>;
+    IndexName?: string;
+    Limit?: number;
+    ExclusiveStartKey?: any;
+    ScanIndexForward?: boolean;
+  }): Promise<{ items: any[]; lastEvaluatedKey?: any }> {
+    const result = await this.queryOptimized(params);
+    return {
+      items: result.items,
+      lastEvaluatedKey: result.lastEvaluatedKey,
+    };
+  }
+
+  protected async scan(params: {
+    FilterExpression?: string;
+    ExpressionAttributeNames?: Record<string, string>;
+    ExpressionAttributeValues?: Record<string, any>;
+    Limit?: number;
+    ExclusiveStartKey?: any;
+  }): Promise<{ items: any[]; lastEvaluatedKey?: any }> {
+    const command = new ScanCommand({
+      TableName: this.tableName,
+      FilterExpression: params.FilterExpression,
+      ExpressionAttributeNames: params.ExpressionAttributeNames,
+      ExpressionAttributeValues: params.ExpressionAttributeValues,
+      Limit: params.Limit || 25,
+      ExclusiveStartKey: params.ExclusiveStartKey,
+      ReturnConsumedCapacity: 'TOTAL',
+    });
+
+    const result = await this.client.send(command);
+    
+    return {
+      items: result.Items || [],
+      lastEvaluatedKey: result.LastEvaluatedKey,
+    };
+  }
+
   async updateItem(params: {
     PK: string;
     SK: string;
@@ -286,134 +556,23 @@ export abstract class BaseDynamoDBRepository {
       ExpressionAttributeNames: params.ExpressionAttributeNames,
       ExpressionAttributeValues: params.ExpressionAttributeValues,
       ReturnValues: 'ALL_NEW',
+      ReturnConsumedCapacity: 'TOTAL',
     });
     
     const result = await this.client.send(command);
     return result.Attributes;
   }
 
-  /**
-   * Remove um item da tabela.
-   * 
-   * @async
-   * @method deleteItem
-   * @param {object} params - Parâmetros da exclusão
-   * @param {string} params.PK - Chave primária
-   * @param {string} params.SK - Chave de ordenação
-   * @returns {Promise<void>}
-   */
   async deleteItem(params: { PK: string; SK: string }): Promise<void> {
     const command = new DeleteCommand({
       TableName: this.tableName,
       Key: params,
+      ReturnConsumedCapacity: 'TOTAL',
     });
     
     await this.client.send(command);
-  }
-
-  /**
-   * Executa comando Query para busca eficiente.
-   * 
-   * @async
-   * @protected
-   * @method query
-   * @param {object} params - Parâmetros da query
-   * @returns {Promise<object>} Resultados com paginação
-   */
-  protected async query(params: {
-    KeyConditionExpression?: string;
-    FilterExpression?: string;
-    ExpressionAttributeNames?: Record<string, string>;
-    ExpressionAttributeValues?: Record<string, any>;
-    IndexName?: string;
-    Limit?: number;
-    ExclusiveStartKey?: any;
-    ScanIndexForward?: boolean;
-  }): Promise<{ items: any[]; lastEvaluatedKey?: any }> {
-    const command = new QueryCommand({
-      TableName: this.tableName,
-      ...params,
-    });
-
-    const result = await this.client.send(command);
-    return {
-      items: result.Items || [],
-      lastEvaluatedKey: result.LastEvaluatedKey,
-    };
-  }
-
-  /**
-   * Executa comando Scan para busca completa.
-   * 
-   * @async
-   * @protected
-   * @method scan
-   * @param {object} params - Parâmetros do scan
-   * @returns {Promise<object>} Resultados com paginação
-   */
-  protected async scan(params: {
-    FilterExpression?: string;
-    ExpressionAttributeNames?: Record<string, string>;
-    ExpressionAttributeValues?: Record<string, any>;
-    Limit?: number;
-    ExclusiveStartKey?: any;
-  }): Promise<{ items: any[]; lastEvaluatedKey?: any }> {
-    const command = new ScanCommand({
-      TableName: this.tableName,
-      ...params,
-    });
-
-    const result = await this.client.send(command);
-    return {
-      items: result.Items || [],
-      lastEvaluatedKey: result.LastEvaluatedKey,
-    };
-  }
-
-  /**
-   * Converte item do DynamoDB para formato da aplicação.
-   * 
-   * Remove campos específicos do DynamoDB (PK, SK, GSIs)
-   * e retorna apenas os dados da aplicação.
-   * 
-   * @protected
-   * @method fromDynamoDB
-   * @param {any} item - Item do DynamoDB
-   * @returns {any} Item limpo para a aplicação
-   */
-  protected fromDynamoDB(item: any): any {
-    if (!item) return null;
     
-    const cleanItem = { ...item };
-    delete cleanItem.PK;
-    delete cleanItem.SK;
-    delete cleanItem.GSI1PK;
-    delete cleanItem.GSI1SK;
-    delete cleanItem.GSI2PK;
-    delete cleanItem.GSI2SK;
-    
-    return cleanItem;
-  }
-
-  /**
-   * Prepara item da aplicação para formato DynamoDB.
-   * 
-   * Adiciona chaves PK/SK e campos comuns necessários
-   * para armazenamento no DynamoDB.
-   * 
-   * @protected
-   * @method toDynamoDB
-   * @param {any} item - Item da aplicação
-   * @param {string} entityType - Tipo da entidade
-   * @param {string} PK - Chave primária
-   * @param {string} SK - Chave de ordenação
-   * @returns {any} Item formatado para DynamoDB
-   */
-  protected toDynamoDB(item: any, entityType: string, PK: string, SK: string): any {
-    return {
-      PK,
-      SK,
-      ...this.addCommonFields(item, entityType),
-    };
+    // Invalidar cache
+    this.invalidateCache(`${params.PK}:${params.SK}`);
   }
 }

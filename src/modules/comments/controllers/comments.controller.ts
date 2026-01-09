@@ -12,7 +12,7 @@
  * @module modules/comments/controllers/comments.controller
  */
 
-import { BadRequestException, Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { CommentsService } from '../services/comments.service';
 import { CreateCommentDto } from '../dto/create-comment.dto';
@@ -65,11 +65,11 @@ export class CommentsController {
     summary: 'Listar comentários',
     description: 'Lista comentários com filtros por post, autor ou comentário pai',
   })
-  @ApiQuery({ name: 'postId', required: false, description: 'Filtrar por ID do post', example: 'N-fGhgb8-2byjMUku8vkI' })
-  @ApiQuery({ name: 'authorId', required: false, description: 'Filtrar por ID do autor', example: '44085408-7021-7051-e274-ae704499cd72' })
-  @ApiQuery({ name: 'parentId', required: false, description: 'Filtrar por comentário pai (respostas)', example: 'O4gqlc5OagZr5HQClsYDU' })
-  @ApiQuery({ name: 'limit', required: false, description: 'Limite de resultados', example: 10 })
-  @ApiQuery({ name: 'offset', required: false, description: 'Offset para paginação', example: 0 })
+  @ApiQuery({ name: 'postId', required: false, description: 'Filtrar por ID do post' })
+  @ApiQuery({ name: 'authorId', required: false, description: 'Filtrar por ID do autor' })
+  @ApiQuery({ name: 'parentId', required: false, description: 'Filtrar por comentário pai (respostas)' })
+  @ApiQuery({ name: 'limit', required: false, description: 'Limite de resultados' })
+  @ApiQuery({ name: 'offset', required: false, description: 'Offset para paginação' })
   @ApiResponse({
     status: 200,
     description: 'Lista de comentários retornada',
@@ -91,7 +91,7 @@ export class CommentsController {
     if (query.parentId) {
       return this.commentsService.getReplies(query.parentId);
     }
-    throw new BadRequestException('Must provide postId, authorId, or parentId');
+    throw new Error('Must provide postId, authorId, or parentId');
   }
 
   /**
@@ -105,7 +105,7 @@ export class CommentsController {
     summary: 'Buscar comentário por ID',
     description: 'Retorna um comentário específico pelo seu ID',
   })
-  @ApiParam({ name: 'id', description: 'ID do comentário', example: 'O4gqlc5OagZr5HQClsYDU' })
+  @ApiParam({ name: 'id', description: 'ID do comentário' })
   @ApiResponse({
     status: 200,
     description: 'Comentário encontrado',
@@ -131,7 +131,7 @@ export class CommentsController {
     summary: 'Atualizar comentário',
     description: 'Atualiza um comentário existente',
   })
-  @ApiParam({ name: 'id', description: 'ID do comentário', example: 'O4gqlc5OagZr5HQClsYDU' })
+  @ApiParam({ name: 'id', description: 'ID do comentário' })
   @ApiResponse({
     status: 200,
     description: 'Comentário atualizado com sucesso',

@@ -82,8 +82,8 @@ export class LikesController {
     summary: 'Descurtir post',
     description: 'Remove a curtida de um post',
   })
-  @ApiParam({ name: 'userId', description: 'ID do usuário', example: '44085408-7021-7051-e274-ae704499cd72' })
-  @ApiParam({ name: 'postId', description: 'ID do post', example: 'N-fGhgb8-2byjMUku8vkI' })
+  @ApiParam({ name: 'userId', description: 'ID do usuário' })
+  @ApiParam({ name: 'postId', description: 'ID do post' })
   @ApiResponse({
     status: 200,
     description: 'Post descurtido com sucesso',
@@ -105,8 +105,8 @@ export class LikesController {
     summary: 'Descurtir comentário',
     description: 'Remove a curtida de um comentário',
   })
-  @ApiParam({ name: 'userId', description: 'ID do usuário', example: '44085408-7021-7051-e274-ae704499cd72' })
-  @ApiParam({ name: 'commentId', description: 'ID do comentário', example: 'O4gqlc5OagZr5HQClsYDU' })
+  @ApiParam({ name: 'userId', description: 'ID do usuário' })
+  @ApiParam({ name: 'commentId', description: 'ID do comentário' })
   @ApiResponse({
     status: 200,
     description: 'Comentário descurtido com sucesso',
@@ -127,7 +127,7 @@ export class LikesController {
     summary: 'Buscar curtida por ID',
     description: 'Retorna uma curtida específica pelo seu ID',
   })
-  @ApiParam({ name: 'id', description: 'ID da curtida', example: 'Kvm9Cw9dI1FLghZMl1XwB' })
+  @ApiParam({ name: 'id', description: 'ID da curtida' })
   @ApiResponse({
     status: 200,
     description: 'Curtida encontrada',
@@ -152,7 +152,7 @@ export class LikesController {
     summary: 'Listar curtidas do post',
     description: 'Retorna todas as curtidas de um post específico',
   })
-  @ApiParam({ name: 'postId', description: 'ID do post', example: 'N-fGhgb8-2byjMUku8vkI' })
+  @ApiParam({ name: 'postId', description: 'ID do post' })
   @ApiResponse({
     status: 200,
     description: 'Lista de curtidas retornada',
@@ -173,7 +173,7 @@ export class LikesController {
     summary: 'Listar curtidas do comentário',
     description: 'Retorna todas as curtidas de um comentário específico',
   })
-  @ApiParam({ name: 'commentId', description: 'ID do comentário', example: 'O4gqlc5OagZr5HQClsYDU' })
+  @ApiParam({ name: 'commentId', description: 'ID do comentário' })
   @ApiResponse({
     status: 200,
     description: 'Lista de curtidas retornada',
@@ -194,7 +194,7 @@ export class LikesController {
     summary: 'Listar curtidas do usuário',
     description: 'Retorna todas as curtidas feitas por um usuário',
   })
-  @ApiParam({ name: 'userId', description: 'ID do usuário', example: '44085408-7021-7051-e274-ae704499cd72' })
+  @ApiParam({ name: 'userId', description: 'ID do usuário' })
   @ApiResponse({
     status: 200,
     description: 'Lista de curtidas retornada',
@@ -216,8 +216,8 @@ export class LikesController {
     summary: 'Verificar se usuário curtiu post',
     description: 'Verifica se um usuário específico curtiu um post',
   })
-  @ApiParam({ name: 'userId', description: 'ID do usuário', example: '44085408-7021-7051-e274-ae704499cd72' })
-  @ApiParam({ name: 'postId', description: 'ID do post', example: 'N-fGhgb8-2byjMUku8vkI' })
+  @ApiParam({ name: 'userId', description: 'ID do usuário' })
+  @ApiParam({ name: 'postId', description: 'ID do post' })
   @ApiResponse({
     status: 200,
     description: 'Status da curtida retornado',
@@ -239,8 +239,8 @@ export class LikesController {
     summary: 'Verificar se usuário curtiu comentário',
     description: 'Verifica se um usuário específico curtiu um comentário',
   })
-  @ApiParam({ name: 'userId', description: 'ID do usuário', example: '44085408-7021-7051-e274-ae704499cd72' })
-  @ApiParam({ name: 'commentId', description: 'ID do comentário', example: 'O4gqlc5OagZr5HQClsYDU' })
+  @ApiParam({ name: 'userId', description: 'ID do usuário' })
+  @ApiParam({ name: 'commentId', description: 'ID do comentário' })
   @ApiResponse({
     status: 200,
     description: 'Status da curtida retornado',
