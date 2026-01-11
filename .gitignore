@@ -62,11 +62,39 @@ backend/
 # TypeScript build info
 tsconfig.tsbuildinfo
 
-# Local testing
+# Prisma
+prisma/migrations/
+!prisma/migrations/.gitkeep
+
+# AWS SAM build artifacts
+.sam/
+
+# Local environment files
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE specific VS Code
+.vscode/settings.json
+.vscode/launch.json
+.vscode/extensions.json
+
+# NestJS specific
+.nest/
+*.nestjs.json
+
+# Fastify specific
+.fastify-cache/
+
+# Lambda local testing
+.lambda-local/
 events/
+
+# CloudFormation templates (se gerados dinamicamente)
+*.template.generated.yaml
 
 # Ignora a pasta FUTURO na raiz e tudo dentro dela
 /FUTURO/
 
 # Ignora a pasta .vscode
-.vscode 
+.vscode
